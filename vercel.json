@@ -1,9 +1,31 @@
 {
   "version": 2,
+  "buildCommand": "npm install",
   "builds": [
     {
-      "src": "package.json",
+      "src": "public/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "server.js",
       "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/.*",
+      "dest": "public/$1",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*\\.)(css|js|json|svg|avif|html|png|jpg|jpeg|gif)$",
+      "dest": "public/$1.$2"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
     }
   ],
   "functions": {
