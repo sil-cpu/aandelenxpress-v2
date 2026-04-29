@@ -1,9 +1,11 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const app = express();
 
 const PORT = process.env.PORT || 3000;
+
+// Create Express app
+const app = express();
 
 // Approved users (starts with demo accounts, grows as resellers are approved)
 const approvedUsers = {
@@ -634,8 +636,13 @@ app.delete('/api/blog/posts/:id', requireAdmin, (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-    console.log(`
+// Export app for Vercel
+module.exports = app;
+
+// Start server if running directly (not as a Vercel function)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`
     ╔══════════════════════════════════════════════════════════════╗
     ║                   AandelenXpress Server                      ║
     ║                                                              ║
@@ -650,4 +657,5 @@ app.listen(PORT, () => {
     ║                                                              ║
     ╚══════════════════════════════════════════════════════════════╝
     `);
-});
+    });
+}
