@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm install",
   "version": 2,
   "builds": [
     {
@@ -6,11 +7,12 @@
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
-          "*.html",
-          "*.css",
-          "*.js",
-          "*.svg",
-          "*.avif"
+          "**/*.html",
+          "**/*.css",
+          "**/*.js",
+          "**/*.svg",
+          "**/*.avif",
+          "**/*.json"
         ]
       }
     }
@@ -20,5 +22,8 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
