@@ -107,6 +107,31 @@ app.use(express.static(publicPath, {
   index: ['index.html']
 }));
 
+// Diagnostic endpoint (for debugging Vercel environment)
+app.get('/_debug/info', (req, res) => {
+    const fs = require('fs');
+    const info = {
+        node_version: process.version,
+        cwd: process.cwd(),
+        dirname: __dirname,
+        public_path: path.join(__dirname, 'public'),
+        public_exists: fs.existsSync(path.join(__dirname, 'public')),
+        env: process.env.NODE_ENV,
+        public_files: []
+    };
+    
+    try {
+        const publicDir = path.join(__dirname, 'public');
+        if (fs.existsSync(publicDir)) {
+            info.public_files = fs.readdirSync(publicDir).slice(0, 10);
+        }
+    } catch (e) {
+        info.error = e.message;
+    }
+    
+    res.json(info);
+});
+
 // Auth middleware
 function requireLogin(req, res, next) {
     if (req.session && req.session.user) {
