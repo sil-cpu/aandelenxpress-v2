@@ -79,7 +79,21 @@ app.use(session({
 }));
 
 // Serve static files from the current directory
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.set('Content-Type', 'text/css');
+    } else if (path.endsWith('.js')) {
+      res.set('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.json')) {
+      res.set('Content-Type', 'application/json');
+    } else if (path.endsWith('.svg')) {
+      res.set('Content-Type', 'image/svg+xml');
+    } else if (path.endsWith('.avif')) {
+      res.set('Content-Type', 'image/avif');
+    }
+  }
+}));
 
 // Auth middleware
 function requireLogin(req, res, next) {

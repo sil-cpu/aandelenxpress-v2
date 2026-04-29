@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "public": true,
   "builds": [
     {
       "src": "server.js",
@@ -12,11 +13,7 @@
       "dest": "server.js"
     },
     {
-      "src": "/(.*\\.(css|js|svg|avif|json|ico|jpg|jpeg|png|gif|webp|woff|woff2|ttf|eot))",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
+      "src": ".*",
       "dest": "server.js"
     }
   ]
