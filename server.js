@@ -81,20 +81,30 @@ app.use(session({
 }));
 
 // Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.css')) {
-      res.set('Content-Type', 'text/css');
-    } else if (path.endsWith('.js')) {
-      res.set('Content-Type', 'application/javascript');
-    } else if (path.endsWith('.json')) {
+const publicPath = path.join(__dirname, 'public');
+console.log('Serving static files from:', publicPath);
+
+app.use(express.static(publicPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css')) {
+      res.set('Content-Type', 'text/css; charset=utf-8');
+    } else if (filePath.endsWith('.js')) {
+      res.set('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filePath.endsWith('.json')) {
       res.set('Content-Type', 'application/json');
-    } else if (path.endsWith('.svg')) {
+    } else if (filePath.endsWith('.svg')) {
       res.set('Content-Type', 'image/svg+xml');
-    } else if (path.endsWith('.avif')) {
+    } else if (filePath.endsWith('.avif')) {
       res.set('Content-Type', 'image/avif');
+    } else if (filePath.endsWith('.png')) {
+      res.set('Content-Type', 'image/png');
+    } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+      res.set('Content-Type', 'image/jpeg');
+    } else if (filePath.endsWith('.gif')) {
+      res.set('Content-Type', 'image/gif');
     }
-  }
+  },
+  index: ['index.html']
 }));
 
 // Auth middleware
@@ -634,6 +644,26 @@ app.delete('/api/blog/posts/:id', requireAdmin, (req, res) => {
     
     blogPosts.splice(idx, 1);
     res.json({ success: true });
+});
+
+// Fallback: Serve public files directly if static middleware didn't catch them
+app.use((req, res, next) => {
+    const fs = require('fs');
+    const filePath = path.join(__dirname, 'public', req.path);
+    try {
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            // Determine MIME type and serve
+            if (filePath.endsWith('.css')) {
+                res.set('Content-Type', 'text/css; charset=utf-8');
+            } else if (filePath.endsWith('.js')) {
+                res.set('Content-Type', 'application/javascript; charset=utf-8');
+            }
+            return res.sendFile(filePath);
+        }
+    } catch (e) {
+        // Continue to next middleware
+    }
+    next();
 });
 
 // Export app for Vercel
