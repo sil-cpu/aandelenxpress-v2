@@ -1,0 +1,21 @@
+{
+  "name": "aandelenxpress",
+  "version": "1.0.0",
+  "description": "AandelenXpress - Beleggingsplatform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "aandelen",
+    "belegging",
+    "platform"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.19.0"
+  }
+}

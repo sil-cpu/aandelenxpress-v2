@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket – AandelenXpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #0F1D3A 0%, #1A3B5C 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2D3748;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #0F1D3A 0%, #1A3B5C 100%);
+            color: white;
+            padding: 24px;
+            border-bottom: 3px solid #E8EDF5;
+        }
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .header-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 24px;
+        }
+        .info-section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E8EDF5;
+        }
+        .info-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .info-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #718096;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 1rem;
+            color: #2D3748;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .badge-status-open { background: #E6F3FF; color: #0052CC; }
+        .badge-status-waiting { background: #FFF4E6; color: #B87400; }
+        .badge-status-replied { background: #E8F5E9; color: #2E7D32; }
+        .badge-status-resolved { background: #E0F2F1; color: #00695C; }
+        .badge-status-closed { background: #F3E5F5; color: #6A1B9A; }
+        .badge-intake { background: #FFE1E1; color: #C7254E; }
+        .badge-ident { background: #FFF4E6; color: #B87400; }
+        .badge-new { background: #E8F5E9; color: #2E7D32; }
+        
+        .replies-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid #E8EDF5;
+        }
+        .reply-item {
+            background: #F7FAFC;
+            border-left: 3px solid #0F1D3A;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+        .reply-author {
+            font-weight: 600;
+            color: #0F1D3A;
+            margin-bottom: 4px;
+        }
+        .reply-time {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 10px;
+        }
+        .reply-message {
+            color: #2D3748;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .no-replies {
+            color: #A0AEC0;
+            font-style: italic;
+            padding: 16px;
+            text-align: center;
+            background: #F7FAFC;
+            border-radius: 4px;
+        }
+        .error-message {
+            background: #FED7D7;
+            color: #C53030;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: #0052CC;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .container { border-radius: 8px; }
+            .header { padding: 16px; }
+            .content { padding: 16px; }
+            .header-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div id="ticketId" class="header-title">TK-001</div>
+        <div id="ticketSubject" class="header-subtitle">Onderwerp</div>
+    </div>
+    
+    <div class="content">
+        <a href="javascript:history.back()" class="back-link">← Terug</a>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="info-section">
+            <div class="info-label">Partner</div>
+            <div class="info-value" id="ticketPartner">–</div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="info-section" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+                <div class="info-label">Status</div>
+                <div class="info-value"><span id="ticketStatus" class="badge badge-status-open">Open</span></div>
+            </div>
+            
+            <div class="info-section" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+                <div class="info-label">Prioriteit</div>
+                <div class="info-value"><span id="ticketPriority" class="badge badge-intake">Hoog</span></div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-label">Ingediend op</div>
+            <div class="info-value" id="ticketDate">–</div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-label">Contact E-mail</div>
+            <div class="info-value"><a id="ticketEmail" href="mailto:contact@example.com" style="color:#0052CC;text-decoration:none;">contact@example.com</a></div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-label">Uw verzoek</div>
+            <div class="info-value" id="ticketMessage" style="background:#F7FAFC;padding:12px;border-radius:6px;border-left:3px solid #0F1D3A;">Uw bericht hier</div>
+        </div>
+        
+        <div class="replies-section">
+            <div class="info-label">Antwoorden</div>
+            <div id="repliesList" style="margin-top: 12px;">
+                <div class="no-replies">Nog geen antwoorden ontvangen</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Shared ticket data - use ticketId from URL parameter
+const tickets = [
+  { id:"TK-001", partner:"Bakker Accountants", subject:"Toegang iDIN portaal werkt niet", priority:"high",   date:"2026-04-24", status:"Open", email:"contact@bakker.nl", replies:[] },
+  { id:"TK-002", partner:"Van der Berg & Co",  subject:"KvK bevestiging niet ontvangen",  priority:"medium", date:"2026-04-23", status:"Open", email:"info@vandenberg.nl", replies:[] },
+  { id:"TK-003", partner:"Dijkstra Partners",  subject:"Vraag over facturatiemodel",       priority:"low",    date:"2026-04-22", status:"Open", email:"admin@dijkstra.nl", replies:[] },
+  { id:"TK-004", partner:"Smit & Assoc.",      subject:"Logo updaten in portaal",          priority:"low",    date:"2026-04-20", status:"Open", email:"office@smit.nl", replies:[] },
+];
+
+function fmtDate(d) {
+  const parts = d.split('-');
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  const days = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+  const months = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+  return days[date.getDay()] + ' ' + date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
+}
+
+function formatTime(isoString) {
+  const date = new Date(isoString);
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const s = String(date.getSeconds()).padStart(2, '0');
+  return d + '-' + m + '-' + y + ', ' + h + ':' + min + ':' + s;
+}
+
+function loadTicketDetail() {
+  // Get ticketId from URL
+  const params = new URLSearchParams(window.location.search);
+  const ticketId = params.get('id');
+  
+  if (!ticketId) {
+    document.getElementById('errorContainer').innerHTML = '<div class="error-message">Geen ticket ID opgegeven</div>';
+    return;
+  }
+  
+  // Fetch ticket from server
+  fetch(`/api/tickets/${ticketId}`)
+    .then(r => r.json())
+    .then(ticket => {
+      displayTicket(ticket);
+    })
+    .catch(e => {
+      // Fallback to local data if API fails
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (ticket) {
+        displayTicket(ticket);
+      } else {
+        document.getElementById('errorContainer').innerHTML = '<div class="error-message">Ticket niet gevonden</div>';
+      }
+    });
+}
+
+function displayTicket(ticket) {
+  const pLabel = { high: 'Hoog', medium: 'Gemiddeld', low: 'Laag' };
+  const pClass = { high: 'badge-intake', medium: 'badge-ident', low: 'badge-new' };
+  const sClass = { Open: 'badge-status-open', Waiting: 'badge-status-waiting', Replied: 'badge-status-replied', Resolved: 'badge-status-resolved', Closed: 'badge-status-closed' };
+  
+  document.getElementById('ticketId').textContent = ticket.id;
+  document.getElementById('ticketSubject').textContent = ticket.subject;
+  document.getElementById('ticketPartner').textContent = ticket.partner || '–';
+  document.getElementById('ticketStatus').className = `badge ${sClass[ticket.status || 'Open']}`;
+  document.getElementById('ticketStatus').textContent = ticket.status || 'Open';
+  document.getElementById('ticketPriority').className = `badge ${pClass[ticket.priority]}`;
+  document.getElementById('ticketPriority').textContent = pLabel[ticket.priority];
+  document.getElementById('ticketDate').textContent = fmtDate(ticket.date);
+  
+  const emailEl = document.getElementById('ticketEmail');
+  emailEl.href = `mailto:${ticket.email}`;
+  emailEl.textContent = ticket.email;
+  
+  document.getElementById('ticketMessage').textContent = `Dit is het originele verzoek van ${ticket.partner || 'de klant'}`;
+  
+  // Display replies
+  const repliesList = document.getElementById('repliesList');
+  if (ticket.replies && ticket.replies.length > 0) {
+    repliesList.innerHTML = ticket.replies.map(r => `
+      <div class="reply-item">
+        <div class="reply-author">${r.author || 'Admin'}</div>
+        <div class="reply-time">${formatTime(r.createdAt)}</div>
+        <div class="reply-message">${r.message}</div>
+      </div>
+    `).join('');
+  } else {
+    repliesList.innerHTML = '<div class="no-replies">Nog geen antwoorden ontvangen</div>';
+  }
+}
+
+// Load ticket on page load
+document.addEventListener('DOMContentLoaded', loadTicketDetail);
+</script>
+</body>
+</html>
