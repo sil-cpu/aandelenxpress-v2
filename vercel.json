@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
   "builds": [
     {
       "src": "server.js",
@@ -12,14 +11,5 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ],
-  "functions": {
-    "server.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
