@@ -80,8 +80,8 @@ app.use(session({
     cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 
-// Serve static files from the current directory
-app.use(express.static(path.join(__dirname), {
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.css')) {
       res.set('Content-Type', 'text/css');
