@@ -40,13 +40,13 @@
     <nav class="navbar">
         <div class="container">
             <div class="nav-pill"><div class="nav-content">
-                <a href="index.html" class="logo">
+                <a href="/" class="logo">
                     <img src="AandelenXpress logo.avif" alt="AandelenXpress">
                 </a>
                 <ul class="nav-menu">
-                    <li><a href="blog.html" class="nav-top-link">← Terug naar blog</a></li>
+                    <li><a href="/blog" class="nav-top-link">← Terug naar blog</a></li>
                     <li style="flex: 1;"></li>
-                    <li><a href="login.html" class="btn-nav-ghost">Inloggen</a></li>
+                    <li><a href="/login" class="btn-nav-ghost">Inloggen</a></li>
                 </ul>
                 <button class="nav-hamburger" id="navHamburger" aria-label="Menu openen">
                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="6" x2="20" y2="6"/><line x1="2" y1="11" x2="20" y2="11"/><line x1="2" y1="16" x2="20" y2="16"/></svg>
@@ -89,10 +89,10 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
-                <div class="footer-brand"><a href="index.html"><img src="AandelenXpress logo.avif" alt="AandelenXpress" style="height:32px; margin-bottom:12px; display:block;"></a><p>White-label BV-oprichting voor accountantskantoren.</p></div>
-                <div class="footer-col"><h4>Diensten</h4><ul><li><a href="oprichten.html">Oprichten</a></li><li><a href="platform.html">Platform</a></li></ul></div>
-                <div class="footer-col"><h4>Blog</h4><ul><li><a href="blog.html">Alle artikelen</a></li><li><a href="blog.html#bv-oprichting">BV-oprichting</a></li></ul></div>
-                <div class="footer-col"><h4>Ondersteuning</h4><ul><li><a href="contact.html">Contact</a></li><li><a href="login.html">Inloggen</a></li></ul></div>
+                <div class="footer-brand"><a href="/"><img src="AandelenXpress logo.avif" alt="AandelenXpress" style="height:32px; margin-bottom:12px; display:block;"></a><p>White-label BV-oprichting voor accountantskantoren.</p></div>
+                <div class="footer-col"><h4>Diensten</h4><ul><li><a href="/oprichten">Oprichten</a></li><li><a href="/platform">Platform</a></li></ul></div>
+                <div class="footer-col"><h4>Blog</h4><ul><li><a href="/blog">Alle artikelen</a></li><li><a href="/blog#bv-oprichting">BV-oprichting</a></li></ul></div>
+                <div class="footer-col"><h4>Ondersteuning</h4><ul><li><a href="/contact">Contact</a></li><li><a href="/login">Inloggen</a></li></ul></div>
                 <div class="footer-col"><h4>Juridisch</h4><ul><li><a href="#">Privacybeleid</a></li><li><a href="#">Algemene voorwaarden</a></li></ul></div>
             </div>
             <div class="footer-bottom"><p>© 2025 AandelenXpress B.V. – Alle rechten voorbehouden</p></div>
@@ -133,7 +133,7 @@
                 
                 // Categories
                 const tagsHtml = post.categories.map(cat => 
-                    `<a href="blog.html#${cat.toLowerCase()}" class="artikel-tag">${cat}</a>`
+                    `<a href="/blog#${cat.toLowerCase()}" class="artikel-tag">${cat}</a>`
                 ).join('');
                 document.getElementById('artikelTags').innerHTML = tagsHtml;
                 

@@ -80,11 +80,21 @@ app.use(session({
     cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 
+// Redirect .html URLs to clean URLs (301 for SEO)
+const protectedPages = ['admin-dashboard', 'reseller-dashboard', 'blog-admin', 'dossier-detail', 'ticket-detail', 'partner-detail', 'dossier-status'];
+app.get('/:page.html', (req, res, next) => {
+    const page = req.params.page;
+    if (protectedPages.includes(page)) return next();
+    if (page === 'index') return res.redirect(301, '/');
+    return res.redirect(301, `/${page}`);
+});
+
 // Serve static files from the public directory
 const publicPath = path.join(__dirname, 'public');
 console.log('Serving static files from:', publicPath);
 
 app.use(express.static(publicPath, {
+  extensions: ['html'],
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.css')) {
       res.set('Content-Type', 'text/css; charset=utf-8');

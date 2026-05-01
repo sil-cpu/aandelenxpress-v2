@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin-dashboard
+Disallow: /reseller-dashboard
+Disallow: /blog-admin
+Disallow: /dossier-detail
+Disallow: /ticket-detail
+Disallow: /partner-detail
+Disallow: /api/
+Disallow: /_debug/
+
+Sitemap: https://aandelenxpress.nl/sitemap.xml
