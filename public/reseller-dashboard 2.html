@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partnerportaal – AandelenXpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="dashboard-shared.css">
+</head>
+<body>
+<div class="dash-wrap">
+
+    <!-- SIDEBAR -->
+    <aside class="dash-sidebar">
+        <div class="dash-logo">
+            <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+        </div>
+
+        <nav class="dash-nav">
+            <span class="dash-nav-section">Menu</span>
+            <a href="#" class="dash-nav-item active" data-section="dossiers">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Mijn dossiers
+            </a>
+            <a href="#" class="dash-nav-item" data-section="rapportages">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Rapportages
+            </a>
+            <a href="#" class="dash-nav-item" data-section="instellingen">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                Instellingen
+            </a>
+        </nav>
+
+        <div class="dash-sidebar-foot">
+            <div class="dash-user-row">
+                <div class="dash-avatar" id="userInitials">--</div>
+                <div class="dash-user-info">
+                    <div class="dash-user-name" id="userCompany">Laden...</div>
+                    <div class="dash-user-email" id="userEmail"></div>
+                </div>
+            </div>
+            <button class="dash-logout-btn" onclick="logout()">Uitloggen</button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="dash-main">
+        <div class="dash-topbar">
+            <span class="dash-topbar-title" id="topbarTitle">Mijn dossiers</span>
+            <div class="dash-topbar-actions">
+                <button class="btn-primary" onclick="openModal()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nieuwe opdracht
+                </button>
+            </div>
+        </div>
+
+        <div class="dash-content">
+
+            <!-- DOSSIERS -->
+            <div class="dash-section active" id="section-dossiers">
+                <div class="stats-grid mb-28">
+                    <div class="stat-card blue">
+                        <div class="stat-card-label">Totale dossiers</div>
+                        <div class="stat-card-value" id="stat-total">8</div>
+                        <div class="stat-card-sub">Alle opdrachten</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">In behandeling</div>
+                        <div class="stat-card-value" id="stat-progress">3</div>
+                        <div class="stat-card-sub">Actieve dossiers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Voltooid deze maand</div>
+                        <div class="stat-card-value" id="stat-month">6</div>
+                        <div class="stat-card-sub">April 2026</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Gem. doorlooptijd</div>
+                        <div class="stat-card-value">3,2<span style="font-size:1rem;font-weight:400;color:#8A9BB5"> d</span></div>
+                        <div class="stat-card-sub">Werkdagen</div>
+                    </div>
+                </div>
+
+                <div class="section-row mb-20">
+                    <span class="section-heading">Recente dossiers</span>
+                    <a href="#" class="dash-card-action">Alles bekijken</a>
+                </div>
+
+                <div class="dash-card">
+                    <div class="dash-table-head table-cols-dossiers">
+                        <span>Bedrijfsnaam</span>
+                        <span>Aangemeld</span>
+                        <span>Status</span>
+                        <span>Voortgang</span>
+                        <span></span>
+                    </div>
+                    <div id="dossiersList"></div>
+                </div>
+            </div>
+
+            <!-- RAPPORTAGES -->
+            <div class="dash-section" id="section-rapportages">
+                <div class="section-row mb-20">
+                    <span class="section-heading">Rapportages</span>
+                </div>
+
+                <div class="rapport-filter">
+                    <select class="form-select">
+                        <option>2026</option>
+                        <option>2025</option>
+                        <option>2024</option>
+                    </select>
+                    <select class="form-select">
+                        <option>Alle periodes</option>
+                        <option>Q1 (jan–mrt)</option>
+                        <option>Q2 (apr–jun)</option>
+                        <option>Q3 (jul–sep)</option>
+                        <option>Q4 (okt–dec)</option>
+                    </select>
+                    <select class="form-select">
+                        <option>Alle statussen</option>
+                        <option>In behandeling</option>
+                        <option>Voltooid</option>
+                    </select>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="rapport-card">
+                        <div class="rapport-icon">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z"/></svg>
+                        </div>
+                        <div class="rapport-info">
+                            <div style="font-weight:600;font-size:0.95rem;color:#0F1D3A;">Dossieroverzicht</div>
+                            <div style="font-size:0.83rem;color:#718096;margin-top:2px;">Alle dossiers van de geselecteerde periode</div>
+                        </div>
+                        <button class="btn-ghost" style="flex-shrink:0;" onclick="saveToast('Download gestart')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                        </button>
+                    </div>
+                    <div class="rapport-card">
+                        <div class="rapport-icon">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        <div class="rapport-info">
+                            <div style="font-weight:600;font-size:0.95rem;color:#0F1D3A;">Maandrapportage</div>
+                            <div style="font-size:0.83rem;color:#718096;margin-top:2px;">Samenvatting per kalendermaand</div>
+                        </div>
+                        <button class="btn-ghost" style="flex-shrink:0;" onclick="saveToast('Download gestart')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                        </button>
+                    </div>
+                    <div class="rapport-card">
+                        <div class="rapport-icon">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </div>
+                        <div class="rapport-info">
+                            <div style="font-weight:600;font-size:0.95rem;color:#0F1D3A;">Kwartaalrapportage</div>
+                            <div style="font-size:0.83rem;color:#718096;margin-top:2px;">Prestaties per kwartaal met vergelijking</div>
+                        </div>
+                        <button class="btn-ghost" style="flex-shrink:0;" onclick="saveToast('Download gestart')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                        </button>
+                    </div>
+                    <div class="rapport-card">
+                        <div class="rapport-icon">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        </div>
+                        <div class="rapport-info">
+                            <div style="font-weight:600;font-size:0.95rem;color:#0F1D3A;">Factuurexport</div>
+                            <div style="font-size:0.83rem;color:#718096;margin-top:2px;">Factuuroverzicht voor de boekhouding</div>
+                        </div>
+                        <button class="btn-ghost" style="flex-shrink:0;" onclick="saveToast('Download gestart')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INSTELLINGEN -->
+            <div class="dash-section" id="section-instellingen">
+                <div class="mb-28">
+                    <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:6px;">Instellingen</h1>
+                    <p class="text-muted text-sm">Beheer uw kantoorprofiel en contactgegevens.</p>
+                </div>
+
+                <div class="settings-block">
+                    <div class="settings-block-header">
+                        <div class="settings-block-title">Kantoorprofiel</div>
+                        <div class="settings-block-sub">Gegevens van uw accountantskantoor</div>
+                    </div>
+                    <div class="settings-block-body">
+                        <div class="settings-field-grid">
+                            <div class="form-field"><label>Kantoornaam</label><input type="text" value="Bakker Accountants B.V."></div>
+                            <div class="form-field"><label>Website</label><input type="url" value="https://bakker-acc.nl"></div>
+                            <div class="form-field"><label>KvK-nummer</label><input type="text" value="11223344"></div>
+                            <div class="form-field"><label>BTW-nummer</label><input type="text" value="NL123456789B01"></div>
+                            <div class="form-field"><label>Bedrijfsadres</label><input type="text" value="Keizersgracht 123, Amsterdam"></div>
+                            <div class="form-field"><label>Telefoonnummer</label><input type="tel" value="+31 20 555 0100"></div>
+                        </div>
+                    </div>
+                    <div class="settings-footer">
+                        <button class="btn-primary" onclick="saveToast()">Opslaan</button>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <div class="settings-block-header">
+                        <div class="settings-block-title">Contactpersoon</div>
+                        <div class="settings-block-sub">De primaire contactpersoon voor AandelenXpress</div>
+                    </div>
+                    <div class="settings-block-body">
+                        <div class="settings-field-grid">
+                            <div class="form-field"><label>Volledige naam</label><input type="text" value="Jan Bakker"></div>
+                            <div class="form-field"><label>Functie</label><input type="text" value="Directeur"></div>
+                            <div class="form-field"><label>Zakelijk e-mailadres</label><input type="email" value="j.bakker@bakker-acc.nl"></div>
+                            <div class="form-field"><label>Mobiel nummer</label><input type="tel" value="+31 6 12345678"></div>
+                        </div>
+                    </div>
+                    <div class="settings-footer">
+                        <button class="btn-primary" onclick="saveToast()">Opslaan</button>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <div class="settings-block-header">
+                        <div class="settings-block-title">E-mail notificaties</div>
+                        <div class="settings-block-sub">Ontvang automatische updates over uw dossiers</div>
+                    </div>
+                    <div class="settings-block-body">
+                        <div class="toggle-row">
+                            <div><div class="toggle-label">Statusupdate dossier</div><div class="toggle-sub">Melding bij elke statuswijziging van een dossier</div></div>
+                            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                        </div>
+                        <div class="toggle-row">
+                            <div><div class="toggle-label">Dossier voltooid</div><div class="toggle-sub">Melding wanneer een BV-oprichting is afgerond</div></div>
+                            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+                        </div>
+                        <div class="toggle-row">
+                            <div><div class="toggle-label">Wekelijks overzicht</div><div class="toggle-sub">Elke maandag een samenvatting van uw dossiers</div></div>
+                            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
+        <div class="modal-header">
+            <h2>Nieuwe opdracht indienen</h2>
+            <button class="modal-close" onclick="closeModal()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="newDossierForm">
+            <div style="font-weight:600;margin-bottom:16px;font-size:0.95rem;">Klantgegevens</div>
+            <div class="form-field">
+                <label>Bedrijfsnaam *</label>
+                <input type="text" id="clientName" placeholder="B.V. De Innovatie" required>
+            </div>
+            <div class="form-field">
+                <label>E-mailadres klant *</label>
+                <input type="email" id="clientEmail" placeholder="info@bedrijf.nl" required>
+            </div>
+            <div class="form-field">
+                <label>Telefoonnummer klant</label>
+                <input type="tel" id="clientPhone" placeholder="+31 6 12345678">
+            </div>
+            
+            <div style="margin-top:24px;font-weight:600;margin-bottom:16px;font-size:0.95rem;">Oprichtingsgegevens</div>
+            
+            <div class="form-field">
+                <label>Wat wil je oprichten? *</label>
+                <select id="oprichtingType" required>
+                    <option value="">-- Kies een optie --</option>
+                    <option value="bv">Gewone BV</option>
+                    <option value="bv-holding">BV + Holding structuur</option>
+                    <option value="bv-spoed">BV met spoed (24-48 uur)</option>
+                    <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
+                    <option value="advies">Wil graag advies (geen oprichting)</option>
+                </select>
+            </div>
+            
+            <div class="form-field">
+                <label>Gewenste naam BV *</label>
+                <input type="text" id="gewenstNaam" placeholder="Voorbeeld B.V." required>
+            </div>
+            
+            <div class="form-field">
+                <label>Doel van de BV op hoofdlijnen *</label>
+                <textarea id="doel" placeholder="Wat is het doel van de BV?" style="min-height:80px;resize:vertical;" required></textarea>
+            </div>
+            
+            <div class="form-field">
+                <label>Aantal aandeelhouders *</label>
+                <input type="number" id="aandeelhouders" placeholder="1" min="1" required>
+            </div>
+            
+            <div class="form-field">
+                <label>Geplaatst kapitaal (in €) *</label>
+                <input type="number" id="kapitaal" placeholder="0.01" min="0.01" step="0.01" required>
+            </div>
+            
+            <div class="form-field">
+                <label>Startsaldo bank rekening (optioneel)</label>
+                <input type="number" id="startSaldo" placeholder="0.00" min="0" step="0.01">
+            </div>
+            
+            <div class="form-field">
+                <label>Opmerkingen/bijzonderheden (optioneel)</label>
+                <textarea id="opmerkingen" placeholder="Eventuele speciale wensen..." style="min-height:80px;resize:vertical;"></textarea>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost" onclick="closeModal()">Annuleren</button>
+                <button type="submit" class="btn-primary">Opdracht indienen</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let dossiers = [
+    { name: 'TechStart B.V.',       date: '2026-04-20', statusKey: 'notary',   statusText: 'Notariële akte', pct: 75,  dossierNr:'AX-2026-0042', clientEmail:'info@techstart.nl',      clientPhone:'+31 20 123 4567', kvk:'' },
+    { name: 'Consultancy Plus',     date: '2026-04-18', statusKey: 'ident',    statusText: 'iDIN verwerking',     pct: 50,  dossierNr:'AX-2026-0041', clientEmail:'info@consultancyplus.nl', clientPhone:'+31 30 987 6543', kvk:'' },
+    { name: 'Groen & Co',           date: '2026-04-15', statusKey: 'kvk',      statusText: 'KvK inschrijving',    pct: 90,  dossierNr:'AX-2026-0040', clientEmail:'j.groen@groenco.nl',     clientPhone:'+31 10 246 8135', kvk:'87654321' },
+    { name: 'Marketing Solutions',  date: '2026-04-12', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0039', clientEmail:'admin@marketsol.nl',     clientPhone:'+31 70 135 7924', kvk:'76543218' },
+    { name: 'Finance Advisors',     date: '2026-04-10', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0038', clientEmail:'post@financeadv.nl',     clientPhone:'+31 40 321 0987', kvk:'65432187' },
+    { name: 'Design Studio B.V.',   date: '2026-04-05', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0037', clientEmail:'studio@designbv.nl',    clientPhone:'+31 20 456 7890', kvk:'54321876' },
+    { name: 'HR Services',          date: '2026-03-28', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0036', clientEmail:'hr@hrservices.nl',       clientPhone:'+31 23 654 3210', kvk:'43218765' },
+    { name: 'Logistiek B.V.',       date: '2026-03-25', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0035', clientEmail:'info@logistiek.nl',      clientPhone:'+31 50 111 2233', kvk:'32187654' },
+];
+
+function renderDossiers() {
+    document.getElementById('dossiersList').innerHTML = dossiers.map(d => `
+        <div class="dash-table-row table-cols-dossiers">
+            <div style="font-weight:500">${d.name}</div>
+            <div class="text-muted text-sm">${new Date(d.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
+            <div><span class="badge badge-${d.statusKey}">${d.statusText}</span></div>
+            <div class="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill" style="width:${d.pct}%"></div></div>
+                <span class="progress-pct">${d.pct}%</span>
+            </div>
+            <div><a href="dossier-detail.html?nr=${d.dossierNr}" class="table-link">Details →</a></div>
+        </div>
+    `).join('');
+}
+
+async function loadDossiers() {
+    try {
+        const r = await fetch('/api/my-requests');
+        if (!r.ok) return;
+        const requests = await r.json();
+        
+        // Convert pending requests to display format
+        const pendingDossiers = requests
+            .filter(req => req.status === 'pending')
+            .map(req => ({
+                name: req.clientName,
+                date: req.createdAt,
+                statusKey: 'pending',
+                statusText: 'Aanvraag ingediend',
+                pct: 5,
+                dossierNr: req.id,
+                clientEmail: req.clientEmail,
+                clientPhone: req.clientPhone,
+                kvk: ''
+            }));
+        
+        // Convert approved requests to normal dossier format
+        const approvedDossiers = requests
+            .filter(req => req.status === 'approved')
+            .map(req => ({
+                name: req.clientName,
+                date: req.approvedAt,
+                statusKey: 'intake',
+                statusText: 'Intake',
+                pct: 15,
+                dossierNr: req.id,
+                clientEmail: req.clientEmail,
+                clientPhone: req.clientPhone,
+                kvk: ''
+            }));
+        
+        // Merge with hardcoded dossiers
+        dossiers = [...pendingDossiers, ...approvedDossiers, ...dossiers.filter(d => !d.dossierNr.startsWith('RR-') && !d.dossierNr.startsWith('5'))];
+        renderDossiers();
+    } catch(e) {
+        console.error('Failed to load dossiers:', e);
+    }
+}
+
+document.querySelectorAll('.dash-nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+        e.preventDefault();
+        const s = item.dataset.section;
+        document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.dash-section').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('section-' + s).classList.add('active');
+        const titles = { dossiers:'Mijn dossiers', rapportages:'Rapportages', instellingen:'Instellingen' };
+        document.getElementById('topbarTitle').textContent = titles[s] || '';
+    });
+});
+
+async function loadUser() {
+    try {
+        const r = await fetch('/api/user');
+        if (!r.ok) { window.location.href = '/login.html'; return; }
+        const u = await r.json();
+        document.getElementById('userCompany').textContent = u.company;
+        document.getElementById('userEmail').textContent = u.email;
+        document.getElementById('userInitials').textContent = u.name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+        
+        // Load dossiers after user is loaded
+        await loadDossiers();
+    } catch(e) { window.location.href = '/login.html'; }
+}
+
+function openModal() { document.getElementById('modal').classList.add('active'); }
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+document.getElementById('modal').addEventListener('click', e => { if(e.target.id==='modal') closeModal(); });
+
+document.getElementById('newDossierForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const clientName = document.getElementById('clientName').value;
+    const clientEmail = document.getElementById('clientEmail').value;
+    const clientPhone = document.getElementById('clientPhone').value;
+    const oprichtingType = document.getElementById('oprichtingType').value;
+    const gewenstNaam = document.getElementById('gewenstNaam').value;
+    const doel = document.getElementById('doel').value;
+    const aandeelhouders = parseInt(document.getElementById('aandeelhouders').value);
+    const kapitaal = parseFloat(document.getElementById('kapitaal').value);
+    const startSaldo = parseFloat(document.getElementById('startSaldo').value) || 0;
+    const opmerkingen = document.getElementById('opmerkingen').value;
+    
+    try {
+        const r = await fetch('/api/reseller-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                clientName, clientEmail, clientPhone,
+                oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen
+            })
+        });
+        
+        if (!r.ok) {
+            const err = await r.json();
+            alert('Fout: ' + (err.error || 'Opdracht kon niet worden ingediend'));
+            return;
+        }
+        
+        closeModal();
+        document.getElementById('newDossierForm').reset();
+        
+        // Reload dossiers
+        await loadDossiers();
+        
+        // Show success toast
+        const t = document.createElement('div');
+        t.textContent = '✓ Opdracht succesvol ingediend';
+        Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    } catch(e) {
+        alert('Fout: ' + e.message);
+    }
+});
+
+function logout() {
+    if(confirm('Weet u zeker dat u wilt uitloggen?')) window.location.href = '/api/logout';
+}
+
+// ── Toast helper ──────────────────────────────────────────
+function saveToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = '✓ ' + (msg || 'Instellingen opgeslagen');
+    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:'9999',boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+loadUser();
+
+</script>
+</body>
+</html>

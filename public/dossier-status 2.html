@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dossier Status – AandelenXpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #F5F7FA 0%, #E8EDF5 100%);
+            color: #0F1D3A;
+            min-height: 100vh;
+        }
+
+        .status-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header with partner branding */
+        .status-header {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #E1E7F0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            gap: 24px;
+        }
+
+        .partner-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .partner-name {
+            font-size: 0.9rem;
+            color: #8A9BB5;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .dossier-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #0F1D3A;
+            margin-bottom: 8px;
+        }
+
+        .dossier-number {
+            font-size: 0.85rem;
+            color: #8A9BB5;
+            font-family: monospace;
+        }
+
+        /* Status timeline */
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #E1E7F0;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #8A9BB5;
+            margin-bottom: 12px;
+        }
+
+        .status-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .timeline-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            right: -50%;
+            height: 2px;
+            background: #E8EDF5;
+        }
+
+        .timeline-step.active:not(:last-child)::after {
+            background: #00B894;
+        }
+
+        .timeline-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #E8EDF5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-weight: 600;
+            color: #8A9BB5;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-step.active .timeline-circle {
+            background: #00B894;
+            border-color: #00B894;
+            color: white;
+        }
+
+        .timeline-step.completed .timeline-circle {
+            background: #00B894;
+            border-color: #00B894;
+            color: white;
+        }
+
+        .timeline-step.completed .timeline-circle::before {
+            content: '✓';
+            font-weight: 700;
+        }
+
+        .timeline-label {
+            font-size: 0.8rem;
+            color: #8A9BB5;
+            font-weight: 500;
+        }
+
+        .timeline-step.active .timeline-label {
+            color: #00B894;
+            font-weight: 600;
+        }
+
+        /* Current status */
+        .current-status {
+            background: linear-gradient(135deg, #F0F9F7 0%, #E8F5F2 100%);
+            border: 1px solid #B8E6DE;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #00B894;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .status-description {
+            font-size: 1rem;
+            color: #0F1D3A;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .status-detail {
+            font-size: 0.9rem;
+            color: #8A9BB5;
+        }
+
+        /* To-do list */
+        .todo-section {
+            margin-top: 32px;
+        }
+
+        .todo-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .todo-icon {
+            width: 28px;
+            height: 28px;
+            background: #1A3B70;
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .todo-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0F1D3A;
+        }
+
+        .todo-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: #FAFBFF;
+            border: 1px solid #E8EDF5;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .todo-item:hover {
+            background: #F5F7FA;
+            border-color: #D8DEE8;
+        }
+
+        .todo-item.completed {
+            background: #F0F9F7;
+            border-color: #B8E6DE;
+        }
+
+        .todo-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #8A9BB5;
+            border-radius: 6px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        .todo-item.completed .todo-checkbox {
+            background: #00B894;
+            border-color: #00B894;
+            color: white;
+            font-weight: 700;
+        }
+
+        .todo-content {
+            flex: 1;
+        }
+
+        .todo-item-title {
+            font-weight: 500;
+            color: #0F1D3A;
+            margin-bottom: 4px;
+        }
+
+        .todo-item-desc {
+            font-size: 0.85rem;
+            color: #8A9BB5;
+        }
+
+        .todo-item.completed .todo-item-title {
+            text-decoration: line-through;
+            color: #8A9BB5;
+        }
+
+        /* Footer */
+        .status-footer {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #E1E7F0;
+            margin-top: 32px;
+        }
+
+        .footer-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #8A9BB5;
+            margin-bottom: 12px;
+        }
+
+        .footer-contact {
+            font-size: 0.95rem;
+            color: #0F1D3A;
+            margin-bottom: 16px;
+        }
+
+        .footer-contact strong {
+            font-weight: 600;
+        }
+
+        .footer-contact a {
+            color: #1A3B70;
+            text-decoration: none;
+        }
+
+        .footer-contact a:hover {
+            text-decoration: underline;
+        }
+
+        .aaxp-logo {
+            color: #1A3B70;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #E8EDF5;
+        }
+
+        /* Support tickets */
+        .tickets-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .ticket-item {
+            background: #FAFBFF;
+            border: 1px solid #E8EDF5;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .ticket-item:hover {
+            background: #F5F7FA;
+            border-color: #D8DEE8;
+        }
+
+        .ticket-item.unread {
+            background: #FFFAF0;
+            border-color: #FFE8C8;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .ticket-id {
+            font-weight: 600;
+            color: #1A3B70;
+            font-family: monospace;
+        }
+
+        .ticket-status {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: #E8EDF5;
+            color: #1A3B70;
+        }
+
+        .ticket-status.unread {
+            background: #FFE8C8;
+            color: #CC6600;
+        }
+
+        .ticket-subject {
+            font-weight: 500;
+            color: #0F1D3A;
+            margin-bottom: 6px;
+        }
+
+        .ticket-message {
+            font-size: 0.9rem;
+            color: #8A9BB5;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .ticket-meta {
+            font-size: 0.8rem;
+            color: #A0AEC0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #0F1D3A;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #E8EDF5;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: #0F1D3A;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #1A3B70;
+            box-shadow: 0 0 0 3px rgba(26, 59, 112, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .submit-btn {
+            background: #1A3B70;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .submit-btn:hover {
+            background: #142A50;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #A0AEC0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-success {
+            background: #F0F9F7;
+            border: 1px solid #B8E6DE;
+            color: #0F5A4D;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            .status-container {
+                padding: 16px;
+            }
+
+            .status-header {
+                padding: 20px;
+            }
+
+            .header-top {
+                flex-direction: column;
+            }
+
+            .dossier-title {
+                font-size: 1.4rem;
+            }
+
+            .status-timeline {
+                flex-wrap: wrap;
+            }
+
+            .timeline-step {
+                flex-basis: 50%;
+                margin-bottom: 20px;
+            }
+
+            .timeline-step:not(:last-child)::after {
+                display: none;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Ticket Modal */
+        .ticket-modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 998;
+        }
+
+        .ticket-modal-backdrop.active {
+            display: block;
+        }
+
+        .ticket-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .ticket-modal.active {
+            display: block;
+        }
+
+        .ticket-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid #E8EDF5;
+        }
+
+        .ticket-modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: #0F1D3A;
+        }
+
+        .ticket-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #8A9BB5;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .ticket-modal-close:hover {
+            background: #F5F7FA;
+            color: #0F1D3A;
+        }
+
+        .ticket-modal-content {
+            padding: 24px;
+        }
+
+        .ticket-modal-meta {
+            background: #FAFBFF;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: gap:12px 24px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .ticket-modal-meta div {
+            color: #0F1D3A;
+            margin-bottom: 8px;
+        }
+
+        .ticket-modal-message {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #F5F7FA;
+            border-left: 4px solid #1A3B70;
+            border-radius: 4px;
+        }
+
+        .ticket-modal-message strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #0F1D3A;
+        }
+
+        #ticketModalMessage {
+            color: #0F1D3A;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .ticket-modal-replies {
+            padding-top: 20px;
+            border-top: 1px solid #E8EDF5;
+        }
+
+        .ticket-modal-replies strong {
+            display: block;
+            margin-bottom: 16px;
+            color: #0F1D3A;
+        }
+
+        .ticket-reply {
+            background: #FAFBFF;
+            border: 1px solid #E8EDF5;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .ticket-reply-header {
+            font-weight: 600;
+            color: #1A3B70;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-reply-time {
+            font-size: 0.8rem;
+            color: #8A9BB5;
+            font-weight: 400;
+        }
+
+        .ticket-reply-message {
+            color: #0F1D3A;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<div class="status-container">
+    <!-- Header with Partner Logo -->
+    <div class="status-header">
+        <div class="header-top">
+            <div class="partner-logo" id="partnerLogo"></div>
+            <div class="header-info">
+                <div class="partner-name" id="partnerName"></div>
+                <div class="dossier-title" id="dossierTitle"></div>
+                <div class="dossier-number" id="dossierNumber"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="status-card">
+        <div class="status-label">Status Voortgang</div>
+        <div class="status-timeline" id="statusTimeline"></div>
+        
+        <div class="current-status">
+            <span class="status-badge" id="statusBadge"></span>
+            <div class="status-description" id="statusDescription"></div>
+            <div class="status-detail" id="statusDetail"></div>
+        </div>
+    </div>
+
+    <!-- To-Do List -->
+    <div class="status-card">
+        <div class="todo-section">
+            <div class="todo-header">
+                <div class="todo-icon">✓</div>
+                <div class="todo-title">Volgende Stappen</div>
+            </div>
+            <ul class="todo-list" id="todoList"></ul>
+        </div>
+    </div>
+
+    <!-- Support Tickets -->
+    <div class="status-card">
+        <div class="todo-section">
+            <div class="todo-header">
+                <div class="todo-icon">💬</div>
+                <div class="todo-title">Support Tickets</div>
+            </div>
+
+            <!-- Ticket submission form -->
+            <div style="background: #FAFBFF; padding: 20px; border-radius: 8px; border: 1px solid #E8EDF5; margin-top: 16px;">
+                <div style="font-weight: 600; color: #0F1D3A; margin-bottom: 12px;">Nieuw ticket indienen</div>
+                <div id="formSuccess" class="form-success" style="display: none;"></div>
+                <form id="ticketForm">
+                    <div class="form-group">
+                        <label class="form-label">Onderwerp</label>
+                        <input type="text" name="subject" class="form-input" placeholder="Bijv. Vraag over documenten" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bericht</label>
+                        <textarea name="message" class="form-textarea" placeholder="Beschrijf uw vraag of probleem..." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Uw naam</label>
+                            <input type="text" name="senderName" class="form-input" placeholder="Uw volledige naam" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Uw e-mailadres</label>
+                            <input type="email" name="senderEmail" class="form-input" placeholder="uw@email.com" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">Ticket indienen</button>
+                </form>
+            </div>
+
+            <!-- Tickets list -->
+            <div style="margin-top: 20px;">
+                <div style="font-weight: 600; color: #0F1D3A; margin-bottom: 12px;">Uw tickets</div>
+                <ul class="tickets-list" id="ticketsList">
+                    <li style="color: #8A9BB5; font-size: 0.9rem; padding: 16px; text-align: center;">Geen tickets ingediend</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="status-footer">
+        <div class="footer-label">Vragen?</div>
+        <div class="footer-contact">
+            Neem contact op met <strong id="partnerContactName"></strong><br>
+            📧 <a href="mailto:" id="partnerContactEmail"></a><br>
+            📞 <a href="tel:" id="partnerContactPhone"></a>
+        </div>
+        <div class="aaxp-logo">Powered by AandelenXpress</div>
+    </div>
+
+    <!-- Ticket Detail Modal -->
+    <div class="ticket-modal-backdrop" id="ticketModalBackdrop" onclick="closeTicketModal()"></div>
+    <div class="ticket-modal" id="ticketModal">
+        <div class="ticket-modal-header">
+            <h3 id="ticketModalTitle"></h3>
+            <button class="ticket-modal-close" onclick="closeTicketModal()">✕</button>
+        </div>
+        <div class="ticket-modal-content">
+            <div class="ticket-modal-meta">
+                <div><strong>Ticket ID:</strong> <span id="ticketModalId"></span></div>
+                <div><strong>Status:</strong> <span id="ticketModalStatus"></span></div>
+                <div><strong>Ingediend:</strong> <span id="ticketModalDate"></span></div>
+                <div><strong>Uw naam:</strong> <span id="ticketModalSender"></span></div>
+                <div><strong>E-mailadres:</strong> <span id="ticketModalSenderEmail"></span></div>
+            </div>
+            <div class="ticket-modal-message">
+                <strong>Uw bericht:</strong>
+                <div id="ticketModalMessage"></div>
+            </div>
+            <div class="ticket-modal-replies" id="ticketModalRepliesContainer" style="display:none;">
+                <strong>Antwoorden:</strong>
+                <div id="ticketModalReplies"></div>
+            </div>
+            <div id="ticketNoReplies" style="text-align: center; color: #8A9BB5; padding: 20px; font-size: 0.9rem;">
+                Er zijn nog geen antwoorden. We nemen binnenkort contact met u op.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Status configuration
+const statusSteps = [
+    { key: 'intake', label: 'Intake', description: 'Initële intake verwerking' },
+    { key: 'ident', label: 'iDIN Verificatie', description: 'Identiteitsverificatie' },
+    { key: 'kvk', label: 'KvK Inschrijving', description: 'Registratie bij KVK' },
+    { key: 'notary', label: 'Notariële Akte', description: 'Notariële verwerking' },
+    { key: 'complete', label: 'Voltooid', description: 'Dossier afgerond' }
+];
+
+const statusDescriptions = {
+    intake: 'Wij verwerkten uw aanvraag en stuurden u de nodige documenten op.',
+    ident: 'Uw identiteit wordt geverifieerd via iDIN.',
+    kvk: 'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel.',
+    notary: 'De notariële akte wordt opgesteld door onze partner.',
+    complete: 'Uw dossier is volledig afgerond. Gefeliciteerd!'
+};
+
+// Todo items per status
+const todoItems = {
+    intake: [
+        { title: 'Documenten ontvangen', desc: 'U ontvangt documentatie via email' },
+        { title: 'Formulieren invullen', desc: 'Vul alle vereiste formulieren in' },
+        { title: 'Documenten retourneren', desc: 'Stuur ingevulde formulieren terug' }
+    ],
+    ident: [
+        { title: 'iDIN login', desc: 'Log in met uw bank-app via iDIN' },
+        { title: 'Verificatie voltooien', desc: 'Voltooi alle verificatiestappen' },
+        { title: 'Wachten op bevestiging', desc: 'Wij verwerken uw gegevens' }
+    ],
+    kvk: [
+        { title: 'KvK inschrijving starten', desc: 'Wij dienen uw aanvraag in' },
+        { title: 'Goedkeuring afwachten', desc: 'KvK keurt uw registratie goed' },
+        { title: 'Bedrijfsnummer ontvangen', desc: 'U ontvangt uw bedrijfsnummer' }
+    ],
+    notary: [
+        { title: 'Akte ondertekenen', desc: 'Onderteken de notariële akte' },
+        { title: 'Inschrijving Handelsregister', desc: 'Akte wordt geregistreerd' },
+        { title: 'Finalisering', desc: 'Finalisering van alle procedures' }
+    ],
+    complete: [
+        { title: 'Alle stappen voltooid', desc: 'Uw bedrijf is volledig opgericht!' },
+        { title: 'Documenten beschikbaar', desc: 'Alle documenten zijn beschikbaar' },
+        { title: 'Support beschikbaar', desc: 'Ons team staat voor u klaar' }
+    ]
+};
+
+// Mock dossier data - in production this comes from backend
+const allDossiersData = [
+    { name:"TechStart B.V.", type:"B.V.", partner:"Bakker Accountants", statusKey:"notary", statusText:"Notariële akte", date:"2026-04-20", dossierNr:"AX-2026-0042", contact:"Jan de Vries", clientEmail:"info@techstart.nl", clientPhone:"+31 20 123 4567", kvk:"", assignedTo:"Jan Bakker" },
+    { name:"Consultancy Plus", type:"B.V.", partner:"Van der Berg & Co", statusKey:"ident", statusText:"iDIN verwerking", date:"2026-04-18", dossierNr:"AX-2026-0041", contact:"Marie Hendrikx", clientEmail:"info@consultancyplus.nl", clientPhone:"+31 30 987 6543", kvk:"", assignedTo:"Kees van Berg" },
+    { name:"Groen & Co", type:"Holdings B.V.", partner:"Bakker Accountants", statusKey:"kvk", statusText:"KvK inschrijving", date:"2026-04-15", dossierNr:"AX-2026-0040", contact:"Jan Groen", clientEmail:"j.groen@groenco.nl", clientPhone:"+31 10 246 8135", kvk:"87654321", assignedTo:"Jan Bakker" },
+    { name:"Marketing Solutions", type:"B.V.", partner:"Dijkstra Partners", statusKey:"complete", statusText:"Voltooid", date:"2026-04-12", dossierNr:"AX-2026-0039", contact:"Els de Boeck", clientEmail:"admin@marketsol.nl", clientPhone:"+31 70 135 7924", kvk:"76543218", assignedTo:"Els Dijkstra" },
+    { name:"Finance Advisors", type:"B.V.", partner:"Van der Berg & Co", statusKey:"complete", statusText:"Voltooid", date:"2026-04-10", dossierNr:"AX-2026-0038", contact:"Kees Vermeulen", clientEmail:"post@financeadv.nl", clientPhone:"+31 40 321 0987", kvk:"65432187", assignedTo:"Kees van Berg" },
+];
+
+const partners = [
+    { name:"Bakker Accountants", city:"Amsterdam", dossiers:89, color:"#1A3B70", contact:"Jan Bakker", email:"j.bakker@bakker-acc.nl", phone:"+31 20 555 0100", since:"2024-01", kvk:"11223344" },
+    { name:"Van der Berg & Co", city:"Rotterdam", dossiers:72, color:"#2A5BA0", contact:"Kees van Berg", email:"k.vanberg@vdberg.nl", phone:"+31 10 555 0200", since:"2024-03", kvk:"22334455" },
+    { name:"Dijkstra Partners", city:"Utrecht", dossiers:65, color:"#17518A", contact:"Els Dijkstra", email:"e.dijkstra@dijkstra.nl", phone:"+31 30 555 0300", since:"2024-02", kvk:"33445566" },
+    { name:"Smit & Assoc.", city:"Den Haag", dossiers:48, color:"#1D4477", contact:"Wim Smit", email:"w.smit@smitassoc.nl", phone:"+31 70 555 0400", since:"2024-06", kvk:"44556677" },
+];
+
+function getPartnersInitials(partnerName) {
+    return partnerName.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+}
+
+function getPartnerColor(partnerName) {
+    const partner = partners.find(p => p.name === partnerName);
+    return partner ? partner.color : "#1A3B70";
+}
+
+function renderStatusTimeline(currentStatus) {
+    const timelineDiv = document.getElementById('statusTimeline');
+    const currentIndex = statusSteps.findIndex(s => s.key === currentStatus);
+    
+    timelineDiv.innerHTML = statusSteps.map((step, index) => {
+        let stepClass = '';
+        if (index < currentIndex) stepClass = 'completed';
+        else if (index === currentIndex) stepClass = 'active';
+        
+        return `
+            <div class="timeline-step ${stepClass}">
+                <div class="timeline-circle">${index + 1}</div>
+                <div class="timeline-label">${step.label}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderTodoList(currentStatus) {
+    const todoList = document.getElementById('todoList');
+    const todos = todoItems[currentStatus] || [];
+    
+    todoList.innerHTML = todos.map((todo, index) => {
+        const isCompleted = currentStatus === 'complete';
+        const completedClass = isCompleted ? 'completed' : '';
+        
+        return `
+            <li class="todo-item ${completedClass}">
+                <div class="todo-checkbox">${isCompleted ? '✓' : ''}</div>
+                <div class="todo-content">
+                    <div class="todo-item-title">${todo.title}</div>
+                    <div class="todo-item-desc">${todo.desc}</div>
+                </div>
+            </li>
+        `;
+    }).join('');
+}
+
+function loadTickets(dossierNr) {
+    fetch(`/api/tickets/${dossierNr}`)
+        .then(res => res.json())
+        .then(tickets => renderTickets(tickets))
+        .catch(err => console.error('Error loading tickets:', err));
+}
+
+function renderTickets(tickets) {
+    const ticketsList = document.getElementById('ticketsList');
+    
+    if (tickets.length === 0) {
+        ticketsList.innerHTML = '<li style="color: #8A9BB5; font-size: 0.9rem; padding: 16px; text-align: center;">Geen tickets ingediend</li>';
+        return;
+    }
+    
+    ticketsList.innerHTML = tickets.map(ticket => {
+        const isUnread = !ticket.read;
+        const date = new Date(ticket.createdAt).toLocaleDateString('nl-NL', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        return `
+            <li class="ticket-item ${isUnread ? 'unread' : ''}" data-ticket-id="${ticket.id}" onclick="openTicketDetail(event, '${ticket.id}')">
+                <div class="ticket-header">
+                    <div class="ticket-id">${ticket.id}</div>
+                    <span class="ticket-status ${isUnread ? 'unread' : ''}">${isUnread ? 'Nieuw' : 'Gelezen'}</span>
+                </div>
+                <div class="ticket-subject">${ticket.subject}</div>
+                <div class="ticket-message">${ticket.message}</div>
+                <div class="ticket-meta">
+                    Ingediend door ${ticket.senderName} • ${date}
+                </div>
+            </li>
+        `;
+    }).join('');
+    
+    // Mark unread tickets as read when user sees them
+    tickets.forEach(ticket => {
+        if (!ticket.read) {
+            markTicketAsRead(ticket.id);
+        }
+    });
+}
+
+function markTicketAsRead(ticketId) {
+    fetch(`/api/tickets/${ticketId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isRead: true })
+    }).catch(err => console.error('Error marking ticket as read:', err));
+}
+
+function openTicketDetail(event, ticketId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    fetch(`/api/tickets/${ticketId}`)
+        .then(res => res.json())
+        .then(ticket => displayTicketModal(ticket))
+        .catch(err => {
+            console.error('Error loading ticket:', err);
+            alert('Er is een fout opgetreden bij het laden van het ticket.');
+        });
+}
+
+function displayTicketModal(ticket) {
+    const modal = document.getElementById('ticketModal');
+    const backdrop = document.getElementById('ticketModalBackdrop');
+    
+    // Set ticket details
+    document.getElementById('ticketModalTitle').textContent = ticket.subject;
+    document.getElementById('ticketModalId').textContent = ticket.id;
+    document.getElementById('ticketModalStatus').textContent = ticket.status || (ticket.read ? 'Gelezen' : 'Nieuw');
+    
+    const dateFmt = new Date(ticket.createdAt).toLocaleDateString('nl-NL', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    document.getElementById('ticketModalDate').textContent = dateFmt;
+    document.getElementById('ticketModalSender').textContent = ticket.senderName;
+    document.getElementById('ticketModalSenderEmail').textContent = ticket.senderEmail;
+    document.getElementById('ticketModalMessage').textContent = ticket.message;
+    
+    // Display replies
+    const repliesContainer = document.getElementById('ticketModalRepliesContainer');
+    const repliesDiv = document.getElementById('ticketModalReplies');
+    const noReplies = document.getElementById('ticketNoReplies');
+    
+    if (ticket.replies && ticket.replies.length > 0) {
+        repliesContainer.style.display = 'block';
+        noReplies.style.display = 'none';
+        
+        repliesDiv.innerHTML = ticket.replies.map(reply => {
+            const replyDate = new Date(reply.createdAt).toLocaleDateString('nl-NL', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            return `
+                <div class="ticket-reply">
+                    <div class="ticket-reply-header">
+                        ${reply.author} (${reply.email})
+                        <span class="ticket-reply-time">${replyDate}</span>
+                    </div>
+                    <div class="ticket-reply-message">${reply.message}</div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        repliesContainer.style.display = 'none';
+        noReplies.style.display = 'block';
+    }
+    
+    // Show modal
+    modal.classList.add('active');
+    backdrop.classList.add('active');
+}
+
+function closeTicketModal() {
+    const modal = document.getElementById('ticketModal');
+    const backdrop = document.getElementById('ticketModalBackdrop');
+    
+    modal.classList.remove('active');
+    backdrop.classList.remove('active');
+}
+
+function submitTicket(formData) {
+    const params = new URLSearchParams(window.location.search);
+    const dossierNr = params.get('nr');
+    
+    return fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            dossierNr,
+            subject: formData.subject,
+            message: formData.message,
+            senderName: formData.senderName,
+            senderEmail: formData.senderEmail
+        })
+    }).then(res => res.json());
+}
+
+function setupTicketForm() {
+    const form = document.getElementById('ticketForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+            subject: form.subject.value,
+            message: form.message.value,
+            senderName: form.senderName.value,
+            senderEmail: form.senderEmail.value
+        };
+        
+        const submitBtn = form.querySelector('.submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verzenden...';
+        
+        try {
+            const result = await submitTicket(formData);
+            
+            // Show success message
+            const successDiv = document.getElementById('formSuccess');
+            successDiv.textContent = '✓ Ticket succesvol ingediend! We nemen zo spoedig mogelijk contact met u op.';
+            successDiv.style.display = 'block';
+            
+            // Reset form
+            form.reset();
+            
+            // Reload tickets
+            const params = new URLSearchParams(window.location.search);
+            loadTickets(params.get('nr'));
+            
+            // Hide success message after 5 seconds
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        } catch (error) {
+            alert('Er is een fout opgetreden bij het indienen van het ticket. Probeer het alstublieft opnieuw.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Ticket indienen';
+        }
+    });
+}
+
+function loadDossierStatusWithTickets() {
+    const params = new URLSearchParams(window.location.search);
+    const dossierNr = params.get('nr');
+    
+    if (!dossierNr) {
+        document.body.innerHTML = '<div style="padding: 48px; text-align: center; font-size: 1.1rem; color: #8A9BB5;">Dossier niet gevonden. Controleer de URL.</div>';
+        return;
+    }
+    
+    const dossier = allDossiersData.find(d => d.dossierNr === dossierNr);
+    const partner = partners.find(p => p.name === dossier?.partner);
+    
+    if (!dossier || !partner) {
+        document.body.innerHTML = '<div style="padding: 48px; text-align: center; font-size: 1.1rem; color: #8A9BB5;">Dossier niet gevonden.</div>';
+        return;
+    }
+    
+    // Set page title
+    document.title = `${dossier.name} – Dossier Status`;
+    
+    // Set partner logo
+    const logoDiv = document.getElementById('partnerLogo');
+    logoDiv.textContent = getPartnersInitials(partner.name);
+    logoDiv.style.background = getPartnerColor(partner.name);
+    
+    // Set dossier info
+    document.getElementById('partnerName').textContent = partner.name;
+    document.getElementById('dossierTitle').textContent = dossier.name;
+    document.getElementById('dossierNumber').textContent = `Dossier nummmer: ${dossierNr}`;
+    
+    // Set status timeline and current status
+    renderStatusTimeline(dossier.statusKey);
+    
+    document.getElementById('statusBadge').textContent = dossier.statusText;
+    document.getElementById('statusDescription').textContent = statusDescriptions[dossier.statusKey];
+    document.getElementById('statusDetail').textContent = `Laats update: ${new Date(dossier.date).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'})}`;
+    
+    // Set todo list
+    renderTodoList(dossier.statusKey);
+    
+    // Set footer contact
+    document.getElementById('partnerContactName').textContent = partner.contact;
+    const emailLink = document.getElementById('partnerContactEmail');
+    emailLink.textContent = partner.email;
+    emailLink.href = `mailto:${partner.email}`;
+    
+    const phoneLink = document.getElementById('partnerContactPhone');
+    phoneLink.textContent = partner.phone;
+    phoneLink.href = `tel:${partner.phone}`;
+    
+    // Setup ticket form and load tickets
+    setupTicketForm();
+    loadTickets(dossierNr);
+}
+
+// Load on page load
+window.addEventListener('DOMContentLoaded', loadDossierStatusWithTickets);
+</script>
+
+</body>
+</html>

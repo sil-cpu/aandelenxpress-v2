@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog artikel – AandelenXpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .artikel-hero { background: linear-gradient(135deg, #0F1D3A 0%, #1A3B70 100%); color: white; padding: 60px 20px; text-align: center; }
+        .artikel-hero h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; max-width: 900px; margin-left: auto; margin-right: auto; }
+        .artikel-meta { display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 0.95rem; opacity: 0.9; flex-wrap: wrap; }
+        .artikel-meta-item { display: flex; align-items: center; gap: 6px; }
+        .artikel-container { max-width: 800px; margin: 60px auto; padding: 20px; }
+        .artikel-tags { display: flex; gap: 8px; margin-bottom: 30px; flex-wrap: wrap; }
+        .artikel-tag { display: inline-block; padding: 6px 12px; background: #f0f4f8; color: #0F1D3A; border-radius: 4px; font-size: 0.85rem; font-weight: 500; }
+        .artikel-content { font-size: 1.05rem; line-height: 1.7; color: #2d3748; }
+        .artikel-content h2 { font-size: 1.5rem; font-weight: 600; margin: 30px 0 15px 0; color: #0F1D3A; }
+        .artikel-content h3 { font-size: 1.2rem; font-weight: 600; margin: 24px 0 12px 0; color: #0F1D3A; }
+        .artikel-content p { margin-bottom: 16px; }
+        .artikel-content ul, .artikel-content ol { margin-bottom: 16px; padding-left: 24px; }
+        .artikel-content li { margin-bottom: 8px; }
+        .artikel-content blockquote { border-left: 4px solid #1A3B70; padding-left: 20px; margin: 24px 0; font-style: italic; color: #555; }
+        .artikel-content code { background: #f0f4f8; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .artikel-footer { padding-top: 24px; margin-top: 40px; border-top: 1px solid #e0e7f1; }
+        .artikel-author { display: flex; align-items: center; gap: 12px; }
+        .artikel-avatar { width: 48px; height: 48px; background: #1A3B70; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; }
+        .artikel-author-info strong { display: block; color: #0F1D3A; margin-bottom: 2px; }
+        .artikel-author-info small { color: #8a9bb5; }
+        .artikel-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+        .artikel-nav a { display: block; padding: 20px; background: #f8fafc; border: 1px solid #e0e7f1; border-radius: 8px; text-decoration: none; color: #0F1D3A; transition: all 0.2s; }
+        .artikel-nav a:hover { background: #eef2f7; border-color: #1A3B70; }
+        .artikel-nav-label { font-size: 0.75rem; color: #8a9bb5; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
+        .artikel-nav-title { font-size: 1.1rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-pill"><div class="nav-content">
+                <a href="index.html" class="logo">
+                    <img src="AandelenXpress logo.avif" alt="AandelenXpress">
+                </a>
+                <ul class="nav-menu">
+                    <li><a href="blog.html" class="nav-top-link">← Terug naar blog</a></li>
+                    <li style="flex: 1;"></li>
+                    <li><a href="login.html" class="btn-nav-ghost">Inloggen</a></li>
+                </ul>
+                <button class="nav-hamburger" id="navHamburger" aria-label="Menu openen">
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="6" x2="20" y2="6"/><line x1="2" y1="11" x2="20" y2="11"/><line x1="2" y1="16" x2="20" y2="16"/></svg>
+                </button>
+            </div></div>
+        </div>
+    </nav>
+
+    <div id="artikelHero" class="artikel-hero">
+        <div class="container">
+            <h1 id="artikelTitle">Laden...</h1>
+            <div class="artikel-meta">
+                <div class="artikel-meta-item">
+                    <span>Door</span>
+                    <strong id="artikelAuthor">—</strong>
+                </div>
+                <div class="artikel-meta-item">
+                    <span id="artikelDate">—</span>
+                    <span>•</span>
+                    <span id="artikelReadTime">— min lezen</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="artikel-container">
+        <div class="artikel-tags" id="artikelTags"></div>
+        <div class="artikel-content" id="artikelContent"></div>
+        <div class="artikel-footer">
+            <div class="artikel-author">
+                <div class="artikel-avatar" id="artikelAvatarInit">—</div>
+                <div class="artikel-author-info">
+                    <strong id="artikelAuthorName">AandelenXpress</strong>
+                    <small id="artikelAuthorRole">Team</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand"><a href="index.html"><img src="AandelenXpress logo.avif" alt="AandelenXpress" style="height:32px; margin-bottom:12px; display:block;"></a><p>White-label BV-oprichting voor accountantskantoren.</p></div>
+                <div class="footer-col"><h4>Diensten</h4><ul><li><a href="oprichten.html">Oprichten</a></li><li><a href="platform.html">Platform</a></li></ul></div>
+                <div class="footer-col"><h4>Blog</h4><ul><li><a href="blog.html">Alle artikelen</a></li><li><a href="blog.html#bv-oprichting">BV-oprichting</a></li></ul></div>
+                <div class="footer-col"><h4>Ondersteuning</h4><ul><li><a href="contact.html">Contact</a></li><li><a href="login.html">Inloggen</a></li></ul></div>
+                <div class="footer-col"><h4>Juridisch</h4><ul><li><a href="#">Privacybeleid</a></li><li><a href="#">Algemene voorwaarden</a></li></ul></div>
+            </div>
+            <div class="footer-bottom"><p>© 2025 AandelenXpress B.V. – Alle rechten voorbehouden</p></div>
+        </div>
+    </footer>
+
+    <script>
+        async function loadArtikel() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            
+            if (!id) {
+                document.getElementById('artikelContent').innerHTML = '<p style="color: #c53030;">Artikel niet gevonden.</p>';
+                return;
+            }
+            
+            try {
+                const r = await fetch('/api/blog/posts/' + id);
+                if (!r.ok) {
+                    document.getElementById('artikelContent').innerHTML = '<p style="color: #c53030;">Artikel niet gevonden.</p>';
+                    return;
+                }
+                
+                const post = await r.json();
+                
+                document.title = post.title + ' – AandelenXpress';
+                document.getElementById('artikelTitle').textContent = post.title;
+                document.getElementById('artikelAuthor').textContent = post.author;
+                document.getElementById('artikelAuthorName').textContent = post.author;
+                document.getElementById('artikelDate').textContent = new Date(post.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
+                
+                const wordCount = post.content.split(/\s+/).length;
+                const readTime = Math.max(1, Math.round(wordCount / 200));
+                document.getElementById('artikelReadTime').textContent = readTime + ' min lezen';
+                
+                const initials = post.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                document.getElementById('artikelAvatarInit').textContent = initials;
+                
+                // Categories
+                const tagsHtml = post.categories.map(cat => 
+                    `<a href="blog.html#${cat.toLowerCase()}" class="artikel-tag">${cat}</a>`
+                ).join('');
+                document.getElementById('artikelTags').innerHTML = tagsHtml;
+                
+                document.getElementById('artikelContent').innerHTML = post.content;
+            } catch(e) {
+                console.error('Error loading article:', e);
+                document.getElementById('artikelContent').innerHTML = '<p style="color: #c53030;">Fout bij laden artikel.</p>';
+            }
+        }
+        
+        // Navbar scroll animation
+        (function() {
+            var nav = document.querySelector('.navbar');
+            function updateNav() {
+                if (window.scrollY > 40) { nav.classList.add('scrolled'); } else { nav.classList.remove('scrolled'); }
+            }
+            window.addEventListener('scroll', updateNav, { passive: true });
+            updateNav();
+        })();
+        
+        // Mobile drawer
+        (function() {
+            var hamburger = document.getElementById('navHamburger');
+            var drawer = document.getElementById('navDrawer');
+            var overlay = document.getElementById('navDrawerOverlay');
+            var closeBtn = document.getElementById('navDrawerClose');
+            function openDrawer() { drawer?.classList.add('open'); overlay?.classList.add('open'); document.body.style.overflow = 'hidden'; }
+            function closeDrawer() { drawer?.classList.remove('open'); overlay?.classList.remove('open'); document.body.style.overflow = ''; }
+            if (hamburger) hamburger.addEventListener('click', openDrawer);
+            if (overlay) overlay.addEventListener('click', closeDrawer);
+            if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+        })();
+        
+        loadArtikel();
+    </script>
+</body>
+</html>

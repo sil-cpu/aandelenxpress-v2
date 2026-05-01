@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin – AandelenXpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="dashboard-shared.css">
+</head>
+<body>
+<div class="dash-wrap">
+
+  <aside class="dash-sidebar">
+    <div class="dash-logo">
+      <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+    </div>
+
+    <nav class="dash-nav">
+      <span class="dash-nav-section">Navigatie</span>
+      <a href="#" class="dash-nav-item active" data-section="overzicht">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="dash-nav-item" data-section="partners">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Partners
+      </a>
+      <a href="#" class="dash-nav-item" data-section="dossiers">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Alle dossiers
+      </a>
+      <a href="#" class="dash-nav-item" data-section="support" id="navSupport">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Support
+      </a>
+      <a href="#" class="dash-nav-item" data-section="aanmeldingen" id="navAanmeldingen">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Aanmeldingen
+        <span id="pendingBadge" style="display:none;margin-left:auto;background:#e53e3e;color:#fff;font-size:0.7rem;font-weight:700;border-radius:10px;padding:1px 7px;"></span>
+      </a>
+      <a href="#" class="dash-nav-item" data-section="reseller-requests" id="navResellerRequests">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Reseller aanvragen
+        <span id="resellRequestsBadge" style="display:none;margin-left:auto;background:#e53e3e;color:#fff;font-size:0.7rem;font-weight:700;border-radius:10px;padding:1px 7px;"></span>
+      </a>
+      <a href="#" class="dash-nav-item" data-section="leden">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Leden & gebruikers
+      </a>
+      <span class="dash-nav-section" style="margin-top:8px;">Systeem</span>
+      <a href="#" class="dash-nav-item" data-section="instellingen">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Instellingen
+      </a>
+    </nav>
+
+    <div class="dash-sidebar-foot">
+      <div class="dash-user-row">
+        <div class="dash-avatar admin-avatar" id="userInitials">A</div>
+        <div class="dash-user-info">
+          <div class="dash-user-name" id="userName">Admin</div>
+          <div class="dash-user-email" id="userEmail"></div>
+        </div>
+      </div>
+      <div class="admin-badge">Beheerdersaccount</div>
+      <button class="dash-logout-btn" onclick="logout()">Uitloggen</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <span class="dash-topbar-title" id="topbarTitle">Dashboard</span>
+      <div class="dash-topbar-actions">
+        <span class="admin-topbar-badge">ADMIN</span>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <!-- OVERZICHT -->
+      <div class="dash-section active" id="section-overzicht">
+        <div class="stats-grid mb-28">
+          <div class="stat-card blue">
+            <div class="stat-card-label">Totale dossiers</div>
+            <div class="stat-card-value">324</div>
+            <div class="stat-card-sub">Alle partners</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Actieve partners</div>
+            <div class="stat-card-value">42</div>
+            <div class="stat-card-sub">Accountantskantoren</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Voltooid deze maand</div>
+            <div class="stat-card-value">57</div>
+            <div class="stat-card-sub">April 2026</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Gem. doorlooptijd</div>
+            <div class="stat-card-value">3,1<span style="font-size:1rem;font-weight:400;color:#8A9BB5"> d</span></div>
+            <div class="stat-card-sub">Werkdagen</div>
+          </div>
+        </div>
+
+        <div class="dash-two-col mb-28">
+          <div>
+            <div class="section-row mb-20">
+              <span class="section-heading">Recente opdrachten</span>
+              <a href="#" class="dash-card-action" onclick="showSection('dossiers');return false;">Alles bekijken</a>
+            </div>
+            <div class="dash-card">
+              <div class="dash-table-head table-cols-admin">
+                <span>Bedrijfsnaam</span><span>Partner</span><span>Status</span><span>Datum</span><span></span>
+              </div>
+              <div id="recentDossiers"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PARTNERS -->
+      <div class="dash-section" id="section-partners">
+        <div class="section-row mb-20">
+          <span class="section-heading">Partnerkantoren</span>
+          <span class="text-muted text-sm" id="partnersTotal">6 partners</span>
+        </div>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="partnerSearch" placeholder="Zoek op parthernaam, contactperson, stad..." style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;width:100%;box-sizing:border-box;font-family:inherit;" />
+        </div>
+        <div class="dash-card">
+          <div class="dash-table-wrapper">
+            <div class="dash-table-head table-cols-partners" style="cursor:pointer;user-select:none;">
+              <span class="sortable-header" onclick="setSortColumn('partnerName')" style="display:flex;align-items:center;gap:4px;">Naam <span class="sort-indicator" id="sort-partnerName"></span></span>
+              <span class="sortable-header" onclick="setSortColumn('partnerCity')" style="display:flex;align-items:center;gap:4px;">Stad <span class="sort-indicator" id="sort-partnerCity"></span></span>
+              <span style="font-weight:500;color:#8A9BB5;">Contact</span>
+              <span class="sortable-header" onclick="setSortColumn('partnerDossiers')" style="display:flex;align-items:center;gap:4px;">Dossiers <span class="sort-indicator" id="sort-partnerDossiers"></span></span>
+              <span style="font-weight:500;color:#8A9BB5;">KvK</span>
+              <span style="font-weight:500;color:#8A9BB5;">Email</span>
+              <span style="font-weight:500;color:#8A9BB5;">Telefoon</span>
+              <span style="font-weight:500;color:#8A9BB5;">Sinds</span>
+            </div>
+            <div id="allPartners"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALLE DOSSIERS -->
+      <div class="dash-section" id="section-dossiers">
+        <div class="section-row mb-20">
+          <span class="section-heading">Alle dossiers</span>
+          <span class="text-muted text-sm" id="dossiersTotal">324 dossiers totaal</span>
+        </div>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="dossierSearch" placeholder="Zoek op bedrijfsnaam, partner..." style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;width:100%;box-sizing:border-box;font-family:inherit;" />
+        </div>
+        <div style="margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:center;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Assigned to</label>
+            <select id="dossierFilterAssigned" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
+              <option value="">Alle</option>
+              <option value="Jan Bakker">Jan Bakker</option>
+              <option value="Kees van Berg">Kees van Berg</option>
+              <option value="Els Dijkstra">Els Dijkstra</option>
+              <option value="Wim Smit">Wim Smit</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Status</label>
+            <select id="dossierFilterStatus" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
+              <option value="">Alle</option>
+              <option value="intake">Intake</option>
+              <option value="ident">iDIN verwerking</option>
+              <option value="kvk">KvK inschrijving</option>
+              <option value="notary">Notariële akte</option>
+              <option value="complete">Voltooid</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Partner</label>
+            <select id="dossierFilterPartner" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
+              <option value="">Alle</option>
+              <option value="Bakker Accountants">Bakker Accountants</option>
+              <option value="Van der Berg & Co">Van der Berg & Co</option>
+              <option value="Dijkstra Partners">Dijkstra Partners</option>
+              <option value="Smit & Assoc.">Smit & Assoc.</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Type</label>
+            <select id="dossierFilterType" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
+              <option value="">Alle</option>
+              <option value="B.V.">B.V.</option>
+              <option value="Holdings B.V.">Holdings B.V.</option>
+            </select>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-table-wrapper">
+            <div class="dash-table-head table-cols-admin" style="cursor:pointer;user-select:none;">
+              <span class="sortable-header" onclick="setSortColumn('name')" style="display:flex;align-items:center;gap:4px;">Bedrijfsnaam <span class="sort-indicator" id="sort-name"></span></span>
+              <span class="sortable-header" onclick="setSortColumn('type')" style="display:flex;align-items:center;gap:4px;">Type <span class="sort-indicator" id="sort-type"></span></span>
+              <span class="sortable-header" onclick="setSortColumn('partner')" style="display:flex;align-items:center;gap:4px;">Partner <span class="sort-indicator" id="sort-partner"></span></span>
+              <span class="sortable-header" onclick="setSortColumn('status')" style="display:flex;align-items:center;gap:4px;">Status <span class="sort-indicator" id="sort-status"></span></span>
+              <span class="sortable-header" onclick="setSortColumn('date')" style="display:flex;align-items:center;gap:4px;">Datum <span class="sort-indicator" id="sort-date"></span></span>
+              <span style="font-weight:500;color:#8A9BB5;">KvK</span>
+              <span style="font-weight:500;color:#8A9BB5;">Contact</span>
+              <span style="font-weight:500;color:#8A9BB5;">Telefoon</span>
+            </div>
+            <div id="allDossiers"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUPPORT -->
+      <div class="dash-section" id="section-support">
+        <div class="section-row mb-20">
+          <span class="section-heading">Supportverzoeken</span>
+          <span class="badge badge-intake" style="font-size:0.74rem;">3 open</span>
+        </div>
+        <div class="dash-card">
+          <div class="dash-table-head table-cols-tickets">
+            <span>Ticket</span><span>Partner</span><span>Onderwerp</span><span>Prioriteit</span><span>Status</span><span>Datum</span><span></span>
+          </div>
+          <div id="ticketList"></div>
+        </div>
+      </div>
+
+      <!-- AANMELDINGEN -->
+      <div class="dash-section" id="section-aanmeldingen">
+        <div class="section-row mb-20">
+          <span class="section-heading">Reseller-aanmeldingen</span>
+          <span id="pendingCount" class="text-muted text-sm">Laden...</span>
+        </div>
+        <div class="dash-card" id="aanmeldingenCard">
+          <div id="aanmeldingenList"><div style="padding:32px;text-align:center;color:#8A9BB5;">Laden...</div></div>
+        </div>
+      </div>
+
+      <!-- AANMELDING DRAWER -->
+      <div class="drawer-backdrop" id="aanmDrawerBackdrop" onclick="closeAanmDrawer()"></div>
+      <div class="detail-drawer" id="aanmDrawer">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <h2 id="aanmDrawerTitle">Aanmelding</h2>
+            <p id="aanmDrawerSub"></p>
+          </div>
+          <button class="drawer-close" onclick="closeAanmDrawer()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-section">
+            <div class="drawer-section-title">Kantoorgegevens</div>
+            <div class="drawer-field-row">
+              <div class="drawer-field"><div class="drawer-field-label">Kantoornaam</div><div class="drawer-field-value" id="dfKantoor">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">KvK-nummer</div><div class="drawer-field-value" id="dfKvk">–</div></div>
+            </div>
+          </div>
+          <div class="drawer-section">
+            <div class="drawer-section-title">Contactpersoon</div>
+            <div class="drawer-field-row">
+              <div class="drawer-field"><div class="drawer-field-label">Naam</div><div class="drawer-field-value" id="dfNaam">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">Telefoonnummer</div><div class="drawer-field-value" id="dfTelefoon">–</div></div>
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">E-mailadres</div><div class="drawer-field-value" id="dfEmail">–</div></div>
+            </div>
+          </div>
+          <div class="drawer-section">
+            <div class="drawer-section-title">Aanmeldingsdatum</div>
+            <div class="drawer-field"><div class="drawer-field-value" id="dfDatum">–</div></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn-primary" style="flex:1;padding:12px;" id="aanmApproveBtn" onclick="">Goedkeuren</button>
+            <button class="btn-ghost" style="flex:1;padding:12px;color:#c53030;border-color:#c53030;" id="aanmRejectBtn" onclick="">Afwijzen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESELLER AANVRAGEN -->
+      <div class="dash-section" id="section-reseller-requests">
+        <div class="section-row mb-20">
+          <span class="section-heading">Reseller opdracht aanvragen</span>
+          <span id="resellerRequestsCount" class="text-muted text-sm">Laden...</span>
+        </div>
+        <div class="dash-card">
+          <div class="dash-table-head table-cols-reseller-requests">
+            <span>Bedrijfsnaam</span><span>Partner</span><span>Status</span><span>Datum</span><span></span>
+          </div>
+          <div id="resellerRequestsList"></div>
+        </div>
+      </div>
+
+      <!-- RESELLER REQUEST DRAWER -->
+      <div class="drawer-backdrop" id="requestDrawerBackdrop" onclick="closeRequestDrawer()"></div>
+      <div class="detail-drawer" id="requestDrawer">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <h2>Opdracht aanvraag</h2>
+            <p id="requestDrawerSub">Details</p>
+          </div>
+          <button class="drawer-close" onclick="closeRequestDrawer()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body" style="max-height:calc(100vh - 140px);overflow-y:auto;">
+          <div class="drawer-section">
+            <div class="drawer-section-title">Aanvrager</div>
+            <div class="drawer-field-row">
+              <div class="drawer-field"><div class="drawer-field-label">Reseller</div><div class="drawer-field-value" id="rfReseller">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">Kantoor</div><div class="drawer-field-value" id="rfKantoor">–</div></div>
+            </div>
+          </div>
+          
+          <div class="drawer-section">
+            <div class="drawer-section-title">Klantgegevens</div>
+            <div class="drawer-field-row">
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Bedrijfsnaam</div><div class="drawer-field-value" id="rfBedrijf">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">E-mail</div><div class="drawer-field-value" id="rfEmail">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">Telefoon</div><div class="drawer-field-value" id="rfTelefoon">–</div></div>
+            </div>
+          </div>
+          
+          <div class="drawer-section">
+            <div class="drawer-section-title">Oprichtingsgegevens</div>
+            <div class="drawer-field-row">
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Type oprichting</div><div class="drawer-field-value" id="rfType">–</div></div>
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Gewenste naam BV</div><div class="drawer-field-value" id="rfGewenstNaam">–</div></div>
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Doel van de BV</div><div class="drawer-field-value" style="white-space:pre-wrap;padding:8px;background:#f7fafc;border-radius:4px;margin-top:4px;" id="rfDoel">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">Aantal aandeelhouders</div><div class="drawer-field-value" id="rfAandeelhouders">–</div></div>
+              <div class="drawer-field"><div class="drawer-field-label">Geplaatst kapitaal</div><div class="drawer-field-value" id="rfKapitaal">–</div></div>
+            </div>
+          </div>
+          
+          <div class="drawer-section">
+            <div class="drawer-section-title">Aanvullende gegevens</div>
+            <div class="drawer-field-row">
+              <div class="drawer-field"><div class="drawer-field-label">Startsaldo bankrekening</div><div class="drawer-field-value" id="rfStartSaldo">–</div></div>
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Opmerkingen</div><div class="drawer-field-value" style="white-space:pre-wrap;padding:8px;background:#f7fafc;border-radius:4px;margin-top:4px;" id="rfOpmerkingen">–</div></div>
+            </div>
+          </div>
+          
+          <div class="drawer-section">
+            <div class="drawer-section-title">Status</div>
+            <div class="drawer-field"><div class="drawer-field-value" id="rfStatus">–</div></div>
+          </div>
+          
+          <div id="requestActionButtons" style="display:flex;gap:10px;margin-top:20px;margin-bottom:20px;">
+            <button class="btn-primary" style="flex:1;padding:12px;" id="requestApproveBtn" onclick="approveResellerRequest()">Goedkeuren</button>
+            <button class="btn-ghost" style="flex:1;padding:12px;color:#c53030;border-color:#c53030;" id="requestRejectBtn" onclick="rejectResellerRequest()">Afwijzen</button>
+          </div>
+          
+          <div id="requestRejectionReason" style="display:none;margin-top:16px;padding:12px;background:#fed7d7;border-radius:6px;color:#742a2a;margin-bottom:20px;">
+            <div style="font-weight:600;margin-bottom:4px;">Afwijzingsreden:</div>
+            <div id="rfRejectionReason">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TICKET DRAWER -->
+      <div class="drawer-backdrop" id="ticketDrawerBackdrop" onclick="closeTicketDrawer()"></div>
+      <div class="detail-drawer" id="ticketDrawer">
+        <div class="drawer-header">
+          <div>
+            <h3 id="ticketDrawerTitle" style="margin:0;font-size:1.1rem;">–</h3>
+            <p id="ticketDrawerSub" style="margin:4px 0 0;font-size:0.85rem;color:#718096;">Details</p>
+          </div>
+          <button class="drawer-close" onclick="closeTicketDrawer()">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body" style="max-height:calc(100vh - 120px);overflow-y:auto;">
+          <div style="display:grid;gap:20px;">
+            <!-- Onderwerp & Status -->
+            <div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                  <div class="drawer-field-label">Onderwerp</div>
+                  <div class="drawer-field-value" id="tkSubject">–</div>
+                </div>
+                <div>
+                  <div class="drawer-field-label">Status</div>
+                  <select id="tkStatusSelect" style="padding:8px 12px;border:1px solid #D4DDE5;border-radius:6px;font-size:0.9rem;cursor:pointer;background:#F9FAFB;" onchange="updateTicketStatus()">
+                    <option value="Open">Open</option>
+                    <option value="Waiting">Waiting</option>
+                    <option value="Replied">Replied</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zender info -->
+            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
+              <div class="drawer-field-label" style="margin-bottom:12px;">Van:</div>
+              <div style="font-size:0.9rem;">
+                <div><strong id="tkSenderName">–</strong></div>
+                <div style="color:#718096;font-size:0.85rem;" id="tkSenderEmail">–</div>
+              </div>
+            </div>
+
+            <!-- Publieke link -->
+            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
+              <div class="drawer-field-label" style="margin-bottom:8px;">Publieke link (voor e-mail):</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="tkPublicLink" value="" readonly style="flex:1;padding:8px 12px;border:1px solid #D4DDE5;border-radius:4px;font-size:0.85rem;background:#F9FAFB;color:#718096;">
+                <button onclick="copyTicketLink()" style="padding:8px 14px;background:#0A1E42;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;font-size:0.9rem;white-space:nowrap;">Kopieren</button>
+              </div>
+            </div>
+
+            <!-- Origineel bericht -->
+            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
+              <div class="drawer-field-label" style="margin-bottom:8px;">Origineel bericht:</div>
+              <div style="background:#f7fafc;padding:12px;border-radius:4px;font-size:0.9rem;white-space:pre-wrap;" id="tkMessage">–</div>
+            </div>
+
+            <!-- Antwoorden -->
+            <div id="tkRepliesSection" style="border-top:1px solid #E8EDF5;padding-top:16px;display:none;">
+              <div class="drawer-field-label" style="margin-bottom:12px;">Antwoorden:</div>
+              <div id="tkReplies" style="display:flex;flex-direction:column;gap:12px;"></div>
+            </div>
+
+            <!-- Antwoord formulier -->
+            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
+              <div class="drawer-field-label" style="margin-bottom:12px;">Antwoord toevoegen:</div>
+              <textarea id="tkReplyMessage" placeholder="Typ hier uw antwoord..." style="width:100%;padding:10px;border:1px solid #CBD5E0;border-radius:4px;font-family:inherit;font-size:0.9rem;min-height:100px;resize:vertical;"></textarea>
+              <button onclick="submitTicketReply()" style="margin-top:12px;padding:8px 16px;background:#0A1E42;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;">Antwoord verzenden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEDEN & GEBRUIKERS -->
+      <div class="dash-section" id="section-leden">
+        <div class="section-row mb-20">
+          <span class="section-heading">Leden & gebruikers</span>
+          <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px;" onclick="openAddAdminDrawer()">+ Admin toevoegen</button>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex;gap:12px;margin-bottom:20px;border-bottom:1px solid #E8EDF5;padding-bottom:0;">
+          <button class="btn-ghost" id="tabAdmins" style="padding:12px 16px;border-bottom:2px solid #1A3B70;color:#1A3B70;font-weight:600;border-radius:0;background:none;cursor:pointer;" onclick="switchLedenTab('admins')">Admins</button>
+          <button class="btn-ghost" id="tabResellers" style="padding:12px 16px;border-bottom:2px solid transparent;color:#A0AEC0;font-weight:500;border-radius:0;background:none;cursor:pointer;" onclick="switchLedenTab('resellers')">Reseller-gebruikers</button>
+        </div>
+
+        <!-- Admins tab -->
+        <div id="ledenAdminsContent" class="dash-card">
+          <div class="dash-table-head" style="grid-template-columns:2fr 1.5fr 1fr auto auto;padding:10px 20px;">
+            <span>Naam</span><span>E-mail</span><span>Status</span><span></span><span></span>
+          </div>
+          <div id="adminsList" style="min-height:120px;"></div>
+        </div>
+
+        <!-- Resellers tab -->
+        <div id="ledenResellersContent" class="dash-card" style="display:none;">
+          <div class="dash-table-head" style="grid-template-columns:2fr 1.5fr 1.5fr 1fr auto auto;padding:10px 20px;">
+            <span>Naam</span><span>E-mail</span><span>Bedrijf</span><span>Status</span><span></span><span></span>
+          </div>
+          <div id="resellersList" style="min-height:120px;"></div>
+        </div>
+      </div>
+
+      <!-- ADD ADMIN DRAWER -->
+      <div class="drawer-backdrop" id="addAdminBackdrop" onclick="closeAddAdminDrawer()"></div>
+      <div class="detail-drawer" id="addAdminDrawer">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <h2>Nieuwe admin</h2>
+            <p>Voeg een beheerder toe</p>
+          </div>
+          <button class="drawer-close" onclick="closeAddAdminDrawer()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-section">
+            <div class="form-field" style="margin-bottom:16px;">
+              <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Volledige naam</label>
+              <input type="text" id="addAdminName" placeholder="Jan Jansen" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+            </div>
+            <div class="form-field" style="margin-bottom:16px;">
+              <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">E-mailadres</label>
+              <input type="email" id="addAdminEmail" placeholder="jan@aandelenxpress.nl" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+            </div>
+            <div class="form-field" style="margin-bottom:20px;">
+              <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Wachtwoord</label>
+              <input type="password" id="addAdminPassword" placeholder="Min. 8 tekens" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+            </div>
+            <div id="addAdminError" style="color:#c53030;font-size:0.85rem;margin-bottom:16px;display:none;"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn-primary" style="flex:1;padding:12px;" onclick="saveNewAdmin()">Toevoegen</button>
+            <button class="btn-ghost" style="flex:1;padding:12px;" onclick="closeAddAdminDrawer()">Annuleren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT USER DRAWER -->
+      <div class="drawer-backdrop" id="editUserBackdrop" onclick="closeEditUserDrawer()"></div>
+      <div class="detail-drawer" id="editUserDrawer">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <h2 id="editUserTitle">Gebruiker bewerken</h2>
+            <p id="editUserSub"></p>
+          </div>
+          <button class="drawer-close" onclick="closeEditUserDrawer()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-section">
+            <div class="drawer-section-title">Gebruikersgegevens</div>
+            <div class="drawer-field" style="margin-bottom:12px;">
+              <div class="drawer-field-label">Naam</div>
+              <div class="drawer-field-value" id="euName">—</div>
+            </div>
+            <div class="drawer-field" style="margin-bottom:12px;">
+              <div class="drawer-field-label">E-mail</div>
+              <div class="drawer-field-value" id="euEmail">—</div>
+            </div>
+            <div class="drawer-field" style="margin-bottom:12px;">
+              <div class="drawer-field-label">Type</div>
+              <div class="drawer-field-value" id="euType">—</div>
+            </div>
+            <div class="drawer-field" style="margin-bottom:20px;">
+              <div class="drawer-field-label">Status</div>
+              <div class="drawer-field-value"><span class="badge" id="euStatusBadge" style="padding:4px 10px;font-size:0.8rem;"></span></div>
+            </div>
+          </div>
+
+          <div class="drawer-section">
+            <div class="drawer-section-title">Acties</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <button class="btn-primary" style="width:100%;padding:10px;font-size:0.9rem;" onclick="openResetPasswordDrawer()">Wachtwoord resetten</button>
+              <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;" id="euToggleStatusBtn" onclick="">Status wijzigen</button>
+              <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;color:#c53030;border-color:#c53030;" onclick="deleteUser()" id="euDeleteBtn">Verwijderen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESET PASSWORD DRAWER -->
+      <div class="drawer-backdrop" id="resetPwdBackdrop" onclick="closeResetPasswordDrawer()" style="display:none;"></div>
+      <div class="detail-drawer" id="resetPwdDrawer" style="display:none;transform:translateX(100%);">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <h2>Wachtwoord resetten</h2>
+            <p id="resetPwdSub">—</p>
+          </div>
+          <button class="drawer-close" onclick="closeResetPasswordDrawer()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-section">
+            <div class="form-field" style="margin-bottom:20px;">
+              <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Nieuw wachtwoord</label>
+              <input type="password" id="resetPwdInput" placeholder="Min. 8 tekens" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+            </div>
+            <div id="resetPwdError" style="color:#c53030;font-size:0.85rem;margin-bottom:16px;display:none;"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn-primary" style="flex:1;padding:12px;" onclick="confirmResetPassword()">Resetten</button>
+            <button class="btn-ghost" style="flex:1;padding:12px;" onclick="closeResetPasswordDrawer()">Annuleren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTELLINGEN -->
+      <div class="dash-section" id="section-instellingen">
+        <div class="mb-28">
+          <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:6px;">Instellingen</h1>
+          <p class="text-muted text-sm">Systeem- en platformconfiguratie voor AandelenXpress.</p>
+        </div>
+
+        <div class="settings-block">
+          <div class="settings-block-header">
+            <div class="settings-block-title">Platformgegevens</div>
+            <div class="settings-block-sub">Basisinformatie van het notariskantoor</div>
+          </div>
+          <div class="settings-block-body">
+            <div class="settings-field-grid">
+              <div class="form-field"><label>Kantoornaam</label><input type="text" value="AandelenXpress B.V."></div>
+              <div class="form-field"><label>KvK-nummer</label><input type="text" value="87654321"></div>
+              <div class="form-field"><label>BTW-nummer</label><input type="text" value="NL864532789B01"></div>
+              <div class="form-field"><label>IBAN</label><input type="text" value="NL91 ABNA 0417 1643 00"></div>
+              <div class="form-field"><label>Telefoonnummer</label><input type="tel" value="+31 20 123 4567"></div>
+              <div class="form-field"><label>E-mailadres</label><input type="email" value="info@aandelenxpress.nl"></div>
+            </div>
+          </div>
+          <div class="settings-footer">
+            <button class="btn-primary" onclick="adminSaveToast()">Opslaan</button>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <div class="settings-block-header">
+            <div class="settings-block-title">E-mail notificaties</div>
+            <div class="settings-block-sub">Ontvang automatische updates over dossiers en partners</div>
+          </div>
+          <div class="settings-block-body">
+            <div class="toggle-row">
+              <div><div class="toggle-label">Nieuwe opdracht ontvangen</div><div class="toggle-sub">Melding bij elke nieuwe aanmelding van een partner</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Dossier voltooid</div><div class="toggle-sub">Melding bij voltooiing van KvK-inschrijving</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Nieuwe partneraanmelding</div><div class="toggle-sub">Melding wanneer een nieuw kantoor zich aanmeldt</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Wekelijks overzicht</div><div class="toggle-sub">Elke maandag een samenvatting van de week</div></div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <div class="settings-block-header">
+            <div class="settings-block-title">API &amp; Integraties</div>
+            <div class="settings-block-sub">Technische toegang voor partnerintegraties</div>
+          </div>
+          <div class="settings-block-body">
+            <div class="form-field">
+              <label>Live API-sleutel</label>
+              <div class="api-key-row">
+                <input type="text" value="ax_live_sk_7f3k2m9pQzR8vX..." readonly>
+                <button class="btn-ghost" onclick="navigator.clipboard.writeText('ax_live_sk_7f3k2m9pQzR8vX').then(()=>adminSaveToast('Gekopieerd'))">Kopiëren</button>
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Webhook URL</label>
+              <input type="url" placeholder="https://jouwkantoor.nl/webhook/aandelenxpress">
+            </div>
+          </div>
+          <div class="settings-footer">
+            <button class="btn-ghost" onclick="adminSaveToast('Sleutel vernieuwd')">Sleutel vernieuwen</button>
+            <button class="btn-primary" onclick="adminSaveToast()">Opslaan</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const allDossiersData = [
+  { name:"TechStart B.V.",       type:"B.V.",          partner:"Bakker Accountants",  statusKey:"notary",   statusText:"Notariële akte",  date:"2026-04-20", dossierNr:"AX-2026-0042", contact:"Jan de Vries",      clientEmail:"info@techstart.nl",       clientPhone:"+31 20 123 4567", kvk:"", assignedTo:"Jan Bakker" },
+  { name:"Consultancy Plus",     type:"B.V.",          partner:"Van der Berg & Co",   statusKey:"ident",    statusText:"iDIN verwerking",      date:"2026-04-18", dossierNr:"AX-2026-0041", contact:"Marie Hendrikx",    clientEmail:"info@consultancyplus.nl",  clientPhone:"+31 30 987 6543", kvk:"", assignedTo:"Kees van Berg" },
+  { name:"Groen & Co",           type:"Holdings B.V.",  partner:"Bakker Accountants",  statusKey:"kvk",      statusText:"KvK inschrijving",     date:"2026-04-15", dossierNr:"AX-2026-0040", contact:"Jan Groen",         clientEmail:"j.groen@groenco.nl",      clientPhone:"+31 10 246 8135", kvk:"87654321", assignedTo:"Jan Bakker" },
+  { name:"Marketing Solutions",  type:"B.V.",          partner:"Dijkstra Partners",   statusKey:"complete", statusText:"Voltooid",             date:"2026-04-12", dossierNr:"AX-2026-0039", contact:"Els de Boeck",      clientEmail:"admin@marketsol.nl",      clientPhone:"+31 70 135 7924", kvk:"76543218", assignedTo:"Els Dijkstra" },
+  { name:"Finance Advisors",     type:"B.V.",          partner:"Van der Berg & Co",   statusKey:"complete", statusText:"Voltooid",             date:"2026-04-10", dossierNr:"AX-2026-0038", contact:"Kees Vermeulen",    clientEmail:"post@financeadv.nl",      clientPhone:"+31 40 321 0987", kvk:"65432187", assignedTo:"Kees van Berg" },
+  { name:"Design Studio B.V.",   type:"Holdings B.V.",  partner:"Smit & Assoc.",       statusKey:"complete", statusText:"Voltooid",             date:"2026-04-05", dossierNr:"AX-2026-0037", contact:"Wim Smit",          clientEmail:"studio@designbv.nl",      clientPhone:"+31 20 456 7890", kvk:"54321876", assignedTo:"Wim Smit" },
+  { name:"HR Services B.V.",     type:"B.V.",          partner:"Bakker Accountants",  statusKey:"intake",   statusText:"Intake",               date:"2026-04-22", dossierNr:"AX-2026-0043", contact:"Femke Jansen",      clientEmail:"hr@hrservices.nl",         clientPhone:"+31 23 654 3210", kvk:"", assignedTo:"Jan Bakker" },
+  { name:"Logistiek Noord",      type:"B.V.",          partner:"Dijkstra Partners",   statusKey:"complete", statusText:"Voltooid",             date:"2026-03-28", dossierNr:"AX-2026-0035", contact:"Pieter van Oss",   clientEmail:"info@logistieknrd.nl",    clientPhone:"+31 50 111 2233", kvk:"43218765", assignedTo:"Els Dijkstra" },
+];
+
+const partners = [
+  { name:"Bakker Accountants",  city:"Amsterdam",  dossiers:89, color:"#1A3B70", contact:"Jan Bakker",     email:"j.bakker@bakker-acc.nl",   phone:"+31 20 555 0100", since:"2024-01", kvk:"11223344" },
+  { name:"Van der Berg & Co",   city:"Rotterdam",  dossiers:72, color:"#2A5BA0", contact:"Kees van Berg",  email:"k.vanberg@vdberg.nl",       phone:"+31 10 555 0200", since:"2024-03", kvk:"22334455" },
+  { name:"Dijkstra Partners",   city:"Utrecht",    dossiers:65, color:"#17518A", contact:"Els Dijkstra",   email:"e.dijkstra@dijkstra.nl",    phone:"+31 30 555 0300", since:"2024-02", kvk:"33445566" },
+  { name:"Smit & Assoc.",       city:"Den Haag",   dossiers:48, color:"#1D4477", contact:"Wim Smit",       email:"w.smit@smitassoc.nl",       phone:"+31 70 555 0400", since:"2024-06", kvk:"44556677" },
+  { name:"De Groot Financieel", city:"Eindhoven",  dossiers:31, color:"#1A3B70", contact:"Hans de Groot",  email:"h.degroot@degroot.nl",      phone:"+31 40 555 0500", since:"2025-01", kvk:"55667788" },
+  { name:"Jansen Advies",       city:"Groningen",  dossiers:19, color:"#2A5BA0", contact:"Marie Jansen",   email:"m.jansen@jansenadvies.nl",  phone:"+31 50 555 0600", since:"2025-04", kvk:"66778899" },
+];
+
+const monthData = [
+  { m:"Oct", v:28 }, { m:"Nov", v:35 }, { m:"Dec", v:22 },
+  { m:"Jan", v:39 }, { m:"Feb", v:44 }, { m:"Mrt", v:51 }, { m:"Apr", v:57 },
+];
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString("nl-NL",{day:"numeric",month:"short",year:"numeric"});
+}
+
+// Copy URL to clipboard
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    adminSaveToast('Link gekopieerd');
+  }).catch(() => {
+    alert('Kon link niet kopiëren');
+  });
+}
+
+// Load ticket badge count
+async function loadTicketBadge() {
+  const res = await fetch('/api/tickets-count');
+  if (!res.ok) return;
+  const data = await res.json();
+  const badge = document.getElementById('navSupport');
+  if (!badge) return;
+  
+  const existingBadge = badge.querySelector('.ticket-badge');
+  if (existingBadge) existingBadge.remove();
+  
+  if (data.count > 0) {
+    const badgeEl = document.createElement('span');
+    badgeEl.className = 'ticket-badge';
+    badgeEl.textContent = data.count;
+    badgeEl.style.cssText = 'display:inline-block;position:absolute;right:12px;background:#e53e3e;color:white;font-size:0.7rem;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;';
+    badge.style.position = 'relative';
+    badge.appendChild(badgeEl);
+  }
+}
+
+// Reload badges periodically
+setInterval(loadTicketBadge, 5000);
+
+function renderTable(id, rows) {
+  const container = document.getElementById(id);
+  container.innerHTML = rows.map((d, idx) => {
+    return `
+    <div class="dash-table-row table-cols-admin dossier-row" data-idx="${idx}">
+      <div style="font-weight:500;color:#0F1D3A;">
+        <a href="dossier-detail.html?nr=${d.dossierNr}" style="color:#0F1D3A;text-decoration:none;font-weight:500;display:block;">${d.name}</a>
+      </div>
+      <div style="color:#8A9BB5;font-size:0.85rem;">${d.type}</div>
+      <div style="color:#8A9BB5;font-size:0.9rem;">${d.partner}</div>
+      <div><span class="badge badge-${d.statusKey}" style="font-size:0.8rem;">${d.statusText}</span></div>
+      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${fmtDate(d.date)}</div>
+      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${d.kvk || '–'}</div>
+      <div style="color:#8A9BB5;font-size:0.85rem;">${d.contact || '–'}</div>
+      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${d.clientPhone || '–'}</div>
+    </div>
+  `}).join("");
+}
+function renderPartners() {
+  document.getElementById("partnerGrid").innerHTML = partners.map(p => {
+    const initials = p.name.split(" ").map(w => w[0]).join("").slice(0,2);
+    const pct = Math.round(p.dossiers / 89 * 100);
+    return `<div class="partner-card" style="cursor:pointer;" onclick="location.href='partner-detail.html?name='+encodeURIComponent('${p.name}')">
+      <div class="partner-card-header" style="background:${p.color};">${initials}</div>
+      <div class="partner-card-body">
+        <div class="partner-card-name">${p.name}</div>
+        <div class="partner-card-meta">${p.city} · ${p.dossiers} dossiers</div>
+        <div class="progress-bar" style="margin-top:12px;">
+          <div class="progress-fill" style="width:${pct}%;"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderPartnersTable(data) {
+  const container = document.getElementById('allPartners');
+  container.innerHTML = data.map((p, idx) => `
+    <div class="dash-table-row table-cols-partners" data-idx="${idx}" style="position:relative;grid-template-columns:140px 100px 150px 90px 90px 160px 130px 100px;">
+      <a href="partner-detail.html?name=${encodeURIComponent(p.name)}" style="font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#0F1D3A;text-decoration:none;cursor:pointer;display:block;">${p.name}</a>
+      <div style="color:#8A9BB5;font-size:0.9rem;">${p.city}</div>
+      <div style="color:#8A9BB5;font-size:0.9rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${p.contact || '–'}</div>
+      <div style="color:#8A9BB5;font-size:0.9rem;text-align:center;font-weight:500;">${p.dossiers}</div>
+      <div style="color:#8A9BB5;font-size:0.85rem;font-family:monospace;">${p.kvk}</div>
+      <div style="color:#8A9BB5;font-size:0.85rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"><a href="mailto:${p.email}" style="color:#1A3B70;text-decoration:none;">${p.email}</a></div>
+      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${p.phone}</div>
+      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${p.since}</div>
+    </div>
+  `).join("");
+}
+
+function renderChart() {
+  const max = Math.max(...monthData.map(m => m.v));
+  const MAX_H = 82;
+  document.getElementById("monthChart").innerHTML = monthData.map(m => {
+    const h = Math.max(4, Math.round(m.v / max * MAX_H));
+    return `<div class="chart-col">
+      <div class="chart-bar" style="height:${h}px" title="${m.v}"></div>
+      <div class="chart-month">${m.m}</div>
+    </div>`;
+  }).join("");
+}
+
+document.querySelectorAll(".dash-nav-item").forEach(item => {
+  item.addEventListener("click", e => {
+    e.preventDefault();
+    showSection(item.dataset.section);
+  });
+});
+
+function showSection(s) {
+  document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
+  document.getElementById("section-" + s).classList.add("active");
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", support:"Support", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  document.getElementById("topbarTitle").textContent = titles[s] || s;
+  if (s === "aanmeldingen") loadPending();
+  if (s === "leden") loadLedenTab("admins");
+  document.querySelectorAll(".dash-nav-item").forEach(i => {
+    i.classList.toggle("active", i.dataset.section === s);
+  });
+  // Update URL hash
+  window.location.hash = s;
+}
+
+// Handle hash changes for browser back/forward
+window.addEventListener("hashchange", () => {
+  const section = window.location.hash.slice(1) || "overzicht";
+  showSectionSilent(section);
+});
+
+// Show section without updating hash (for hash change event)
+function showSectionSilent(s) {
+  const section = document.getElementById("section-" + s);
+  if (!section) return; // Section doesn't exist
+  
+  document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
+  section.classList.add("active");
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", support:"Support", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  document.getElementById("topbarTitle").textContent = titles[s] || s;
+  if (s === "aanmeldingen") loadPending();
+  if (s === "leden") loadLedenTab("admins");
+  document.querySelectorAll(".dash-nav-item").forEach(i => {
+    i.classList.toggle("active", i.dataset.section === s);
+  });
+}
+
+
+
+async function loadUser() {
+  try {
+    const r = await fetch("/api/user");
+    if (!r.ok) { window.location.href = "/login.html"; return; }
+    const u = await r.json();
+    document.getElementById("userName").textContent = u.name;
+    document.getElementById("userEmail").textContent = u.email;
+    document.getElementById("userInitials").textContent = u.name.split(" ").map(p => p[0]).join("").slice(0,2).toUpperCase();
+  } catch(e) { window.location.href = "/login.html"; }
+}
+
+function logout() {
+  if (confirm("Weet u zeker dat u wilt uitloggen?")) window.location.href = "/api/logout";
+}
+
+// ── Ticket data ──────────────────────────────────────────
+const tickets = [
+  { id:"TK-001", partner:"Bakker Accountants", subject:"Toegang iDIN portaal werkt niet", priority:"high",   date:"2026-04-24", status:"Open", email:"contact@bakker.nl", replies:[] },
+  { id:"TK-002", partner:"Van der Berg & Co",  subject:"KvK bevestiging niet ontvangen",  priority:"medium", date:"2026-04-23", status:"Open", email:"info@vandenberg.nl", replies:[] },
+  { id:"TK-003", partner:"Dijkstra Partners",  subject:"Vraag over facturatiemodel",       priority:"low",    date:"2026-04-22", status:"Open", email:"admin@dijkstra.nl", replies:[] },
+  { id:"TK-004", partner:"Smit & Assoc.",      subject:"Logo updaten in portaal",          priority:"low",    date:"2026-04-20", status:"Open", email:"office@smit.nl", replies:[] },
+];
+
+function loadAndRenderTickets() {
+  // Fetch tickets from API (includes all tickets)
+  fetch('/api/admin/tickets')
+    .then(res => res.json())
+    .then(apiTickets => {
+      // Combine test data with API tickets (test data is the base, API adds real tickets)
+      const allTickets = [...tickets];
+      
+      // Add API tickets that aren't in the test data
+      apiTickets.forEach(apiT => {
+        if (!allTickets.find(t => t.id === apiT.id)) {
+          allTickets.push(apiT);
+        }
+      });
+      
+      renderTickets(allTickets);
+    })
+    .catch(err => {
+      console.error('Error loading tickets:', err);
+      // Fallback to test data if API fails
+      renderTickets(tickets);
+    });
+}
+
+function renderTickets(allTickets = tickets) {
+  const pClass = { high:"badge-intake", medium:"badge-ident", low:"badge-new" };
+  const pLabel = { high:"Hoog", medium:"Gemiddeld", low:"Laag" };
+  const sClass = { Open:"badge-status-open", Waiting:"badge-status-waiting", Replied:"badge-status-replied", Resolved:"badge-status-resolved", Closed:"badge-status-closed" };
+  
+  document.getElementById("ticketList").innerHTML = allTickets.map(t => {
+    // For dossier tickets, use dossierNr instead of partner
+    const displayPartner = t.partner || `Dossier ${t.dossierNr}`;
+    // For dossier tickets, use default priority if not set
+    const priority = t.priority || 'medium';
+    
+    return `
+      <div class="dash-table-row table-cols-tickets" style="cursor:pointer;" onclick="openTicketDrawer('${t.id}')">
+        <div style="font-family:monospace;font-size:0.8rem;color:#718096;">${t.id}</div>
+        <div style="font-size:0.87rem;font-weight:500;">${displayPartner}</div>
+        <div style="font-size:0.87rem;">${t.subject}</div>
+        <div><span class="badge ${pClass[priority]}">${pLabel[priority]}</span></div>
+        <div><span class="badge ${sClass[t.status||'Open']}">${t.status||'Open'}</span></div>
+        <div class="text-muted text-sm">${fmtDate(t.date || t.createdAt)}</div>
+        <div><a href="#" class="table-link" onclick="openTicketDrawer('${t.id}');return false;">Bekijken →</a></div>
+      </div>`;
+  }).join("");
+}
+
+
+// ── Admin toast ───────────────────────────────────────────
+function adminSaveToast(msg) {
+  const t = document.createElement("div");
+  t.textContent = "✓ " + (msg || "Instellingen opgeslagen");
+  Object.assign(t.style, {position:"fixed",bottom:"24px",right:"24px",background:"#0A1E42",color:"white",padding:"14px 20px",borderRadius:"8px",fontWeight:"500",fontSize:"0.9rem",zIndex:"9999",boxShadow:"0 8px 24px rgba(0,0,0,0.2)"});
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── Aanmeldingen ────────────────────────────────────────
+async function loadPending() {
+  const res = await fetch('/api/admin/pending');
+  if (!res.ok) return;
+  const list = await res.json();
+
+  const badge = document.getElementById('pendingBadge');
+  const countEl = document.getElementById('pendingCount');
+  if (list.length === 0) {
+    badge.style.display = 'none';
+    countEl.textContent = 'Geen openstaande aanmeldingen';
+  } else {
+    badge.textContent = list.length;
+    badge.style.display = 'inline';
+    countEl.textContent = list.length + ' openstaande aanmelding' + (list.length !== 1 ? 'en' : '');
+  }
+
+  const container = document.getElementById('aanmeldingenList');
+  if (list.length === 0) {
+    container.innerHTML = `<div style="padding:48px;text-align:center;color:#8A9BB5;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1.5" style="display:block;margin:0 auto 12px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Geen openstaande aanmeldingen
+    </div>`;
+    return;
+  }
+
+  container.innerHTML =
+    `<div class="dash-table-head" style="grid-template-columns:2fr 1fr 1.4fr 1.4fr 1fr;padding:10px 20px;">
+      <span>Kantoor</span><span>KvK</span><span>Contactpersoon</span><span>E-mail</span><span>Aangemeld</span>
+    </div>` +
+    list.map(r => `
+    <div class="dash-table-row" style="grid-template-columns:2fr 1fr 1.4fr 1.4fr 1fr;cursor:pointer;" onclick='openAanmDrawer(${JSON.stringify(JSON.stringify(r))})'>
+      <div style="font-weight:500">${r.kantoor}</div>
+      <div class="text-muted text-sm" style="font-family:monospace;">${r.kvk}</div>
+      <div class="text-muted text-sm">${r.naam}</div>
+      <div class="text-muted text-sm">${r.email}</div>
+      <div class="text-muted text-sm">${new Date(r.aangemeld).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
+    </div>`).join('');
+}
+
+function openAanmDrawer(jsonStr) {
+  const r = JSON.parse(jsonStr);
+  document.getElementById('aanmDrawerTitle').textContent = r.kantoor;
+  document.getElementById('aanmDrawerSub').textContent   = 'Aangemeld op ' + new Date(r.aangemeld).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('dfKantoor').textContent  = r.kantoor;
+  document.getElementById('dfKvk').textContent      = r.kvk;
+  document.getElementById('dfNaam').textContent     = r.naam;
+  document.getElementById('dfTelefoon').textContent = r.telefoon;
+  document.getElementById('dfEmail').textContent    = r.email;
+  document.getElementById('dfDatum').textContent    = new Date(r.aangemeld).toLocaleString('nl-NL',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('aanmApproveBtn').onclick = () => approveReseller(r.email);
+  document.getElementById('aanmRejectBtn').onclick  = () => rejectReseller(r.email);
+  document.getElementById('aanmDrawer').classList.add('open');
+  document.getElementById('aanmDrawerBackdrop').classList.add('open');
+}
+
+function closeAanmDrawer() {
+  document.getElementById('aanmDrawer').classList.remove('open');
+  document.getElementById('aanmDrawerBackdrop').classList.remove('open');
+}
+
+async function approveReseller(email) {
+  if (!confirm(`Weet u zeker dat u ${email} wilt goedkeuren als reseller?`)) return;
+  const res = await fetch('/api/admin/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (res.ok) {
+    closeAanmDrawer();
+    adminSaveToast('Reseller goedgekeurd en account aangemaakt');
+    loadPending();
+  } else {
+    adminSaveToast('Fout bij goedkeuren');
+  }
+}
+
+async function rejectReseller(email) {
+  if (!confirm(`Weet u zeker dat u de aanmelding van ${email} wilt afwijzen?`)) return;
+  const res = await fetch('/api/admin/reject', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (res.ok) {
+    closeAanmDrawer();
+    adminSaveToast('Aanmelding afgewezen');
+    loadPending();
+  } else {
+    adminSaveToast('Fout bij afwijzen');
+  }
+}
+
+async function loadPendingBadge() {
+  try {
+    const res = await fetch('/api/admin/pending');
+    if (!res.ok) return;
+    const list = await res.json();
+    const badge = document.getElementById('pendingBadge');
+    if (list.length > 0) {
+      badge.textContent = list.length;
+      badge.style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+// ── Leden & Gebruikersbeheer ────────────────────────────────────────
+let currentLedenTab = 'admins';
+let editingUserEmail = null;
+
+function switchLedenTab(tab) {
+  currentLedenTab = tab;
+  document.getElementById('tabAdmins').style.color = tab === 'admins' ? '#1A3B70' : '#A0AEC0';
+  document.getElementById('tabAdmins').style.borderBottomColor = tab === 'admins' ? '#1A3B70' : 'transparent';
+  document.getElementById('tabAdmins').style.fontWeight = tab === 'admins' ? '600' : '500';
+  document.getElementById('tabResellers').style.color = tab === 'resellers' ? '#1A3B70' : '#A0AEC0';
+  document.getElementById('tabResellers').style.borderBottomColor = tab === 'resellers' ? '#1A3B70' : 'transparent';
+  document.getElementById('tabResellers').style.fontWeight = tab === 'resellers' ? '600' : '500';
+  document.getElementById('ledenAdminsContent').style.display = tab === 'admins' ? '' : 'none';
+  document.getElementById('ledenResellersContent').style.display = tab === 'resellers' ? '' : 'none';
+  loadLedenTab(tab);
+}
+
+async function loadLedenTab(tab) {
+  const res = await fetch('/api/admin/users?type=' + (tab === 'admins' ? 'admin' : 'reseller'));
+  if (!res.ok) return;
+  const users = await res.json();
+
+  if (tab === 'admins') {
+    document.getElementById('adminsList').innerHTML = users.length === 0
+      ? '<div style="padding:32px;text-align:center;color:#8A9BB5;">Geen admins</div>'
+      : users.map(u => `
+      <div class="dash-table-row" style="grid-template-columns:2fr 1.5fr 1fr auto auto;cursor:pointer;" onclick="openEditUserDrawer('${u.email}')">
+        <div style="font-weight:500">${u.name}</div>
+        <div class="text-muted text-sm">${u.email}</div>
+        <div><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-pending'}" style="font-size:0.75rem;padding:4px 10px;">${u.status === 'active' ? 'Actief' : 'Inactief'}</span></div>
+        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;" onclick="openEditUserDrawer('${u.email}')">Bewerken</button></div>
+        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;color:#666;" onclick="deleteUserConfirm('${u.email}',event)">Verwijderen</button></div>
+      </div>`).join('');
+  } else {
+    document.getElementById('resellersList').innerHTML = users.length === 0
+      ? '<div style="padding:32px;text-align:center;color:#8A9BB5;">Geen reseller-gebruikers</div>'
+      : users.map(u => `
+      <div class="dash-table-row" style="grid-template-columns:2fr 1.5fr 1.5fr 1fr auto auto;" onclick="openEditUserDrawer('${u.email}')">
+        <div style="font-weight:500">${u.name}</div>
+        <div class="text-muted text-sm">${u.email}</div>
+        <div class="text-muted text-sm">${u.company}</div>
+        <div><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-pending'}" style="font-size:0.75rem;padding:4px 10px;">${u.status === 'active' ? 'Actief' : 'Inactief'}</span></div>
+        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;" onclick="openEditUserDrawer('${u.email}')">Bewerken</button></div>
+        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;color:#666;" onclick="deleteUserConfirm('${u.email}',event)">Verwijderen</button></div>
+      </div>`).join('');
+  }
+}
+
+function openAddAdminDrawer() {
+  document.getElementById('addAdminName').value = '';
+  document.getElementById('addAdminEmail').value = '';
+  document.getElementById('addAdminPassword').value = '';
+  document.getElementById('addAdminError').style.display = 'none';
+  document.getElementById('addAdminDrawer').classList.add('open');
+  document.getElementById('addAdminBackdrop').classList.add('open');
+}
+
+function closeAddAdminDrawer() {
+  document.getElementById('addAdminDrawer').classList.remove('open');
+  document.getElementById('addAdminBackdrop').classList.remove('open');
+}
+
+async function saveNewAdmin() {
+  const name = document.getElementById('addAdminName').value.trim();
+  const email = document.getElementById('addAdminEmail').value.trim();
+  const password = document.getElementById('addAdminPassword').value;
+  const errorEl = document.getElementById('addAdminError');
+
+  if (!name || !email || !password) {
+    errorEl.textContent = 'Alle velden verplicht';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  if (password.length < 8) {
+    errorEl.textContent = 'Wachtwoord min. 8 tekens';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const res = await fetch('/api/admin/users/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, name, password })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    closeAddAdminDrawer();
+    adminSaveToast('Admin toegevoegd');
+    loadLedenTab('admins');
+  } else {
+    errorEl.textContent = data.error || 'Fout bij toevoegen';
+    errorEl.style.display = 'block';
+  }
+}
+
+async function openEditUserDrawer(email) {
+  editingUserEmail = email;
+  const res = await fetch('/api/admin/users?type=all');
+  if (!res.ok) return;
+  const users = await res.json();
+  const user = users.find(u => u.email === email);
+  if (!user) return;
+
+  document.getElementById('editUserTitle').textContent = user.name;
+  document.getElementById('editUserSub').textContent = user.email;
+  document.getElementById('euName').textContent = user.name;
+  document.getElementById('euEmail').textContent = user.email;
+  document.getElementById('euType').textContent = user.type === 'admin' ? 'Beheerder' : 'Reseller';
+  const badge = document.getElementById('euStatusBadge');
+  badge.textContent = user.status === 'active' ? 'Actief' : 'Inactief';
+  badge.className = 'badge ' + (user.status === 'active' ? 'badge-active' : 'badge-pending');
+  
+  const toggleBtn = document.getElementById('euToggleStatusBtn');
+  toggleBtn.textContent = user.status === 'active' ? 'Deactiveren' : 'Activeren';
+  toggleBtn.onclick = () => toggleUserStatus(email);
+
+  if (email === 'admin@aandelenxpress.nl') {
+    document.getElementById('euDeleteBtn').style.display = 'none';
+  } else {
+    document.getElementById('euDeleteBtn').style.display = '';
+  }
+
+  document.getElementById('editUserDrawer').classList.add('open');
+  document.getElementById('editUserBackdrop').classList.add('open');
+}
+
+function closeEditUserDrawer() {
+  document.getElementById('editUserDrawer').classList.remove('open');
+  document.getElementById('editUserBackdrop').classList.remove('open');
+  editingUserEmail = null;
+}
+
+function openResetPasswordDrawer() {
+  const email = editingUserEmail;
+  const res_users = document.querySelectorAll('.dash-table-row');
+  let userName = email;
+  document.querySelectorAll('.drawer-field-value').forEach(el => {
+    if (el.textContent.includes(email)) {
+      const parent = el.parentElement;
+      if (parent.previousElementSibling && parent.previousElementSibling.textContent.includes('E-mail')) {
+        userName = document.getElementById('editUserTitle').textContent;
+      }
+    }
+  });
+
+  document.getElementById('resetPwdSub').textContent = userName;
+  document.getElementById('resetPwdInput').value = '';
+  document.getElementById('resetPwdError').style.display = 'none';
+  document.getElementById('resetPwdDrawer').style.display = 'block';
+  document.getElementById('resetPwdBackdrop').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('resetPwdDrawer').classList.add('open');
+    document.getElementById('resetPwdBackdrop').classList.add('open');
+  }, 0);
+}
+
+function closeResetPasswordDrawer() {
+  document.getElementById('resetPwdDrawer').classList.remove('open');
+  document.getElementById('resetPwdBackdrop').classList.remove('open');
+  setTimeout(() => {
+    document.getElementById('resetPwdDrawer').style.display = 'none';
+    document.getElementById('resetPwdBackdrop').style.display = 'none';
+  }, 200);
+}
+
+async function confirmResetPassword() {
+  const pwd = document.getElementById('resetPwdInput').value;
+  const errorEl = document.getElementById('resetPwdError');
+
+  if (!pwd || pwd.length < 8) {
+    errorEl.textContent = 'Wachtwoord min. 8 tekens';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const res = await fetch('/api/admin/users/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: editingUserEmail, newPassword: pwd })
+  });
+
+  if (res.ok) {
+    closeResetPasswordDrawer();
+    closeEditUserDrawer();
+    adminSaveToast('Wachtwoord gewijzigd');
+  } else {
+    errorEl.textContent = 'Fout bij resetten';
+    errorEl.style.display = 'block';
+  }
+}
+
+async function toggleUserStatus(email) {
+  const res = await fetch('/api/admin/users/toggle-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+
+  if (res.ok) {
+    closeEditUserDrawer();
+    adminSaveToast('Status gewijzigd');
+    loadLedenTab(currentLedenTab);
+  } else {
+    adminSaveToast('Fout bij wijzigen status');
+  }
+}
+
+function deleteUserConfirm(email, event) {
+  event.stopPropagation();
+  if (!confirm('Weet u zeker dat u deze gebruiker wilt verwijderen?')) return;
+  deleteUser(email);
+}
+
+async function deleteUser(email = editingUserEmail) {
+  if (email === 'admin@aandelenxpress.nl') {
+    adminSaveToast('Kan hoofdadmin niet verwijderen');
+    return;
+  }
+
+  const res = await fetch('/api/admin/users/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+
+  if (res.ok) {
+    closeEditUserDrawer();
+    adminSaveToast('Gebruiker verwijderd');
+    loadLedenTab(currentLedenTab);
+  } else {
+    adminSaveToast('Fout bij verwijderen');
+  }
+}
+
+// ── Sorting and Filtering ─────────────────────────────────────────
+let currentSortColumn = 'date';
+let sortDirection = -1; // -1 = descending (newest first), 1 = ascending
+let currentPartnerSortColumn = 'partnerName';
+let partnerSortDirection = 1; // 1 = ascending (A-Z), -1 = descending
+
+function setSortColumn(col) {
+  if (col.startsWith('partner')) {
+    // Partner sorting
+    if (currentPartnerSortColumn === col) {
+      partnerSortDirection *= -1; // Toggle direction
+    } else {
+      currentPartnerSortColumn = col;
+      partnerSortDirection = 1; // Default: ascending
+    }
+    updatePartnerSortIndicators();
+    applyPartnerSearch();
+  } else {
+    // Dossier sorting
+    if (currentSortColumn === col) {
+      sortDirection *= -1; // Toggle direction
+    } else {
+      currentSortColumn = col;
+      sortDirection = -1; // Default: descending
+    }
+    updateSortIndicators();
+    applyAllFilters();
+  }
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll('.sort-indicator').forEach(ind => ind.textContent = '');
+  const indicator = document.getElementById('sort-' + currentSortColumn);
+  if (indicator) {
+    indicator.textContent = sortDirection === -1 ? '↓' : '↑';
+    indicator.style.color = '#1A3B70';
+    indicator.style.fontSize = '0.8rem';
+  }
+}
+
+function updatePartnerSortIndicators() {
+  document.querySelectorAll('.sort-indicator').forEach(ind => ind.textContent = '');
+  const indicator = document.getElementById('sort-' + currentPartnerSortColumn);
+  if (indicator) {
+    indicator.textContent = partnerSortDirection === 1 ? '↑' : '↓';
+    indicator.style.color = '#1A3B70';
+    indicator.style.fontSize = '0.8rem';
+  }
+}
+
+function searchPartners(data) {
+  const searchTerm = document.getElementById('partnerSearch')?.value.toLowerCase() || '';
+  if (!searchTerm) return data;
+  
+  return data.filter(p => 
+    p.name.toLowerCase().includes(searchTerm) ||
+    p.city.toLowerCase().includes(searchTerm) ||
+    p.contact.toLowerCase().includes(searchTerm) ||
+    p.email.toLowerCase().includes(searchTerm) ||
+    p.phone.toLowerCase().includes(searchTerm)
+  );
+}
+
+function sortPartners(data) {
+  const sorted = [...data];
+  
+  sorted.sort((a, b) => {
+    let aVal, bVal;
+    
+    switch(currentPartnerSortColumn) {
+      case 'partnerName':
+        aVal = a.name.toLowerCase();
+        bVal = b.name.toLowerCase();
+        break;
+      case 'partnerCity':
+        aVal = a.city.toLowerCase();
+        bVal = b.city.toLowerCase();
+        break;
+      case 'partnerDossiers':
+        aVal = a.dossiers;
+        bVal = b.dossiers;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aVal < bVal) return -1 * partnerSortDirection;
+    if (aVal > bVal) return 1 * partnerSortDirection;
+    return 0;
+  });
+  
+  return sorted;
+}
+
+function applyPartnerSearch() {
+  let filtered = partners;
+  
+  // Apply search
+  filtered = searchPartners(filtered);
+  
+  // Apply sort
+  filtered = sortPartners(filtered);
+  
+  // Update total display
+  document.getElementById('partnersTotal').textContent = filtered.length + ' partner' + (filtered.length !== 1 ? 's' : '');
+  
+  renderPartnersTable(filtered);
+}
+
+function performSearch(data) {
+  const searchTerm = document.getElementById('dossierSearch')?.value.toLowerCase() || '';
+  if (!searchTerm) return data;
+  
+  return data.filter(d => 
+    d.name.toLowerCase().includes(searchTerm) ||
+    d.partner.toLowerCase().includes(searchTerm) ||
+    d.statusText.toLowerCase().includes(searchTerm) ||
+    d.dossierNr.toLowerCase().includes(searchTerm)
+  );
+}
+
+function sortDossiers(data) {
+  const sorted = [...data];
+  
+  sorted.sort((a, b) => {
+    let aVal, bVal;
+    
+    switch(currentSortColumn) {
+      case 'name':
+        aVal = a.name.toLowerCase();
+        bVal = b.name.toLowerCase();
+        break;
+      case 'partner':
+        aVal = a.partner.toLowerCase();
+        bVal = b.partner.toLowerCase();
+        break;
+      case 'status':
+        aVal = a.statusText.toLowerCase();
+        bVal = b.statusText.toLowerCase();
+        break;
+      case 'type':
+        aVal = a.type.toLowerCase();
+        bVal = b.type.toLowerCase();
+        break;
+      case 'date':
+        aVal = new Date(a.date);
+        bVal = new Date(b.date);
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aVal < bVal) return -1 * sortDirection;
+    if (aVal > bVal) return 1 * sortDirection;
+    return 0;
+  });
+  
+  return sorted;
+}
+
+function applyAllFilters() {
+  const assignedFilter = document.getElementById('dossierFilterAssigned')?.value || '';
+  const statusFilter = document.getElementById('dossierFilterStatus')?.value || '';
+  const partnerFilter = document.getElementById('dossierFilterPartner')?.value || '';
+  const typeFilter = document.getElementById('dossierFilterType')?.value || '';
+  
+  // Start with all data
+  let filtered = allDossiersData;
+  
+  // Apply all filters
+  if (assignedFilter) {
+    filtered = filtered.filter(d => d.assignedTo === assignedFilter);
+  }
+  if (statusFilter) {
+    filtered = filtered.filter(d => d.statusKey === statusFilter);
+  }
+  if (partnerFilter) {
+    filtered = filtered.filter(d => d.partner === partnerFilter);
+  }
+  if (typeFilter) {
+    filtered = filtered.filter(d => d.type === typeFilter);
+  }
+  
+  // Apply search
+  filtered = performSearch(filtered);
+  
+  // Apply sort
+  filtered = sortDossiers(filtered);
+  
+  // Update total display
+  document.getElementById('dossiersTotal').textContent = filtered.length + ' dossiers';
+  
+  renderTable('allDossiers', filtered);
+}
+
+function applyDossierFilter() {
+  applyAllFilters();
+}
+
+// ────── RESELLER REQUESTS ──────────────────────────────────
+
+let currentRequestDrawer = null;
+
+async function loadResellerRequests() {
+  try {
+    const r = await fetch('/api/reseller-requests?status=pending');
+    if (!r.ok) return;
+    const requests = await r.json();
+    
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+    
+    const html = requests.map(req => `
+      <div class="dash-table-row table-cols-reseller-requests" style="cursor:pointer;" onclick="openRequestDrawer('${req.id}')">
+        <div style="font-weight:500">${escapeHtml(req.clientName)}</div>
+        <div class="text-muted text-sm">${escapeHtml(req.resellerCompany)}</div>
+        <div><span class="badge badge-pending">Aanvraag ingediend</span></div>
+        <div class="text-muted text-sm">${new Date(req.createdAt).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <div><a href="#" class="table-link" onclick="openRequestDrawer('${req.id}');return false;">Details →</a></div>
+      </div>
+    `).join('');
+    
+    if (requests.length === 0) {
+      document.getElementById('resellerRequestsList').innerHTML = '<div style="padding:32px;text-align:center;color:#8A9BB5;">Geen aanvragen in behandeling</div>';
+    } else {
+      document.getElementById('resellerRequestsList').innerHTML = html;
+    }
+    
+    document.getElementById('resellerRequestsCount').textContent = requests.length + ' aanvragen';
+    document.getElementById('resellRequestsBadge').textContent = requests.length;
+    document.getElementById('resellRequestsBadge').style.display = requests.length > 0 ? 'inline' : 'none';
+  } catch(e) {
+    console.error('Failed to load reseller requests:', e);
+  }
+}
+
+async function openRequestDrawer(requestId) {
+  try {
+    const r = await fetch('/api/reseller-requests?status=all');
+    if (!r.ok) return;
+    const requests = await r.json();
+    const request = requests.find(req => req.id === requestId);
+    
+    if (!request) return;
+    
+    currentRequestDrawer = request;
+    
+    document.getElementById('rfReseller').textContent = request.resellerName;
+    document.getElementById('rfKantoor').textContent = request.resellerCompany;
+    document.getElementById('rfBedrijf').textContent = request.clientName;
+    document.getElementById('rfEmail').textContent = request.clientEmail;
+    document.getElementById('rfTelefoon').textContent = request.clientPhone || '–';
+    
+    // Oprichtingsgegevens
+    const typeMap = {
+      'bv': 'Gewone BV',
+      'bv-holding': 'BV + Holding structuur',
+      'bv-spoed': 'BV met spoed (24-48 uur)',
+      'eenmanszaak-omzetten': 'Eenmanszaak → BV omzetten',
+      'advies': 'Wil graag advies (geen oprichting)'
+    };
+    document.getElementById('rfType').textContent = typeMap[request.oprichtingType] || request.oprichtingType || '–';
+    document.getElementById('rfGewenstNaam').textContent = request.gewenstNaam || '–';
+    document.getElementById('rfDoel').textContent = request.doel || '–';
+    document.getElementById('rfAandeelhouders').textContent = (request.aandeelhouders || 1) + ' persoon(en)';
+    document.getElementById('rfKapitaal').textContent = '€ ' + (request.kapitaal || 0.01).toLocaleString('nl-NL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    // Aanvullende gegevens
+    document.getElementById('rfStartSaldo').textContent = request.startSaldo ? '€ ' + request.startSaldo.toLocaleString('nl-NL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '–';
+    document.getElementById('rfOpmerkingen').textContent = request.opmerkingen || '(geen opmerkingen)';
+    
+    document.getElementById('rfStatus').textContent = request.status === 'pending' ? 'Aanvraag ingediend' : 
+                                                       request.status === 'approved' ? 'Goedgekeurd' : 
+                                                       request.status === 'rejected' ? 'Afgewezen' : request.status;
+    document.getElementById('rfStatus').textContent = request.status === 'pending' ? 'Aanvraag ingediend' : 
+                                                       request.status === 'approved' ? 'Goedgekeurd' : 
+                                                       request.status === 'rejected' ? 'Afgewezen' : request.status;
+    
+    // Show/hide action buttons based on status
+    const actionsDiv = document.getElementById('requestActionButtons');
+    const rejectionDiv = document.getElementById('requestRejectionReason');
+    
+    if (request.status === 'pending') {
+      actionsDiv.style.display = 'flex';
+      rejectionDiv.style.display = 'none';
+    } else if (request.status === 'approved') {
+      actionsDiv.style.display = 'none';
+      rejectionDiv.style.display = 'none';
+    } else if (request.status === 'rejected') {
+      actionsDiv.style.display = 'none';
+      rejectionDiv.style.display = 'block';
+      document.getElementById('rfRejectionReason').textContent = request.rejectionReason || '–';
+    }
+    
+    document.getElementById('requestDrawerBackdrop').classList.add('open');
+    document.getElementById('requestDrawer').classList.add('open');
+  } catch(e) {
+    console.error('Failed to open request drawer:', e);
+  }
+}
+
+function closeRequestDrawer() {
+  document.getElementById('requestDrawerBackdrop').classList.remove('open');
+  document.getElementById('requestDrawer').classList.remove('open');
+  currentRequestDrawer = null;
+}
+
+async function approveResellerRequest() {
+  if (!currentRequestDrawer) return;
+  
+  try {
+    const r = await fetch(`/api/reseller-requests/${currentRequestDrawer.id}/approve`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!r.ok) {
+      alert('Fout: ' + (await r.json()).error);
+      return;
+    }
+    
+    closeRequestDrawer();
+    loadResellerRequests();
+    
+    const t = document.createElement('div');
+    t.textContent = '✓ Aanvraag goedgekeurd';
+    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  } catch(e) {
+    alert('Fout: ' + e.message);
+  }
+}
+
+async function rejectResellerRequest() {
+  if (!currentRequestDrawer) return;
+  
+  const reason = prompt('Afwijzingsreden:', 'Aanvraag niet goedgekeurd');
+  if (reason === null) return;
+  
+  try {
+    const r = await fetch(`/api/reseller-requests/${currentRequestDrawer.id}/reject`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    
+    if (!r.ok) {
+      alert('Fout: ' + (await r.json()).error);
+      return;
+    }
+    
+    closeRequestDrawer();
+    loadResellerRequests();
+    
+    const t = document.createElement('div');
+    t.textContent = '✓ Aanvraag afgewezen';
+    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  } catch(e) {
+    alert('Fout: ' + e.message);
+  }
+}
+
+// ─ Ticket Drawer Functions ─────────────────────────────────────────────
+let currentTicketDrawer = null;
+
+async function openTicketDrawer(ticketId) {
+  try {
+    // First try to find ticket in local array
+    let ticket = tickets.find(t => t.id === ticketId);
+    
+    // If not found locally, fetch from API
+    if (!ticket) {
+      const response = await fetch('/api/tickets/' + ticketId);
+      if (!response.ok) {
+        alert('Ticket niet gevonden');
+        return;
+      }
+      ticket = await response.json();
+    }
+    
+    currentTicketDrawer = ticket;
+    
+    document.getElementById('ticketDrawerTitle').textContent = ticket.id + ' - ' + ticket.subject;
+    
+    // Handle both support tickets (date) and dossier tickets (createdAt)
+    const ticketDate = ticket.date || ticket.createdAt;
+    document.getElementById('ticketDrawerSub').textContent = 'Ingediend op ' + fmtDate(ticketDate);
+    
+    document.getElementById('tkSubject').textContent = ticket.subject;
+    document.getElementById('tkStatusSelect').value = ticket.status || 'Open';
+    
+    // For dossier tickets, show dossier and sender info; for support tickets, show partner
+    if (ticket.dossierNr) {
+      document.getElementById('tkSenderName').textContent = ticket.senderName || '–';
+      document.getElementById('tkSenderEmail').textContent = ticket.senderEmail ? '(' + ticket.senderEmail + ')' : '';
+    } else {
+      document.getElementById('tkSenderName').textContent = ticket.partner || '–';
+      document.getElementById('tkSenderEmail').textContent = ticket.email ? '(' + ticket.email + ')' : '';
+    }
+    
+    // Generate public link
+    const publicLink = window.location.origin + '/ticket-detail.html?id=' + ticket.id;
+    document.getElementById('tkPublicLink').value = publicLink;
+    
+    // Show message
+    if (ticket.dossierNr) {
+      document.getElementById('tkMessage').textContent = ticket.message || 'Geen bericht';
+    } else {
+      document.getElementById('tkMessage').textContent = 'Dit is het originele verzoek van ' + (ticket.partner || 'de klant');
+    }
+    
+    // Show replies if any
+    const repliesSection = document.getElementById('tkRepliesSection');
+    if (ticket.replies && ticket.replies.length > 0) {
+      repliesSection.style.display = 'block';
+      const repliesHTML = ticket.replies.map(r => `
+        <div style="background:#f7fafc;padding:12px;border-radius:4px;border-left:3px solid #0A1E42;">
+          <div style="font-weight:600;font-size:0.9rem;">${r.author}</div>
+          <div style="font-size:0.8rem;color:#718096;margin-bottom:6px;">${new Date(r.createdAt).toLocaleString('nl-NL')}</div>
+          <div style="font-size:0.9rem;white-space:pre-wrap;">${r.message}</div>
+        </div>
+      `).join('');
+      document.getElementById('tkReplies').innerHTML = repliesHTML;
+    } else {
+      repliesSection.style.display = 'none';
+    }
+    
+    document.getElementById('tkReplyMessage').value = '';
+    
+    document.getElementById('ticketDrawerBackdrop').classList.add('open');
+    document.getElementById('ticketDrawer').classList.add('open');
+  } catch(e) {
+    console.error('Error opening ticket drawer:', e);
+    alert('Er is een fout opgetreden bij het laden van het ticket');
+  }
+}
+
+function closeTicketDrawer() {
+  document.getElementById('ticketDrawerBackdrop').classList.remove('open');
+  document.getElementById('ticketDrawer').classList.remove('open');
+  currentTicketDrawer = null;
+}
+
+async function submitTicketReply() {
+  if (!currentTicketDrawer) return;
+  
+  const message = document.getElementById('tkReplyMessage').value.trim();
+  if (!message) {
+    alert('Voer een antwoord in');
+    return;
+  }
+  
+  try {
+    const r = await fetch(`/api/tickets/${currentTicketDrawer.id}/reply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ message })
+    });
+    
+    if (!r.ok) {
+      const err = await r.json();
+      alert('Fout: ' + (err.error || 'Antwoord kon niet worden verzonden'));
+      return;
+    }
+    
+    const updated = await r.json();
+    
+    // Update the local tickets array with the updated ticket data
+    const ticketIndex = tickets.findIndex(t => t.id === currentTicketDrawer.id);
+    if (ticketIndex !== -1) {
+      tickets[ticketIndex] = updated;
+    }
+    
+    currentTicketDrawer = updated;
+    
+    // Re-render the drawer with the updated data
+    await openTicketDrawer(currentTicketDrawer.id);
+    
+    // Refresh the ticket table
+    await loadAndRenderTickets();
+    
+    const t = document.createElement('div');
+    t.textContent = '✓ Antwoord verzonden';
+    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  } catch(e) {
+    alert('Fout: ' + e.message);
+  }
+}
+
+async function updateTicketStatus() {
+  if (!currentTicketDrawer) return;
+  
+  const newStatus = document.getElementById('tkStatusSelect').value;
+  if (newStatus === currentTicketDrawer.status) return;
+  
+  try {
+    const r = await fetch(`/api/tickets/${currentTicketDrawer.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status: newStatus })
+    });
+    
+    if (!r.ok) {
+      const err = await r.json();
+      alert('Fout: ' + (err.error || 'Status kon niet worden gewijzigd'));
+      document.getElementById('tkStatusSelect').value = currentTicketDrawer.status;
+      return;
+    }
+    
+    const updated = await r.json();
+    
+    // Update the local tickets array
+    const ticketIndex = tickets.findIndex(t => t.id === currentTicketDrawer.id);
+    if (ticketIndex !== -1) {
+      tickets[ticketIndex] = updated;
+    }
+    
+    currentTicketDrawer = updated;
+    
+    // Refresh the ticket table
+    await loadAndRenderTickets();
+    
+    const t = document.createElement('div');
+    t.textContent = '✓ Status bijgewerkt naar ' + newStatus;
+    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  } catch(e) {
+    alert('Fout: ' + e.message);
+    document.getElementById('tkStatusSelect').value = currentTicketDrawer.status;
+  }
+}
+
+function copyTicketLink() {
+  const link = document.getElementById('tkPublicLink').value;
+  if (!link) return;
+  
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Gekopieerd';
+    btn.style.background = '#2E7D32';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '#0A1E42';
+    }, 2000);
+  }).catch(err => {
+    alert('Kon link niet kopiëren');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize hash-based routing
+  const section = window.location.hash.slice(1) || "overzicht";
+  showSectionSilent(section);
+  
+  // Setup filter event listeners
+  const filterSelect = document.getElementById('dossierFilterAssigned');
+  const searchInput = document.getElementById('dossierSearch');
+  const statusFilter = document.getElementById('dossierFilterStatus');
+  const partnerFilter = document.getElementById('dossierFilterPartner');
+  const typeFilter = document.getElementById('dossierFilterType');
+  const partnerSearchInput = document.getElementById('partnerSearch');
+  
+  if (filterSelect) filterSelect.addEventListener('change', applyAllFilters);
+  if (searchInput) searchInput.addEventListener('input', applyAllFilters);
+  if (statusFilter) statusFilter.addEventListener('change', applyAllFilters);
+  if (partnerFilter) partnerFilter.addEventListener('change', applyAllFilters);
+  if (typeFilter) typeFilter.addEventListener('change', applyAllFilters);
+  if (partnerSearchInput) partnerSearchInput.addEventListener('input', applyPartnerSearch);
+  
+  updateSortIndicators();
+  updatePartnerSortIndicators();
+});
+
+loadUser();
+renderTable("recentDossiers", allDossiersData.slice(0,5));
+renderTable("allDossiers", allDossiersData);
+renderPartnersTable(partners);
+loadAndRenderTickets();
+loadPendingBadge();
+loadResellerRequests();
+</script>
+</body>
+</html>

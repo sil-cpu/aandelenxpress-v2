@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Partnerdetail – AandelenXpress</title>
+  <link rel="stylesheet" href="dashboard-shared.css">
+  <style>
+    .detail-page-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .detail-card { background: white; border: 1px solid #E8EDF5; border-radius: 12px; overflow: hidden; }
+    .detail-card-head { padding: 18px 24px; border-bottom: 1px solid #EEF1F7; }
+    .detail-card-title { font-size: 0.9rem; font-weight: 600; color: #0F1D3A; }
+    .detail-card-body { padding: 24px; }
+    .detail-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+    .detail-field label { display: block; font-size: 0.76rem; font-weight: 600; color: #8A9BB5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .detail-field .val { font-size: 0.92rem; font-weight: 500; color: #0F1D3A; }
+    .partner-avatar-large { width: 64px; height: 64px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; color: white; flex-shrink: 0; }
+    .page-title-row { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 28px; }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 500; color: #2B6CB5; text-decoration: none; margin-bottom: 24px; }
+    .back-btn:hover { color: #1A3B70; }
+    .stat-mini-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .stat-mini { background: #F7F9FC; border: 1px solid #E8EDF5; border-radius: 10px; padding: 14px 16px; text-align: center; }
+    .stat-mini-val { font-size: 1.6rem; font-weight: 700; color: #1A3B70; }
+    .dossier-row-mini { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #F0F2F7; align-items: center; }
+    .dossier-row-mini:last-child { border-bottom: none; }
+    .dossier-row-mini a { font-size: 0.82rem; color: #2B6CB5; text-decoration: none; white-space: nowrap; }
+    .dossier-row-mini a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="dash-wrap">
+
+  <!-- SIDEBAR (admin only) -->
+  <aside class="dash-sidebar" id="sidebar">
+    <div class="dash-logo">
+      <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+    </div>
+    <nav class="dash-nav" id="sidebarNav"></nav>
+    <div class="dash-sidebar-foot">
+      <div class="dash-user-row">
+        <div class="dash-avatar" id="userInitials">--</div>
+        <div class="dash-user-info">
+          <div class="dash-user-name" id="userName">Laden...</div>
+          <div class="dash-user-email" id="userEmail"></div>
+        </div>
+      </div>
+      <a href="#" class="dash-nav-item" style="margin-top:8px;" onclick="logout();return false;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Uitloggen
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="dash-topbar">
+      <span class="dash-topbar-title" id="topbarTitle">Partnerdetail</span>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a href="admin-dashboard.html" class="btn-ghost" style="font-size:0.85rem;">
+          ← Terug
+        </a>
+      </div>
+    </header>
+
+    <div class="dash-content" id="pageContent">
+      <!-- filled by JS -->
+    </div>
+  </main>
+</div>
+
+<script>
+const allPartners = [
+  { name:"Bakker Accountants",  city:"Amsterdam",  dossiers:89, color:"#1A3B70", contact:"Jan Bakker",     email:"j.bakker@bakker-acc.nl",   phone:"+31 20 555 0100", since:"2024-01", kvk:"11223344" },
+  { name:"Van der Berg & Co",   city:"Rotterdam",  dossiers:72, color:"#2A5BA0", contact:"Kees van Berg",  email:"k.vanberg@vdberg.nl",       phone:"+31 10 555 0200", since:"2024-03", kvk:"22334455" },
+  { name:"Dijkstra Partners",   city:"Utrecht",    dossiers:65, color:"#17518A", contact:"Els Dijkstra",   email:"e.dijkstra@dijkstra.nl",    phone:"+31 30 555 0300", since:"2024-02", kvk:"33445566" },
+  { name:"Smit & Assoc.",       city:"Den Haag",   dossiers:48, color:"#1D4477", contact:"Wim Smit",       email:"w.smit@smitassoc.nl",       phone:"+31 70 555 0400", since:"2024-06", kvk:"44556677" },
+  { name:"De Groot Financieel", city:"Eindhoven",  dossiers:31, color:"#1A3B70", contact:"Hans de Groot",  email:"h.degroot@degroot.nl",      phone:"+31 40 555 0500", since:"2025-01", kvk:"55667788" },
+  { name:"Jansen Advies",       city:"Groningen",  dossiers:19, color:"#2A5BA0", contact:"Marie Jansen",   email:"m.jansen@jansenadvies.nl",  phone:"+31 50 555 0600", since:"2025-04", kvk:"66778899" },
+];
+
+const allDossiers = [
+  { name:"TechStart B.V.",       partner:"Bakker Accountants",  statusKey:"notary",   statusText:"Notariële akte", date:"2026-04-20", dossierNr:"AX-2026-0042" },
+  { name:"Consultancy Plus",     partner:"Van der Berg & Co",   statusKey:"ident",    statusText:"iDIN verwerking", date:"2026-04-18", dossierNr:"AX-2026-0041" },
+  { name:"Groen & Co",           partner:"Bakker Accountants",  statusKey:"kvk",      statusText:"KvK inschrijving", date:"2026-04-15", dossierNr:"AX-2026-0040" },
+  { name:"Marketing Solutions",  partner:"Dijkstra Partners",   statusKey:"complete", statusText:"Voltooid", date:"2026-04-12", dossierNr:"AX-2026-0039" },
+  { name:"Finance Advisors",     partner:"Van der Berg & Co",   statusKey:"complete", statusText:"Voltooid", date:"2026-04-10", dossierNr:"AX-2026-0038" },
+  { name:"Design Studio B.V.",   partner:"Smit & Assoc.",       statusKey:"complete", statusText:"Voltooid", date:"2026-04-05", dossierNr:"AX-2026-0037" },
+  { name:"HR Services B.V.",     partner:"Bakker Accountants",  statusKey:"intake",   statusText:"Intake", date:"2026-04-22", dossierNr:"AX-2026-0043" },
+  { name:"Logistiek Noord",      partner:"Dijkstra Partners",   statusKey:"complete", statusText:"Voltooid", date:"2026-03-28", dossierNr:"AX-2026-0035" },
+];
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString("nl-NL", { day:"numeric", month:"long", year:"numeric" });
+}
+
+function renderPage(p) {
+  const initials = p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  const relDossiers = allDossiers.filter(d => d.partner === p.name);
+  const sinceStr = p.since ? new Date(p.since+"-01").toLocaleDateString("nl-NL",{month:"long",year:"numeric"}) : "—";
+  const thisYear = Math.round(p.dossiers * 0.35);
+  const pct = Math.round(p.dossiers / 89 * 100);
+
+  document.getElementById("topbarTitle").textContent = p.name;
+  document.title = p.name + " – AandelenXpress";
+
+  document.getElementById("pageContent").innerHTML = `
+    <a href="admin-dashboard.html" class="back-btn">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Terug naar dashboard
+    </a>
+
+    <div class="page-title-row">
+      <div class="partner-avatar-large" style="background:${p.color};">${initials}</div>
+      <div>
+        <div style="font-size:1.5rem;font-weight:600;color:#0F1D3A;">${p.name}</div>
+        <div style="font-size:0.88rem;color:#718096;margin-top:4px;">${p.city} &nbsp;·&nbsp; Klant sinds ${sinceStr}</div>
+      </div>
+      <span class="badge badge-active" style="font-size:0.85rem;padding:6px 14px;margin-left:auto;">Actief</span>
+    </div>
+
+    <!-- Statistieken (full width) -->
+    <div class="stat-mini-grid" style="margin-bottom:20px;">
+      <div class="stat-mini">
+        <div class="stat-card-label">Totale dossiers</div>
+        <div class="stat-mini-val">${p.dossiers}</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-card-label">Dit jaar</div>
+        <div class="stat-mini-val">${thisYear}</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-card-label">Aandeel totaal</div>
+        <div class="stat-mini-val">${pct}%</div>
+        <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+
+    <div class="detail-page-grid">
+      <!-- Kantoorgegevens -->
+      <div class="detail-card">
+        <div class="detail-card-head"><div class="detail-card-title">Kantoorgegevens</div></div>
+        <div class="detail-card-body">
+          <div class="detail-field-grid">
+            <div class="detail-field"><label>Kantoornaam</label><div class="val">${p.name}</div></div>
+            <div class="detail-field"><label>Vestiging</label><div class="val">${p.city}</div></div>
+            <div class="detail-field"><label>KvK-nummer</label><div class="val" style="font-family:monospace;">${p.kvk||"—"}</div></div>
+            <div class="detail-field"><label>Klant sinds</label><div class="val">${sinceStr}</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contactpersoon -->
+      <div class="detail-card">
+        <div class="detail-card-head"><div class="detail-card-title">Contactpersoon</div></div>
+        <div class="detail-card-body">
+          <div class="detail-field-grid">
+            <div class="detail-field"><label>Naam</label><div class="val">${p.contact||"—"}</div></div>
+            <div class="detail-field"><label>Telefoon</label><div class="val">${p.phone||"—"}</div></div>
+            <div class="detail-field" style="grid-column:span 2"><label>E-mailadres</label><div class="val">${p.email||"—"}</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dossiers -->
+    <div class="detail-card">
+      <div class="detail-card-head" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="detail-card-title">Dossiers</div>
+        <span class="badge badge-active" style="font-size:0.75rem;">${relDossiers.length} getoond</span>
+      </div>
+      ${relDossiers.length > 0 ? `
+      <div style="display:grid;grid-template-columns:180px 130px 110px 110px 60px;gap:12px;padding:12px 16px;border-bottom:1px solid #E8EDF5;background:#FAFBFC;font-weight:500;font-size:0.8rem;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">
+        <span>Bedrijfsnaam</span><span>Partner</span><span>Status</span><span>Aangemeld</span><span></span>
+      </div>
+      ${relDossiers.map(d => `
+      <div style="display:grid;grid-template-columns:180px 130px 110px 110px 60px;gap:12px;padding:12px 16px;border-bottom:1px solid #F0F2F7;align-items:center;">
+        <a href="dossier-detail.html?nr=${d.dossierNr}" style="font-size:0.88rem;font-weight:500;color:#0F1D3A;text-decoration:none;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block;">${d.name}</a>
+        <div style="font-size:0.82rem;color:#718096;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${d.partner}</div>
+        <span class="badge badge-${d.statusKey}" style="font-size:0.75rem;justify-self:start;">${d.statusText}</span>
+        <div style="font-size:0.82rem;color:#A0AEC0;">${fmtDate(d.date)}</div>
+        <a href="dossier-detail.html?nr=${d.dossierNr}" style="font-size:0.82rem;color:#2B6CB5;text-decoration:none;justify-self:end;">→</a>
+      </div>`).join("")}` :
+      `<div style="padding:40px;text-align:center;color:#A0AEC0;font-size:0.9rem;">Geen dossiers gevonden voor dit kantoor.</div>`}
+    </div>`;
+}
+
+function buildSidebar(role) {
+  const adminItems = [
+    { section:"overzicht", label:"Dashboard", url:"admin-dashboard.html#overzicht", icon:`<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>` },
+    { section:"partners", label:"Partners", url:"admin-dashboard.html#partners", icon:`<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
+    { section:"dossiers", label:"Alle dossiers", url:"admin-dashboard.html#dossiers", icon:`<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>` },
+    { section:"support", label:"Support", url:"admin-dashboard.html#support", icon:`<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>` },
+    { section:"aanmeldingen", label:"Aanmeldingen", url:"admin-dashboard.html#aanmeldingen", icon:`<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>` },
+    { section:"leden", label:"Leden & gebruikers", url:"admin-dashboard.html#leden", icon:`<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
+    { section:"instellingen", label:"Instellingen", url:"admin-dashboard.html#instellingen", icon:`<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>` },
+  ];
+  
+  let html = '<span class="dash-nav-section">Navigatie</span>';
+  html += adminItems.slice(0, 6).map(it =>
+    `<a href="${it.url}" class="dash-nav-item">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">${it.icon}</svg>
+      ${it.label}
+    </a>`
+  ).join("");
+  
+  html += '<span class="dash-nav-section" style="margin-top:8px;">Systeem</span>';
+  html += `<a href="${adminItems[6].url}" class="dash-nav-item">
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">${adminItems[6].icon}</svg>
+    ${adminItems[6].label}
+  </a>`;
+  
+  document.getElementById("sidebarNav").innerHTML = html;
+}
+
+async function init() {
+  const params = new URLSearchParams(location.search);
+  const name = params.get("name");
+
+  try {
+    const r = await fetch("/api/user");
+    if (!r.ok) { location.href = "/login.html"; return; }
+    const u = await r.json();
+    if (u.type !== "admin") { location.href = "/reseller-dashboard.html"; return; }
+    document.getElementById("userName").textContent = u.name;
+    document.getElementById("userEmail").textContent = u.email;
+    document.getElementById("userInitials").textContent = u.name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
+    buildSidebar(u.type);
+
+    const p = allPartners.find(x => x.name === name);
+    if (!p) {
+      document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Partner niet gevonden.</p><a href="admin-dashboard.html" class="btn-primary" style="margin-top:16px;">Terug naar dashboard</a></div>`;
+      return;
+    }
+    renderPage(p);
+  } catch(e) { location.href = "/login.html"; }
+}
+
+function logout() {
+  if (confirm("Weet u zeker dat u wilt uitloggen?")) location.href = "/api/logout";
+}
+
+init();
+</script>
+</body>
+</html>

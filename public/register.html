@@ -52,106 +52,19 @@
             <div class="login-form-box">
 
                 <!-- Success state (hidden by default) -->
-                <div id="successState" style="display:none; text-align:center; padding: 24px 0;">
-                    <div style="width:64px;height:64px;background:#E6EDF5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1A3B70" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <div style="text-align:center; padding: 32px 0;">
+                    <div style="width:64px;height:64px;background:#FEF3C7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     </div>
-                    <h1 style="font-size:1.5rem;margin-bottom:10px;">Aanmelding ontvangen!</h1>
-                    <p style="color:#64748b;line-height:1.6;margin-bottom:28px;">Uw aanmelding is succesvol ingediend. Ons team beoordeelt uw aanvraag en u ontvangt bericht zodra uw account is goedgekeurd.<br><br>Dit duurt gewoonlijk <strong>1 werkdag</strong>.</p>
-                    <a href="login.html" class="login-submit" style="display:block;text-align:center;text-decoration:none;">Terug naar inloggen</a>
-                </div>
-
-                <!-- Registration form -->
-                <div id="formState">
-                    <h1>Aanmelden als reseller</h1>
-                    <p class="login-subtitle">Vul uw kantoorgegevens in om een partneraccount aan te vragen.</p>
-
-                    <form id="registerForm" novalidate>
-                        <div class="login-field">
-                            <label for="kantoor">Kantoornaam</label>
-                            <input type="text" id="kantoor" name="kantoor" placeholder="Uw Accountantskantoor B.V." required>
-                        </div>
-                        <div class="login-field">
-                            <label for="kvk">KvK-nummer</label>
-                            <input type="text" id="kvk" name="kvk" placeholder="12345678" maxlength="8" required>
-                        </div>
-                        <div class="login-field">
-                            <label for="naam">Naam contactpersoon</label>
-                            <input type="text" id="naam" name="naam" placeholder="Voor- en achternaam" required>
-                        </div>
-                        <div class="login-field">
-                            <label for="email">E-mailadres</label>
-                            <input type="email" id="email" name="email" placeholder="naam@kantoor.nl" autocomplete="email" required>
-                        </div>
-                        <div class="login-field">
-                            <label for="telefoon">Telefoonnummer</label>
-                            <input type="tel" id="telefoon" name="telefoon" placeholder="+31 6 12345678" required>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                            <div class="login-field" style="margin-bottom:0;">
-                                <label for="password">Wachtwoord</label>
-                                <input type="password" id="password" name="password" placeholder="Min. 8 tekens" autocomplete="new-password" required>
-                            </div>
-                            <div class="login-field" style="margin-bottom:0;">
-                                <label for="password2">Bevestigen</label>
-                                <input type="password" id="password2" name="password2" placeholder="Herhaal wachtwoord" autocomplete="new-password" required>
-                            </div>
-                        </div>
-                        <div style="margin-top:16px;"></div>
-                        <div id="registerError" style="color:#c33;font-size:0.9rem;margin-bottom:12px;display:none;"></div>
-                        <button type="submit" class="login-submit">Aanmelding indienen</button>
-                    </form>
-
-                    <p class="login-footer-note" style="margin-top:20px;">
-                        Al een account? <a href="login.html">Inloggen</a> &nbsp;&middot;&nbsp;
-                        Terug naar <a href="index.html">aandelenxpress.nl</a>
-                    </p>
+                    <h1 style="font-size:1.5rem;margin-bottom:10px;">Registratie tijdelijk niet beschikbaar</h1>
+                    <p style="color:#64748b;line-height:1.6;margin-bottom:28px;">Het AandelenXpress platform is momenteel in ontwikkeling.<br>Registreren is tijdelijk niet mogelijk.<br><br>Neem contact op via <strong>info@aandelenxpress.nl</strong> voor meer informatie.</p>
+                    <a href="index.html" class="login-submit" style="display:block;text-align:center;text-decoration:none;">Terug naar de website</a>
                 </div>
 
             </div>
         </div>
 
     </div>
-
-    <script>
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const errorDiv = document.getElementById('registerError');
-            errorDiv.style.display = 'none';
-
-            const body = {
-                kantoor:   document.getElementById('kantoor').value.trim(),
-                kvk:       document.getElementById('kvk').value.trim(),
-                naam:      document.getElementById('naam').value.trim(),
-                email:     document.getElementById('email').value.trim(),
-                telefoon:  document.getElementById('telefoon').value.trim(),
-                password:  document.getElementById('password').value,
-                password2: document.getElementById('password2').value,
-            };
-
-            try {
-                const res = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    document.getElementById('formState').style.display = 'none';
-                    document.getElementById('successState').style.display = 'block';
-                } else {
-                    errorDiv.textContent = data.error || 'Er is iets misgegaan. Probeer het opnieuw.';
-                    errorDiv.style.display = 'block';
-                }
-            } catch (err) {
-                errorDiv.textContent = 'Verbindingsfout. Controleer uw internetverbinding.';
-                errorDiv.style.display = 'block';
-            }
-        });
-    </script>
 
 </body>
 </html>
