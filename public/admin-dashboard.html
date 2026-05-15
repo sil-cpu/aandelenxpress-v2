@@ -823,12 +823,12 @@ function showSectionSilent(s) {
 async function loadUser() {
   try {
     const r = await fetch("/api/user");
-    if (!r.ok) { window.location.href = "/login.html"; return; }
+    if (!r.ok) { window.location.href = "/login"; return; }
     const u = await r.json();
     document.getElementById("userName").textContent = u.name;
     document.getElementById("userEmail").textContent = u.email;
     document.getElementById("userInitials").textContent = u.name.split(" ").map(p => p[0]).join("").slice(0,2).toUpperCase();
-  } catch(e) { window.location.href = "/login.html"; }
+  } catch(e) { window.location.href = "/login"; }
 }
 
 function logout() {

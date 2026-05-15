@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const path = require('path');
+const emails = require('./emails');
 
 const PORT = process.env.PORT || 3000;
 
@@ -73,11 +75,12 @@ const blogPosts = [];
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(session({
-    secret: 'aandelenxpress-secret-key-2026',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+app.use(cookieSession({
+    name: 'aax_session',
+    keys: ['aandelenxpress-secret-key-2026'],
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    sameSite: 'lax'
 }));
 
 // Redirect .html URLs to clean URLs (301 for SEO)
@@ -147,7 +150,7 @@ function requireLogin(req, res, next) {
     if (req.session && req.session.user) {
         next();
     } else {
-        res.redirect('/login.html');
+        res.redirect('/login');
     }
 }
 
@@ -155,7 +158,7 @@ function requireAdmin(req, res, next) {
     if (req.session && req.session.user && req.session.user.type === 'admin') {
         next();
     } else {
-        res.redirect('/login.html');
+        res.redirect('/login');
     }
 }
 
@@ -196,15 +199,14 @@ app.post('/api/login', (req, res) => {
     };
 
     // Redirect based on user type
-    const redirectUrl = user.type === 'admin' ? '/admin-dashboard.html' : '/reseller-dashboard.html';
+    const redirectUrl = user.type === 'admin' ? '/admin-dashboard' : '/reseller-dashboard';
     res.json({ success: true, redirect: redirectUrl });
 });
 
 // Handle logout
 app.get('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
-        res.redirect('/login.html');
-    });
+    req.session = null;
+    res.redirect('/login');
 });
 
 // Reseller dashboard
@@ -259,6 +261,10 @@ app.post('/api/register', (req, res) => {
         aangemeld: new Date().toISOString()
     });
 
+    // Transactionele emails: admin notificatie + bevestiging aan aanvrager
+    emails.emailAdminNewRegistration({ name: naam, email, company: kantoor, phone: telefoon });
+    emails.emailApplicantRegistrationReceived({ name: naam, email });
+
     res.json({ success: true });
 });
 
@@ -284,6 +290,10 @@ app.post('/api/admin/approve', requireAdmin, (req, res) => {
         status: 'active'
     };
     pendingResellers.splice(idx, 1);
+
+    // Notificeer de reseller dat zijn account is goedgekeurd
+    emails.emailResellerApproved({ name: r.naam, email: r.email });
+
     res.json({ success: true });
 });
 
@@ -293,7 +303,12 @@ app.post('/api/admin/reject', requireAdmin, (req, res) => {
     const idx = pendingResellers.findIndex(r => r.email === email);
     if (idx === -1) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
 
+    const r = pendingResellers[idx];
     pendingResellers.splice(idx, 1);
+
+    // Notificeer de reseller dat zijn aanmelding is afgewezen
+    emails.emailResellerRejected({ name: r.naam, email: r.email, reason: req.body.reason || null });
+
     res.json({ success: true });
 });
 
@@ -425,6 +440,10 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
     };
     
     resellerRequests.push(request);
+
+    // Notificeer admin van nieuwe opdracht
+    emails.emailAdminNewRequest({ request });
+
     res.status(201).json(request);
 });
 
@@ -457,7 +476,10 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (r
     request.status = 'approved';
     request.approvedAt = new Date().toISOString();
     request.approvedBy = req.session.user.email;
-    
+
+    // Notificeer reseller dat opdracht is goedgekeurd
+    emails.emailResellerRequestApproved({ request });
+
     res.json(request);
 });
 
@@ -474,7 +496,10 @@ app.patch('/api/reseller-requests/:id/reject', requireAdmin, express.json(), (re
     // Mark as rejected
     request.status = 'rejected';
     request.rejectionReason = reason || 'Aanvraag afgewezen';
-    
+
+    // Notificeer reseller dat opdracht is afgewezen
+    emails.emailResellerRequestRejected({ request });
+
     res.json(request);
 });
 
@@ -525,6 +550,11 @@ app.post('/api/tickets', express.json(), (req, res) => {
     };
     
     tickets.push(ticket);
+
+    // Notificeer admin + stuur bevestiging aan indiener
+    emails.emailAdminNewTicket({ ticket });
+    emails.emailTicketSenderConfirmation({ ticket });
+
     res.status(201).json(ticket);
 });
 
@@ -577,7 +607,14 @@ app.post('/api/tickets/:ticketId/reply', requireAdmin, express.json(), (req, res
     if (ticket.status === 'open' || ticket.status === 'Open') {
         ticket.status = 'Replied';
     }
-    
+
+    // Notificeer de indiener van het ticket over de reactie
+    emails.emailTicketReply({
+        ticket,
+        replyMessage: message.trim(),
+        adminName: req.session.user.name,
+    });
+
     res.json(ticket);
 });
 

@@ -372,7 +372,7 @@ async function init() {
 
   try {
     const r = await fetch("/api/user");
-    if (!r.ok) { location.href = "/login.html"; return; }
+    if (!r.ok) { location.href = "/login"; return; }
     const u = await r.json();
     document.getElementById("userName").textContent = u.name;
     document.getElementById("userEmail").textContent = u.email;
@@ -390,7 +390,7 @@ async function init() {
     
     // Load tickets after page is rendered
     setTimeout(() => loadTickets(nr), 100);
-  } catch(e) { location.href = "/login.html"; }
+  } catch(e) { location.href = "/login"; }
 }
 
 function logout() {

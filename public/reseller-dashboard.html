@@ -418,7 +418,7 @@ document.querySelectorAll('.dash-nav-item').forEach(item => {
 async function loadUser() {
     try {
         const r = await fetch('/api/user');
-        if (!r.ok) { window.location.href = '/login.html'; return; }
+        if (!r.ok) { window.location.href = '/login'; return; }
         const u = await r.json();
         document.getElementById('userCompany').textContent = u.company;
         document.getElementById('userEmail').textContent = u.email;
@@ -426,7 +426,7 @@ async function loadUser() {
         
         // Load dossiers after user is loaded
         await loadDossiers();
-    } catch(e) { window.location.href = '/login.html'; }
+    } catch(e) { window.location.href = '/login'; }
 }
 
 function openModal() { document.getElementById('modal').classList.add('active'); }
