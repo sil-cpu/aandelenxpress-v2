@@ -20,16 +20,23 @@ const SITE_URL     = process.env.SITE_URL || 'https://aandelenxpress.vercel.app'
  * Stuur een email. Als TEST_EMAIL in .env staat, wordt het echte 'to'-adres
  * vervangen zodat alle mails naar één testadres gaan.
  */
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, attachment }) {
     const recipient = process.env.TEST_EMAIL || to;
 
     try {
-        const result = await resend.emails.send({
+        const params = {
             from:    FROM_ADDRESS,
             to:      recipient,
             subject: subject,
             html:    html,
-        });
+        };
+        if (attachment) {
+            params.attachments = [{
+                filename: attachment.filename,
+                content:  Buffer.from(attachment.content, 'base64'),
+            }];
+        }
+        const result = await resend.emails.send(params);
         console.log(`[email] Sent "${subject}" → ${recipient}`, result?.data?.id || '');
         return result;
     } catch (err) {
@@ -417,12 +424,12 @@ async function emailClientBetaling({ request }) {
 
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
-async function emailCustom({ to, subject, body, bodyHtml }) {
+async function emailCustom({ to, subject, body, bodyHtml, attachment }) {
     const content = bodyHtml || (body || '')
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/\n/g, '<br>');
     const html = layout(`<h2 style="margin-top:0;color:#0F1D3A;">${subject}</h2><div style="line-height:1.8;">${content}</div>`);
-    return sendEmail({ to, subject, html });
+    return sendEmail({ to, subject, html, attachment });
 }
 
 module.exports = {

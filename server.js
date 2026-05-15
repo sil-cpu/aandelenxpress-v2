@@ -698,10 +698,10 @@ app.get('/api/admin/admins', requireAdmin, (req, res) => {
 
 // POST send custom email (admin only)
 app.post('/api/email-send', requireAdmin, express.json(), async (req, res) => {
-    const { to, subject, body, bodyHtml } = req.body;
+    const { to, subject, body, bodyHtml, attachment } = req.body;
     if (!to || !subject || (!body && !bodyHtml)) return res.status(400).json({ error: 'to, subject en body zijn verplicht' });
     try {
-        await emails.emailCustom({ to, subject, body, bodyHtml });
+        await emails.emailCustom({ to, subject, body, bodyHtml, attachment });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Fout bij verzenden: ' + e.message });
