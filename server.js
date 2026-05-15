@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cookieSession = require('cookie-session');
 const path = require('path');
+const fs = require('fs');
 const emails = require('./emails');
 
 const PORT = process.env.PORT || 3000;
@@ -64,9 +65,29 @@ const tickets = [
     { id: "TK-004", partner: "Smit & Assoc.", subject: "Logo updaten in portaal", priority: "low", date: "2026-04-20", status: "Open", email: "office@smit.nl", replies: [] }
 ];
 
-// Reseller requests (in-memory; resets on server restart)
-let requestCounter = 5000;
-const resellerRequests = [];
+// Reseller requests (persistent via data/db.json)
+const DB_PATH = path.join(__dirname, 'data', 'db.json');
+
+function loadDB() {
+    try {
+        if (fs.existsSync(DB_PATH)) {
+            return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+        }
+    } catch(e) { console.error('DB load error:', e.message); }
+    return { requestCounter: 5000, resellerRequests: [], vragenlijsten: [] };
+}
+
+function saveDB() {
+    try {
+        const dir = path.dirname(DB_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(DB_PATH, JSON.stringify({ requestCounter, resellerRequests, vragenlijsten }, null, 2));
+    } catch(e) { console.error('DB save error:', e.message); }
+}
+
+const _db = loadDB();
+let requestCounter = _db.requestCounter;
+const resellerRequests = _db.resellerRequests;
 
 // Generate a short random access token for client dossier access
 function generateToken() {
@@ -84,8 +105,8 @@ function generateSmartToken(request) {
   return token;
 }
 
-// Vragenlijst submissions (in-memory; resets on server restart)
-const vragenlijsten = [];
+// Vragenlijst submissions (persistent)
+const vragenlijsten = _db.vragenlijsten;
 
 // Blog posts (in-memory; resets on server restart)
 let blogPostCounter = 1000;
@@ -485,6 +506,7 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
     request.accessToken = generateSmartToken(request);
     
     resellerRequests.push(request);
+    saveDB();
 
     // Notificeer admin van nieuwe opdracht
     // ⚠️  Klant ontvangt GEEN email bij aanmaken — alleen na goedkeuring (zie approve endpoint)
@@ -558,6 +580,7 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (r
     request.approvedAt = new Date().toISOString();
     request.approvedBy = req.session.user.email;
 
+    saveDB();
     // Notificeer reseller + stuur klant email met link naar vragenlijst
     emails.emailResellerRequestApproved({ request });
     emails.emailClientCaseApproved({ request });
@@ -571,6 +594,7 @@ app.patch('/api/reseller-requests/:id/token', requireAdmin, express.json(), (req
     if (!request) return res.status(404).json({ error: 'Niet gevonden' });
     const customToken = req.body && req.body.token;
     request.accessToken = customToken || generateSmartToken(request);
+    saveDB();
     res.json({ accessToken: request.accessToken });
 });
 
@@ -587,6 +611,7 @@ app.patch('/api/reseller-requests/:id/reject', requireAdmin, express.json(), (re
     // Mark as rejected
     request.status = 'rejected';
     request.rejectionReason = reason || 'Aanvraag afgewezen';
+    saveDB();
 
     // Notificeer reseller dat opdracht is afgewezen
     emails.emailResellerRequestRejected({ request });
@@ -790,6 +815,7 @@ app.post('/api/vragenlijst', express.json({ limit: '25mb' }), (req, res) => {
     } else {
         vragenlijsten.push(submission);
     }
+    saveDB();
 
     // Notificeer admin
     emails.emailAdminVragenlijstSubmitted({ submission });

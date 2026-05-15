@@ -15,3 +15,6 @@ build/
 *~
 .cache/
 # Fixed git email configuration
+
+# Klantdata (lokale persistentie)
+data/
