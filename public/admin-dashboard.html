@@ -911,6 +911,7 @@ function renderChart() {
 
 document.querySelectorAll(".dash-nav-item").forEach(item => {
   item.addEventListener("click", e => {
+    if (!item.dataset.section) return; // externe link, gewoon navigeren
     e.preventDefault();
     showSection(item.dataset.section);
   });
