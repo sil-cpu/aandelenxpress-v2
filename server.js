@@ -76,6 +76,14 @@ function generateToken() {
   return t;
 }
 
+function generateSmartToken(request) {
+  // Format: voornaam + bvnaam (lowercase, alleen letters/cijfers)
+  const firstName = (request.clientName || '').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+  const bvName = (request.gewenstNaam || '').toLowerCase().replace(/\s+b\.?v\.?$/i, '').replace(/[^a-z0-9]/g, '');
+  const token = (firstName + bvName).slice(0, 20) || generateToken();
+  return token;
+}
+
 // Vragenlijst submissions (in-memory; resets on server restart)
 const vragenlijsten = [];
 
@@ -457,7 +465,7 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
         resellerId,
         resellerName: resellerUser.name,
         resellerCompany: resellerUser.company || 'AandelenXpress',
-        accessToken: generateToken(),
+        accessToken: null, // set after object creation
         clientName,
         clientEmail,
         clientPhone: clientPhone || '',
@@ -474,6 +482,7 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
         approvedBy: null,
         rejectionReason: null
     };
+    request.accessToken = generateSmartToken(request);
     
     resellerRequests.push(request);
 
@@ -557,11 +566,11 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (r
 });
 
 // PATCH reset/set access token for a dossier (admin only)
-app.patch('/api/reseller-requests/:id/token', requireAdmin, (req, res) => {
+app.patch('/api/reseller-requests/:id/token', requireAdmin, express.json(), (req, res) => {
     const request = resellerRequests.find(r => r.id === req.params.id);
     if (!request) return res.status(404).json({ error: 'Niet gevonden' });
     const customToken = req.body && req.body.token;
-    request.accessToken = customToken || generateToken();
+    request.accessToken = customToken || generateSmartToken(request);
     res.json({ accessToken: request.accessToken });
 });
 
