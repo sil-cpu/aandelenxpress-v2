@@ -85,6 +85,17 @@ function saveDB() {
     } catch(e) { console.error('DB save error:', e.message); }
 }
 
+function addActivity(requestObj, type, message, author) {
+    if (!requestObj.activities) requestObj.activities = [];
+    requestObj.activities.push({
+        id: Date.now() + Math.random(), // avoid collision on same ms
+        type,
+        message,
+        author: author || null,
+        timestamp: new Date().toISOString()
+    });
+}
+
 const _db = loadDB();
 let requestCounter = _db.requestCounter;
 const resellerRequests = _db.resellerRequests;
@@ -465,6 +476,13 @@ app.patch('/api/dossier-assignments/:nr', requireAdmin, express.json(), (req, re
     } else {
         dossierAssignments[nr] = adminName;
     }
+    const request = resellerRequests.find(r => r.id === nr);
+    if (request) {
+        const actor = req.session.user.name || req.session.user.email;
+        const msg = adminName ? `Dossier toegewezen aan ${adminName} door ${actor}` : `Toewijzing verwijderd door ${actor}`;
+        addActivity(request, 'system', msg, null);
+        saveDB();
+    }
     res.json({ success: true, nr, assignedTo: adminName || null });
 });
 
@@ -506,6 +524,7 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
         rejectionReason: null
     };
     request.accessToken = generateSmartToken(request);
+    addActivity(request, 'system', `Dossier aangemaakt door ${resellerUser.name || resellerId}`, null);
     
     resellerRequests.push(request);
     saveDB();
@@ -608,10 +627,46 @@ app.patch('/api/reseller-requests/:id/status', requireAdmin, express.json(), (re
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
     const request = resellerRequests.find(r => r.id === id);
     if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+    const oldStatus = request.status;
+    const statusLabels = { pending:'Aanvraag', approved:'iDIN-verificatie', notary:'Notariële akte', kvk:'KvK-inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
     request.status = status;
     request.statusUpdatedAt = new Date().toISOString();
+    const adminName = req.session.user.name || req.session.user.email;
+    addActivity(request, 'system', `Status gewijzigd van "${statusLabels[oldStatus]||oldStatus}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
     saveDB();
     res.json({ success: true, status });
+});
+
+// GET activity log for a dossier
+app.get('/api/reseller-requests/:id/activities', requireLogin, (req, res) => {
+    const { id } = req.params;
+    const request = resellerRequests.find(r => r.id === id);
+    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+    if (req.session.user.type !== 'admin' && request.resellerId !== req.session.user.email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
+    res.json(request.activities || []);
+});
+
+// POST add admin comment to a dossier
+app.post('/api/reseller-requests/:id/activities', requireAdmin, express.json(), (req, res) => {
+    const { id } = req.params;
+    const { message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'Bericht is verplicht' });
+    const request = resellerRequests.find(r => r.id === id);
+    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+    const adminName = req.session.user.name || req.session.user.email;
+    const entry = {
+        id: Date.now() + Math.random(),
+        type: 'comment',
+        message: message.trim(),
+        author: adminName,
+        timestamp: new Date().toISOString()
+    };
+    if (!request.activities) request.activities = [];
+    request.activities.push(entry);
+    saveDB();
+    res.json(entry);
 });
 
 // GET admin users list (admin only)

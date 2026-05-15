@@ -7,6 +7,36 @@
   <link rel="stylesheet" href="dashboard-shared.css">
   <style>
     .detail-page-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    /* 2-col layout: info left + activity right */
+    .detail-2col { display: grid; grid-template-columns: 1fr 360px; gap: 20px; align-items: start; margin-bottom: 20px; }
+    .detail-left-col { display: flex; flex-direction: column; gap: 20px; }
+
+    /* Activity panel */
+    .activity-panel { background: white; border: 1px solid #E8EDF5; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: sticky; top: 20px; }
+    .act-head { padding: 15px 20px 13px; border-bottom: 1px solid #EEF1F7; font-size: .9rem; font-weight: 600; color: #0F1D3A; display: flex; align-items: center; gap: 8px; }
+    .act-head svg { flex-shrink: 0; }
+    .act-feed { overflow-y: auto; max-height: 520px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+    .act-loading, .act-empty { text-align: center; color: #94A3B8; font-size: .83rem; padding: 28px 16px; }
+
+    /* System items */
+    .act-item { display: flex; gap: 10px; align-items: flex-start; }
+    .act-sys-icon { width: 28px; height: 28px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .act-item--system .act-bubble { flex: 1; background: #F5F8FF; border: 1px solid #E8EEFF; border-radius: 8px; padding: 8px 12px; font-size: .82rem; color: #4A5568; font-style: italic; line-height: 1.5; }
+    .act-item--system .act-time { font-size: .72rem; color: #94A3B8; margin-top: 4px; }
+
+    /* Comment items */
+    .act-avatar { width: 28px; height: 28px; border-radius: 50%; background: #1A3B70; color: #fff; font-size: .71rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: Arial, sans-serif; }
+    .act-item--comment .act-bubble { flex: 1; background: white; border: 1px solid #DDE5F4; border-left: 3px solid #1A3B70; border-radius: 8px; padding: 9px 13px; font-size: .85rem; color: #0F1D3A; line-height: 1.55; }
+    .act-item--comment .act-author { font-size: .72rem; font-weight: 700; color: #1A3B70; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .act-item--comment .act-time { font-size: .72rem; color: #94A3B8; margin-top: 4px; }
+
+    /* Compose */
+    .act-compose { padding: 12px 14px; border-top: 1px solid #EEF1F7; display: flex; gap: 8px; align-items: flex-end; background: #FAFCFF; }
+    .act-compose textarea { flex: 1; border: 1px solid #DDE5F4; border-radius: 8px; padding: 9px 11px; font-size: .85rem; font-family: inherit; color: #0F1D3A; resize: none; outline: none; line-height: 1.5; }
+    .act-compose textarea:focus { border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,.12); }
+    .act-send-btn { padding: 9px 14px; background: #1A3B70; color: #fff; border: none; border-radius: 8px; font-size: .84rem; font-weight: 600; cursor: pointer; font-family: inherit; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+    .act-send-btn:hover { background: #0F2658; }
+    .act-send-btn:disabled { opacity: .6; cursor: default; }
     .detail-card { background: white; border: 1px solid #E8EDF5; border-radius: 12px; overflow: hidden; }
     .detail-card-head { padding: 18px 24px; border-bottom: 1px solid #EEF1F7; }
     .detail-card-title { font-size: 0.9rem; font-weight: 600; color: #0F1D3A; }
@@ -251,6 +281,46 @@ function renderPage(d, role) {
   const partnerField = role === "admin"
     ? `<div class="detail-field"><label>Partner</label><div class="val">${d.partner}</div></div>` : "";
 
+  const accessSection = role === 'admin' ? `
+    <div class="detail-card">
+      <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Links &amp; Wachtwoord</div></div>
+      <div class="detail-card-body">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Statuspagina klant</div>
+            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/dossier-status?nr=${d.dossierNr}</div>
+          </div>
+          <button onclick="copyToClipboard('${window.location.origin}/dossier-status?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Formulier (vragenlijst)</div>
+            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}</div>
+          </div>
+          <button onclick="copyToClipboard('${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
+          <a href="${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}" target="_blank" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;text-decoration:none;">Openen ↗</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+          <div style="flex:1;">
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Toegangscode (status &amp; formulier)</div>
+            <div id="dossierToken" style="font-family:monospace;font-size:1.1rem;font-weight:600;letter-spacing:3px;color:#1A3B70;">${d.accessToken || '—'}</div>
+          </div>
+          <button onclick="resetDossierToken('${d.dossierNr}')" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;">Nieuw wachtwoord</button>
+          <button onclick="copyToClipboard(document.getElementById('dossierToken').textContent)" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
+        </div>
+        <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de statuspagina + het wachtwoord. Het formulier (vragenlijst) is publiek toegankelijk via de link hierboven.</div>
+      </div>
+    </div>` : '';
+
+  const composeBar = role === 'admin' ? `
+    <div class="act-compose">
+      <textarea id="actInput" placeholder="Opmerking toevoegen..." rows="2" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))postComment()"></textarea>
+      <button class="act-send-btn" onclick="postComment()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Sturen
+      </button>
+    </div>` : '';
+
   document.getElementById("pageContent").innerHTML = `
     <a href="${role==='admin'?'admin-dashboard.html':'reseller-dashboard.html'}" class="back-btn">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -273,101 +343,82 @@ function renderPage(d, role) {
       </div>
     </div>
 
-    <div class="detail-page-grid">
-      <!-- Dossiergegevens -->
-      <div class="detail-card">
-        <div class="detail-card-head"><div class="detail-card-title">Dossiergegevens</div></div>
-        <div class="detail-card-body">
-          <div class="detail-field-grid">
-            <div class="detail-field"><label>Dossiernummer</label><div class="val" style="font-family:monospace;">${d.dossierNr}</div></div>
-            <div class="detail-field"><label>Aangemeld</label><div class="val">${fmtDate(d.date)}</div></div>
-            ${partnerField}
-            <div class="detail-field"><label>Status</label><div class="val"><span class="badge badge-${d.statusKey}">${d.statusText}</span></div></div>
+    <!-- 2-column: info cards left | activity right -->
+    <div class="detail-2col">
+      <div class="detail-left-col">
+
+        <!-- Dossiergegevens -->
+        <div class="detail-card">
+          <div class="detail-card-head"><div class="detail-card-title">Dossiergegevens</div></div>
+          <div class="detail-card-body">
+            <div class="detail-field-grid">
+              <div class="detail-field"><label>Dossiernummer</label><div class="val" style="font-family:monospace;">${d.dossierNr}</div></div>
+              <div class="detail-field"><label>Aangemeld</label><div class="val">${fmtDate(d.date)}</div></div>
+              ${partnerField}
+              <div class="detail-field"><label>Status</label><div class="val"><span class="badge badge-${d.statusKey}">${d.statusText}</span></div></div>
+            </div>
           </div>
         </div>
+
+        <!-- Klantgegevens -->
+        <div class="detail-card">
+          <div class="detail-card-head"><div class="detail-card-title">Klantgegevens</div></div>
+          <div class="detail-card-body">
+            <div class="detail-field-grid">
+              <div class="detail-field"><label>Bedrijfsnaam</label><div class="val">${d.name}</div></div>
+              <div class="detail-field"><label>KvK-nummer</label><div class="val">${d.kvk||"—"}</div></div>
+              <div class="detail-field"><label>E-mailadres</label><div class="val">${d.clientEmail||"—"}</div></div>
+              <div class="detail-field"><label>Telefoonnummer</label><div class="val">${d.clientPhone||"—"}</div></div>
+            </div>
+          </div>
+        </div>
+
+        ${accessSection}
+
+        <!-- Documenten -->
+        <div class="detail-card">
+          <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
+          <div class="detail-card-body">
+            <div class="doc-list">
+              <div class="doc-item">
+                <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <span class="doc-name">Oprichtingsakte concept</span>
+                <span class="doc-meta">${["complete","kvk","notary"].includes(d.statusKey)?"Beschikbaar":"Nog niet beschikbaar"}</span>
+                ${["complete","kvk","notary"].includes(d.statusKey)?`<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="alert('Downloaden niet beschikbaar in demo')">Download</button>`:""}
+              </div>
+              <div class="doc-item">
+                <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <span class="doc-name">Paspoort / ID-bewijs</span>
+                <span class="doc-meta">${!["new","intake"].includes(d.statusKey)?"Ingediend":"Verwacht"}</span>
+              </div>
+              <div class="doc-item">
+                <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <span class="doc-name">KvK uittreksel</span>
+                <span class="doc-meta">${d.statusKey==="complete"?"Beschikbaar":"Verwacht na voltooiing"}</span>
+                ${d.statusKey==="complete"?`<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="alert('Downloaden niet beschikbaar in demo')">Download</button>`:""}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /detail-left-col -->
+
+      <!-- Activity feed (right column) -->
+      <div class="activity-panel">
+        <div class="act-head">
+          <svg width="15" height="15" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Activiteit &amp; Opmerkingen
+        </div>
+        <div class="act-feed" id="actFeed">
+          <div class="act-loading">Laden…</div>
+        </div>
+        ${composeBar}
       </div>
 
-      <!-- Klantgegevens -->
-      <div class="detail-card">
-        <div class="detail-card-head"><div class="detail-card-title">Klantgegevens</div></div>
-        <div class="detail-card-body">
-          <div class="detail-field-grid">
-            <div class="detail-field"><label>Bedrijfsnaam</label><div class="val">${d.name}</div></div>
-            <div class="detail-field"><label>KvK-nummer</label><div class="val">${d.kvk||"—"}</div></div>
-            <div class="detail-field"><label>E-mailadres</label><div class="val">${d.clientEmail||"—"}</div></div>
-            <div class="detail-field"><label>Telefoonnummer</label><div class="val">${d.clientPhone||"—"}</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </div><!-- /detail-2col -->
+  `;
 
-    <!-- White-label status pagina URL (full width) -->
-    ${role === 'admin' ? `
-    <div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Links &amp; Wachtwoord</div></div>
-      <div class="detail-card-body">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Statuspagina klant</div>
-            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/dossier-status?nr=${d.dossierNr}</div>
-          </div>
-          <button onclick="copyToClipboard('${window.location.origin}/dossier-status?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
-            Kopiëren
-          </button>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Formulier (vragenlijst)</div>
-            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}</div>
-          </div>
-          <button onclick="copyToClipboard('${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
-            Kopiëren
-          </button>
-          <a href="${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}" target="_blank" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;text-decoration:none;">
-            Openen ↗
-          </a>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-          <div style="flex:1;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Toegangscode (status &amp; formulier)</div>
-            <div id="dossierToken" style="font-family:monospace;font-size:1.1rem;font-weight:600;letter-spacing:3px;color:#1A3B70;">${d.accessToken || '—'}</div>
-          </div>
-          <button onclick="resetDossierToken('${d.dossierNr}')" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;">
-            Nieuw wachtwoord
-          </button>
-          <button onclick="copyToClipboard(document.getElementById('dossierToken').textContent)" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;font-weight:500;">
-            Kopiëren
-          </button>
-        </div>
-        <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de statuspagina + het wachtwoord. Het formulier (vragenlijst) is publiek toegankelijk via de link hierboven.</div>
-      </div>
-    </div>` : ''}
-
-    <!-- Documenten (full width) -->
-    <div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
-      <div class="detail-card-body">
-        <div class="doc-list">
-          <div class="doc-item">
-            <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <span class="doc-name">Oprichtingsakte concept</span>
-            <span class="doc-meta">${["complete","kvk","notary"].includes(d.statusKey)?"Beschikbaar":"Nog niet beschikbaar"}</span>
-            ${["complete","kvk","notary"].includes(d.statusKey)?`<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="alert('Downloaden niet beschikbaar in demo')">Download</button>`:""}
-          </div>
-          <div class="doc-item">
-            <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <span class="doc-name">Paspoort / ID-bewijs</span>
-            <span class="doc-meta">${!["new","intake"].includes(d.statusKey)?"Ingediend":"Verwacht"}</span>
-          </div>
-          <div class="doc-item">
-            <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <span class="doc-name">KvK uittreksel</span>
-            <span class="doc-meta">${d.statusKey==="complete"?"Beschikbaar":"Verwacht na voltooiing"}</span>
-            ${d.statusKey==="complete"?`<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="alert('Downloaden niet beschikbaar in demo')">Download</button>`:""}
-          </div>
-        </div>
-      </div>
-    </div>`;
+  loadActivity(d.dossierNr);
 }
 
 function buildTimelineHorizontal(statusKey) {
@@ -394,6 +445,81 @@ function buildTimelineHorizontal(statusKey) {
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString("nl-NL", { day:"numeric", month:"long", year:"numeric" });
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('nl-NL', { day:'numeric', month:'short', year:'numeric' }) +
+    ' · ' + d.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderActivityItem(item) {
+  const time = fmtDateTime(item.timestamp);
+  if (item.type === 'system') {
+    return `<div class="act-item act-item--system">
+      <div class="act-sys-icon">
+        <svg width="12" height="12" fill="none" stroke="#4A5568" viewBox="0 0 24 24" stroke-width="2.2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </div>
+      <div style="flex:1">
+        <div class="act-bubble">${escHtml(item.message)}</div>
+        <div class="act-time">${time}</div>
+      </div>
+    </div>`;
+  } else {
+    const initials = (item.author||'A').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    return `<div class="act-item act-item--comment">
+      <div class="act-avatar">${escHtml(initials)}</div>
+      <div style="flex:1">
+        <div class="act-bubble">
+          <div class="act-author">${escHtml(item.author||'Admin')}</div>
+          ${escHtml(item.message)}
+        </div>
+        <div class="act-time">${time}</div>
+      </div>
+    </div>`;
+  }
+}
+
+async function loadActivity(dossierNr) {
+  const feed = document.getElementById('actFeed');
+  if (!feed) return;
+  try {
+    const r = await fetch(`/api/reseller-requests/${encodeURIComponent(dossierNr)}/activities`);
+    if (!r.ok) { feed.innerHTML = '<div class="act-empty">Geen activiteit beschikbaar</div>'; return; }
+    const items = await r.json();
+    if (!items.length) { feed.innerHTML = '<div class="act-empty">Nog geen activiteit voor dit dossier</div>'; return; }
+    feed.innerHTML = items.map(renderActivityItem).join('');
+    feed.scrollTop = feed.scrollHeight;
+  } catch(e) {
+    feed.innerHTML = '<div class="act-empty">Kon activiteit niet laden</div>';
+  }
+}
+
+async function postComment() {
+  const input = document.getElementById('actInput');
+  const msg = input?.value?.trim();
+  if (!msg) return;
+  const dossierNr = currentDossier?.dossierNr;
+  if (!dossierNr) return;
+  const btn = document.querySelector('.act-send-btn');
+  if (btn) { btn.disabled = true; }
+  try {
+    const r = await fetch(`/api/reseller-requests/${encodeURIComponent(dossierNr)}/activities`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    if (!r.ok) throw new Error('API fout');
+    input.value = '';
+    await loadActivity(dossierNr);
+  } catch(e) { alert('Fout bij versturen: ' + e.message); }
+  finally { if (btn) btn.disabled = false; }
 }
 
 function copyToClipboard(text) {
@@ -567,6 +693,7 @@ async function changeStatus(val) {
     currentDossier.apiStatus = val;
     renderPage(currentDossier, currentRole);
     showToast('Status bijgewerkt naar: ' + s.text);
+    loadActivity(currentDossier.dossierNr);
   } catch(e) { alert('Fout bij opslaan: ' + e.message); }
 }
 
