@@ -49,26 +49,25 @@ function layout(bodyHtml) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${BRAND}</title>
   <style>
-    body { margin:0; padding:0; background:#f5f6fa; font-family:Arial,sans-serif; color:#222; }
-    .wrap { max-width:580px; margin:40px auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    .header { background:#1a2e5a; padding:28px 32px; }
-    .header h1 { margin:0; color:#fff; font-size:22px; letter-spacing:.5px; }
-    .header span { color:#4fc3f7; }
+    body { margin:0; padding:0; background:#f0f4f8; font-family:Arial,sans-serif; color:#222; }
+    .wrap { max-width:580px; margin:40px auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,.10); border-top:4px solid #1A3B70; }
+    .header { background:#fff; padding:22px 32px 18px; border-bottom:1px solid #EEF2FF; }
+    .header img { display:block; height:38px; max-width:220px; }
     .body { padding:28px 32px; font-size:15px; line-height:1.7; }
-    .body h2 { color:#1a2e5a; margin-top:0; }
-    .info-box { background:#f0f4ff; border-left:4px solid #1a2e5a; padding:12px 16px; border-radius:4px; margin:16px 0; font-size:14px; }
-    .btn { display:inline-block; margin:20px 0; padding:12px 28px; background:#1a2e5a; color:#fff; border-radius:5px; text-decoration:none; font-weight:bold; font-size:15px; }
-    .footer { background:#f5f6fa; padding:16px 32px; font-size:12px; color:#888; border-top:1px solid #eee; }
+    .body h2 { color:#0F1D3A; margin-top:0; font-size:1.2em; }
+    .info-box { background:#F5F8FF; border-left:4px solid #1A3B70; padding:12px 16px; border-radius:4px; margin:16px 0; font-size:14px; }
+    .btn { display:inline-block; margin:20px 0; padding:13px 28px; background:#1A3B70; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; font-size:15px; }
+    .footer { background:#F8FAFD; padding:16px 32px; font-size:12px; color:#94A3B8; border-top:1px solid #E8EDF5; text-align:center; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="header">
-      <h1>Aandelen<span>Xpress</span></h1>
+      <img src="${SITE_URL}/logo.svg" alt="AandelenXpress" height="38">
     </div>
     <div class="body">${bodyHtml}</div>
     <div class="footer">
-      © ${new Date().getFullYear()} ${BRAND} · Dit is een automatisch bericht, niet beantwoorden.
+      &copy; ${new Date().getFullYear()} ${BRAND} &nbsp;&middot;&nbsp; Dit is een automatisch bericht, niet beantwoorden.
     </div>
   </div>
 </body>
