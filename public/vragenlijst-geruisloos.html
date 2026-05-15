@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geruisloze Inbreng BV & Holding – Vragenlijst</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', -apple-system, sans-serif; background: linear-gradient(135deg, #F5F7FA 0%, #E8EDF5 100%); color: #0F1D3A; min-height: 100vh; }
+        .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; }
+
+        /* ── Header ── */
+        .page-header { background: #1A3B70; border-radius: 12px; padding: 28px 32px; margin-bottom: 24px; color: white; display: flex; align-items: flex-start; gap: 20px; }
+        .header-logo { width: 52px; height: 52px; background: rgba(255,255,255,.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; }
+        .header-info { flex: 1; }
+        .header-partner { font-size: .8rem; font-weight: 500; opacity: .7; margin-bottom: 4px; letter-spacing: .05em; text-transform: uppercase; }
+        .header-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+        .header-sub { font-size: .9rem; opacity: .8; }
+        .ref-badge { font-size: .75rem; font-weight: 600; background: rgba(255,255,255,.15); padding: 4px 10px; border-radius: 20px; margin-top: 10px; display: inline-block; }
+
+        /* ── Alert ── */
+        .alert { background: #FFF8E7; border: 1px solid #FFD87A; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 14px 16px; font-size: .9rem; color: #78350F; margin-bottom: 24px; line-height: 1.5; }
+        .alert-info { background: #EFF6FF; border-color: #BFDBFE; border-left-color: #3B82F6; color: #1E40AF; }
+
+        /* ── Cards ── */
+        .card { background: white; border-radius: 12px; border: 1px solid #E1E7F0; box-shadow: 0 2px 8px rgba(0,0,0,.05); margin-bottom: 20px; overflow: hidden; }
+        .card-header { background: #F5F7FA; border-bottom: 1px solid #E1E7F0; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+        .card-icon { width: 30px; height: 30px; background: #1A3B70; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .9rem; flex-shrink: 0; }
+        .card-title { font-weight: 600; font-size: 1rem; color: #0F1D3A; }
+        .card-body { padding: 24px; }
+        .card-note { background: #F0F4FF; border: 1px solid #C7D7F8; border-radius: 8px; padding: 12px 16px; font-size: .88rem; color: #1E3A8A; line-height: 1.5; margin-bottom: 20px; }
+
+        /* ── Fields ── */
+        .field { margin-bottom: 22px; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label { display: block; font-size: .88rem; font-weight: 600; color: #0F1D3A; margin-bottom: 8px; }
+        .field-hint { font-size: .8rem; color: #718096; margin-top: 6px; line-height: 1.4; }
+        .req { color: #E03D3D; margin-left: 3px; }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="number"], textarea, select {
+            width: 100%; padding: 10px 13px; border: 1.5px solid #D1DCF0; border-radius: 8px;
+            font-family: inherit; font-size: .9rem; color: #0F1D3A; background: white;
+            transition: border-color .15s;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #1A3B70; }
+        textarea { resize: vertical; min-height: 80px; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 540px) { .field-row { grid-template-columns: 1fr; } }
+
+        /* ── Radio options ── */
+        .options-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .option-item { border: 1.5px solid #D1DCF0; border-radius: 8px; padding: 12px 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; transition: border-color .15s, background .15s; }
+        .option-item:hover { border-color: #1A3B70; background: #F8FAFF; }
+        .option-item.selected { border-color: #1A3B70; background: #EEF3FF; }
+        .option-item input[type="radio"], .option-item input[type="checkbox"] { width: auto; margin-top: 3px; flex-shrink: 0; accent-color: #1A3B70; }
+        .option-content { flex: 1; }
+        .option-label { font-weight: 500; font-size: .9rem; }
+        .option-desc { font-size: .82rem; color: #718096; margin-top: 3px; line-height: 1.4; }
+
+        /* ── Checkbox multi ── */
+        .check-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .check-item { border: 1.5px solid #D1DCF0; border-radius: 8px; padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: border-color .15s; }
+        .check-item:hover { border-color: #1A3B70; background: #F8FAFF; }
+        .check-item.selected { border-color: #1A3B70; background: #EEF3FF; }
+        .check-item input[type="checkbox"] { width: auto; flex-shrink: 0; accent-color: #1A3B70; }
+
+        /* ── Reveal ── */
+        .reveal { display: none; margin-top: 12px; padding: 16px; background: #F8FAFF; border: 1px solid #D1DCF0; border-radius: 8px; }
+        .reveal.visible { display: block; }
+
+        /* ── File upload ── */
+        .file-zone { border: 2px dashed #C8D4EA; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; position: relative; }
+        .file-zone:hover, .file-zone.dragover { border-color: #1A3B70; background: #F0F5FF; }
+        .file-zone.has-file { border-color: #22C55E; background: #F0FDF4; border-style: solid; }
+        .file-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .file-icon { font-size: 2rem; margin-bottom: 8px; }
+        .file-zone-label { font-size: .88rem; font-weight: 500; color: #4A5568; }
+        .file-zone-sub { font-size: .78rem; color: #A0AEC0; margin-top: 4px; }
+        .file-selected { font-size: .85rem; font-weight: 600; color: #22C55E; margin-top: 8px; }
+        .file-optional .file-zone { border-style: dashed; opacity: .85; }
+
+        /* ── Privacy & submit ── */
+        .privacy-box { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+        .privacy-box input { width: auto; margin-top: 4px; flex-shrink: 0; accent-color: #1A3B70; }
+        .privacy-text { font-size: .88rem; color: #4A5568; line-height: 1.5; }
+        .privacy-text a { color: #1A3B70; }
+        .btn-submit { width: 100%; padding: 14px; background: #1A3B70; color: white; border: none; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background .15s; margin-top: 8px; }
+        .btn-submit:hover { background: #0F2851; }
+        .btn-submit:disabled { background: #A0AEC0; cursor: not-allowed; }
+
+        /* ── States ── */
+        .state { display: none; }
+        .state.active { display: block; }
+        .loading-wrap, .error-wrap { text-align: center; padding: 80px 20px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #E8EDF5; border-top-color: #1A3B70; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-icon { font-size: 3rem; margin-bottom: 16px; }
+        .error-title { font-size: 1.2rem; font-weight: 600; color: #C53030; margin-bottom: 8px; }
+        .error-sub { color: #718096; font-size: .9rem; line-height: 1.5; }
+        .success-wrap { background: white; border-radius: 12px; border: 1px solid #B8E6DE; padding: 56px 32px; text-align: center; }
+        .success-icon { font-size: 3.5rem; margin-bottom: 20px; }
+        .success-title { font-size: 1.4rem; font-weight: 700; color: #0F1D3A; margin-bottom: 12px; }
+        .success-sub { color: #4A5568; font-size: .95rem; line-height: 1.6; max-width: 440px; margin: 0 auto; }
+        .page-footer { text-align: center; font-size: .78rem; color: #A0AEC0; margin-top: 32px; }
+
+        /* ── Error highlight ── */
+        .field-error input, .field-error textarea, .field-error select { border-color: #E03D3D !important; }
+        .field-error .options-list .option-item, .field-error .check-list .check-item { border-color: #E03D3D; }
+        .field-error .file-zone { border-color: #E03D3D !important; }
+        .field-error-msg { font-size: .8rem; color: #E03D3D; margin-top: 5px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- LOADING -->
+    <div id="stateLoading" class="state active">
+        <div class="loading-wrap">
+            <div class="spinner"></div>
+            <div style="color:#8A9BB5;font-size:.9rem;">Dossier ophalen…</div>
+        </div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="stateError" class="state">
+        <div class="error-wrap">
+            <div class="error-icon">⚠️</div>
+            <div class="error-title" id="errorTitle">Dossier niet gevonden</div>
+            <div class="error-sub" id="errorSub">Controleer de link in uw email. Neem contact op met uw adviseur als het probleem aanhoudt.</div>
+        </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="stateSuccess" class="state">
+        <div class="success-wrap">
+            <div class="success-icon">✅</div>
+            <div class="success-title">Vragenlijst succesvol ingediend!</div>
+            <div class="success-sub">
+                Bedankt. Wij hebben uw gegevens ontvangen en gaan direct aan de slag.<br><br>
+                U ontvangt een bevestiging per email. Heeft u vragen? Mail naar
+                <a href="mailto:info@aandelenxpress.nl" style="color:#1A3B70">info@aandelenxpress.nl</a>.
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM -->
+    <div id="stateForm" class="state">
+
+        <div class="page-header">
+            <div class="header-logo" id="headerLogo">AX</div>
+            <div class="header-info">
+                <div class="header-partner" id="headerPartner"></div>
+                <div class="header-title">Geruisloze Inbreng BV &amp; Holding</div>
+                <div class="header-sub" id="headerSub"></div>
+                <div class="ref-badge" id="headerRef"></div>
+            </div>
+        </div>
+
+        <div class="alert">
+            Vul alle verplichte velden in (gemarkeerd met <span style="color:#E03D3D;font-weight:700">*</span>).
+            Duurt gemiddeld <strong>15–20 minuten</strong>. Uw gegevens worden veilig verwerkt.
+        </div>
+
+        <div class="alert alert-info">
+            Dit formulier is bestemd voor de omzetting van uw <strong>eenmanszaak of VOF</strong> naar een
+            <strong>BV met holding structuur</strong> via geruisloze inbreng.
+        </div>
+
+        <form id="vragenlijstForm" novalidate>
+
+            <!-- 1. Taalvereisten -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">1</div><div class="card-title">Taalvereisten</div></div>
+                <div class="card-body">
+                    <div class="field" id="fieldNlTaal">
+                        <label class="field-label">Is het niveau van de Nederlandstalige taal van de aandeelhouders en bestuurders C1 of hoger?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'nederlandsTaal','ja');checkTaal()">
+                                <input type="radio" name="nederlandsTaal" value="ja">
+                                <div class="option-content"><div class="option-label">Ja</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this,'nederlandsTaal','nee');checkTaal()">
+                                <input type="radio" name="nederlandsTaal" value="nee">
+                                <div class="option-content"><div class="option-label">Nee</div><div class="option-desc">Indien lager dan C1 zijn er extra tolkkosten van toepassing.</div></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="field" id="fieldEnTaal">
+                        <label class="field-label">Is het niveau van de Engelstalige taal van de aandeelhouders en bestuurders C1 of hoger?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'engelsTaal','ja');checkTaal()">
+                                <input type="radio" name="engelsTaal" value="ja">
+                                <div class="option-content"><div class="option-label">Ja</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this,'engelsTaal','nee');checkTaal()">
+                                <input type="radio" name="engelsTaal" value="nee">
+                                <div class="option-content"><div class="option-label">Nee</div><div class="option-desc">Als zowel NL als EN lager is dan C1, worden er tolkkosten van €250 in rekening gebracht.</div></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="reveal" id="revealTaalOpmerking">
+                        <div class="field">
+                            <label class="field-label">Uw moedertaal en talen waarbij u C2-niveau heeft<span class="req">*</span></label>
+                            <textarea name="taalOpmerking" placeholder="Bijv. moedertaal Turks, C2 in Duits…" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Contactgegevens -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">2</div><div class="card-title">Contactgegevens</div></div>
+                <div class="card-body">
+                    <div class="field" id="fieldEmail">
+                        <label class="field-label">Uw contacte-mailadres<span class="req">*</span></label>
+                        <input type="email" name="contactEmail" id="contactEmail" placeholder="uw@emailadres.nl">
+                        <div class="field-hint">Hierop ontvangt u de vervolgcommunicatie over uw dossier.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Sector -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">3</div><div class="card-title">Sector</div></div>
+                <div class="card-body">
+                    <div class="field" id="fieldSector">
+                        <label class="field-label">In welke sector is uw aannemerszaak/onderneming actief?<span class="req">*</span></label>
+                        <ul class="options-list options-grid">
+                            <li class="option-item" onclick="selectOption(this,'sector','Finance')"><input type="radio" name="sector" value="Finance"><div class="option-content"><div class="option-label">💰 Finance</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Transport')"><input type="radio" name="sector" value="Transport"><div class="option-content"><div class="option-label">🚛 Transport</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Bouwsector')"><input type="radio" name="sector" value="Bouwsector"><div class="option-content"><div class="option-label">🏗 Bouwsector</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Commercieel')"><input type="radio" name="sector" value="Commercieel"><div class="option-content"><div class="option-label">💼 Commercieel</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Detailhandel')"><input type="radio" name="sector" value="Detailhandel"><div class="option-content"><div class="option-label">🛒 Detailhandel</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Professioneel')"><input type="radio" name="sector" value="Professioneel"><div class="option-content"><div class="option-label">🏛 Professioneel</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Gezondheidszorg')"><input type="radio" name="sector" value="Gezondheidszorg"><div class="option-content"><div class="option-label">🏥 Gezondheidszorg</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Horeca')"><input type="radio" name="sector" value="Horeca"><div class="option-content"><div class="option-label">🍽 Horeca</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'sector','Anders');toggleReveal('revealSectorAnders',true)"><input type="radio" name="sector" value="Anders"><div class="option-content"><div class="option-label">📋 Anders</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="reveal" id="revealSectorAnders">
+                        <div class="field">
+                            <label class="field-label">Omschrijf uw sector<span class="req">*</span></label>
+                            <input type="text" name="sectorAnders" placeholder="Bijv. IT-dienstverlening, landbouw…">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Gegevens BV (werkmaatschappij) -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">4</div><div class="card-title">Gegevens van de BV (werkmaatschappij)</div></div>
+                <div class="card-body">
+                    <div class="card-note">
+                        De aandeelhouder van de nieuw op te richten <strong>B.V.</strong> is de nieuw op te richten <strong>HOLDING</strong>.
+                        Wij willen eerst weten wat de naam en het doel van uw BV gaat zijn.
+                    </div>
+                    <div class="field-row">
+                        <div class="field" id="fieldBvNaam">
+                            <label class="field-label">Naam van de BV<span class="req">*</span></label>
+                            <input type="text" name="bvNaam" placeholder="Bijv. Test B.V.">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Telefoonnummer van de BV</label>
+                            <input type="tel" name="bvTelefoon" placeholder="+31 6 12345678">
+                        </div>
+                    </div>
+                    <div class="field" id="fieldBvEmail">
+                        <label class="field-label">E-mailadres van de BV<span class="req">*</span></label>
+                        <input type="email" name="bvEmail" placeholder="info@uwbv.nl">
+                    </div>
+                    <div class="field" id="fieldBvDoel">
+                        <label class="field-label">Doel van de BV — wat gaat de BV doen?<span class="req">*</span></label>
+                        <textarea name="bvDoel" placeholder="Omschrijf de bedrijfsactiviteiten van de BV…" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Gegevens Holding -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">5</div><div class="card-title">Gegevens van de Holding</div></div>
+                <div class="card-body">
+                    <div class="card-note">
+                        Nu willen we graag de gegevens van de nieuw op te richten <strong>HOLDING</strong>.
+                        De holding wordt de aandeelhouder van uw BV.
+                    </div>
+                    <div class="field" id="fieldHoldingNaam">
+                        <label class="field-label">Naam van de Holding<span class="req">*</span></label>
+                        <input type="text" name="holdingNaam" placeholder="Bijv. Test Holding B.V.">
+                    </div>
+                    <div class="field" id="fieldAandeelhouders">
+                        <label class="field-label">Hoeveel aandeelhouders zal de Holding hebben?<span class="req">*</span></label>
+                        <input type="number" name="aandeelhouders" min="1" max="50" placeholder="1">
+                        <div class="field-hint">Normaal gesproken is de dagelijks bestuurder van het bedrijf de aandeelhouder zelf, of de bestuurders van de holding.</div>
+                    </div>
+                    <div class="field" id="fieldAandeelhoudersBestuurders">
+                        <label class="field-label">Zijn de aandeelhouders ook de bestuurders?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'aandeelhoudersBestuurders','ja')"><input type="radio" name="aandeelhoudersBestuurders" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'aandeelhoudersBestuurders','nee')"><input type="radio" name="aandeelhoudersBestuurders" value="nee"><div class="option-content"><div class="option-label">Nee</div><div class="option-desc">Er zijn aparte bestuurders naast de aandeelhouders.</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="field" id="fieldHoldingAdres">
+                        <label class="field-label">Wat is het adres van de Holding?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'holdingAdres','zelfde-aannemerszaak')"><input type="radio" name="holdingAdres" value="zelfde-aannemerszaak"><div class="option-content"><div class="option-label">Hetzelfde als het adres van de aannemerszaak/onderneming</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'holdingAdres','zelfde-aandeelhouder')"><input type="radio" name="holdingAdres" value="zelfde-aandeelhouder"><div class="option-content"><div class="option-label">Hetzelfde als het adres van de aandeelhouder</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'holdingAdres','anders');toggleReveal('revealHoldingAdresAnders',true)"><input type="radio" name="holdingAdres" value="anders"><div class="option-content"><div class="option-label">Anders</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="reveal" id="revealHoldingAdresAnders">
+                        <div class="field">
+                            <label class="field-label">Adres van de Holding<span class="req">*</span></label>
+                            <input type="text" name="holdingAdresAnders" placeholder="Straat, huisnummer, postcode, plaats">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Documenten -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">6</div><div class="card-title">Documenten</div></div>
+                <div class="card-body">
+
+                    <div class="field" id="fieldHuurovereenkomst">
+                        <label class="field-label">Huurovereenkomst voor het adres van de Holding BV<span class="req">*</span></label>
+                        <div class="field-hint" style="margin-bottom:8px;">Upload de huurovereenkomst van het vestigingsadres van de holding.</div>
+                        <div class="file-zone" id="huurovereenkomstZone">
+                            <input type="file" id="huurovereenkomstFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📄</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="huurovereenkomstSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="fieldKvkUittreksel">
+                        <label class="field-label">KVK-uittreksel van de eenmanszaak of VOF<span class="req">*</span></label>
+                        <div class="file-zone" id="kvkUittrekselZone">
+                            <input type="file" id="kvkUittrekselFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">🏢</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="kvkUittrekselSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="fieldVerzekering">
+                        <label class="field-label">Verzekeringsbewijs aansprakelijkheidsverzekering aan de Belastingdienst<span class="req">*</span></label>
+                        <div class="file-zone" id="verzekeringZone">
+                            <input type="file" id="verzekeringFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">🛡</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="verzekeringSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="fieldOntvangstIntent">
+                        <label class="field-label">Bewijs van ontvangst van de intentverklaring<span class="req">*</span></label>
+                        <div class="file-zone" id="ontvangstIntentZone">
+                            <input type="file" id="ontvangstIntentFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📬</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="ontvangstIntentSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="fieldIntentverklaring">
+                        <label class="field-label">De intentverklaring<span class="req">*</span></label>
+                        <div class="file-zone" id="intentverklaringZone">
+                            <input type="file" id="intentverklaringFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📝</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="intentverklaringSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="fieldBijlageIntent">
+                        <label class="field-label">Het getekende/ingevulde bijlage bij de intentverklaring<span class="req">*</span></label>
+                        <div class="file-zone" id="bijlageIntentZone">
+                            <input type="file" id="bijlageIntentFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📎</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="bijlageIntentSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" id="fieldInterim">
+                        <label class="field-label">De interimpbeschrijving<span class="req">*</span></label>
+                        <div class="field-hint" style="margin-bottom:8px;">Voor alle oprichtingsprocessen en aftrekposten. Opgesteld door uw accountant.</div>
+                        <div class="file-zone" id="interimZone">
+                            <input type="file" id="interimFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📊</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="interimSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field file-optional">
+                        <label class="field-label">VOF UBO-uittreksel <span style="font-weight:400;color:#718096;">(alleen indien sprake is van een VOF)</span></label>
+                        <div class="field-hint" style="margin-bottom:8px;">Niet ouder dan 6 maanden. Op te vragen via de website van de KVK.</div>
+                        <div class="file-zone" id="uboZone">
+                            <input type="file" id="uboFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">👥</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe (optioneel)</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="uboSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 7. Fiscalist / Accountant -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">7</div><div class="card-title">Fiscaal adviseur</div></div>
+                <div class="card-body">
+                    <div class="field" id="fieldFiscalist">
+                        <label class="field-label">Werkt u met een fiscalist, accountant- of administratiekantoor?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'fiscalist','ja');toggleReveal('revealFiscalist',true)"><input type="radio" name="fiscalist" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'fiscalist','nee');toggleReveal('revealFiscalist',false)"><input type="radio" name="fiscalist" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="reveal" id="revealFiscalist">
+                        <div class="field">
+                            <label class="field-label">Naam van het kantoor<span class="req">*</span></label>
+                            <input type="text" name="fiscalistNaam" placeholder="Naam accountantskantoor">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Import / Export -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">8</div><div class="card-title">Import &amp; Export</div></div>
+                <div class="card-body">
+                    <div class="field" id="fieldImport">
+                        <label class="field-label">Gaat de BV producten of diensten importeren?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'importeert','ja')"><input type="radio" name="importeert" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'importeert','nee')"><input type="radio" name="importeert" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="field" id="fieldExport">
+                        <label class="field-label">Gaat de BV producten of diensten exporteren?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'exporteert','ja')"><input type="radio" name="exporteert" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'exporteert','nee')"><input type="radio" name="exporteert" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="field" id="fieldVerkoopkanalen">
+                        <label class="field-label">Waar worden producten/diensten aangeboden?<span class="req">*</span></label>
+                        <ul class="check-list check-grid">
+                            <li class="check-item" onclick="toggleCheck(this,'kanaalNationaal')"><input type="checkbox" name="kanaalNationaal" value="ja"><div class="option-label">🇳🇱 Nationaal</div></li>
+                            <li class="check-item" onclick="toggleCheck(this,'kanaalInternationaal')"><input type="checkbox" name="kanaalInternationaal" value="ja"><div class="option-label">🌍 Internationaal</div></li>
+                            <li class="check-item" onclick="toggleCheck(this,'kanaalB2b')"><input type="checkbox" name="kanaalB2b" value="ja"><div class="option-label">🏢 Alleen aan bedrijven (B2B)</div></li>
+                            <li class="check-item" onclick="toggleCheck(this,'kanaalRetail')"><input type="checkbox" name="kanaalRetail" value="ja"><div class="option-label">🛒 Retail / consumenten</div></li>
+                            <li class="check-item" onclick="toggleCheck(this,'kanaalAnders');toggleReveal('revealKanaalAnders', this.classList.contains('selected'))"><input type="checkbox" name="kanaalAnders" value="ja"><div class="option-label">📋 Anders</div></li>
+                        </ul>
+                    </div>
+                    <div class="reveal" id="revealKanaalAnders">
+                        <div class="field">
+                            <label class="field-label">Toelichting verkoopkanalen<span class="req">*</span></label>
+                            <input type="text" name="kanaalAndersOmschrijving" placeholder="Omschrijf uw verkoopkanaal…">
+                        </div>
+                    </div>
+                    <div class="field" id="fieldGroothandel">
+                        <label class="field-label">Is de BV een groothandel?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'groothandel','ja')"><input type="radio" name="groothandel" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'groothandel','nee')"><input type="radio" name="groothandel" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. Personeel -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">9</div><div class="card-title">Personeel</div></div>
+                <div class="card-body">
+                    <div class="field" id="fieldPersoneelAnders">
+                        <label class="field-label">Gaat er personeel over van een andere onderneming?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this,'personeelOvergang','ja')"><input type="radio" name="personeelOvergang" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
+                            <li class="option-item" onclick="selectOption(this,'personeelOvergang','nee')"><input type="radio" name="personeelOvergang" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
+                        </ul>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label class="field-label">Aantal fulltime medewerkers (≥15 uur/week)</label>
+                            <input type="number" name="personeelFulltime" min="0" placeholder="0">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Aantal parttime medewerkers (&lt;15 uur/week)</label>
+                            <input type="number" name="personeelParttime" min="0" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="field file-optional">
+                        <label class="field-label">Personeelsplan <span style="font-weight:400;color:#718096;">(indien beschikbaar)</span></label>
+                        <div class="file-zone" id="personeelsplanZone">
+                            <input type="file" id="personeelsplanFile" accept=".pdf,.jpg,.jpeg,.png,.docx">
+                            <div class="file-icon">👥</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe (optioneel)</div>
+                            <div class="file-zone-sub">PDF, JPG, PNG of DOCX — max. 10 MB</div>
+                            <div class="file-selected" id="personeelsplanSelected" style="display:none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10. KVK Datacard -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">10</div><div class="card-title">KVK Datacard</div></div>
+                <div class="card-body">
+                    <p style="font-size:.88rem;color:#4A5568;line-height:1.6;margin-bottom:16px;">
+                        Bij inschrijving bij de Kamer van Koophandel (KVK) is een <strong>datacard</strong> vereist.
+                        Als u al een ingevulde datacard heeft, upload deze hier.
+                        Heeft u nog geen datacard? Print hem uit, zet uw handtekening, scan hem in en upload hem hieronder.
+                        De datacard staat als bijlage bij de email met de link naar dit formulier.
+                    </p>
+                    <div class="field" id="fieldDatacard">
+                        <label class="field-label">Datacard (KVK)<span class="req">*</span></label>
+                        <div class="file-zone" id="datacardZone">
+                            <input type="file" id="datacardFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📋</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="datacardSelected" style="display:none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 11. PEP Verklaring -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">11</div><div class="card-title">PEP-verklaring</div></div>
+                <div class="card-body">
+                    <p style="font-size:.88rem;color:#4A5568;line-height:1.6;margin-bottom:16px;">
+                        Het is onze wettelijke verplichting om na te gaan of u een <strong>PEP</strong> (Politiek Prominent Persoon) bent.
+                        Wij zijn hiertoe verplicht vanuit de Wet ter voorkoming van witwassen en financieren van terrorisme (Wwft).
+                        Vul de PEP-verklaring in, onderteken hem, scan hem in en upload hem hieronder.
+                        De PEP-verklaring staat als bijlage bij de email met de link naar dit formulier.
+                    </p>
+                    <div class="field" id="fieldPep">
+                        <label class="field-label">PEP-verklaring<span class="req">*</span></label>
+                        <div class="file-zone" id="pepZone">
+                            <input type="file" id="pepFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">🔏</div>
+                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="pepSelected" style="display:none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 12. Opmerkingen -->
+            <div class="card">
+                <div class="card-header"><div class="card-icon">12</div><div class="card-title">Opmerkingen</div></div>
+                <div class="card-body">
+                    <div class="field">
+                        <label class="field-label">Heeft u nog vragen of opmerkingen over uw BV-aanvraag?</label>
+                        <textarea name="opmerkingen" placeholder="Optioneel — stel hier uw vragen of voeg extra informatie toe…" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Submit -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="field" id="fieldPrivacy">
+                        <label class="privacy-box">
+                            <input type="checkbox" name="privacy" id="privacyCheck">
+                            <div class="privacy-text">
+                                Ik ga akkoord met de <a href="/privacy" target="_blank">Privacyverklaring</a> en de
+                                <a href="/algemene-voorwaarden" target="_blank">Algemene Voorwaarden</a>.
+                                Ik bevestig dat ik dit formulier naar beste kennis en geweten heb ingevuld en dat de verstrekte gegevens correct en volledig zijn.
+                            </div>
+                        </label>
+                    </div>
+                    <div id="formErrorMsg" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:12px 14px;font-size:.88rem;color:#C53030;margin-bottom:16px;">
+                        ⚠️ Vul alle verplichte velden in voordat u het formulier indient.
+                    </div>
+                    <button type="submit" class="btn-submit" id="btnSubmit">Formulier indienen →</button>
+                </div>
+            </div>
+
+        </form>
+    </div><!-- /stateForm -->
+
+    <div class="page-footer">Powered by AandelenXpress &nbsp;·&nbsp; © 2026</div>
+</div>
+
+<script>
+function showState(name) {
+    ['stateLoading','stateError','stateForm','stateSuccess'].forEach(id => {
+        document.getElementById(id).classList.toggle('active', id === name);
+    });
+}
+function showError(title, sub) {
+    document.getElementById('errorTitle').textContent = title;
+    if (sub) document.getElementById('errorSub').textContent = sub;
+    showState('stateError');
+}
+
+// ── Load dossier ─────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const caseId = params.get('nr');
+
+if (!caseId) {
+    showError('Geen dossiernummer', 'Gebruik de link uit uw email om dit formulier te openen.');
+} else {
+    fetch('/api/request-info/' + encodeURIComponent(caseId))
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(data => {
+            document.getElementById('headerPartner').textContent = data.resellerCompany;
+            document.getElementById('headerSub').textContent = 'Gewenste naam: ' + data.gewenstNaam;
+            document.getElementById('headerRef').textContent = 'Referentie: ' + data.id;
+            document.getElementById('headerLogo').textContent = data.resellerCompany.slice(0,2).toUpperCase();
+            document.getElementById('contactEmail').value = data.clientEmail || '';
+            showState('stateForm');
+        })
+        .catch(err => {
+            if (err.message === '404') {
+                showError('Dossier niet gevonden of nog niet goedgekeurd',
+                    'Uw dossier is mogelijk nog in behandeling. U ontvangt een email zodra het is goedgekeurd.');
+            } else {
+                showError('Er is een fout opgetreden', 'Probeer opnieuw te laden of neem contact op.');
+            }
+        });
+}
+
+// ── Radio / checkbox helpers ──────────────────
+function selectOption(li, name, value) {
+    li.closest('ul').querySelectorAll('.option-item').forEach(el => {
+        el.classList.remove('selected');
+        el.querySelector('input').checked = false;
+    });
+    li.classList.add('selected');
+    li.querySelector('input').checked = true;
+    const f = li.closest('.field');
+    if (f) f.classList.remove('field-error');
+}
+
+function toggleCheck(li) {
+    li.classList.toggle('selected');
+    li.querySelector('input[type="checkbox"]').checked = li.classList.contains('selected');
+}
+
+function toggleReveal(id, show) {
+    document.getElementById(id).classList.toggle('visible', show);
+}
+
+function checkTaal() {
+    const nl = document.querySelector('[name="nederlandsTaal"]:checked');
+    const en = document.querySelector('[name="engelsTaal"]:checked');
+    const show = (nl && nl.value === 'nee') || (en && en.value === 'nee');
+    toggleReveal('revealTaalOpmerking', show);
+}
+
+// ── File upload ───────────────────────────────
+const MAX_MB = 10;
+const fileZones = [
+    ['huurovereenkomstFile','huurovereenkomstZone','huurovereenkomstSelected'],
+    ['kvkUittrekselFile','kvkUittrekselZone','kvkUittrekselSelected'],
+    ['verzekeringFile','verzekeringZone','verzekeringSelected'],
+    ['ontvangstIntentFile','ontvangstIntentZone','ontvangstIntentSelected'],
+    ['intentverklaringFile','intentverklaringZone','intentverklaringSelected'],
+    ['bijlageIntentFile','bijlageIntentZone','bijlageIntentSelected'],
+    ['interimFile','interimZone','interimSelected'],
+    ['uboFile','uboZone','uboSelected'],
+    ['personeelsplanFile','personeelsplanZone','personeelsplanSelected'],
+    ['datacardFile','datacardZone','datacardSelected'],
+    ['pepFile','pepZone','pepSelected'],
+];
+
+fileZones.forEach(([inputId, zoneId, selectedId]) => {
+    const input = document.getElementById(inputId);
+    const zone  = document.getElementById(zoneId);
+    const label = document.getElementById(selectedId);
+    input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > MAX_MB * 1024 * 1024) { alert('Bestand te groot (max ' + MAX_MB + ' MB)'); input.value = ''; return; }
+        zone.classList.add('has-file');
+        zone.style.borderColor = '';
+        label.textContent = '✓ ' + file.name;
+        label.style.display = 'block';
+    });
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; input.dispatchEvent(new Event('change')); }
+    });
+});
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.readAsDataURL(file);
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+    });
+}
+
+// ── Submit ────────────────────────────────────
+document.getElementById('vragenlijstForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const f = this;
+    let valid = true;
+
+    f.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+    document.getElementById('formErrorMsg').style.display = 'none';
+
+    // Required radio groups
+    [
+        ['nederlandsTaal','fieldNlTaal'],['engelsTaal','fieldEnTaal'],
+        ['sector','fieldSector'],['aandeelhoudersBestuurders','fieldAandeelhoudersBestuurders'],
+        ['holdingAdres','fieldHoldingAdres'],['fiscalist','fieldFiscalist'],
+        ['importeert','fieldImport'],['exporteert','fieldExport'],
+        ['groothandel','fieldGroothandel'],['personeelOvergang','fieldPersoneelAnders'],
+    ].forEach(([name, fieldId]) => {
+        if (!f.querySelector('[name="' + name + '"]:checked')) {
+            document.getElementById(fieldId).classList.add('field-error');
+            valid = false;
+        }
+    });
+
+    // Required text fields
+    const textFields = [
+        ['bvNaam','fieldBvNaam'],['bvEmail','fieldBvEmail'],['bvDoel','fieldBvDoel'],['holdingNaam','fieldHoldingNaam']
+    ];
+    textFields.forEach(([name, fieldId]) => {
+        if (!f.querySelector('[name="' + name + '"]').value.trim()) {
+            document.getElementById(fieldId).classList.add('field-error');
+            valid = false;
+        }
+    });
+
+    const emailVal = f.querySelector('[name="contactEmail"]').value.trim();
+    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+        document.getElementById('fieldEmail').classList.add('field-error');
+        valid = false;
+    }
+
+    const aandeelhouders = f.querySelector('[name="aandeelhouders"]').value;
+    if (!aandeelhouders || aandeelhouders < 1) {
+        document.getElementById('fieldAandeelhouders').classList.add('field-error');
+        valid = false;
+    }
+
+    // Required file uploads
+    const requiredFiles = [
+        ['huurovereenkomstFile','fieldHuurovereenkomst'],
+        ['kvkUittrekselFile','fieldKvkUittreksel'],
+        ['verzekeringFile','fieldVerzekering'],
+        ['ontvangstIntentFile','fieldOntvangstIntent'],
+        ['intentverklaringFile','fieldIntentverklaring'],
+        ['bijlageIntentFile','fieldBijlageIntent'],
+        ['interimFile','fieldInterim'],
+        ['datacardFile','fieldDatacard'],
+        ['pepFile','fieldPep'],
+    ];
+    requiredFiles.forEach(([inputId, fieldId]) => {
+        if (!document.getElementById(inputId).files[0]) {
+            document.getElementById(fieldId).classList.add('field-error');
+            valid = false;
+        }
+    });
+
+    if (!document.getElementById('privacyCheck').checked) {
+        document.getElementById('fieldPrivacy').classList.add('field-error');
+        valid = false;
+    }
+
+    if (!valid) {
+        document.getElementById('formErrorMsg').style.display = 'block';
+        f.querySelector('.field-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Bezig met indienen…';
+
+    try {
+        // Convert required files
+        const [huurB64, kvkB64, verzB64, ontvangstB64, intentB64, bijlageB64, interimB64, datacardB64, pepB64] = await Promise.all([
+            fileToBase64(document.getElementById('huurovereenkomstFile').files[0]),
+            fileToBase64(document.getElementById('kvkUittrekselFile').files[0]),
+            fileToBase64(document.getElementById('verzekeringFile').files[0]),
+            fileToBase64(document.getElementById('ontvangstIntentFile').files[0]),
+            fileToBase64(document.getElementById('intentverklaringFile').files[0]),
+            fileToBase64(document.getElementById('bijlageIntentFile').files[0]),
+            fileToBase64(document.getElementById('interimFile').files[0]),
+            fileToBase64(document.getElementById('datacardFile').files[0]),
+            fileToBase64(document.getElementById('pepFile').files[0]),
+        ]);
+
+        // Optional files
+        const uboFileEl = document.getElementById('uboFile').files[0];
+        const planFileEl = document.getElementById('personeelsplanFile').files[0];
+        const uboB64   = uboFileEl  ? await fileToBase64(uboFileEl)  : null;
+        const planB64  = planFileEl ? await fileToBase64(planFileEl) : null;
+
+        const kanalen = ['Nationaal','Internationaal','B2B','Retail','Anders']
+            .filter((_,i) => ['kanaalNationaal','kanaalInternationaal','kanaalB2b','kanaalRetail','kanaalAnders'][i] && f.querySelector('[name="' + ['kanaalNationaal','kanaalInternationaal','kanaalB2b','kanaalRetail','kanaalAnders'][i] + '"]')?.checked)
+            .map((_,i) => ['Nationaal','Internationaal','B2B','Retail','Anders'][i]);
+
+        const payload = {
+            caseId,
+            formulierType:          'geruisloze-inbreng',
+            nederlandsTaal:         f.querySelector('[name="nederlandsTaal"]:checked').value,
+            engelsTaal:             f.querySelector('[name="engelsTaal"]:checked').value,
+            taalOpmerking:          f.querySelector('[name="taalOpmerking"]')?.value.trim() || '',
+            contactEmail:           emailVal,
+            sector:                 f.querySelector('[name="sector"]:checked').value,
+            sectorAnders:           f.querySelector('[name="sectorAnders"]')?.value.trim() || '',
+            bvNaam:                 f.querySelector('[name="bvNaam"]').value.trim(),
+            bvTelefoon:             f.querySelector('[name="bvTelefoon"]').value.trim(),
+            bvEmail:                f.querySelector('[name="bvEmail"]').value.trim(),
+            bvDoel:                 f.querySelector('[name="bvDoel"]').value.trim(),
+            holdingNaam:            f.querySelector('[name="holdingNaam"]').value.trim(),
+            aandeelhouders:         f.querySelector('[name="aandeelhouders"]').value,
+            aandeelhoudersBestuurders: f.querySelector('[name="aandeelhoudersBestuurders"]:checked').value,
+            holdingAdres:           f.querySelector('[name="holdingAdres"]:checked').value,
+            holdingAdresAnders:     f.querySelector('[name="holdingAdresAnders"]')?.value.trim() || '',
+            fiscalist:              f.querySelector('[name="fiscalist"]:checked').value,
+            fiscalistNaam:          f.querySelector('[name="fiscalistNaam"]')?.value.trim() || '',
+            importeert:             f.querySelector('[name="importeert"]:checked').value,
+            exporteert:             f.querySelector('[name="exporteert"]:checked').value,
+            verkoopkanalen:         kanalen,
+            kanaalAndersOmschrijving: f.querySelector('[name="kanaalAndersOmschrijving"]')?.value.trim() || '',
+            groothandel:            f.querySelector('[name="groothandel"]:checked').value,
+            personeelOvergang:      f.querySelector('[name="personeelOvergang"]:checked').value,
+            personeelFulltime:      f.querySelector('[name="personeelFulltime"]').value || '0',
+            personeelParttime:      f.querySelector('[name="personeelParttime"]').value || '0',
+            opmerkingen:            f.querySelector('[name="opmerkingen"]').value.trim(),
+            huurovereenkomst:       { naam: document.getElementById('huurovereenkomstFile').files[0].name, data: huurB64 },
+            kvkUittreksel:          { naam: document.getElementById('kvkUittrekselFile').files[0].name,    data: kvkB64 },
+            verzekering:            { naam: document.getElementById('verzekeringFile').files[0].name,      data: verzB64 },
+            ontvangstIntent:        { naam: document.getElementById('ontvangstIntentFile').files[0].name, data: ontvangstB64 },
+            intentverklaring:       { naam: document.getElementById('intentverklaringFile').files[0].name, data: intentB64 },
+            bijlageIntent:          { naam: document.getElementById('bijlageIntentFile').files[0].name,    data: bijlageB64 },
+            interim:                { naam: document.getElementById('interimFile').files[0].name,          data: interimB64 },
+            datacardBestand:        { naam: document.getElementById('datacardFile').files[0].name,         data: datacardB64 },
+            pepBestand:             { naam: document.getElementById('pepFile').files[0].name,              data: pepB64 },
+            uboUittreksel:          uboFileEl  ? { naam: uboFileEl.name,  data: uboB64  } : null,
+            personeelsplan:         planFileEl ? { naam: planFileEl.name, data: planB64 } : null,
+        };
+
+        const res = await fetch('/api/vragenlijst', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Serverfout'); }
+
+        showState('stateSuccess');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch(err) {
+        btn.disabled = false;
+        btn.textContent = 'Formulier indienen →';
+        alert('Er is een fout opgetreden: ' + err.message + '. Probeer het opnieuw of neem contact op.');
+    }
+});
+</script>
+</body>
+</html>

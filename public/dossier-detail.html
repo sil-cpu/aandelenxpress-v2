@@ -173,12 +173,12 @@ function renderPage(d, role) {
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
           <div style="flex:1;min-width:0;">
             <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Formulier (vragenlijst)</div>
-            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/vragenlijst?nr=${d.dossierNr}</div>
+            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : 'vragenlijst'}?nr=${d.dossierNr}</div>
           </div>
-          <button onclick="copyToClipboard('${window.location.origin}/vragenlijst?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
+          <button onclick="copyToClipboard('${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : 'vragenlijst'}?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
             Kopiëren
           </button>
-          <a href="${window.location.origin}/vragenlijst?nr=${d.dossierNr}" target="_blank" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;text-decoration:none;">
+          <a href="${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : 'vragenlijst'}?nr=${d.dossierNr}" target="_blank" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;text-decoration:none;">
             Openen ↗
           </a>
         </div>
@@ -402,7 +402,7 @@ async function init() {
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
           const statusMap = { 'pending':{ key:'pending', text:'Nieuw' }, 'approved':{ key:'ident', text:'In behandeling' }, 'rejected':{ key:'new', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'new', text: req.status };
-          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '' };
+          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '' };
         }
       } catch(e) { console.error('API fetch failed:', e); }
     } else {
