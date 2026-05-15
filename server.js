@@ -441,8 +441,9 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
     
     resellerRequests.push(request);
 
-    // Notificeer admin van nieuwe opdracht
+    // Notificeer admin van nieuwe opdracht + stuur klant bevestiging met link naar dossier/vragenlijst
     emails.emailAdminNewRequest({ request });
+    emails.emailClientNewRequest({ request });
 
     res.status(201).json(request);
 });

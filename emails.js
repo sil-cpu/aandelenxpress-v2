@@ -21,6 +21,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_ADDRESS = 'AandelenXpress <onboarding@resend.dev>'; // ← vervang na domeinverificatie
 const ADMIN_EMAIL  = 'admin@aandelenxpress.nl';
 const BRAND        = 'AandelenXpress';
+const SITE_URL     = process.env.SITE_URL || 'https://aandelenxpress.vercel.app';
 
 /**
  * Stuur een email. Als TEST_EMAIL in .env staat, wordt het echte 'to'-adres
@@ -176,6 +177,36 @@ async function emailAdminNewRequest({ request }) {
     });
 }
 
+/** Klant: bevestiging van ontvangst + link naar statuspagina / vragenlijst */
+async function emailClientNewRequest({ request }) {
+    const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany } = request;
+    const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
+
+    return sendEmail({
+        to:      clientEmail,
+        subject: `Uw BV-aanvraag is ontvangen — ${gewenstNaam}`,
+        html:    layout(`
+            <h2>Bedankt, ${clientName}!</h2>
+            <p>Uw aanvraag voor de oprichting van <strong>${gewenstNaam}</strong> is goed ontvangen 
+               via uw adviseur <strong>${resellerName}</strong> (${resellerCompany}).</p>
+            <div class="info-box">
+                <strong>Type:</strong> ${oprichtingType}<br>
+                <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
+                <strong>Referentienummer:</strong> ${id}
+            </div>
+            <p><strong>Wat zijn de volgende stappen?</strong><br>
+               Via onderstaande link kunt u de voortgang van uw dossier volgen, 
+               de vragenlijst invullen en documenten aanleveren.</p>
+            <a class="btn" href="${statusUrl}">Mijn dossier bekijken &amp; vragenlijst invullen</a>
+            <p style="font-size:13px;color:#888;margin-top:24px;">
+                Bewaar deze email — de link hierboven geeft u toegang tot uw persoonlijke dossier.<br>
+                Heeft u vragen? Neem contact op met uw adviseur 
+                of mail naar <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.
+            </p>
+        `),
+    });
+}
+
 /** Reseller: opdracht goedgekeurd door admin */
 async function emailResellerRequestApproved({ request }) {
     const { id, resellerName, clientName, oprichtingType, gewenstNaam } = request;
@@ -285,6 +316,7 @@ module.exports = {
     emailResellerApproved,
     emailResellerRejected,
     emailAdminNewRequest,
+    emailClientNewRequest,
     emailResellerRequestApproved,
     emailResellerRequestRejected,
     emailAdminNewTicket,
