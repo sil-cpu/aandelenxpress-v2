@@ -425,6 +425,21 @@ body {
 /* Wrap card content for horizontal scroll on small screens */
 .table-scroll-wrap { overflow-x: auto; }
 
+/* Chart period selector */
+.chart-period-btn {
+    padding: 5px 14px;
+    border: 1px solid #E8EDF5;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    background: white;
+    color: #8A9BB5;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.chart-period-btn:hover { border-color: #1A3B70; color: #1A3B70; }
+.chart-period-btn.active { background: #1A3B70; color: white; border-color: #1A3B70; }
+
 
 /* ===== STATUS BADGES ===== */
 .badge {

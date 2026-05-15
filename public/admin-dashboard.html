@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="dashboard-shared.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="dash-wrap">
@@ -100,22 +101,33 @@
           </div>
         </div>
 
-        <div class="dash-two-col mb-28">
-          <div>
-            <div class="section-row mb-20">
-              <span class="section-heading">Recente opdrachten</span>
-              <a href="#" class="dash-card-action" onclick="showSection('dossiers');return false;">Alles bekijken</a>
-            </div>
-            <div class="dash-card table-scroll-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr><th>Bedrijfsnaam</th><th>Type</th><th>Partner</th><th>Status</th><th>Datum</th><th>KvK</th><th>Contact</th><th>Toegewezen aan</th></tr>
-                </thead>
-                <tbody id="recentDossiers"></tbody>
-              </table>
+        <div class="mb-28">
+          <div class="section-row mb-20">
+            <span class="section-heading">Recente opdrachten</span>
+            <a href="#" class="dash-card-action" onclick="showSection('dossiers');return false;">Alles bekijken</a>
+          </div>
+          <div class="dash-card table-scroll-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr><th>Bedrijfsnaam</th><th>Type</th><th>Partner</th><th>Status</th><th>Datum</th><th>KvK</th><th>Contact</th><th>Toegewezen aan</th></tr>
+              </thead>
+              <tbody id="recentDossiers"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mb-28">
+          <div class="section-row mb-20">
+            <span class="section-heading">Aanvragen per dag</span>
+            <div style="display:flex;gap:6px;">
+              <button class="chart-period-btn active" onclick="setChartPeriod(7,this)">7 dagen</button>
+              <button class="chart-period-btn" onclick="setChartPeriod(30,this)">30 dagen</button>
+              <button class="chart-period-btn" onclick="setChartPeriod(90,this)">90 dagen</button>
             </div>
           </div>
-
+          <div class="dash-card" style="padding:20px 24px 16px;">
+            <canvas id="requestsChart" height="80"></canvas>
+          </div>
         </div>
       </div>
 
@@ -664,6 +676,7 @@ async function loadDossiers() {
   if (stat) stat.textContent = allDossiersData.length;
   renderTable('recentDossiers', allDossiersData.slice(0,5));
   renderTable('allDossiers', allDossiersData);
+  initRequestsChart();
 }
 
 async function loadAdmins() {
@@ -793,6 +806,83 @@ function renderPartnersTable(data) {
       <td class="td-muted" style="white-space:nowrap;">${p.since}</td>
     </tr>
   `).join("");
+}
+
+let requestsChartInstance = null;
+let currentChartDays = 7;
+
+function buildChartData(days) {
+  const now = new Date();
+  const labels = [];
+  const counts = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }));
+    counts.push(allDossiersData.filter(x => (x.date || '').slice(0, 10) === key).length);
+  }
+  return { labels, counts };
+}
+
+function initRequestsChart() {
+  const canvas = document.getElementById('requestsChart');
+  if (!canvas) return;
+  const { labels, counts } = buildChartData(currentChartDays);
+  if (requestsChartInstance) requestsChartInstance.destroy();
+  requestsChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Aanvragen',
+        data: counts,
+        borderColor: '#1A3B70',
+        backgroundColor: 'rgba(26,59,112,0.07)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#1A3B70',
+        pointHoverRadius: 5,
+        tension: 0.35,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0A1E42',
+          padding: 10,
+          callbacks: { label: ctx => ' ' + ctx.parsed.y + ' aanvragen' }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#8A9BB5', font: { size: 11 }, maxTicksLimit: 14 }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#F0F2F7' },
+          ticks: { color: '#8A9BB5', font: { size: 11 }, precision: 0 }
+        }
+      }
+    }
+  });
+}
+
+function setChartPeriod(days, btn) {
+  currentChartDays = days;
+  document.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const { labels, counts } = buildChartData(days);
+  if (requestsChartInstance) {
+    requestsChartInstance.data.labels = labels;
+    requestsChartInstance.data.datasets[0].data = counts;
+    requestsChartInstance.update();
+  }
 }
 
 function renderChart() {
