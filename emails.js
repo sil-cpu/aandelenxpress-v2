@@ -391,7 +391,16 @@ async function emailAdminVragenlijstSubmitted({ submission }) {
 
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
+async function emailCustom({ to, subject, body }) {
+    const safe = body
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
+    const html = layout(`<h2 style="margin-top:0;color:#0F1D3A;">${subject}</h2><div style="line-height:1.8;">${safe}</div>`);
+    return sendEmail({ to, subject, html });
+}
+
 module.exports = {
+    emailCustom,
     emailAdminNewRegistration,
     emailApplicantRegistrationReceived,
     emailResellerApproved,

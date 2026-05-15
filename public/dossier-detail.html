@@ -20,6 +20,45 @@
     .page-title-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
     .page-title { font-size: 1.5rem; font-weight: 600; color: #0F1D3A; }
     .page-subtitle { font-size: 0.88rem; color: #718096; margin-top: 4px; }
+
+    /* ── Action bar ── */
+    .action-bar { display: flex; align-items: center; gap: 16px; padding: 11px 28px; background: #fff; border-bottom: 1px solid #E8EDF5; flex-wrap: wrap; }
+    .ab-group { display: flex; align-items: center; gap: 8px; }
+    .ab-label { font-size: .73rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+    .ab-select { appearance: none; -webkit-appearance: none; padding: 7px 30px 7px 11px; border: 1px solid #DDE5F4; border-radius: 8px; font-size: .85rem; color: #0F1D3A; background: #F8FAFD url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238A9BB5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 9px center; cursor: pointer; font-family: inherit; min-width: 150px; }
+    .ab-select:focus { outline: none; border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,.12); }
+    .ab-divider { width: 1px; height: 22px; background: #E8EDF5; flex-shrink: 0; }
+    .acties-wrap { position: relative; }
+    .btn-acties { display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; border: none; border-radius: 8px; background: #1A3B70; color: #fff; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-acties:hover { background: #0F2658; }
+    .acties-dropdown { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #DDE5F4; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,29,58,.12); min-width: 195px; z-index: 300; overflow: hidden; }
+    .acties-dropdown button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 11px 16px; border: none; background: none; font-size: .87rem; color: #0F1D3A; cursor: pointer; font-family: inherit; text-align: left; }
+    .acties-dropdown button:hover { background: #F5F8FF; }
+    .acties-dropdown .acties-sep { height: 1px; background: #EEF2FF; margin: 4px 0; }
+
+    /* ── Email modal ── */
+    .em-overlay { display: none; position: fixed; inset: 0; background: rgba(10,20,50,.45); backdrop-filter: blur(2px); z-index: 1000; align-items: center; justify-content: center; }
+    .em-overlay.open { display: flex; }
+    .em-modal { background: #fff; border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,.2); width: 580px; max-width: calc(100vw - 32px); max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; }
+    .em-header { display: flex; align-items: center; padding: 18px 24px 14px; border-bottom: 1px solid #EEF2FF; }
+    .em-header h3 { margin: 0; font-size: 1rem; color: #0F1D3A; flex: 1; font-weight: 600; }
+    .em-close { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #94A3B8; padding: 4px 7px; border-radius: 6px; line-height: 1; }
+    .em-close:hover { background: #F0F4FF; color: #0F1D3A; }
+    .em-tpl-bar { display: flex; align-items: center; gap: 10px; padding: 10px 24px; background: #F8FAFD; border-bottom: 1px solid #EEF2FF; }
+    .em-tpl-bar select { flex: 1; padding: 7px 10px; border: 1px solid #DDE5F4; border-radius: 7px; font-size: .82rem; background: #fff; cursor: pointer; font-family: inherit; color: #0F1D3A; }
+    .em-tpl-bar button { padding: 7px 12px; border: 1px solid #DDE5F4; border-radius: 7px; background: #fff; font-size: .82rem; cursor: pointer; white-space: nowrap; color: #0F1D3A; font-family: inherit; }
+    .em-tpl-bar button:hover { background: #EBF2FF; border-color: #B8CFFE; }
+    .em-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
+    .em-field { margin-bottom: 15px; }
+    .em-field label { display: block; font-size: .73rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px; }
+    .em-field input, .em-field textarea { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #DDE5F4; border-radius: 8px; font-size: .9rem; font-family: inherit; color: #0F1D3A; }
+    .em-field input:focus, .em-field textarea:focus { outline: none; border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,.12); }
+    .em-field textarea { min-height: 150px; resize: vertical; }
+    .em-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid #EEF2FF; }
+    .em-footer button { padding: 10px 22px; border-radius: 8px; font-size: .88rem; font-weight: 600; cursor: pointer; font-family: inherit; border: none; }
+    .em-cancel { background: #F0F4FF; color: #0F1D3A; border: 1px solid #DDE5F4 !important; }
+    .em-send { background: #1A3B70; color: #fff; }
+    .em-send:hover { background: #0F2658; }
   </style>
 </head>
 <body>
@@ -57,13 +96,95 @@
       </div>
     </header>
 
+    <!-- ACTION BAR (admin only, shown by JS) -->
+    <div id="actionBar" class="action-bar" style="display:none;">
+      <div class="ab-group">
+        <span class="ab-label">Behandelaar</span>
+        <select id="assignedSelect" class="ab-select" onchange="changeAssigned(this.value)">
+          <option value="">Niet toegewezen</option>
+        </select>
+      </div>
+      <div class="ab-divider"></div>
+      <div class="ab-group">
+        <span class="ab-label">Status</span>
+        <select id="statusSelect" class="ab-select" onchange="changeStatus(this.value)">
+          <option value="pending">Nieuw</option>
+          <option value="approved">iDIN-verificatie</option>
+          <option value="notary">Notariële akte</option>
+          <option value="kvk">KvK-inschrijving</option>
+          <option value="complete">Voltooid</option>
+          <option value="rejected">Afgewezen</option>
+        </select>
+      </div>
+      <div style="margin-left:auto;">
+        <div class="acties-wrap">
+          <button class="btn-acties" onclick="toggleActies()">
+            Acties
+            <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acties-dropdown" id="actiesDropdown" style="display:none;">
+            <button onclick="closeActies();openEmailModal()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Verstuur email
+            </button>
+            <div class="acties-sep"></div>
+            <button onclick="closeActies();alert('Binnenkort beschikbaar')">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Gegevens wijzigen
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="dash-content" id="pageContent">
       <!-- filled by JS -->
     </div>
   </main>
+
+  <!-- EMAIL MODAL -->
+  <div id="emailModal" class="em-overlay" onclick="if(event.target===this)closeEmailModal()">
+    <div class="em-modal">
+      <div class="em-header">
+        <h3>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          E-mail opstellen
+        </h3>
+        <button class="em-close" onclick="closeEmailModal()">✕</button>
+      </div>
+      <div class="em-tpl-bar">
+        <button onclick="saveEmailTemplate()">💾 Opslaan als template</button>
+        <select id="templateSelect" onchange="applyTemplate(this.value)" style="max-width:220px;">
+          <option value="">Kies template...</option>
+        </select>
+      </div>
+      <div class="em-body">
+        <div class="em-field">
+          <label>Aan</label>
+          <input type="email" id="emTo" placeholder="E-mailadres ontvanger">
+        </div>
+        <div class="em-field">
+          <label>Onderwerp</label>
+          <input type="text" id="emSubject" placeholder="Onderwerp van de e-mail">
+        </div>
+        <div class="em-field">
+          <label>Bericht</label>
+          <textarea id="emBody" placeholder="Typ hier uw bericht..."></textarea>
+        </div>
+      </div>
+      <div class="em-footer">
+        <button class="em-cancel" onclick="closeEmailModal()">Annuleren</button>
+        <button class="em-send" onclick="sendCustomEmail()">Versturen →</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
+// ── Global state ───────────────────────────────────────────
+let currentDossier = null;
+let currentRole = null;
+
 // ── All dossier data ───────────────────────────────────────
 const allDossiers = [
   { name:"TechStart B.V.",       partner:"Bakker Accountants",  statusKey:"notary",   statusText:"Notariële akte",  date:"2026-04-20", dossierNr:"AX-2026-0042", clientEmail:"info@techstart.nl",       clientPhone:"+31 20 123 4567", kvk:"" },
@@ -379,6 +500,145 @@ async function resetDossierToken(dossierNr) {
   } catch(e) { alert('Fout bij resetten: ' + e.message); }
 }
 
+// ── Action bar ─────────────────────────────────────────────
+async function renderActionBar(d) {
+  // Fetch admin list
+  let admins = [];
+  try {
+    const r = await fetch('/api/admin/admins');
+    if (r.ok) admins = await r.json();
+  } catch(e) {}
+
+  // Fetch current assignment
+  let assignedTo = '';
+  try {
+    const r = await fetch('/api/dossier-assignments');
+    if (r.ok) { const all = await r.json(); assignedTo = all[d.dossierNr] || ''; }
+  } catch(e) {}
+
+  // Populate admin select
+  const assignedSel = document.getElementById('assignedSelect');
+  assignedSel.innerHTML = '<option value="">Niet toegewezen</option>' +
+    admins.map(a => `<option value="${a.name}"${assignedTo === a.name ? ' selected' : ''}>${a.name}</option>`).join('');
+
+  // Set current status
+  const statusSel = document.getElementById('statusSelect');
+  if (d.apiStatus) statusSel.value = d.apiStatus;
+
+  document.getElementById('actionBar').style.display = 'flex';
+}
+
+async function changeStatus(val) {
+  if (!currentDossier?.dossierNr?.startsWith('RR-')) return;
+  try {
+    const r = await fetch(`/api/reseller-requests/${encodeURIComponent(currentDossier.dossierNr)}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: val })
+    });
+    if (!r.ok) throw new Error('API fout');
+    const sMap = { 'pending':{ key:'intake', text:'Nieuw' }, 'approved':{ key:'ident', text:'iDIN-verificatie' }, 'notary':{ key:'notary', text:'Notariële akte' }, 'kvk':{ key:'kvk', text:'KvK-inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'new', text:'Afgewezen' } };
+    const s = sMap[val] || { key:'intake', text: val };
+    currentDossier.statusKey = s.key;
+    currentDossier.statusText = s.text;
+    currentDossier.apiStatus = val;
+    renderPage(currentDossier, currentRole);
+    showToast('Status bijgewerkt naar: ' + s.text);
+  } catch(e) { alert('Fout bij opslaan: ' + e.message); }
+}
+
+async function changeAssigned(val) {
+  if (!currentDossier?.dossierNr) return;
+  try {
+    await fetch(`/api/dossier-assignments/${encodeURIComponent(currentDossier.dossierNr)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminName: val })
+    });
+    showToast(val ? 'Toegewezen aan ' + val : 'Toewijzing verwijderd');
+  } catch(e) { alert('Fout: ' + e.message); }
+}
+
+function toggleActies() {
+  const dd = document.getElementById('actiesDropdown');
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    setTimeout(() => document.addEventListener('click', closeActiesOutside, { once: true }), 0);
+  }
+}
+function closeActies() { document.getElementById('actiesDropdown').style.display = 'none'; }
+function closeActiesOutside(e) {
+  const wrap = document.querySelector('.acties-wrap');
+  if (wrap && !wrap.contains(e.target)) closeActies();
+}
+
+// ── Email modal ─────────────────────────────────────────────
+async function openEmailModal() {
+  document.getElementById('emTo').value = currentDossier?.clientEmail || '';
+  document.getElementById('emSubject').value = '';
+  document.getElementById('emBody').value = '';
+  await loadEmailTemplates();
+  document.getElementById('emailModal').classList.add('open');
+}
+function closeEmailModal() {
+  document.getElementById('emailModal').classList.remove('open');
+}
+
+async function loadEmailTemplates() {
+  try {
+    const r = await fetch('/api/email-templates');
+    if (!r.ok) return;
+    const tpls = await r.json();
+    const sel = document.getElementById('templateSelect');
+    sel.innerHTML = '<option value="">Kies template...</option>' +
+      tpls.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    sel._templates = tpls;
+  } catch(e) {}
+}
+
+function applyTemplate(id) {
+  const sel = document.getElementById('templateSelect');
+  const tpl = (sel._templates || []).find(t => t.id === id);
+  if (!tpl) return;
+  document.getElementById('emSubject').value = tpl.subject;
+  document.getElementById('emBody').value = tpl.body;
+}
+
+async function saveEmailTemplate() {
+  const subject = document.getElementById('emSubject').value.trim();
+  const body = document.getElementById('emBody').value.trim();
+  if (!subject || !body) { alert('Vul eerst onderwerp en bericht in.'); return; }
+  const name = prompt('Naam voor dit template:', subject);
+  if (!name) return;
+  try {
+    const r = await fetch('/api/email-templates', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, subject, body })
+    });
+    if (!r.ok) throw new Error('API fout');
+    await loadEmailTemplates();
+    showToast('Template opgeslagen: ' + name);
+  } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function sendCustomEmail() {
+  const to = document.getElementById('emTo').value.trim();
+  const subject = document.getElementById('emSubject').value.trim();
+  const body = document.getElementById('emBody').value.trim();
+  if (!to || !subject || !body) { alert('Vul alle velden in.'); return; }
+  const btn = document.querySelector('.em-send');
+  btn.disabled = true; btn.textContent = 'Verzenden...';
+  try {
+    const r = await fetch('/api/email-send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, body })
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'API fout'); }
+    closeEmailModal();
+    showToast('E-mail verzonden naar ' + to);
+  } catch(e) { alert('Fout bij verzenden: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Versturen →'; }
+}
+
 async function init() {
   const params = new URLSearchParams(location.search);
   const nr = params.get("nr");
@@ -400,9 +660,9 @@ async function init() {
         if (dr.ok) {
           const req = await dr.json();
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
-          const statusMap = { 'pending':{ key:'pending', text:'Nieuw' }, 'approved':{ key:'ident', text:'In behandeling' }, 'rejected':{ key:'new', text:'Afgewezen' } };
+          const statusMap = { 'pending':{ key:'intake', text:'Nieuw' }, 'approved':{ key:'ident', text:'iDIN-verificatie' }, 'notary':{ key:'notary', text:'Notariële akte' }, 'kvk':{ key:'kvk', text:'KvK-inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'new', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'new', text: req.status };
-          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '' };
+          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '' };
         }
       } catch(e) { console.error('API fetch failed:', e); }
     } else {
@@ -414,11 +674,16 @@ async function init() {
     }
     document.title = d.name + " – AandelenXpress";
     document.getElementById("topbarTitle").textContent = d.name;
+    currentDossier = d;
+    currentRole = u.type;
     try {
       renderPage(d, u.type);
     } catch(re) {
       console.error('renderPage error:', re);
       document.getElementById("pageContent").innerHTML = '<div class="empty-state" style="padding:80px 32px;"><p>Fout bij laden paginainhoud.</p></div>';
+    }
+    if (u.type === 'admin' && d.dossierNr && d.dossierNr.startsWith('RR-')) {
+      renderActionBar(d);
     }
   } catch(e) {
     console.error('Auth/load error:', e);

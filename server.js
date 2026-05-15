@@ -74,20 +74,22 @@ function loadDB() {
             return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
         }
     } catch(e) { console.error('DB load error:', e.message); }
-    return { requestCounter: 5000, resellerRequests: [], vragenlijsten: [] };
+    return { requestCounter: 5000, resellerRequests: [], vragenlijsten: [], emailTemplates: [] };
 }
 
 function saveDB() {
     try {
         const dir = path.dirname(DB_PATH);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(DB_PATH, JSON.stringify({ requestCounter, resellerRequests, vragenlijsten }, null, 2));
+        fs.writeFileSync(DB_PATH, JSON.stringify({ requestCounter, resellerRequests, vragenlijsten, emailTemplates }, null, 2));
     } catch(e) { console.error('DB save error:', e.message); }
 }
 
 const _db = loadDB();
 let requestCounter = _db.requestCounter;
 const resellerRequests = _db.resellerRequests;
+const emailTemplates = _db.emailTemplates || [];
+let templateCounter = emailTemplates.length > 0 ? Math.max(...emailTemplates.map(t => parseInt((t.id || 'T-0').split('-')[1]) || 0)) + 1 : 1;
 
 // Generate a short random access token for client dossier access
 function generateToken() {
@@ -596,6 +598,64 @@ app.patch('/api/reseller-requests/:id/token', requireAdmin, express.json(), (req
     request.accessToken = customToken || generateSmartToken(request);
     saveDB();
     res.json({ accessToken: request.accessToken });
+});
+
+// PATCH update dossier status (admin only)
+app.patch('/api/reseller-requests/:id/status', requireAdmin, express.json(), (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    const valid = ['pending', 'approved', 'notary', 'kvk', 'complete', 'rejected'];
+    if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
+    const request = resellerRequests.find(r => r.id === id);
+    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+    request.status = status;
+    request.statusUpdatedAt = new Date().toISOString();
+    saveDB();
+    res.json({ success: true, status });
+});
+
+// GET admin users list (admin only)
+app.get('/api/admin/admins', requireAdmin, (req, res) => {
+    const admins = Object.entries(allUsers)
+        .filter(([, u]) => u.type === 'admin')
+        .map(([email, u]) => ({ email, name: u.name }));
+    res.json(admins);
+});
+
+// POST send custom email (admin only)
+app.post('/api/email-send', requireAdmin, express.json(), async (req, res) => {
+    const { to, subject, body } = req.body;
+    if (!to || !subject || !body) return res.status(400).json({ error: 'to, subject en body zijn verplicht' });
+    try {
+        await emails.emailCustom({ to, subject, body });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Fout bij verzenden: ' + e.message });
+    }
+});
+
+// GET email templates (admin only)
+app.get('/api/email-templates', requireAdmin, (req, res) => {
+    res.json(emailTemplates);
+});
+
+// POST save email template (admin only)
+app.post('/api/email-templates', requireAdmin, express.json(), (req, res) => {
+    const { name, subject, body } = req.body;
+    if (!name || !subject || !body) return res.status(400).json({ error: 'name, subject en body zijn verplicht' });
+    const template = { id: `T-${templateCounter++}`, name, subject, body, createdAt: new Date().toISOString() };
+    emailTemplates.push(template);
+    saveDB();
+    res.json(template);
+});
+
+// DELETE email template (admin only)
+app.delete('/api/email-templates/:id', requireAdmin, (req, res) => {
+    const idx = emailTemplates.findIndex(t => t.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Template niet gevonden' });
+    emailTemplates.splice(idx, 1);
+    saveDB();
+    res.json({ success: true });
 });
 
 // PATCH reject reseller request (admin only)
