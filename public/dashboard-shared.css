@@ -345,7 +345,63 @@ body {
     cursor: pointer;
 }
 
-/* ===== TABLE ===== */
+/* ===== TABLE (grid-based divs) ===== */
+.dash-table { width: 100%; }
+
+.dash-table-wrapper {
+    overflow-y: visible;
+    border-radius: 0 0 12px 12px;
+    border: 1px solid #E1E7F0;
+    border-top: none;
+}
+
+.dash-table-head {
+    display: grid;
+    background: #F7F9FC;
+    border-bottom: 1px solid #EEF1F7;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8A9BB5;
+    padding: 0;
+}
+
+.dash-table-head > * {
+    border-right: 1px solid #E8EDF5;
+    padding: 12px 12px;
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+}
+
+.dash-table-head > *:first-child { padding-left: 24px; }
+.dash-table-head > *:last-child  { border-right: none; padding-right: 24px; }
+
+.dash-table-row {
+    display: grid;
+    padding: 0;
+    border-bottom: 1px solid #F0F2F7;
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.dash-table-row > * {
+    border-right: 1px solid #E8EDF5;
+    padding: 14px 12px;
+}
+
+.dash-table-row > *:first-child { padding-left: 24px; }
+.dash-table-row > *:last-child  { border-right: none; padding-right: 24px; }
+.dash-table-row:last-child { border-bottom: none; }
+.dash-table-row:hover { background: #FAFBFF; }
+
+/* Dossiers table columns (reseller) */
+.table-cols-dossiers {
+    grid-template-columns: 2fr 1.5fr 1.5fr 1.8fr 80px;
+    gap: 12px;
+}
+
 /* ===== ADMIN TABLES ===== */
 .admin-table {
     width: 100%;
@@ -505,6 +561,21 @@ body {
 .badge-admin {
     background: #E8F0FE;
     color: #1A73E8;
+}
+
+.badge-vragenlijst {
+    background: #F3F0FF;
+    color: #6741D9;
+}
+
+.badge-betaling {
+    background: #FFF9DB;
+    color: #E67700;
+}
+
+.badge-rejected {
+    background: #FFF5F5;
+    color: #C92A2A;
 }
 
 /* ===== PROGRESS BAR ===== */

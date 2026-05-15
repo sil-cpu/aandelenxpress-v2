@@ -361,9 +361,14 @@ async function loadDossiers() {
         const requests = await r.json();
 
         const statusMap = {
-            'pending':  { key:'pending',  text:'Nieuw',           pct: 5  },
-            'approved': { key:'ident',    text:'In behandeling',  pct: 20 },
-            'rejected': { key:'new',      text:'Afgewezen',       pct: 0  }
+            'pending':     { key:'pending',     text:'Aanvraag ingediend', pct: 5  },
+            'vragenlijst': { key:'vragenlijst', text:'Vragenlijst',        pct: 20 },
+            'approved':    { key:'vragenlijst', text:'Vragenlijst',        pct: 20 },
+            'betaling':    { key:'betaling',    text:'Betaling',           pct: 40 },
+            'notary':      { key:'notary',      text:'Notariële Akte',     pct: 60 },
+            'kvk':         { key:'kvk',         text:'KvK inschrijving',   pct: 80 },
+            'complete':    { key:'complete',    text:'Voltooid',           pct: 100 },
+            'rejected':    { key:'rejected',    text:'Afgewezen',          pct: 0  }
         };
 
         dossiers = requests.map(req => {

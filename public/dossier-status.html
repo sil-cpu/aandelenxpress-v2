@@ -828,46 +828,54 @@
 <script>
 // Status configuration
 const statusSteps = [
-    { key: 'intake',  label: 'Aanvraag ontvangen',  description: 'Initële intake verwerking' },
-    { key: 'ident',   label: 'iDIN Verificatie',     description: 'Identiteitsverificatie' },
-    { key: 'kvk',     label: 'KvK Inschrijving',     description: 'Registratie bij KVK' },
-    { key: 'notary',  label: 'Notariële Akte',        description: 'Notariële verwerking' },
-    { key: 'complete',label: 'Voltooid',              description: 'Dossier afgerond' }
+    { key: 'pending',     label: 'Aanvraag ingediend', description: 'Aanvraag ontvangen en geregistreerd' },
+    { key: 'vragenlijst', label: 'Vragenlijst',         description: 'Vragenlijst invullen' },
+    { key: 'betaling',    label: 'Betaling',            description: 'Betaling verwerken' },
+    { key: 'notary',      label: 'Notariële Akte',      description: 'Notariële verwerking' },
+    { key: 'kvk',         label: 'KvK inschrijving',   description: 'Registratie bij KVK' },
+    { key: 'complete',    label: 'Voltooid',            description: 'Dossier afgerond' }
 ];
 
 const statusDescriptions = {
-    intake:   'Wij verwerkten uw aanvraag en stuurden u de nodige documenten op.',
-    ident:    'Uw identiteit wordt geverifieerd via iDIN.',
-    kvk:      'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel.',
-    notary:   'De notariële akte wordt opgesteld door onze partner.',
-    complete: 'Uw dossier is volledig afgerond. Gefeliciteerd!'
+    pending:     'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier in behandeling.',
+    vragenlijst: 'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
+    approved:    'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
+    betaling:    'De vragenlijst is ontvangen. Wij verzoeken u de betaling te voldoen om verder te gaan.',
+    notary:      'De notariële akte wordt opgesteld door onze partner notaris.',
+    kvk:         'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel.',
+    complete:    'Uw dossier is volledig afgerond. Gefeliciteerd met uw nieuwe B.V.!'
 };
 
 const todoItems = {
-    intake: [
-        { title: 'Documenten ontvangen',   desc: 'U ontvangt documentatie via email' },
-        { title: 'Formulieren invullen',   desc: 'Vul alle vereiste formulieren in' },
-        { title: 'Documenten retourneren', desc: 'Stuur ingevulde formulieren terug' }
+    pending: [
+        { title: 'Aanvraag ingediend',       desc: 'Uw aanvraag is ontvangen' },
+        { title: 'Controle documenten',      desc: 'Wij controleren uw gegevens' },
+        { title: 'U ontvangt bericht',       desc: 'Wij sturen u spoedig een bericht' }
     ],
-    ident: [
-        { title: 'iDIN login',              desc: 'Log in met uw bank-app via iDIN' },
-        { title: 'Verificatie voltooien',   desc: 'Voltooi alle verificatiestappen' },
-        { title: 'Wachten op bevestiging', desc: 'Wij verwerken uw gegevens' }
+    vragenlijst: [
+        { title: 'E-mail met vragenlijst',   desc: 'Controleer uw e-mail inbox' },
+        { title: 'Vragenlijst invullen',     desc: 'Vul alle vragen volledig in' },
+        { title: 'Vragenlijst versturen',    desc: 'Verstuur de ingevulde vragenlijst' }
+    ],
+    betaling: [
+        { title: 'Betaalverzoek ontvangen',  desc: 'U ontvangt een betaalverzoek per e-mail' },
+        { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
+        { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
+    ],
+    notary: [
+        { title: 'Akte ondertekenen',        desc: 'Onderteken de notariële akte' },
+        { title: 'Handelsregister',          desc: 'Akte wordt geregistreerd' },
+        { title: 'Finalisering',             desc: 'Finalisering van alle procedures' }
     ],
     kvk: [
         { title: 'KvK inschrijving starten', desc: 'Wij dienen uw aanvraag in' },
         { title: 'Goedkeuring afwachten',    desc: 'KvK keurt uw registratie goed' },
-        { title: 'Bedrijfsnummer ontvangen', desc: 'U ontvangt uw bedrijfsnummer' }
-    ],
-    notary: [
-        { title: 'Akte ondertekenen',           desc: 'Onderteken de notariële akte' },
-        { title: 'Inschrijving Handelsregister', desc: 'Akte wordt geregistreerd' },
-        { title: 'Finalisering',                desc: 'Finalisering van alle procedures' }
+        { title: 'Bedrijfsnummer ontvangen', desc: 'U ontvangt uw KvK-nummer' }
     ],
     complete: [
-        { title: 'Alle stappen voltooid',   desc: 'Uw bedrijf is volledig opgericht!' },
-        { title: 'Documenten beschikbaar',  desc: 'Alle documenten zijn beschikbaar' },
-        { title: 'Support beschikbaar',     desc: 'Ons team staat voor u klaar' }
+        { title: 'Alle stappen voltooid',    desc: 'Uw bedrijf is volledig opgericht!' },
+        { title: 'Documenten beschikbaar',   desc: 'Alle documenten zijn beschikbaar' },
+        { title: 'Support beschikbaar',      desc: 'Ons team staat voor u klaar' }
     ]
 };
 

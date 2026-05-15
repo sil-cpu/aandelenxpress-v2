@@ -573,11 +573,16 @@ app.get('/api/dossier-status/:id', (req, res) => {
     if (!token || request.accessToken !== token) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
     const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
     const statusMap = {
-      'pending':  { key:'intake',  text:'Aanvraag ontvangen' },
-      'approved': { key:'ident',   text:'iDIN Verificatie' },
-      'rejected': { key:'new',     text:'Afgewezen' }
+      'pending':     { key:'pending',     text:'Aanvraag ingediend' },
+      'approved':    { key:'vragenlijst', text:'Vragenlijst' },
+      'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
+      'betaling':    { key:'betaling',    text:'Betaling' },
+      'notary':      { key:'notary',      text:'Notariële Akte' },
+      'kvk':         { key:'kvk',         text:'KvK inschrijving' },
+      'complete':    { key:'complete',    text:'Voltooid' },
+      'rejected':    { key:'rejected',    text:'Afgewezen' },
     };
-    const s = statusMap[request.status] || { key:'intake', text:'In behandeling' };
+    const s = statusMap[request.status] || { key:'pending', text:'In behandeling' };
     res.json({
       id: request.id,
       name: request.gewenstNaam || request.clientName,
@@ -609,11 +614,12 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (r
         return res.status(404).json({ error: 'Aanvraag niet gevonden' });
     }
     
-    // Move to approved status
-    request.status = 'approved';
+    // Move to vragenlijst status
+    request.status = 'vragenlijst';
     request.approvedAt = new Date().toISOString();
     request.approvedBy = req.session.user.email;
-
+    const approver = req.session.user.name || req.session.user.email;
+    addActivity(request, 'system', `Dossier goedgekeurd door ${approver}. Vragenlijst email verstuurd naar ${request.clientEmail}.`, approver);
     saveDB();
     // Notificeer reseller + stuur klant email met link naar vragenlijst
     emails.emailResellerRequestApproved({ request });
@@ -636,12 +642,12 @@ app.patch('/api/reseller-requests/:id/token', requireAdmin, express.json(), (req
 app.patch('/api/reseller-requests/:id/status', requireAdmin, express.json(), (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    const valid = ['pending', 'approved', 'notary', 'kvk', 'complete', 'rejected'];
+    const valid = ['pending', 'vragenlijst', 'betaling', 'notary', 'kvk', 'complete', 'rejected', 'approved'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
     const request = resellerRequests.find(r => r.id === id);
     if (!request) return res.status(404).json({ error: 'Niet gevonden' });
     const oldStatus = request.status;
-    const statusLabels = { pending:'Aanvraag', approved:'iDIN-verificatie', notary:'Notariële akte', kvk:'KvK-inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
+    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', betaling:'Betaling', notary:'Notariële Akte', kvk:'KvK inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
     request.status = status;
     request.statusUpdatedAt = new Date().toISOString();
     const adminName = req.session.user.name || req.session.user.email;
@@ -912,7 +918,7 @@ app.post('/api/vragenlijst', express.json({ limit: '25mb' }), (req, res) => {
         return res.status(400).json({ error: 'Verplichte velden ontbreken' });
     }
 
-    const request = resellerRequests.find(r => r.id === caseId && r.status === 'approved');
+    const request = resellerRequests.find(r => r.id === caseId && ['approved','vragenlijst','betaling','notary','kvk','complete'].includes(r.status));
     if (!request) {
         return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
     }
@@ -955,6 +961,15 @@ app.get('/api/admin/vragenlijsten', requireAdmin, (req, res) => {
     // Return without raw file data to keep response small
     const result = vragenlijsten.map(({ datacardBestandData, pepBestandData, ...rest }) => rest);
     res.json(result);
+});
+
+// GET single vragenlijst submission by caseId (admin only)
+app.get('/api/vragenlijsten/:caseId', requireAdmin, (req, res) => {
+    const sub = vragenlijsten.find(v => v.caseId === req.params.caseId);
+    if (!sub) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
+    // Strip binary file data from response
+    const { datacardBestandData, pepBestandData, ...rest } = sub;
+    res.json({ ...rest, datacardIngediend: !!sub.datacardBestandNaam, pepIngediend: !!sub.pepBestandNaam });
 });
 
 // ─ Blog endpoints ──────────────────────────────────────────────────────────

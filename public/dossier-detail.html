@@ -145,11 +145,12 @@
       <div class="ab-divider"></div>
       <div class="ab-group">
         <span class="ab-label">Status</span>
-        <select id="statusSelect" class="ab-select" onchange="changeStatus(this.value)">
-          <option value="pending">Nieuw</option>
-          <option value="approved">iDIN-verificatie</option>
-          <option value="notary">Notariële akte</option>
-          <option value="kvk">KvK-inschrijving</option>
+        <select id="statusSelect" class="ab-select" onchange="onStatusSelectChange(this.value)">
+          <option value="pending">Aanvraag ingediend</option>
+          <option value="vragenlijst">Vragenlijst</option>
+          <option value="betaling">Betaling</option>
+          <option value="notary">Notariële Akte</option>
+          <option value="kvk">KvK inschrijving</option>
           <option value="complete">Voltooid</option>
           <option value="rejected">Afgewezen</option>
         </select>
@@ -226,19 +227,41 @@
           </div>
         </div>
       </div>
-      <div class="em-footer">
+      <div class="em-footer" id="emFooterCompose">
         <button class="em-cancel" onclick="closeEmailModal()">Annuleren</button>
         <button class="em-send" onclick="sendCustomEmail()">Versturen →</button>
       </div>
+      <div class="em-footer" id="emFooterStatus" style="display:none;">
+        <button class="em-cancel" onclick="cancelStatusChange()">Annuleren</button>
+        <button class="em-send" style="background:#F0F4FF;color:#1A3B70;border:1px solid #C3DAFE;" onclick="saveStatusOnly()">Opslaan zonder mail</button>
+        <button class="em-send" id="emSendStatusBtn" onclick="saveStatusAndSendEmail()">Opslaan &amp; versturen →</button>
+      </div>
+    </div>
+  </div>
+<!-- VRAGENLIJST VIEWER MODAL -->
+<div id="vlModal" class="em-overlay" onclick="if(event.target===this)closeVragenlijstModal()">
+  <div class="em-modal" style="width:680px;max-width:calc(100vw - 32px);">
+    <div class="em-header">
+      <h3>
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Vragenlijst inzien
+      </h3>
+      <button class="em-close" onclick="closeVragenlijstModal()">&#x2715;</button>
+    </div>
+    <div class="em-body" id="vlModalBody" style="max-height:70vh;overflow-y:auto;">
+      <div style="text-align:center;padding:32px;color:#94A3B8;">Laden…</div>
+    </div>
+    <div class="em-footer">
+      <button class="em-cancel" onclick="closeVragenlijstModal()">Sluiten</button>
     </div>
   </div>
 </div>
-
-<script>
+</div>
 // ── Global state ───────────────────────────────────────────
 let currentDossier = null;
-let currentRole = null;
-
+let currentRole = null;let currentEmailMode = 'compose'; // 'compose' | 'status'
+let pendingStatusChange = null;   // { value, oldValue }
+let currentVragenlijstData = null;
 // ── All dossier data ───────────────────────────────────────
 const allDossiers = [
   { name:"TechStart B.V.",       partner:"Bakker Accountants",  statusKey:"notary",   statusText:"Notariële akte",  date:"2026-04-20", dossierNr:"AX-2026-0042", clientEmail:"info@techstart.nl",       clientPhone:"+31 20 123 4567", kvk:"" },
@@ -339,7 +362,7 @@ function renderPage(d, role) {
     <div class="detail-card" style="margin-bottom:20px;">
       <div class="detail-card-head"><div class="detail-card-title">Voortgang</div></div>
       <div class="detail-card-body">
-        <div class="process-timeline" style="flex-direction:row;gap:0;">${buildTimelineHorizontal(d.statusKey)}</div>
+        <div class="process-timeline" style="flex-direction:row;gap:0;">${buildTimelineHorizontal(d.statusKey, role, d.hasVragenlijst)}</div>
       </div>
     </div>
 
@@ -421,26 +444,34 @@ function renderPage(d, role) {
   loadActivity(d.dossierNr);
 }
 
-function buildTimelineHorizontal(statusKey) {
+function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
   const stages = [
-    "Aanvraag ontvangen", "iDIN-verificatie", "Notariële akte", "KvK-inschrijving", "Voltooid"
+    { key:'pending',     label:'Aanvraag ingediend' },
+    { key:'vragenlijst', label:'Vragenlijst' },
+    { key:'betaling',    label:'Betaling' },
+    { key:'notary',      label:'Notariële Akte' },
+    { key:'kvk',         label:'KvK inschrijving' },
+    { key:'complete',    label:'Voltooid' },
   ];
-  const order = { new:0, intake:0, ident:1, notary:2, kvk:3, complete:4 };
+  const order = { pending:0, approved:1, vragenlijst:1, betaling:2, notary:3, kvk:4, complete:5 };
   const cur = order[statusKey] ?? 0;
-  const allDone = statusKey === "complete";
-  return stages.map((label,i) => {
+  const allDone = statusKey === 'complete';
+  return stages.map((s,i) => {
     const done = allDone || i < cur;
     const active = !allDone && i === cur;
-    const isLast = i === stages.length - 1;
+    const vlBtn = (i === 1 && hasVragenlijst && role === 'admin')
+      ? `<button onclick="openVragenlijstModal()" style="margin-top:6px;padding:3px 9px;background:#EEF4FF;color:#2B6CB5;border:1px solid #C3DAFE;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#x1F4CB; Bekijk vragenlijst</button>`
+      : '';
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;">
-      ${i > 0 ? `<div style="position:absolute;top:14px;right:50%;width:100%;height:2px;background:${done||active?'#1A3B70':'#E8EDF5'};z-index:0;"></div>` : ""}
+      ${i > 0 ? `<div style="position:absolute;top:14px;right:50%;width:100%;height:2px;background:${done||active?'#1A3B70':'#E8EDF5'};z-index:0;"></div>` : ''}
       <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'#1A3B70':active?'#2B6CB5':'#E8EDF5'};background:${done?'#1A3B70':active?'#EEF4FF':'white'};display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:${done?'white':active?'#2B6CB5':'#CBD5E0'};position:relative;z-index:1;">
-        ${done?"✓":i+1}
+        ${done?'&#x2713;':i+1}
       </div>
-      <div style="margin-top:8px;font-size:0.78rem;font-weight:${active?'600':'400'};color:${done?'#1A3B70':active?'#1A3B70':'#A0AEC0'};text-align:center;line-height:1.3;">${label}</div>
-      <div style="font-size:0.72rem;color:${active?'#2B6CB5':'#CBD5E0'};margin-top:2px;">${active?"Actief":done?"Afgerond":""}</div>
+      <div style="margin-top:8px;font-size:0.78rem;font-weight:${active?'600':'400'};color:${done?'#1A3B70':active?'#1A3B70':'#A0AEC0'};text-align:center;line-height:1.3;">${s.label}</div>
+      <div style="font-size:0.72rem;color:${active?'#2B6CB5':'#CBD5E0'};margin-top:2px;">${active?'Actief':done?'Afgerond':''}</div>
+      ${vlBtn}
     </div>`;
-  }).join("");
+  }).join('');
 }
 
 function fmtDate(d) {
@@ -649,7 +680,41 @@ async function resetDossierToken(dossierNr) {
     setTimeout(() => toast.remove(), 4000);
   } catch(e) { alert('Fout bij resetten: ' + e.message); }
 }
-
+// ── Status email templates helper ──────────────────────────
+function getStatusEmailTemplate(status, d) {
+  const naam = escHtml(d.name);
+  const origin = window.location.origin;
+  const statusUrl = `${origin}/dossier-status?nr=${d.dossierNr}`;
+  const vragenlijstUrl = `${origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}`;
+  const code = d.accessToken || '—';
+  const t = {
+    vragenlijst: {
+      subject: `Uw BV-aanvraag is geaccepteerd — vul de vragenlijst in`,
+      body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${d.name} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}`
+    },
+    betaling: {
+      subject: `Betalingsverzoek — BV-oprichting ${d.name}`,
+      body: `Beste klant,\n\nUw vragenlijst is verwerkt. De volgende stap is de betaling voor de oprichting van ${d.name}.\n\nU ontvangt binnenkort een factuur. Na ontvangst van de betaling gaan wij direct door met de verdere afhandeling.\n\nStatuspagina: ${statusUrl}`
+    },
+    notary: {
+      subject: `Notariële akte — ${d.name}`,
+      body: `Beste klant,\n\nDe betaling is ontvangen. Uw dossier bevindt zich nu in de fase van de notariële akte. U wordt binnenkort gecontacteerd voor de ondertekening.\n\nStatuspagina: ${statusUrl}`
+    },
+    kvk: {
+      subject: `KvK inschrijving gestart — ${d.name}`,
+      body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel. U ontvangt het KvK-nummer zodra de inschrijving is verwerkt.\n\nStatuspagina: ${statusUrl}`
+    },
+    complete: {
+      subject: `Uw BV is succesvol opgericht — ${d.name}`,
+      body: `Gefeliciteerd!\n\nDe oprichting van ${d.name} is volledig afgerond. Uw BV is nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}`
+    },
+    rejected: {
+      subject: `Update over uw dossier — ${d.name}`,
+      body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.`
+    }
+  };
+  return t[status] || { subject: `Status update — ${d.name}`, body: `Uw dossier heeft een nieuwe status.` };
+}
 // ── Action bar ─────────────────────────────────────────────
 async function renderActionBar(d) {
   // Fetch admin list
@@ -673,28 +738,89 @@ async function renderActionBar(d) {
 
   // Set current status
   const statusSel = document.getElementById('statusSelect');
-  if (d.apiStatus) statusSel.value = d.apiStatus;
+  if (d.apiStatus) statusSel.value = ['pending','vragenlijst','betaling','notary','kvk','complete','rejected'].includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
 
   document.getElementById('actionBar').style.display = 'flex';
 }
 
-async function changeStatus(val) {
-  if (!currentDossier?.dossierNr?.startsWith('RR-')) return;
+async function onStatusSelectChange(val) {
+  const oldVal = currentDossier?.apiStatus || 'pending';
+  if (val === oldVal) return;
+  pendingStatusChange = { value: val, oldValue: oldVal };
+  const tpl = getStatusEmailTemplate(val, currentDossier);
+  await openEmailModal({ mode: 'status', to: currentDossier?.clientEmail || '', subject: tpl.subject, bodyText: tpl.body });
+}
+
+async function doChangeStatus(val) {
+  const r = await fetch(`/api/reseller-requests/${encodeURIComponent(currentDossier.dossierNr)}/status`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: val })
+  });
+  if (!r.ok) throw new Error('API fout bij status update');
+  const sMap = {
+    'pending':     { key:'pending',     text:'Aanvraag ingediend' },
+    'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
+    'approved':    { key:'vragenlijst', text:'Vragenlijst' },
+    'betaling':    { key:'betaling',    text:'Betaling' },
+    'notary':      { key:'notary',      text:'Notariële Akte' },
+    'kvk':         { key:'kvk',         text:'KvK inschrijving' },
+    'complete':    { key:'complete',    text:'Voltooid' },
+    'rejected':    { key:'rejected',    text:'Afgewezen' }
+  };
+  const s = sMap[val] || { key: val, text: val };
+  currentDossier.statusKey = s.key;
+  currentDossier.statusText = s.text;
+  currentDossier.apiStatus = val;
+  renderPage(currentDossier, currentRole);
+  renderActionBar(currentDossier);
+  loadActivity(currentDossier.dossierNr);
+}
+
+function cancelStatusChange() {
+  if (pendingStatusChange) {
+    const sel = document.getElementById('statusSelect');
+    if (sel) sel.value = pendingStatusChange.oldValue || 'pending';
+    pendingStatusChange = null;
+  }
+  closeEmailModal();
+}
+
+async function saveStatusOnly() {
+  if (!pendingStatusChange) return;
   try {
-    const r = await fetch(`/api/reseller-requests/${encodeURIComponent(currentDossier.dossierNr)}/status`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: val })
+    await doChangeStatus(pendingStatusChange.value);
+    closeEmailModal();
+    pendingStatusChange = null;
+    showToast('Status bijgewerkt');
+  } catch(e) { alert('Fout: ' + e.message); }
+}
+
+async function saveStatusAndSendEmail() {
+  if (!pendingStatusChange) return;
+  const to = document.getElementById('emTo').value.trim();
+  const subject = document.getElementById('emSubject').value.trim();
+  const bodyHtml = document.getElementById('emBodyEditor').innerHTML;
+  const bodyText = document.getElementById('emBodyEditor').textContent.trim();
+  if (!to || !subject || !bodyText) { alert('Vul alle velden in.'); return; }
+  const btn = document.getElementById('emSendStatusBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Opslaan...'; }
+  try {
+    await doChangeStatus(pendingStatusChange.value);
+    const r = await fetch('/api/email-send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, bodyHtml })
     });
-    if (!r.ok) throw new Error('API fout');
-    const sMap = { 'pending':{ key:'intake', text:'Nieuw' }, 'approved':{ key:'ident', text:'iDIN-verificatie' }, 'notary':{ key:'notary', text:'Notariële akte' }, 'kvk':{ key:'kvk', text:'KvK-inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'new', text:'Afgewezen' } };
-    const s = sMap[val] || { key:'intake', text: val };
-    currentDossier.statusKey = s.key;
-    currentDossier.statusText = s.text;
-    currentDossier.apiStatus = val;
-    renderPage(currentDossier, currentRole);
-    showToast('Status bijgewerkt naar: ' + s.text);
-    loadActivity(currentDossier.dossierNr);
-  } catch(e) { alert('Fout bij opslaan: ' + e.message); }
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Email fout'); }
+    closeEmailModal();
+    pendingStatusChange = null;
+    showToast('Status bijgewerkt + email verstuurd naar ' + to);
+  } catch(e) { alert('Fout: ' + e.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Opslaan & versturen →'; } }
+}
+
+async function changeStatus(val) {
+  // Legacy compat — redirect to new flow
+  await onStatusSelectChange(val);
 }
 
 async function changeAssigned(val) {
@@ -723,10 +849,24 @@ function closeActiesOutside(e) {
 }
 
 // ── Email modal ─────────────────────────────────────────────
-async function openEmailModal() {
-  document.getElementById('emTo').value = currentDossier?.clientEmail || '';
-  document.getElementById('emSubject').value = '';
-  document.getElementById('emBodyEditor').innerHTML = '';
+async function openEmailModal(opts = {}) {
+  const isStatus = opts.mode === 'status';
+  currentEmailMode = opts.mode || 'compose';
+  document.getElementById('emTo').value = opts.to || currentDossier?.clientEmail || '';
+  document.getElementById('emSubject').value = opts.subject || '';
+  document.getElementById('emBodyEditor').innerHTML = opts.bodyText
+    ? opts.bodyText.replace(/\n/g, '<br>')
+    : (opts.bodyHtml || '');
+  // Swap footer
+  document.getElementById('emFooterCompose').style.display = isStatus ? 'none' : 'flex';
+  document.getElementById('emFooterStatus').style.display  = isStatus ? 'flex' : 'none';
+  // Update title
+  const titleEl = document.querySelector('#emailModal .em-header h3');
+  if (titleEl) {
+    titleEl.innerHTML = isStatus
+      ? `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Status wijzigen &#8212; e-mail versturen`
+      : `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>E-mail opstellen`;
+  }
   await loadEmailTemplates();
   document.getElementById('emailModal').classList.add('open');
   setTimeout(() => document.getElementById('emTo').focus(), 50);
@@ -793,6 +933,59 @@ async function sendCustomEmail() {
   finally { btn.disabled = false; btn.textContent = 'Versturen →'; }
 }
 
+// ── Vragenlijst viewer ──────────────────────────────────
+async function openVragenlijstModal() {
+  document.getElementById('vlModal').classList.add('open');
+  if (currentVragenlijstData) { renderVlModal(currentVragenlijstData); return; }
+  try {
+    const r = await fetch(`/api/vragenlijsten/${encodeURIComponent(currentDossier.dossierNr)}`);
+    if (!r.ok) { document.getElementById('vlModalBody').innerHTML = '<div style="padding:32px;text-align:center;color:#94A3B8;">Vragenlijst nog niet ingediend.</div>'; return; }
+    currentVragenlijstData = await r.json();
+    renderVlModal(currentVragenlijstData);
+  } catch(e) {
+    document.getElementById('vlModalBody').innerHTML = '<div style="padding:32px;text-align:center;color:#C92A2A;">Fout bij laden.</div>';
+  }
+}
+function closeVragenlijstModal() {
+  document.getElementById('vlModal').classList.remove('open');
+}
+function renderVlModal(d) {
+  const fv = v => escHtml(v || '—');
+  document.getElementById('vlModalBody').innerHTML = `
+    <div style="margin-bottom:16px;padding:10px 16px;background:#F5F8FF;border-left:4px solid #1A3B70;border-radius:4px;font-size:.83rem;color:#4A5568;">
+      Ingediend op: <strong>${d.submittedAt ? new Date(d.submittedAt).toLocaleString('nl-NL') : '—'}</strong>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin-bottom:20px;">
+      ${[
+        ['Naam BV', d.gewenstNaam],
+        ['Contact e-mail', d.contactEmail],
+        ['Type oprichting', d.typeOprichting],
+        ['Sector', d.sector],
+        ['Spoed', d.spoed === 'spoed' ? '⚡ Ja — binnen 48 uur' : 'Nee — standaard'],
+        ['Klant naam', d.clientName],
+        ['Klant e-mail', d.clientEmail],
+        ['Opdracht-ID', d.caseId],
+      ].map(([lbl,val]) => `<div>
+        <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">${lbl}</div>
+        <div style="font-size:.9rem;color:#0F1D3A;font-weight:500;">${fv(val)}</div>
+      </div>`).join('')}
+    </div>
+    ${d.opmerkingen ? `<div style="margin-bottom:16px;padding:12px 16px;background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:4px;font-size:.85rem;color:#78350F;"><strong>Opmerkingen klant:</strong><br>${escHtml(d.opmerkingen).replace(/\n/g,'<br>')}</div>` : ''}
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+        <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Datacard</div>
+        <div style="font-size:.85rem;color:#0F1D3A;">${fv(d.datacardBestandNaam)}</div>
+        ${d.datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+      </div>
+      <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+        <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PEP-verklaring</div>
+        <div style="font-size:.85rem;color:#0F1D3A;">${fv(d.pepBestandNaam)}</div>
+        ${d.pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+      </div>
+    </div>
+  `;
+}
+
 // ── Rich text editor toolbar ───────────────────────────────
 function initEmailEditor() {
   document.querySelectorAll('#emToolbar .em-tb-btn').forEach(btn => {
@@ -835,9 +1028,9 @@ async function init() {
         if (dr.ok) {
           const req = await dr.json();
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
-          const statusMap = { 'pending':{ key:'intake', text:'Nieuw' }, 'approved':{ key:'ident', text:'iDIN-verificatie' }, 'notary':{ key:'notary', text:'Notariële akte' }, 'kvk':{ key:'kvk', text:'KvK-inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'new', text:'Afgewezen' } };
-          const s = statusMap[req.status] || { key:'new', text: req.status };
-          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '' };
+          const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'notary':{ key:'notary', text:'Notariële Akte' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
+          const s = statusMap[req.status] || { key:'pending', text: req.status };
+          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', hasVragenlijst: false };
         }
       } catch(e) { console.error('API fetch failed:', e); }
     } else {
@@ -846,6 +1039,13 @@ async function init() {
     if (!d) {
       document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Dossier niet gevonden.</p><a href="${u.type==='admin'?'admin-dashboard.html':'reseller-dashboard.html'}" class="btn-primary" style="margin-top:16px;">Terug naar dashboard</a></div>`;
       return;
+    }
+    // Check if questionnaire was submitted (admin only)
+    if (u.type === 'admin' && d.dossierNr && d.dossierNr.startsWith('RR-')) {
+      try {
+        const vlr = await fetch('/api/vragenlijsten/' + encodeURIComponent(d.dossierNr));
+        if (vlr.ok) { d.hasVragenlijst = true; currentVragenlijstData = await vlr.json(); }
+      } catch(e) {}
     }
     document.title = d.name + " – AandelenXpress";
     document.getElementById("topbarTitle").textContent = d.name;

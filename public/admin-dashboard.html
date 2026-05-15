@@ -187,11 +187,13 @@
             <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Status</label>
             <select id="dossierFilterStatus" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
               <option value="">Alle</option>
-              <option value="intake">Intake</option>
-              <option value="ident">iDIN verwerking</option>
+              <option value="pending">Aanvraag ingediend</option>
+              <option value="vragenlijst">Vragenlijst</option>
+              <option value="betaling">Betaling</option>
+              <option value="notary">Notariële Akte</option>
               <option value="kvk">KvK inschrijving</option>
-              <option value="notary">Notariële akte</option>
               <option value="complete">Voltooid</option>
+              <option value="rejected">Afgewezen</option>
             </select>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;">
@@ -636,11 +638,16 @@ let dossierAssignments = {};
 function mapRequestToDossier(req) {
   const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
   const statusMap = {
-    'pending':  { key:'pending',  text:'Nieuw' },
-    'approved': { key:'ident',    text:'In behandeling' },
-    'rejected': { key:'new',      text:'Afgewezen' }
+    'pending':     { key:'pending',     text:'Aanvraag ingediend' },
+    'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
+    'approved':    { key:'vragenlijst', text:'Vragenlijst' },
+    'betaling':    { key:'betaling',    text:'Betaling' },
+    'notary':      { key:'notary',      text:'Notariële Akte' },
+    'kvk':         { key:'kvk',         text:'KvK inschrijving' },
+    'complete':    { key:'complete',    text:'Voltooid' },
+    'rejected':    { key:'rejected',    text:'Afgewezen' }
   };
-  const s = statusMap[req.status] || { key:'new', text: req.status };
+  const s = statusMap[req.status] || { key:'pending', text: req.status };
   return {
     name:        req.gewenstNaam || req.clientName,
     type:        typeMap[req.oprichtingType] || req.oprichtingType || '–',

@@ -390,6 +390,31 @@ async function emailAdminVragenlijstSubmitted({ submission }) {
     });
 }
 
+/** Klant: betalingsverzoek — stap na vragenlijst */
+async function emailClientBetaling({ request }) {
+    const { id, clientName, clientEmail, gewenstNaam, resellerName, resellerCompany } = request;
+    const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
+    return sendEmail({
+        to:      clientEmail,
+        subject: `Betalingsverzoek — BV-oprichting ${gewenstNaam}`,
+        html:    layout(`
+            <h2>Betalingsverzoek voor uw BV-oprichting</h2>
+            <p>Beste ${clientName},</p>
+            <p>Uw vragenlijst is ontvangen en verwerkt. De volgende stap is de betaling voor de oprichting van <strong>${gewenstNaam}</strong>.</p>
+            <div class="info-box">
+                <strong>Referentienummer:</strong> ${id}<br>
+                <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
+                <strong>Adviseur:</strong> ${resellerName} (${resellerCompany})
+            </div>
+            <p>U ontvangt binnenkort een factuur via uw adviseur of per mail. Na ontvangst van de betaling gaan wij direct door met de verdere afhandeling.</p>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${statusUrl}">Dossier bekijken</a>
+            <p style="font-size:13px;color:#888;margin-top:24px;">
+                Vragen over de betaling? Mail naar <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.
+            </p>
+        `),
+    });
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
 async function emailCustom({ to, subject, body, bodyHtml }) {
@@ -410,6 +435,7 @@ module.exports = {
     emailClientNewRequest,
     emailResellerRequestApproved,
     emailClientCaseApproved,
+    emailClientBetaling,
     emailResellerRequestRejected,
     emailAdminNewTicket,
     emailTicketSenderConfirmation,
