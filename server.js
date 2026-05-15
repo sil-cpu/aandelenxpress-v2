@@ -1094,6 +1094,9 @@ app.use((req, res, next) => {
 // Export app for Vercel
 module.exports = app;
 
+// Export app for Vercel serverless
+module.exports = app;
+
 // Start server if running directly (not as a Vercel function)
 if (require.main === module) {
     app.listen(PORT, () => {
