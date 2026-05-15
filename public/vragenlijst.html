@@ -360,7 +360,9 @@
         border: 2.5px solid rgba(255,255,255,.35); margin: 0 auto;
         font-family: Georgia, serif; letter-spacing: 1px;
         box-shadow: 0 4px 16px rgba(0,0,0,.25);
+        overflow: hidden;
     }
+    .cs-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center top; border-radius: 50%; display: block; }
     .cs-dot-badge {
         position: absolute; bottom: 3px; right: 3px;
         width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid #1A3B70;
@@ -1049,7 +1051,7 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
 <div id="contactSidebar" class="contact-sidebar" style="display:none;">
     <div class="cs-top">
         <div class="cs-avatar-wrap">
-            <div class="cs-avatar">EV</div>
+            <div class="cs-avatar"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Emma de Vries"></div>
             <span class="cs-dot-badge" id="csDotBadge"></span>
         </div>
         <div class="cs-name">Emma de Vries</div>
