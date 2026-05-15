@@ -51,9 +51,17 @@
     .em-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
     .em-field { margin-bottom: 15px; }
     .em-field label { display: block; font-size: .73rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px; }
-    .em-field input, .em-field textarea { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #DDE5F4; border-radius: 8px; font-size: .9rem; font-family: inherit; color: #0F1D3A; }
-    .em-field input:focus, .em-field textarea:focus { outline: none; border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,.12); }
-    .em-field textarea { min-height: 150px; resize: vertical; }
+    .em-field input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #DDE5F4; border-radius: 8px; font-size: .9rem; font-family: inherit; color: #0F1D3A; }
+    .em-field input:focus { outline: none; border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,.12); }
+    .em-editor-wrap { border: 1px solid #DDE5F4; border-radius: 8px; overflow: hidden; }
+    .em-editor-wrap:focus-within { border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,.12); }
+    .em-toolbar { display: flex; align-items: center; gap: 2px; padding: 6px 8px; background: #F8FAFD; border-bottom: 1px solid #EEF2FF; }
+    .em-tb-btn { width: 30px; height: 28px; border: none; background: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .85rem; color: #0F1D3A; padding: 0; flex-shrink: 0; }
+    .em-tb-btn:hover { background: #EBF2FF; }
+    .em-tb-btn.active { background: #DDE5F4; color: #1A3B70; }
+    .em-tb-sep { width: 1px; height: 18px; background: #DDE5F4; margin: 0 3px; flex-shrink: 0; }
+    .em-editor { padding: 10px 12px; min-height: 150px; font-size: .9rem; font-family: inherit; color: #0F1D3A; outline: none; line-height: 1.75; }
+    .em-editor:empty:before { content: attr(placeholder); color: #94A3B8; pointer-events: none; }
     .em-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid #EEF2FF; }
     .em-footer button { padding: 10px 22px; border-radius: 8px; font-size: .88rem; font-weight: 600; cursor: pointer; font-family: inherit; border: none; }
     .em-cancel { background: #F0F4FF; color: #0F1D3A; border: 1px solid #DDE5F4 !important; }
@@ -169,7 +177,23 @@
         </div>
         <div class="em-field">
           <label>Bericht</label>
-          <textarea id="emBody" placeholder="Typ hier uw bericht..."></textarea>
+          <div class="em-editor-wrap">
+            <div class="em-toolbar" id="emToolbar">
+              <button type="button" class="em-tb-btn" data-cmd="bold" title="Vet"><b>B</b></button>
+              <button type="button" class="em-tb-btn" data-cmd="italic" title="Cursief"><i>I</i></button>
+              <button type="button" class="em-tb-btn" data-cmd="underline" title="Onderstrepen"><u>U</u></button>
+              <span class="em-tb-sep"></span>
+              <button type="button" class="em-tb-btn" data-cmd="insertUnorderedList" title="Opsommingstekens">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <button type="button" class="em-tb-btn" data-cmd="insertOrderedList" title="Genummerde lijst">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="10" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="10" y1="18" x2="20" y2="18"/><text x="1" y="9" font-size="7.5" fill="currentColor" stroke="none" font-weight="700">1.</text><text x="1" y="15" font-size="7.5" fill="currentColor" stroke="none" font-weight="700">2.</text><text x="1" y="21" font-size="7.5" fill="currentColor" stroke="none" font-weight="700">3.</text></svg>
+              </button>
+              <span class="em-tb-sep"></span>
+              <button type="button" class="em-tb-btn" data-cmd="removeFormat" title="Opmaak verwijderen" style="font-size:.75rem;">✕A</button>
+            </div>
+            <div id="emBodyEditor" class="em-editor" contenteditable="true" placeholder="Typ hier uw bericht..."></div>
+          </div>
         </div>
       </div>
       <div class="em-footer">
@@ -575,9 +599,10 @@ function closeActiesOutside(e) {
 async function openEmailModal() {
   document.getElementById('emTo').value = currentDossier?.clientEmail || '';
   document.getElementById('emSubject').value = '';
-  document.getElementById('emBody').value = '';
+  document.getElementById('emBodyEditor').innerHTML = '';
   await loadEmailTemplates();
   document.getElementById('emailModal').classList.add('open');
+  setTimeout(() => document.getElementById('emTo').focus(), 50);
 }
 function closeEmailModal() {
   document.getElementById('emailModal').classList.remove('open');
@@ -600,13 +625,14 @@ function applyTemplate(id) {
   const tpl = (sel._templates || []).find(t => t.id === id);
   if (!tpl) return;
   document.getElementById('emSubject').value = tpl.subject;
-  document.getElementById('emBody').value = tpl.body;
+  document.getElementById('emBodyEditor').innerHTML = tpl.body;
 }
 
 async function saveEmailTemplate() {
   const subject = document.getElementById('emSubject').value.trim();
-  const body = document.getElementById('emBody').value.trim();
-  if (!subject || !body) { alert('Vul eerst onderwerp en bericht in.'); return; }
+  const body = document.getElementById('emBodyEditor').innerHTML;
+  const bodyText = document.getElementById('emBodyEditor').textContent.trim();
+  if (!subject || !bodyText) { alert('Vul eerst onderwerp en bericht in.'); return; }
   const name = prompt('Naam voor dit template:', subject);
   if (!name) return;
   try {
@@ -623,20 +649,42 @@ async function saveEmailTemplate() {
 async function sendCustomEmail() {
   const to = document.getElementById('emTo').value.trim();
   const subject = document.getElementById('emSubject').value.trim();
-  const body = document.getElementById('emBody').value.trim();
-  if (!to || !subject || !body) { alert('Vul alle velden in.'); return; }
+  const bodyHtml = document.getElementById('emBodyEditor').innerHTML;
+  const bodyText = document.getElementById('emBodyEditor').textContent.trim();
+  if (!to || !subject || !bodyText) { alert('Vul alle velden in.'); return; }
   const btn = document.querySelector('.em-send');
   btn.disabled = true; btn.textContent = 'Verzenden...';
   try {
     const r = await fetch('/api/email-send', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, body })
+      body: JSON.stringify({ to, subject, bodyHtml })
     });
     if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'API fout'); }
     closeEmailModal();
     showToast('E-mail verzonden naar ' + to);
   } catch(e) { alert('Fout bij verzenden: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = 'Versturen →'; }
+}
+
+// ── Rich text editor toolbar ───────────────────────────────
+function initEmailEditor() {
+  document.querySelectorAll('#emToolbar .em-tb-btn').forEach(btn => {
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      document.execCommand(btn.dataset.cmd, false, null);
+      updateEditorToolbar();
+    });
+  });
+  const ed = document.getElementById('emBodyEditor');
+  ['keyup','mouseup','selectionchange'].forEach(ev =>
+    ed.addEventListener(ev, updateEditorToolbar)
+  );
+}
+function updateEditorToolbar() {
+  ['bold','italic','underline'].forEach(cmd => {
+    const btn = document.querySelector(`#emToolbar [data-cmd="${cmd}"]`);
+    if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+  });
 }
 
 async function init() {
@@ -695,6 +743,7 @@ function logout() {
   if (confirm("Weet u zeker dat u wilt uitloggen?")) location.href = "/api/logout";
 }
 
+initEmailEditor();
 init();
 </script>
 </body>
