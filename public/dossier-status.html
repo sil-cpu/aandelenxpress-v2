@@ -703,8 +703,12 @@
         <div id="tokenError" style="display:none;color:#c53030;font-size:0.85rem;margin-bottom:12px;"></div>
         <button onclick="submitPassword()" style="width:100%;padding:12px;background:#1A3B70;color:white;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit;">
             Toegang krijgen →
-        </button>
-    </div>
+        </button>        <div style="margin-top:16px;">
+          <button onclick="resendToken()" id="resendBtn" style="background:none;border:none;color:#2B6CB5;font-size:0.87rem;cursor:pointer;font-family:inherit;text-decoration:underline;">
+            Wachtwoord vergeten? Stuur opnieuw per e-mail
+          </button>
+          <div id="resendMsg" style="display:none;margin-top:8px;font-size:0.85rem;"></div>
+        </div>    </div>
 
     <!-- Header with Partner Logo -->
     <div class="status-header" id="mainContent" style="display:none;">
@@ -969,6 +973,33 @@ function submitPassword() {
     const val = document.getElementById('tokenInput').value.trim().toUpperCase();
     if (!val) return;
     loadWithToken(val);
+}
+
+async function resendToken() {
+    const btn = document.getElementById('resendBtn');
+    const msg = document.getElementById('resendMsg');
+    if (!dossierNr) return;
+    btn.disabled = true;
+    btn.textContent = 'Versturen…';
+    msg.style.display = 'none';
+    try {
+        const r = await fetch(`/api/dossier-status/${encodeURIComponent(dossierNr)}/resend-token`, { method: 'POST' });
+        const data = await r.json();
+        if (r.ok) {
+            msg.style.color = '#2E7D32';
+            msg.textContent = `Toegangscode verstuurd naar ${data.maskedEmail}`;
+        } else {
+            msg.style.color = '#c53030';
+            msg.textContent = data.error || 'Fout bij versturen';
+        }
+        msg.style.display = 'block';
+    } catch(e) {
+        msg.style.color = '#c53030';
+        msg.textContent = 'Netwerk fout, probeer opnieuw.';
+        msg.style.display = 'block';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Wachtwoord vergeten? Stuur opnieuw per e-mail';
 }
 
 document.addEventListener('keydown', e => {

@@ -16,6 +16,10 @@ const ADMIN_EMAIL  = 'admin@aandelenxpress.nl';
 const BRAND        = 'AandelenXpress';
 const SITE_URL     = process.env.SITE_URL || 'https://aandelenxpress.vercel.app';
 
+function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 /**
  * Stuur een email. Als TEST_EMAIL in .env staat, wordt het echte 'to'-adres
  * vervangen zodat alle mails naar één testadres gaan.
@@ -432,8 +436,30 @@ async function emailCustom({ to, subject, body, bodyHtml, attachment }) {
     return sendEmail({ to, subject, html, attachment });
 }
 
+async function emailClientResendToken({ request }) {
+    const name  = request.gewenstNaam || request.clientName || 'klant';
+    const token = request.accessToken;
+    const statusUrl = `${SITE_URL}/dossier-status?nr=${request.id}&token=${token}`;
+    const html = layout(`
+      <h2 style="margin-top:0;color:#0F1D3A;">Uw toegangscode</h2>
+      <p>Beste klant,</p>
+      <p>U heeft een verzoek gedaan om de toegangscode voor dossier <strong>${escHtml(name)}</strong> opnieuw te ontvangen.</p>
+      <div style="background:#F7F9FC;border:1px solid #E1E7F0;border-radius:8px;padding:20px 24px;margin:24px 0;text-align:center;">
+        <div style="font-size:0.8rem;color:#8A9BB5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Uw toegangscode</div>
+        <div style="font-size:2rem;font-weight:700;letter-spacing:6px;color:#1A3B70;font-family:monospace;">${escHtml(token)}</div>
+      </div>
+      <p>Of open uw statuspagina direct via de knop hieronder:</p>
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${statusUrl}" style="display:inline-block;padding:14px 32px;background:#1A3B70;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:1rem;-webkit-text-fill-color:#ffffff;">Bekijk dossier status &rarr;</a>
+      </div>
+      <p style="font-size:0.85rem;color:#8A9BB5;">Heeft u dit niet aangevraagd? Dan kunt u deze e-mail negeren.</p>
+    `);
+    return sendEmail({ to: request.clientEmail, subject: `Uw toegangscode — ${name}`, html });
+}
+
 module.exports = {
     emailCustom,
+    emailClientResendToken,
     emailAdminNewRegistration,
     emailApplicantRegistrationReceived,
     emailResellerApproved,

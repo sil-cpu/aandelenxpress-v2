@@ -595,6 +595,24 @@ app.get('/api/dossier-status/:id', (req, res) => {
 });
 
 // GET single reseller request by id (admin or owning reseller)
+
+// POST resend access token to client email (public, no auth required)
+app.post('/api/dossier-status/:id/resend-token', express.json(), async (req, res) => {
+    const request = resellerRequests.find(r => r.id === req.params.id);
+    if (!request) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (!request.clientEmail) return res.status(400).json({ error: 'Geen e-mailadres bekend bij dit dossier' });
+    if (!request.accessToken) return res.status(400).json({ error: 'Geen toegangscode beschikbaar' });
+    try {
+        await emails.emailClientResendToken({ request });
+        // Mask the email in the response for privacy
+        const parts = request.clientEmail.split('@');
+        const masked = parts[0].slice(0,2) + '***@' + parts[1];
+        res.json({ success: true, maskedEmail: masked });
+    } catch(e) {
+        res.status(500).json({ error: 'Fout bij verzenden: ' + e.message });
+    }
+});
+
 app.get('/api/reseller-requests/:id', requireLogin, (req, res) => {
     const request = resellerRequests.find(r => r.id === req.params.id);
     if (!request) return res.status(404).json({ error: 'Niet gevonden' });
