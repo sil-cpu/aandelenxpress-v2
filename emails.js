@@ -51,8 +51,9 @@ function layout(bodyHtml) {
   <style>
     body { margin:0; padding:0; background:#f0f4f8; font-family:Arial,sans-serif; color:#222; }
     .wrap { max-width:580px; margin:40px auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,.10); border-top:4px solid #1A3B70; }
-    .header { background:#fff; padding:22px 32px 18px; border-bottom:1px solid #EEF2FF; }\n    .header table { border-collapse:collapse; }\n    .header .ax-mark { display:inline-block; background:#1A3B70; width:38px; height:38px; border-radius:6px; text-align:center; vertical-align:middle; }\n    .header .ax-mark span { color:#fff; font-size:17px; font-weight:900; font-family:Arial,Helvetica,sans-serif; line-height:38px; letter-spacing:-1px; }\n    .header .ax-word { padding-left:11px; vertical-align:middle; font-size:21px; font-weight:800; color:#0F1D3A; font-family:Arial,Helvetica,sans-serif; letter-spacing:-0.3px; }\n    .header .ax-word b { color:#1B45CC; font-weight:800; }
-    .header img { display:block; height:38px; max-width:220px; }
+    .header { background:#fff; padding:20px 32px 16px; border-bottom:1px solid #EEF2FF; }
+    .header img { display:block; height:40px; max-width:240px; }
+
     .body { padding:28px 32px; font-size:15px; line-height:1.7; }
     .body h2 { color:#0F1D3A; margin-top:0; font-size:1.2em; }
     .info-box { background:#F5F8FF; border-left:4px solid #1A3B70; padding:12px 16px; border-radius:4px; margin:16px 0; font-size:14px; }
@@ -63,12 +64,7 @@ function layout(bodyHtml) {
 <body>
   <div class="wrap">
     <div class="header">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-        <tr>
-          <td class="ax-mark"><span>AX</span></td>
-          <td class="ax-word">Aandelen<b>Xpress</b></td>
-        </tr>
-      </table>
+      <img src="${SITE_URL}/logo-email.png" alt="AandelenXpress" height="40">
     </div>
     <div class="body">${bodyHtml}</div>
     <div class="footer">
