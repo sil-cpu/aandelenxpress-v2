@@ -2,14 +2,7 @@
  * AandelenXpress — Transactional Email Module
  * 
  * Gebruikt Resend voor alle transactionele emails.
- * 
- * ⚠️  Tijdelijk: geen eigen domein geverifieerd.
- *     from:  onboarding@resend.dev  (verplicht zolang geen domein geverifieerd)
- *     to:    TEST_EMAIL in .env     (redirect alle emails naar test-adres)
- * 
- * Zodra domein geverifieerd:
- *   1. Verander FROM_ADDRESS naar bijv. 'noreply@aandelenxpress.nl'
- *   2. Verwijder TEST_EMAIL uit .env → echte ontvanger wordt gebruikt
+ * Domein aandelenxpress.nl is geverifieerd in Resend (15 mei 2026).
  */
 
 require('dotenv').config();
@@ -18,7 +11,7 @@ const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ─ Configuratie ─────────────────────────────────────────────────────────────
-const FROM_ADDRESS = 'AandelenXpress <onboarding@resend.dev>'; // ← vervang na domeinverificatie
+const FROM_ADDRESS = 'AandelenXpress <noreply@aandelenxpress.nl>';
 const ADMIN_EMAIL  = 'admin@aandelenxpress.nl';
 const BRAND        = 'AandelenXpress';
 const SITE_URL     = process.env.SITE_URL || 'https://aandelenxpress.vercel.app';
@@ -232,35 +225,51 @@ async function emailResellerRequestApproved({ request }) {
 /** Klant: opdracht goedgekeurd — link naar vragenlijst + statuspagina met wachtwoord */
 async function emailClientCaseApproved({ request }) {
     const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
-    const vragenlijstUrl = `${SITE_URL}/vragenlijst?nr=${id}`;
-    const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
-    const wachtwoord = accessToken || '—';
+    const formSlug = oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos'
+                   : oprichtingType === 'bv-holding'           ? 'vragenlijst-bv-holding'
+                   : 'vragenlijst';
+    const vragenlijstUrl = `${SITE_URL}/${formSlug}?nr=${id}`;
+    const statusUrl      = `${SITE_URL}/dossier-status?nr=${id}`;
+    const wachtwoord     = accessToken || '—';
 
     return sendEmail({
         to:      clientEmail,
         subject: `Uw BV-aanvraag is geaccepteerd — vul de vragenlijst in`,
         html:    layout(`
             <h2>Goed nieuws, ${clientName}!</h2>
-            <p>Uw aanvraag voor de oprichting van <strong>${gewenstNaam}</strong> is geaccepteerd 
+            <p>Uw aanvraag voor de oprichting van <strong>${gewenstNaam}</strong> is geaccepteerd
                door uw adviseur <strong>${resellerName}</strong> (${resellerCompany}).</p>
             <div class="info-box">
                 <strong>Type:</strong> ${oprichtingType}<br>
                 <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
                 <strong>Referentienummer:</strong> ${id}
             </div>
+
             <p><strong>Volgende stap: vul de vragenlijst in</strong><br>
-               Om uw BV zo snel mogelijk op te richten hebben wij enkele gegevens van u nodig. 
-               Dit duurt gemiddeld 10–15 minuten.</p>
-            <a class="btn" href="${vragenlijstUrl}">Vragenlijst invullen &rarr;</a>
-            <p style="margin-top:24px;"><strong>Volg uw aanvraag:</strong><br>
-               Via onderstaande link kunt u de voortgang van uw dossier volgen.</p>
+               Om uw BV zo snel mogelijk op te richten hebben wij enkele gegevens van u nodig.
+               Dit duurt gemiddeld 10–20 minuten.</p>
+
+            <div style="background:#1a2e5a;border-radius:8px;padding:20px 24px;margin:20px 0;text-align:center;">
+                <p style="color:#fff;margin:0 0 8px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Uw toegangscode voor het formulier</p>
+                <p style="color:#fff;font-family:monospace;font-size:28px;font-weight:700;letter-spacing:6px;margin:0;">${wachtwoord}</p>
+                <p style="color:rgba(255,255,255,.6);margin:8px 0 0;font-size:12px;">Bewaar deze code — u heeft hem nodig om het formulier te openen.</p>
+            </div>
+
+            <a class="btn" href="${vragenlijstUrl}">Vragenlijst openen &rarr;</a>
+
+            <p style="margin-top:28px;"><strong>Uw dossier volgen:</strong></p>
             <div class="info-box">
                 <strong>Statuspagina:</strong> <a href="${statusUrl}">${statusUrl}</a><br>
-                <strong>Wachtwoord:</strong> <span style="font-family:monospace;font-size:16px;letter-spacing:2px;">${wachtwoord}</span>
+                <strong>Toegangscode:</strong> <span style="font-family:monospace;">${wachtwoord}</span>
             </div>
+
+            <div style="background:#fff8e1;border:1px solid #ffe082;border-left:4px solid #f59e0b;border-radius:4px;padding:12px 16px;margin-top:20px;font-size:13px;color:#78350f;">
+                <strong>&#x1F512; Vertrouwelijk</strong> — Deel deze toegangscode en links niet met anderen.
+                Uw formulier bevat gevoelige persoonsgegevens.
+            </div>
+
             <p style="font-size:13px;color:#888;margin-top:24px;">
-                Bewaar deze email — de link en het wachtwoord hierboven geven u toegang tot uw persoonlijke dossier.<br>
-                Heeft u vragen? Neem contact op met uw adviseur of mail naar 
+                Heeft u vragen? Neem contact op met uw adviseur of mail naar
                 <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.
             </p>
         `),

@@ -95,13 +95,42 @@
         .field-error input, .field-error textarea, .field-error select { border-color: #E03D3D !important; }
         .field-error .options-list .option-item, .field-error .check-list .check-item { border-color: #E03D3D; }
         .field-error .file-zone { border-color: #E03D3D !important; }
+    /* ── Password gate ── */
+    .gate-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .gate-card { background: white; border-radius: 16px; border: 1px solid #E1E7F0; box-shadow: 0 8px 32px rgba(0,0,0,.1); padding: 48px 40px; max-width: 420px; width: 100%; text-align: center; }
+    .gate-icon { font-size: 2.5rem; margin-bottom: 20px; }
+    .gate-title { font-size: 1.4rem; font-weight: 700; color: #0F1D3A; margin-bottom: 8px; }
+    .gate-sub { color: #718096; font-size: .9rem; line-height: 1.5; margin-bottom: 28px; }
+    .gate-input { width: 100%; padding: 14px; border: 1.5px solid #D1DCF0; border-radius: 8px; font-family: inherit; font-size: 1.1rem; letter-spacing: 3px; text-align: center; box-sizing: border-box; margin-bottom: 12px; }
+    .gate-input:focus { outline: none; border-color: #1A3B70; }
+    .gate-input.error { border-color: #E03D3D; }
+    .gate-error { color: #E03D3D; font-size: .88rem; margin-bottom: 12px; }
+    .gate-btn { width: 100%; padding: 14px; background: #1A3B70; color: white; border: none; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .gate-btn:hover { background: #0F2851; }
+    .gate-btn:disabled { background: #A0AEC0; cursor: not-allowed; }
+    .gate-hint { font-size: .8rem; color: #A0AEC0; margin-top: 16px; line-height: 1.5; }
     </style>
 </head>
 <body>
 <div class="wrap">
 
+    <!-- PASSWORD GATE -->
+    <div id="stateGate" class="state active">
+        <div class="gate-wrap">
+            <div class="gate-card">
+                <div class="gate-icon">🔒</div>
+                <h2 class="gate-title">Beveiligd formulier</h2>
+                <p class="gate-sub">Voer de <strong>toegangscode</strong> in die u per email heeft ontvangen van AandelenXpress om het formulier te openen.</p>
+                <input type="password" id="gateInput" class="gate-input" placeholder="Uw toegangscode" autocomplete="current-password">
+                <div id="gateError" class="gate-error" style="display:none">Ongeldige toegangscode. Controleer uw email.</div>
+                <button class="gate-btn" id="gateBtn" onclick="submitGate()">Toegang krijgen &rarr;</button>
+                <p class="gate-hint">De toegangscode staat in uw goedkeuringsmail van AandelenXpress.<br>Neem contact op met uw adviseur als u de mail niet kunt vinden.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- LOADING -->
-    <div id="stateLoading" class="state active">
+    <div id="stateLoading" class="state">
         <div class="loading-wrap">
             <div class="spinner"></div>
             <div style="color:#8A9BB5;font-size:.9rem;">Dossier ophalen…</div>
@@ -600,7 +629,7 @@
 
 <script>
 function showState(name) {
-    ['stateLoading','stateError','stateForm','stateSuccess'].forEach(id => {
+    ['stateGate','stateLoading','stateError','stateForm','stateSuccess'].forEach(id => {
         document.getElementById(id).classList.toggle('active', id === name);
     });
 }
@@ -610,31 +639,77 @@ function showError(title, sub) {
     showState('stateError');
 }
 
-// ── Load dossier ─────────────────────────────
+// ── Password gate + load dossier ─────────────
+let verifiedToken = null;
+
 const params = new URLSearchParams(window.location.search);
 const caseId = params.get('nr');
 
 if (!caseId) {
     showError('Geen dossiernummer', 'Gebruik de link uit uw email om dit formulier te openen.');
 } else {
-    fetch('/api/request-info/' + encodeURIComponent(caseId))
-        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(data => {
-            document.getElementById('headerPartner').textContent = data.resellerCompany;
-            document.getElementById('headerSub').textContent = 'Gewenste naam: ' + data.gewenstNaam;
-            document.getElementById('headerRef').textContent = 'Referentie: ' + data.id;
-            document.getElementById('headerLogo').textContent = data.resellerCompany.slice(0,2).toUpperCase();
-            document.getElementById('contactEmail').value = data.clientEmail || '';
-            showState('stateForm');
-        })
-        .catch(err => {
-            if (err.message === '404') {
-                showError('Dossier niet gevonden of nog niet goedgekeurd',
-                    'Uw dossier is mogelijk nog in behandeling. U ontvangt een email zodra het is goedgekeurd.');
-            } else {
-                showError('Er is een fout opgetreden', 'Probeer opnieuw te laden of neem contact op.');
-            }
+    const cached = sessionStorage.getItem('ax_form_' + caseId);
+    if (cached) {
+        verifiedToken = cached;
+        loadDossier(cached);
+    } else {
+        showState('stateGate');
+        document.getElementById('gateInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') submitGate();
         });
+    }
+}
+
+async function submitGate() {
+    const input = document.getElementById('gateInput');
+    const token = input.value.trim();
+    input.classList.remove('error');
+    document.getElementById('gateError').style.display = 'none';
+    if (!token) { input.classList.add('error'); return; }
+    const btn = document.getElementById('gateBtn');
+    btn.disabled = true; btn.textContent = 'Controleren…';
+    try {
+        const r = await fetch('/api/request-info/' + encodeURIComponent(caseId) + '?token=' + encodeURIComponent(token));
+        if (r.ok) {
+            const data = await r.json();
+            verifiedToken = token;
+            sessionStorage.setItem('ax_form_' + caseId, token);
+            populateForm(data);
+        } else if (r.status === 401) {
+            document.getElementById('gateError').style.display = 'block';
+            input.classList.add('error');
+            btn.disabled = false; btn.textContent = 'Toegang krijgen →';
+        } else {
+            document.getElementById('gateError').textContent = 'Dossier niet gevonden. Controleer de link.';
+            document.getElementById('gateError').style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Toegang krijgen →';
+        }
+    } catch {
+        document.getElementById('gateError').textContent = 'Verbindingsfout. Probeer opnieuw.';
+        document.getElementById('gateError').style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Toegang krijgen →';
+    }
+}
+
+function loadDossier(token) {
+    showState('stateLoading');
+    fetch('/api/request-info/' + encodeURIComponent(caseId) + '?token=' + encodeURIComponent(token))
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(data => populateForm(data))
+        .catch(err => {
+            sessionStorage.removeItem('ax_form_' + caseId);
+            if (err.message === '401') { showState('stateGate'); }
+            else { showError('Er is een fout opgetreden', 'Probeer opnieuw te laden.'); }
+        });
+}
+
+function populateForm(data) {
+    document.getElementById('headerPartner').textContent = data.resellerCompany;
+    document.getElementById('headerSub').textContent = 'Gewenste naam: ' + data.gewenstNaam;
+    document.getElementById('headerRef').textContent = 'Referentie: ' + data.id;
+    document.getElementById('headerLogo').textContent = data.resellerCompany.slice(0,2).toUpperCase();
+    document.getElementById('contactEmail').value = data.clientEmail || '';
+    showState('stateForm');
 }
 
 // ── Radio helper ─────────────────────────────
@@ -788,6 +863,7 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
 
         const payload = {
             caseId,
+            token:                       verifiedToken,
             formulierType:               'bv-holding',
             spoed:                       f.querySelector('[name="spoed"]:checked').value,
             nederlandsTaal:              f.querySelector('[name="nederlandsTaal"]:checked').value,

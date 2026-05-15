@@ -761,6 +761,10 @@ app.get('/api/request-info/:id', (req, res) => {
     if (!request || request.status !== 'approved') {
         return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
     }
+    const { token } = req.query;
+    if (!token || request.accessToken !== token) {
+        return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    }
     res.json({
         id: request.id,
         clientName: request.clientName,
@@ -774,10 +778,9 @@ app.get('/api/request-info/:id', (req, res) => {
 
 // POST submit vragenlijst (public — client fills this in)
 app.post('/api/vragenlijst', express.json({ limit: '25mb' }), (req, res) => {
-    const { caseId, spoed, nederlandsTaal, engelsTaal, taalOpmerking, contactEmail,
-            sector, typeOprichting, datacardBestand, pepBestand, opmerkingen } = req.body;
+    const { caseId, token, contactEmail } = req.body;
 
-    if (!caseId || !spoed || !contactEmail || !sector || !typeOprichting) {
+    if (!caseId || !contactEmail) {
         return res.status(400).json({ error: 'Verplichte velden ontbreken' });
     }
 
@@ -786,27 +789,23 @@ app.post('/api/vragenlijst', express.json({ limit: '25mb' }), (req, res) => {
         return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
     }
 
+    // Verify token before accepting submission
+    if (!token || request.accessToken !== token) {
+        return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    }
+
     // Upsert: overschrijf als de klant al eerder indiende
+    // Strip token from stored data, add server-side metadata
+    const { token: _tok, ...formData } = req.body;
     const existing = vragenlijsten.findIndex(v => v.caseId === caseId);
     const submission = {
+        ...formData,
         caseId,
         clientName: request.clientName,
         clientEmail: request.clientEmail,
         resellerCompany: request.resellerCompany,
         gewenstNaam: request.gewenstNaam,
         oprichtingType: request.oprichtingType,
-        spoed,
-        nederlandsTaal,
-        engelsTaal,
-        taalOpmerking: taalOpmerking || '',
-        contactEmail,
-        sector,
-        typeOprichting,
-        datacardBestandNaam: datacardBestand ? datacardBestand.naam : null,
-        datacardBestandData: datacardBestand ? datacardBestand.data : null,
-        pepBestandNaam: pepBestand ? pepBestand.naam : null,
-        pepBestandData: pepBestand ? pepBestand.data : null,
-        opmerkingen: opmerkingen || '',
         submittedAt: new Date().toISOString(),
     };
 
