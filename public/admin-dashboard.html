@@ -376,19 +376,19 @@
         </div>
 
         <!-- Admins tab -->
-        <div id="ledenAdminsContent" class="dash-card">
-          <div class="dash-table-head" style="grid-template-columns:2fr 1.5fr 1fr auto auto;padding:10px 20px;">
-            <span>Naam</span><span>E-mail</span><span>Status</span><span></span><span></span>
-          </div>
-          <div id="adminsList" style="min-height:120px;"></div>
+        <div id="ledenAdminsContent" class="dash-card table-scroll-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Naam</th><th>E-mail</th><th>Status</th><th></th><th></th></tr></thead>
+            <tbody id="adminsList"></tbody>
+          </table>
         </div>
 
         <!-- Resellers tab -->
-        <div id="ledenResellersContent" class="dash-card" style="display:none;">
-          <div class="dash-table-head" style="grid-template-columns:2fr 1.5fr 1.5fr 1fr auto auto;padding:10px 20px;">
-            <span>Naam</span><span>E-mail</span><span>Bedrijf</span><span>Status</span><span></span><span></span>
-          </div>
-          <div id="resellersList" style="min-height:120px;"></div>
+        <div id="ledenResellersContent" class="dash-card table-scroll-wrap" style="display:none;">
+          <table class="admin-table">
+            <thead><tr><th>Naam</th><th>E-mail</th><th>Bedrijf</th><th>Status</th><th></th><th></th></tr></thead>
+            <tbody id="resellersList"></tbody>
+          </table>
         </div>
       </div>
 
@@ -994,18 +994,20 @@ async function loadPending() {
     return;
   }
 
-  container.innerHTML =
-    `<div class="dash-table-head" style="grid-template-columns:2fr 1fr 1.4fr 1.4fr 1fr;padding:10px 20px;">
-      <span>Kantoor</span><span>KvK</span><span>Contactpersoon</span><span>E-mail</span><span>Aangemeld</span>
-    </div>` +
-    list.map(r => `
-    <div class="dash-table-row" style="grid-template-columns:2fr 1fr 1.4fr 1.4fr 1fr;cursor:pointer;" onclick='openAanmDrawer(${JSON.stringify(JSON.stringify(r))})'>
-      <div style="font-weight:500">${r.kantoor}</div>
-      <div class="text-muted text-sm" style="font-family:monospace;">${r.kvk}</div>
-      <div class="text-muted text-sm">${r.naam}</div>
-      <div class="text-muted text-sm">${r.email}</div>
-      <div class="text-muted text-sm">${new Date(r.aangemeld).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
-    </div>`).join('');
+  container.innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>Kantoor</th><th>KvK</th><th>Contactpersoon</th><th>E-mail</th><th>Aangemeld</th></tr></thead>
+      <tbody>
+        ${list.map(r => `
+        <tr style="cursor:pointer;" onclick='openAanmDrawer(${JSON.stringify(JSON.stringify(r))})'>
+          <td style="font-weight:500;">${r.kantoor}</td>
+          <td class="td-muted" style="font-family:monospace;">${r.kvk}</td>
+          <td class="td-muted">${r.naam}</td>
+          <td class="td-muted">${r.email}</td>
+          <td class="td-muted">${new Date(r.aangemeld).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
 }
 
 function openAanmDrawer(jsonStr) {
@@ -1098,27 +1100,27 @@ async function loadLedenTab(tab) {
 
   if (tab === 'admins') {
     document.getElementById('adminsList').innerHTML = users.length === 0
-      ? '<div style="padding:32px;text-align:center;color:#8A9BB5;">Geen admins</div>'
+      ? '<tr><td colspan="5" style="padding:32px;text-align:center;color:#8A9BB5;">Geen admins</td></tr>'
       : users.map(u => `
-      <div class="dash-table-row" style="grid-template-columns:2fr 1.5fr 1fr auto auto;cursor:pointer;" onclick="openEditUserDrawer('${u.email}')">
-        <div style="font-weight:500">${u.name}</div>
-        <div class="text-muted text-sm">${u.email}</div>
-        <div><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-pending'}" style="font-size:0.75rem;padding:4px 10px;">${u.status === 'active' ? 'Actief' : 'Inactief'}</span></div>
-        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;" onclick="openEditUserDrawer('${u.email}')">Bewerken</button></div>
-        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;color:#666;" onclick="deleteUserConfirm('${u.email}',event)">Verwijderen</button></div>
-      </div>`).join('');
+      <tr style="cursor:pointer;" onclick="openEditUserDrawer('${u.email}')">
+        <td style="font-weight:500;">${u.name}</td>
+        <td class="td-muted">${u.email}</td>
+        <td><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-pending'}" style="font-size:0.75rem;">${u.status === 'active' ? 'Actief' : 'Inactief'}</span></td>
+        <td onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:5px 12px;" onclick="openEditUserDrawer('${u.email}')">Bewerken</button></td>
+        <td onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:5px 12px;color:#c53030;border-color:#c53030;" onclick="deleteUserConfirm('${u.email}',event)">Verwijderen</button></td>
+      </tr>`).join('');
   } else {
     document.getElementById('resellersList').innerHTML = users.length === 0
-      ? '<div style="padding:32px;text-align:center;color:#8A9BB5;">Geen reseller-gebruikers</div>'
+      ? '<tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">Geen reseller-gebruikers</td></tr>'
       : users.map(u => `
-      <div class="dash-table-row" style="grid-template-columns:2fr 1.5fr 1.5fr 1fr auto auto;" onclick="openEditUserDrawer('${u.email}')">
-        <div style="font-weight:500">${u.name}</div>
-        <div class="text-muted text-sm">${u.email}</div>
-        <div class="text-muted text-sm">${u.company}</div>
-        <div><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-pending'}" style="font-size:0.75rem;padding:4px 10px;">${u.status === 'active' ? 'Actief' : 'Inactief'}</span></div>
-        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;" onclick="openEditUserDrawer('${u.email}')">Bewerken</button></div>
-        <div onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:6px 12px;color:#666;" onclick="deleteUserConfirm('${u.email}',event)">Verwijderen</button></div>
-      </div>`).join('');
+      <tr style="cursor:pointer;" onclick="openEditUserDrawer('${u.email}')">
+        <td style="font-weight:500;">${u.name}</td>
+        <td class="td-muted">${u.email}</td>
+        <td class="td-muted">${u.company}</td>
+        <td><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-pending'}" style="font-size:0.75rem;">${u.status === 'active' ? 'Actief' : 'Inactief'}</span></td>
+        <td onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:5px 12px;" onclick="openEditUserDrawer('${u.email}')">Bewerken</button></td>
+        <td onclick="event.stopPropagation()"><button class="btn-ghost" style="font-size:0.8rem;padding:5px 12px;color:#c53030;border-color:#c53030;" onclick="deleteUserConfirm('${u.email}',event)">Verwijderen</button></td>
+      </tr>`).join('');
   }
 }
 
