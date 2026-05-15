@@ -229,6 +229,36 @@ async function emailResellerRequestApproved({ request }) {
     });
 }
 
+/** Klant: opdracht goedgekeurd — link naar vragenlijst */
+async function emailClientCaseApproved({ request }) {
+    const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany } = request;
+    const vragenlijstUrl = `${SITE_URL}/vragenlijst?nr=${id}`;
+
+    return sendEmail({
+        to:      clientEmail,
+        subject: `Uw BV-aanvraag is geaccepteerd — vul de vragenlijst in`,
+        html:    layout(`
+            <h2>Goed nieuws, ${clientName}!</h2>
+            <p>Uw aanvraag voor de oprichting van <strong>${gewenstNaam}</strong> is geaccepteerd 
+               door uw adviseur <strong>${resellerName}</strong> (${resellerCompany}).</p>
+            <div class="info-box">
+                <strong>Type:</strong> ${oprichtingType}<br>
+                <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
+                <strong>Referentienummer:</strong> ${id}
+            </div>
+            <p><strong>Volgende stap: vul de vragenlijst in</strong><br>
+               Om uw BV zo snel mogelijk op te richten hebben wij enkele gegevens van u nodig. 
+               Dit duurt gemiddeld 10–15 minuten.</p>
+            <a class="btn" href="${vragenlijstUrl}">Vragenlijst invullen →</a>
+            <p style="font-size:13px;color:#888;margin-top:24px;">
+                Bewaar deze email — de link hierboven is uw persoonlijke toegang tot de vragenlijst.<br>
+                Heeft u vragen? Neem contact op met uw adviseur of mail naar 
+                <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.
+            </p>
+        `),
+    });
+}
+
 /** Reseller: opdracht afgewezen door admin */
 async function emailResellerRequestRejected({ request }) {
     const { id, resellerName, oprichtingType, gewenstNaam, rejectionReason } = request;
@@ -308,6 +338,41 @@ async function emailTicketReply({ ticket, replyMessage, adminName }) {
     });
 }
 
+/** Admin: klant heeft vragenlijst ingevuld */
+async function emailAdminVragenlijstSubmitted({ submission }) {
+    const { caseId, clientName, clientEmail, resellerCompany, gewenstNaam, oprichtingType,
+            spoed, sector, typeOprichting, contactEmail,
+            datacardBestandNaam, pepBestandNaam, opmerkingen, submittedAt } = submission;
+
+    const datum = new Date(submittedAt).toLocaleString('nl-NL', {
+        day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    return sendEmail({
+        to:      ADMIN_EMAIL,
+        subject: `[${BRAND}] Vragenlijst ingevuld — ${gewenstNaam} (${caseId})`,
+        html:    layout(`
+            <h2>Vragenlijst ingevuld door klant</h2>
+            <p><strong>${clientName}</strong> heeft de vragenlijst ingevuld voor opdracht <strong>${caseId}</strong>.</p>
+            <div class="info-box">
+                <strong>Klant:</strong> ${clientName} (${clientEmail})<br>
+                <strong>Contact e-mail:</strong> ${contactEmail}<br>
+                <strong>Partner:</strong> ${resellerCompany}<br>
+                <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
+                <strong>Type:</strong> ${oprichtingType}<br>
+                <strong>Spoed:</strong> ${spoed === 'spoed' ? '⚡ Ja — binnen 48 uur' : 'Nee — standaard'}<br>
+                <strong>Sector:</strong> ${sector}<br>
+                <strong>Type oprichting:</strong> ${typeOprichting}<br>
+                <strong>Datacard:</strong> ${datacardBestandNaam || '—'}<br>
+                <strong>PEP-verklaring:</strong> ${pepBestandNaam || '—'}<br>
+                <strong>Ingediend op:</strong> ${datum}
+            </div>
+            ${opmerkingen ? `<p><strong>Opmerkingen klant:</strong><br>${opmerkingen.replace(/\n/g, '<br>')}</p>` : ''}
+            <a class="btn" href="https://aandelenxpress.vercel.app/admin-dashboard">Bekijken in dashboard</a>
+        `),
+    });
+}
+
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -318,8 +383,10 @@ module.exports = {
     emailAdminNewRequest,
     emailClientNewRequest,
     emailResellerRequestApproved,
+    emailClientCaseApproved,
     emailResellerRequestRejected,
     emailAdminNewTicket,
     emailTicketSenderConfirmation,
     emailTicketReply,
+    emailAdminVragenlijstSubmitted,
 };

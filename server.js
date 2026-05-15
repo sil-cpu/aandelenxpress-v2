@@ -68,6 +68,9 @@ const tickets = [
 let requestCounter = 5000;
 const resellerRequests = [];
 
+// Vragenlijst submissions (in-memory; resets on server restart)
+const vragenlijsten = [];
+
 // Blog posts (in-memory; resets on server restart)
 let blogPostCounter = 1000;
 const blogPosts = [];
@@ -441,9 +444,9 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
     
     resellerRequests.push(request);
 
-    // Notificeer admin van nieuwe opdracht + stuur klant bevestiging met link naar dossier/vragenlijst
+    // Notificeer admin van nieuwe opdracht
+    // ⚠️  Klant ontvangt GEEN email bij aanmaken — alleen na goedkeuring (zie approve endpoint)
     emails.emailAdminNewRequest({ request });
-    emails.emailClientNewRequest({ request });
 
     res.status(201).json(request);
 });
@@ -478,8 +481,9 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (r
     request.approvedAt = new Date().toISOString();
     request.approvedBy = req.session.user.email;
 
-    // Notificeer reseller dat opdracht is goedgekeurd
+    // Notificeer reseller + stuur klant email met link naar vragenlijst
     emails.emailResellerRequestApproved({ request });
+    emails.emailClientCaseApproved({ request });
 
     res.json(request);
 });
@@ -636,6 +640,82 @@ app.patch('/api/tickets/:ticketId/status', requireAdmin, express.json(), (req, r
     
     ticket.status = status;
     res.json(ticket);
+});
+
+// ─ Vragenlijst endpoints ────────────────────────────────────────────────────
+
+// GET public case info (only for approved cases — used by vragenlijst page)
+app.get('/api/request-info/:id', (req, res) => {
+    const request = resellerRequests.find(r => r.id === req.params.id);
+    if (!request || request.status !== 'approved') {
+        return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
+    }
+    res.json({
+        id: request.id,
+        clientName: request.clientName,
+        clientEmail: request.clientEmail,
+        oprichtingType: request.oprichtingType,
+        gewenstNaam: request.gewenstNaam,
+        resellerName: request.resellerName,
+        resellerCompany: request.resellerCompany,
+    });
+});
+
+// POST submit vragenlijst (public — client fills this in)
+app.post('/api/vragenlijst', express.json({ limit: '25mb' }), (req, res) => {
+    const { caseId, spoed, nederlandsTaal, engelsTaal, taalOpmerking, contactEmail,
+            sector, typeOprichting, datacardBestand, pepBestand, opmerkingen } = req.body;
+
+    if (!caseId || !spoed || !contactEmail || !sector || !typeOprichting) {
+        return res.status(400).json({ error: 'Verplichte velden ontbreken' });
+    }
+
+    const request = resellerRequests.find(r => r.id === caseId && r.status === 'approved');
+    if (!request) {
+        return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
+    }
+
+    // Upsert: overschrijf als de klant al eerder indiende
+    const existing = vragenlijsten.findIndex(v => v.caseId === caseId);
+    const submission = {
+        caseId,
+        clientName: request.clientName,
+        clientEmail: request.clientEmail,
+        resellerCompany: request.resellerCompany,
+        gewenstNaam: request.gewenstNaam,
+        oprichtingType: request.oprichtingType,
+        spoed,
+        nederlandsTaal,
+        engelsTaal,
+        taalOpmerking: taalOpmerking || '',
+        contactEmail,
+        sector,
+        typeOprichting,
+        datacardBestandNaam: datacardBestand ? datacardBestand.naam : null,
+        datacardBestandData: datacardBestand ? datacardBestand.data : null,
+        pepBestandNaam: pepBestand ? pepBestand.naam : null,
+        pepBestandData: pepBestand ? pepBestand.data : null,
+        opmerkingen: opmerkingen || '',
+        submittedAt: new Date().toISOString(),
+    };
+
+    if (existing !== -1) {
+        vragenlijsten[existing] = submission;
+    } else {
+        vragenlijsten.push(submission);
+    }
+
+    // Notificeer admin
+    emails.emailAdminVragenlijstSubmitted({ submission });
+
+    res.json({ success: true });
+});
+
+// GET all vragenlijst submissions (admin only)
+app.get('/api/admin/vragenlijsten', requireAdmin, (req, res) => {
+    // Return without raw file data to keep response small
+    const result = vragenlijsten.map(({ datacardBestandData, pepBestandData, ...rest }) => rest);
+    res.json(result);
 });
 
 // ─ Blog endpoints ──────────────────────────────────────────────────────────

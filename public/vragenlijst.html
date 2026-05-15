@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vragenlijst BV Oprichting – AandelenXpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #F5F7FA 0%, #E8EDF5 100%);
+            color: #0F1D3A;
+            min-height: 100vh;
+        }
+
+        .wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        /* ── Header ────────────────────────────────────── */
+        .page-header {
+            background: #1A3B70;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            color: white;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .header-logo {
+            width: 52px;
+            height: 52px;
+            background: rgba(255,255,255,.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            letter-spacing: -.5px;
+        }
+
+        .header-info { flex: 1; }
+        .header-partner { font-size: .8rem; font-weight: 500; opacity: .7; margin-bottom: 4px; letter-spacing: .05em; text-transform: uppercase; }
+        .header-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+        .header-sub { font-size: .9rem; opacity: .8; }
+
+        .ref-badge {
+            font-size: .75rem;
+            font-weight: 600;
+            background: rgba(255,255,255,.15);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        /* ── Alert banner ──────────────────────────────── */
+        .alert {
+            background: #FFF8E7;
+            border: 1px solid #FFD87A;
+            border-left: 4px solid #F59E0B;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: .9rem;
+            color: #78350F;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        /* ── Cards ─────────────────────────────────────── */
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #E1E7F0;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #F5F7FA;
+            border-bottom: 1px solid #E1E7F0;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 30px;
+            height: 30px;
+            background: #1A3B70;
+            color: white;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .card-title { font-weight: 600; font-size: 1rem; color: #0F1D3A; }
+        .card-body { padding: 24px; }
+
+        /* ── Form elements ──────────────────────────────── */
+        .field { margin-bottom: 20px; }
+        .field:last-child { margin-bottom: 0; }
+
+        label.field-label {
+            display: block;
+            font-weight: 500;
+            font-size: .9rem;
+            color: #0F1D3A;
+            margin-bottom: 8px;
+        }
+
+        label.field-label .req { color: #E03D3D; margin-left: 2px; }
+
+        input[type="text"],
+        input[type="email"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #D0D9E8;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: .95rem;
+            color: #0F1D3A;
+            background: #FAFBFF;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #1A3B70;
+            box-shadow: 0 0 0 3px rgba(26,59,112,.1);
+            background: white;
+        }
+
+        textarea { resize: vertical; min-height: 90px; }
+
+        .field-hint {
+            font-size: .8rem;
+            color: #8A9BB5;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        /* ── Radio / Checkbox groups ────────────────────── */
+        .options-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border: 1.5px solid #D0D9E8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .15s;
+            background: #FAFBFF;
+        }
+
+        .option-item:hover { border-color: #1A3B70; background: #F0F4FF; }
+        .option-item.selected { border-color: #1A3B70; background: #EEF3FF; }
+
+        .option-item input[type="radio"],
+        .option-item input[type="checkbox"] {
+            width: auto;
+            margin-top: 2px;
+            accent-color: #1A3B70;
+            flex-shrink: 0;
+        }
+
+        .option-content { flex: 1; }
+        .option-label { font-weight: 500; font-size: .95rem; color: #0F1D3A; }
+        .option-desc { font-size: .82rem; color: #6B7A99; margin-top: 3px; line-height: 1.4; }
+
+        /* Inline 2-col option grid */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 500px) { .options-grid { grid-template-columns: 1fr; } }
+
+        /* ── Conditional reveal ─────────────────────────── */
+        .reveal { display: none; margin-top: 12px; }
+        .reveal.visible { display: block; }
+
+        /* ── File upload ────────────────────────────────── */
+        .file-zone {
+            border: 2px dashed #C5CFE0;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: #FAFBFF;
+            position: relative;
+        }
+
+        .file-zone:hover, .file-zone.dragover { border-color: #1A3B70; background: #EEF3FF; }
+        .file-zone.has-file { border-color: #00B894; background: #F0FBF7; border-style: solid; }
+
+        .file-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .file-zone-label { font-weight: 500; font-size: .9rem; color: #1A3B70; }
+        .file-zone-sub { font-size: .8rem; color: #8A9BB5; margin-top: 4px; }
+        .file-selected { font-size: .85rem; font-weight: 600; color: #00B894; margin-top: 6px; }
+
+        /* ── Privacy checkbox ───────────────────────────── */
+        .privacy-box {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: #F5F7FA;
+            border: 1.5px solid #D0D9E8;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+        }
+
+        .privacy-box input[type="checkbox"] {
+            width: auto;
+            margin-top: 2px;
+            accent-color: #1A3B70;
+            flex-shrink: 0;
+        }
+
+        .privacy-text { font-size: .88rem; color: #4A5568; line-height: 1.5; }
+        .privacy-text a { color: #1A3B70; }
+
+        /* ── Submit button ──────────────────────────────── */
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: #1A3B70;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: 8px;
+        }
+
+        .btn-submit:hover:not(:disabled) { background: #142A50; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,59,112,.3); }
+        .btn-submit:disabled { background: #A0AEC0; cursor: not-allowed; transform: none; }
+
+        /* ── States ─────────────────────────────────────── */
+        .state { display: none; }
+        .state.active { display: block; }
+
+        .loading-wrap { text-align: center; padding: 80px 20px; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #E1E7F0;
+            border-top-color: #1A3B70;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-wrap {
+            background: white;
+            border-radius: 12px;
+            padding: 48px 32px;
+            text-align: center;
+            border: 1px solid #FCE4E4;
+        }
+        .error-icon { font-size: 3rem; margin-bottom: 16px; }
+        .error-title { font-size: 1.2rem; font-weight: 600; color: #C53030; margin-bottom: 8px; }
+        .error-sub { color: #718096; font-size: .9rem; }
+
+        .success-wrap {
+            background: white;
+            border-radius: 12px;
+            padding: 56px 32px;
+            text-align: center;
+            border: 1px solid #B8E6DE;
+        }
+        .success-icon { font-size: 3.5rem; margin-bottom: 20px; }
+        .success-title { font-size: 1.4rem; font-weight: 700; color: #0F1D3A; margin-bottom: 12px; }
+        .success-sub { color: #4A5568; font-size: .95rem; line-height: 1.6; max-width: 440px; margin: 0 auto; }
+
+        /* ── Footer ─────────────────────────────────────── */
+        .page-footer {
+            text-align: center;
+            font-size: .78rem;
+            color: #A0AEC0;
+            margin-top: 32px;
+        }
+
+        /* ── Error highlight on invalid submit ──────────── */
+        .field-error input, .field-error textarea, .field-error select {
+            border-color: #E03D3D !important;
+        }
+        .field-error .options-list .option-item {
+            border-color: #E03D3D;
+        }
+        .field-error-msg {
+            font-size: .8rem;
+            color: #E03D3D;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- LOADING STATE -->
+    <div id="stateLoading" class="state active">
+        <div class="loading-wrap">
+            <div class="spinner"></div>
+            <div style="color:#8A9BB5; font-size:.9rem;">Dossier ophalen…</div>
+        </div>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div id="stateError" class="state">
+        <div class="error-wrap">
+            <div class="error-icon">⚠️</div>
+            <div class="error-title" id="errorTitle">Dossier niet gevonden</div>
+            <div class="error-sub" id="errorSub">Controleer de link in uw email. Neem contact op met uw adviseur als het probleem aanhoudt.</div>
+        </div>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div id="stateSuccess" class="state">
+        <div class="success-wrap">
+            <div class="success-icon">✅</div>
+            <div class="success-title">Vragenlijst succesvol ingediend!</div>
+            <div class="success-sub">
+                Bedankt. Wij hebben uw gegevens ontvangen en gaan direct aan de slag.<br><br>
+                U ontvangt een bevestiging per email. Heeft u vragen, neem dan contact op met 
+                uw adviseur of mail naar <a href="mailto:info@aandelenxpress.nl" style="color:#1A3B70">info@aandelenxpress.nl</a>.
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM STATE -->
+    <div id="stateForm" class="state">
+
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-logo" id="headerLogo">AX</div>
+            <div class="header-info">
+                <div class="header-partner" id="headerPartner"></div>
+                <div class="header-title" id="headerTitle">BV Oprichting — Vragenlijst</div>
+                <div class="header-sub" id="headerSub"></div>
+                <div class="ref-badge" id="headerRef"></div>
+            </div>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert">
+            Vul alle verplichte velden in (gemarkeerd met <span style="color:#E03D3D; font-weight:700">*</span>). 
+            Duurt gemiddeld <strong>10–15 minuten</strong>. Uw gegevens worden veilig verwerkt.
+        </div>
+
+        <form id="vragenlijstForm" novalidate>
+
+            <!-- ── Sectie 1: Spoed ──────────────────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">1</div>
+                    <div class="card-title">Verwerking</div>
+                </div>
+                <div class="card-body">
+                    <div class="field" id="fieldSpoed">
+                        <label class="field-label">Heeft deze oprichting spoed?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this, 'spoed', 'standaard')">
+                                <input type="radio" name="spoed" value="standaard">
+                                <div class="option-content">
+                                    <div class="option-label">Standaard</div>
+                                    <div class="option-desc">Na ontvangst van alle documenten wordt uw aanvraag binnen <strong>5 werkdagen</strong> verwerkt.</div>
+                                </div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'spoed', 'spoed')">
+                                <input type="radio" name="spoed" value="spoed">
+                                <div class="option-content">
+                                    <div class="option-label">⚡ Spoed — binnen 48 uur</div>
+                                    <div class="option-desc">Tegen meerprijs wordt uw aanvraag met voorrang behandeld. Na ontvangst van alle documenten verwerken wij uw aanvraag binnen <strong>48 uur</strong>. Controleer de prijslijst voor de exacte meerkosten.</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Sectie 2: Taalvereisten ─────────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">2</div>
+                    <div class="card-title">Taalvereisten</div>
+                </div>
+                <div class="card-body">
+                    <div class="field" id="fieldNlTaal">
+                        <label class="field-label">Is uw niveau van de Nederlandse taal C1 of hoger?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this, 'nederlandsTaal', 'ja'); checkTaal()">
+                                <input type="radio" name="nederlandsTaal" value="ja">
+                                <div class="option-content"><div class="option-label">Ja</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'nederlandsTaal', 'nee'); checkTaal()">
+                                <input type="radio" name="nederlandsTaal" value="nee">
+                                <div class="option-content">
+                                    <div class="option-label">Nee</div>
+                                    <div class="option-desc">Indien uw niveau lager is dan C1, zijn er extra kosten van toepassing. Wij zorgen in dat geval voor een tolk bij de notaris.</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="field" id="fieldEnTaal">
+                        <label class="field-label">Is uw niveau van de Engelse taal C1 of hoger?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this, 'engelsTaal', 'ja'); checkTaal()">
+                                <input type="radio" name="engelsTaal" value="ja">
+                                <div class="option-content"><div class="option-label">Ja</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'engelsTaal', 'nee'); checkTaal()">
+                                <input type="radio" name="engelsTaal" value="nee">
+                                <div class="option-content">
+                                    <div class="option-label">Nee</div>
+                                    <div class="option-desc">Als uw niveau van zowel de Nederlandse als Engelse taal lager is dan C1, worden er extra kosten van €250 in rekening gebracht. Wij regelen in dat geval een tolk voor uw bespreking met de notaris.</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="reveal" id="revealTaalOpmerking">
+                        <div class="field">
+                            <label class="field-label">Uw moedertaal en talen waarbij u C2-niveau heeft<span class="req">*</span></label>
+                            <textarea name="taalOpmerking" placeholder="Bijv. moedertaal Turks, C2 in Duits…" rows="3"></textarea>
+                            <div class="field-hint">Zodat wij de tolkdienst zo goed mogelijk kunnen inplannen.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Sectie 3: Contactgegevens ───────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">3</div>
+                    <div class="card-title">Contactgegevens</div>
+                </div>
+                <div class="card-body">
+                    <div class="field" id="fieldEmail">
+                        <label class="field-label">Uw contacte-mailadres<span class="req">*</span></label>
+                        <input type="email" name="contactEmail" id="contactEmail" placeholder="uw@emailadres.nl">
+                        <div class="field-hint">Hierop ontvangt u de vervolgcommunicatie over uw dossier.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Sectie 4: Sector ─────────────────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">4</div>
+                    <div class="card-title">Sector</div>
+                </div>
+                <div class="card-body">
+                    <div class="field" id="fieldSector">
+                        <label class="field-label">In welke sector hoort uw aanvraag thuis?<span class="req">*</span></label>
+                        <ul class="options-list options-grid">
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Horeca')">
+                                <input type="radio" name="sector" value="Horeca">
+                                <div class="option-content"><div class="option-label">🍽 Horeca</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Transport')">
+                                <input type="radio" name="sector" value="Transport">
+                                <div class="option-content"><div class="option-label">🚛 Transport</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Beveiliging')">
+                                <input type="radio" name="sector" value="Beveiliging">
+                                <div class="option-content"><div class="option-label">🛡 Beveiliging</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Commercieel')">
+                                <input type="radio" name="sector" value="Commercieel">
+                                <div class="option-content"><div class="option-label">💼 Commercieel</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Professioneel')">
+                                <input type="radio" name="sector" value="Professioneel">
+                                <div class="option-content"><div class="option-label">🏛 Professioneel</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Gezondheidszorg')">
+                                <input type="radio" name="sector" value="Gezondheidszorg">
+                                <div class="option-content"><div class="option-label">🏥 Gezondheidszorg</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Ambacht')">
+                                <input type="radio" name="sector" value="Ambacht">
+                                <div class="option-content"><div class="option-label">🔧 Ambacht</div></div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'sector', 'Anders')">
+                                <input type="radio" name="sector" value="Anders">
+                                <div class="option-content"><div class="option-label">📋 Anders</div></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Sectie 5: Type oprichting ───────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">5</div>
+                    <div class="card-title">Type oprichting</div>
+                </div>
+                <div class="card-body">
+                    <div class="field" id="fieldType">
+                        <label class="field-label">Wat wilt u laten oprichten?<span class="req">*</span></label>
+                        <ul class="options-list">
+                            <li class="option-item" onclick="selectOption(this, 'typeOprichting', 'Holding(s)')">
+                                <input type="radio" name="typeOprichting" value="Holding(s)">
+                                <div class="option-content">
+                                    <div class="option-label">Holding(s)</div>
+                                    <div class="option-desc">Een holding is een vennootschap die aandelen houdt in één of meerdere andere ondernemingen.</div>
+                                </div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'typeOprichting', 'Werkmaatschappij(en)')">
+                                <input type="radio" name="typeOprichting" value="Werkmaatschappij(en)">
+                                <div class="option-content">
+                                    <div class="option-label">Werkmaatschappij(en)</div>
+                                    <div class="option-desc">Een werkmaatschappij is de operationele vennootschap die de dagelijkse activiteiten uitvoert.</div>
+                                </div>
+                            </li>
+                            <li class="option-item" onclick="selectOption(this, 'typeOprichting', 'Holding(s) en werkmaatschappij(en)')">
+                                <input type="radio" name="typeOprichting" value="Holding(s) en werkmaatschappij(en)">
+                                <div class="option-content">
+                                    <div class="option-label">Holding(s) én werkmaatschappij(en)</div>
+                                    <div class="option-desc">Een complete structuur met zowel een holding als één of meerdere werkmaatschappijen.</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Sectie 6: Documenten ────────────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">6</div>
+                    <div class="card-title">Documenten</div>
+                </div>
+                <div class="card-body">
+
+                    <div class="field">
+                        <label class="field-label">Datacard (KvK)<span class="req">*</span></label>
+                        <p style="font-size:.88rem; color:#4A5568; line-height:1.6; margin-bottom:12px;">
+                            Bij inschrijving bij de Kamer van Koophandel (KvK) is een <strong>datacard</strong> vereist.
+                            Als u al een datacard heeft, upload deze hier direct.
+                            Heeft u nog geen datacard? Print de datacard uit, zet uw handtekening, scan hem in en upload hem hieronder.
+                            De datacard staat als bijlage bij de email met daarin de link naar deze vragenlijst.
+                        </p>
+                        <div class="file-zone" id="datacardZone">
+                            <input type="file" id="datacardFile" name="datacardFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📄</div>
+                            <div class="file-zone-label">Klik om een bestand te kiezen of sleep het hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="datacardSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-top:24px;">
+                        <label class="field-label">PEP-verklaring<span class="req">*</span></label>
+                        <p style="font-size:.88rem; color:#4A5568; line-height:1.6; margin-bottom:12px;">
+                            Het is onze verplichting om na te gaan of u een <strong>'PEP'</strong> (Politiek Prominent Persoon) bent.
+                            Vul de PEP-verklaring in, onderteken hem, scan hem in en upload hem hieronder.
+                            De PEP-verklaring staat als bijlage bij de email met de link naar deze vragenlijst.
+                        </p>
+                        <div class="file-zone" id="pepZone">
+                            <input type="file" id="pepFile" name="pepFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📋</div>
+                            <div class="file-zone-label">Klik om een bestand te kiezen of sleep het hiernaartoe</div>
+                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
+                            <div class="file-selected" id="pepSelected" style="display:none"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ── Sectie 7: Opmerkingen ───────────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">7</div>
+                    <div class="card-title">Opmerkingen</div>
+                </div>
+                <div class="card-body">
+                    <div class="field">
+                        <label class="field-label">Heeft u nog vragen of opmerkingen?</label>
+                        <textarea name="opmerkingen" placeholder="Optioneel — stel hier uw eventuele vragen of voeg extra informatie toe…"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Privacy & Submit ────────────────────────── -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="field" id="fieldPrivacy">
+                        <label class="privacy-box">
+                            <input type="checkbox" name="privacy" id="privacyCheck">
+                            <div class="privacy-text">
+                                Ik ga akkoord met de <a href="/privacy" target="_blank">Privacyverklaring</a> en de 
+                                <a href="/algemene-voorwaarden" target="_blank">Algemene Voorwaarden</a>.
+                                Ik bevestig dat ik deze vragenlijst naar beste kennis en geweten heb ingevuld en dat de verstrekte gegevens correct en volledig zijn.
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="formErrorMsg" style="display:none; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:12px 14px; font-size:.88rem; color:#C53030; margin-bottom:16px;">
+                        ⚠️ Vul alle verplichte velden in voordat u de vragenlijst indient.
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btnSubmit">
+                        Vragenlijst indienen →
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div><!-- /stateForm -->
+
+    <div class="page-footer">Powered by AandelenXpress &nbsp;·&nbsp; © 2026</div>
+</div><!-- /wrap -->
+
+<script>
+// ─────────────────────────────────────────────
+// State management
+// ─────────────────────────────────────────────
+function showState(name) {
+    ['stateLoading', 'stateError', 'stateForm', 'stateSuccess'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+    document.getElementById(name).classList.add('active');
+}
+
+function showError(title, sub) {
+    document.getElementById('errorTitle').textContent = title;
+    if (sub) document.getElementById('errorSub').textContent = sub;
+    showState('stateError');
+}
+
+// ─────────────────────────────────────────────
+// Load case info
+// ─────────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const caseId = params.get('nr');
+
+if (!caseId) {
+    showError('Geen dossiernummer', 'Gebruik de link uit uw email om deze pagina te openen.');
+} else {
+    fetch(`/api/request-info/${encodeURIComponent(caseId)}`)
+        .then(r => {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        })
+        .then(data => {
+            // Populate header
+            document.getElementById('headerPartner').textContent = data.resellerCompany;
+            document.getElementById('headerTitle').textContent = `${data.oprichtingType} — Vragenlijst`;
+            document.getElementById('headerSub').textContent = `Gewenste naam: ${data.gewenstNaam}`;
+            document.getElementById('headerRef').textContent = `Referentie: ${data.id}`;
+            document.getElementById('headerLogo').textContent = data.resellerCompany.slice(0, 2).toUpperCase();
+
+            // Pre-fill email
+            document.getElementById('contactEmail').value = data.clientEmail || '';
+
+            showState('stateForm');
+        })
+        .catch(err => {
+            if (err.message === '404') {
+                showError(
+                    'Dossier niet gevonden of nog niet goedgekeurd',
+                    'Uw dossier is mogelijk nog in behandeling bij uw adviseur. U ontvangt een email zodra het is goedgekeurd en u de vragenlijst kunt invullen.'
+                );
+            } else {
+                showError('Er is een fout opgetreden', 'Probeer de pagina opnieuw te laden. Neem contact op als het probleem aanhoudt.');
+            }
+        });
+}
+
+// ─────────────────────────────────────────────
+// Option selection (radio groups styled as cards)
+// ─────────────────────────────────────────────
+function selectOption(li, name, value) {
+    // Deselect all in same group
+    li.closest('ul').querySelectorAll('.option-item').forEach(el => {
+        el.classList.remove('selected');
+        el.querySelector('input').checked = false;
+    });
+    // Select clicked
+    li.classList.add('selected');
+    li.querySelector('input').checked = true;
+    // Clear error highlight
+    const parentField = li.closest('.field');
+    if (parentField) parentField.classList.remove('field-error');
+}
+
+// ─────────────────────────────────────────────
+// Taal conditional reveal
+// ─────────────────────────────────────────────
+function checkTaal() {
+    const nl = document.querySelector('input[name="nederlandsTaal"]:checked');
+    const en = document.querySelector('input[name="engelsTaal"]:checked');
+    const reveal = document.getElementById('revealTaalOpmerking');
+    if ((nl && nl.value === 'nee') || (en && en.value === 'nee')) {
+        reveal.classList.add('visible');
+    } else {
+        reveal.classList.remove('visible');
+    }
+}
+
+// ─────────────────────────────────────────────
+// File upload handlers
+// ─────────────────────────────────────────────
+const MAX_FILE_MB = 10;
+
+function initFileZone(inputId, zoneId, selectedId) {
+    const input = document.getElementById(inputId);
+    const zone  = document.getElementById(zoneId);
+    const label = document.getElementById(selectedId);
+
+    input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > MAX_FILE_MB * 1024 * 1024) {
+            alert(`Bestand is groter dan ${MAX_FILE_MB} MB. Kies een kleiner bestand.`);
+            input.value = '';
+            return;
+        }
+        zone.classList.add('has-file');
+        label.textContent = `✓ ${file.name}`;
+        label.style.display = 'block';
+    });
+
+    // Drag over styling
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            input.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+initFileZone('datacardFile', 'datacardZone', 'datacardSelected');
+initFileZone('pepFile', 'pepZone', 'pepSelected');
+
+// ─────────────────────────────────────────────
+// File → base64
+// ─────────────────────────────────────────────
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload  = () => resolve(reader.result);
+        reader.onerror = reject;
+    });
+}
+
+// ─────────────────────────────────────────────
+// Form submission
+// ─────────────────────────────────────────────
+document.getElementById('vragenlijstForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const f = this;
+    let valid = true;
+
+    // Clear previous errors
+    f.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+    document.getElementById('formErrorMsg').style.display = 'none';
+
+    // Validate required radio groups
+    const radioGroups = [
+        { name: 'spoed',          fieldId: 'fieldSpoed' },
+        { name: 'nederlandsTaal', fieldId: 'fieldNlTaal' },
+        { name: 'engelsTaal',     fieldId: 'fieldEnTaal' },
+        { name: 'sector',         fieldId: 'fieldSector' },
+        { name: 'typeOprichting', fieldId: 'fieldType' },
+    ];
+
+    radioGroups.forEach(({ name, fieldId }) => {
+        if (!f.querySelector(`input[name="${name}"]:checked`)) {
+            document.getElementById(fieldId).classList.add('field-error');
+            valid = false;
+        }
+    });
+
+    // Validate taalOpmerking if visible
+    const taalReveal = document.getElementById('revealTaalOpmerking');
+    if (taalReveal.classList.contains('visible')) {
+        const taalVal = f.querySelector('[name="taalOpmerking"]').value.trim();
+        if (!taalVal) {
+            taalReveal.querySelector('.field').classList.add('field-error');
+            valid = false;
+        }
+    }
+
+    // Validate email
+    const emailVal = f.querySelector('[name="contactEmail"]').value.trim();
+    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+        document.getElementById('fieldEmail').classList.add('field-error');
+        valid = false;
+    }
+
+    // Validate file uploads
+    const datacardFile = document.getElementById('datacardFile').files[0];
+    const pepFile      = document.getElementById('pepFile').files[0];
+    if (!datacardFile) { document.getElementById('datacardZone').style.borderColor = '#E03D3D'; valid = false; }
+    if (!pepFile)      { document.getElementById('pepZone').style.borderColor = '#E03D3D'; valid = false; }
+
+    // Validate privacy
+    if (!document.getElementById('privacyCheck').checked) {
+        document.getElementById('fieldPrivacy').classList.add('field-error');
+        valid = false;
+    }
+
+    if (!valid) {
+        document.getElementById('formErrorMsg').style.display = 'block';
+        f.querySelector('.field-error, [style*="border-color: rgb(224"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    // Disable button
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Bezig met indienen…';
+
+    try {
+        // Convert files to base64
+        const [datacardB64, pepB64] = await Promise.all([
+            fileToBase64(datacardFile),
+            fileToBase64(pepFile),
+        ]);
+
+        const payload = {
+            caseId:          caseId,
+            spoed:           f.querySelector('[name="spoed"]:checked').value,
+            nederlandsTaal:  f.querySelector('[name="nederlandsTaal"]:checked').value,
+            engelsTaal:      f.querySelector('[name="engelsTaal"]:checked').value,
+            taalOpmerking:   f.querySelector('[name="taalOpmerking"]').value.trim(),
+            contactEmail:    emailVal,
+            sector:          f.querySelector('[name="sector"]:checked').value,
+            typeOprichting:  f.querySelector('[name="typeOprichting"]:checked').value,
+            datacardBestand: { naam: datacardFile.name, data: datacardB64 },
+            pepBestand:      { naam: pepFile.name,      data: pepB64 },
+            opmerkingen:     f.querySelector('[name="opmerkingen"]').value.trim(),
+        };
+
+        const res = await fetch('/api/vragenlijst', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Serverfout');
+        }
+
+        showState('stateSuccess');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Vragenlijst indienen →';
+        alert(`Er is een fout opgetreden: ${err.message}. Probeer het opnieuw of neem contact op.`);
+    }
+});
+</script>
+</body>
+</html>
