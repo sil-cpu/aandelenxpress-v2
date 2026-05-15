@@ -222,9 +222,9 @@
                 <th class="sortable" onclick="setSortColumn('partner')">Partner <span class="sort-indicator" id="sort-partner"></span></th>
                 <th class="sortable" onclick="setSortColumn('status')">Status <span class="sort-indicator" id="sort-status"></span></th>
                 <th class="sortable" onclick="setSortColumn('date')">Datum <span class="sort-indicator" id="sort-date"></span></th>
-                <th>KvK</th>
-                <th>Contact</th>
-                <th>Toegewezen aan</th>
+                <th class="sortable" onclick="setSortColumn('kvk')">KvK <span class="sort-indicator" id="sort-kvk"></span></th>
+                <th class="sortable" onclick="setSortColumn('contact')">Contact <span class="sort-indicator" id="sort-contact"></span></th>
+                <th class="sortable" onclick="setSortColumn('assigned')">Toegewezen aan <span class="sort-indicator" id="sort-assigned"></span></th>
               </tr>
             </thead>
             <tbody id="allDossiers"></tbody>
@@ -675,7 +675,8 @@ async function loadDossiers() {
   const stat = document.getElementById('statTotalDossiers');
   if (stat) stat.textContent = allDossiersData.length;
   renderTable('recentDossiers', allDossiersData.slice(0,5));
-  renderTable('allDossiers', allDossiersData);
+  renderTable('allDossiers', sortDossiers(allDossiersData));
+  updateSortIndicators();
   initRequestsChart();
 }
 
@@ -1456,6 +1457,18 @@ function sortDossiers(data) {
       case 'date':
         aVal = new Date(a.date);
         bVal = new Date(b.date);
+        break;
+      case 'kvk':
+        aVal = (a.kvk || '').toLowerCase();
+        bVal = (b.kvk || '').toLowerCase();
+        break;
+      case 'contact':
+        aVal = (a.contact || '').toLowerCase();
+        bVal = (b.contact || '').toLowerCase();
+        break;
+      case 'assigned':
+        aVal = (a.assignedTo || '').toLowerCase();
+        bVal = (b.assignedTo || '').toLowerCase();
         break;
       default:
         return 0;
