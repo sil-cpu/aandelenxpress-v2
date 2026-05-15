@@ -110,6 +110,19 @@ function generateToken() {
   return t;
 }
 
+// Generate an opaque dossier number like AX-K7M3P9
+function generateDossierNr() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const existing = new Set(resellerRequests.map(r => r.id));
+  let id;
+  do {
+    let part = '';
+    for (let i = 0; i < 6; i++) part += chars[Math.floor(Math.random() * chars.length)];
+    id = 'AX-' + part;
+  } while (existing.has(id));
+  return id;
+}
+
 function generateSmartToken(request) {
   // Format: voornaam + bvnaam (lowercase, alleen letters/cijfers)
   const firstName = (request.clientName || '').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -502,7 +515,7 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
     const resellerUser = onBehalf || req.session.user;
 
     const request = {
-        id: `RR-${++requestCounter}`,
+        id: generateDossierNr(),
         resellerId,
         resellerName: resellerUser.name,
         resellerCompany: resellerUser.company || 'AandelenXpress',
