@@ -486,6 +486,17 @@ app.get('/api/reseller-requests', requireAdmin, (req, res) => {
     res.json(filtered);
 });
 
+// GET single reseller request by id (admin or owning reseller)
+app.get('/api/reseller-requests/:id', requireLogin, (req, res) => {
+    const request = resellerRequests.find(r => r.id === req.params.id);
+    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+    const user = req.session.user;
+    if (user.type !== 'admin' && request.resellerId !== user.email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
+    res.json(request);
+});
+
 // PATCH approve reseller request (admin only)
 app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (req, res) => {
     const { id } = req.params;

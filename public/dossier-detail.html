@@ -268,7 +268,6 @@ function buildSidebar(role) {
     { section:"overzicht", label:"Dashboard", icon:`<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>` },
     { section:"partners", label:"Partners", icon:`<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
     { section:"dossiers", label:"Alle dossiers", icon:`<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>` },
-    { section:"support", label:"Support", icon:`<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>` },
     { section:"aanmeldingen", label:"Aanmeldingen", icon:`<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>` },
     { section:"leden", label:"Leden & gebruikers", icon:`<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>` },
     { section:"instellingen", label:"Instellingen", icon:`<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>` },
@@ -379,7 +378,22 @@ async function init() {
     document.getElementById("userInitials").textContent = u.name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
     buildSidebar(u.type);
 
-    const d = allDossiers.find(x => x.dossierNr === nr);
+    // Fetch dossier from API
+    let d = null;
+    if (nr && nr.startsWith('RR-')) {
+      try {
+        const dr = await fetch('/api/reseller-requests/' + encodeURIComponent(nr));
+        if (dr.ok) {
+          const req = await dr.json();
+          const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
+          const statusMap = { 'pending':{ key:'pending', text:'Nieuw' }, 'approved':{ key:'ident', text:'In behandeling' }, 'rejected':{ key:'new', text:'Afgewezen' } };
+          const s = statusMap[req.status] || { key:'new', text: req.status };
+          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '' };
+        }
+      } catch(e) { console.error('API fetch failed:', e); }
+    } else {
+      d = allDossiers.find(x => x.dossierNr === nr);
+    }
     if (!d) {
       document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Dossier niet gevonden.</p><a href="${u.type==='admin'?'admin-dashboard.html':'reseller-dashboard.html'}" class="btn-primary" style="margin-top:16px;">Terug naar dashboard</a></div>`;
       return;
