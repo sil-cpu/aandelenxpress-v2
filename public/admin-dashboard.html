@@ -147,7 +147,12 @@
       <div class="dash-section" id="section-dossiers">
         <div class="section-row mb-20">
           <span class="section-heading">Alle dossiers</span>
-          <span class="text-muted text-sm" id="dossiersTotal">Laden...</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="text-muted text-sm" id="dossiersTotal">Laden...</span>
+            <button class="btn-primary" style="font-size:0.85rem;padding:7px 14px;" onclick="openAdminDossierModal()">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nieuw dossier
+            </button>
+          </div>
         </div>
         <div style="margin-bottom:12px;">
           <input type="text" id="dossierSearch" placeholder="Zoek op bedrijfsnaam, partner..." style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;width:100%;box-sizing:border-box;font-family:inherit;" />
@@ -554,6 +559,54 @@
 
     </div>
   </main>
+</div>
+
+<!-- ADMIN CREATE DOSSIER MODAL -->
+<div class="modal-backdrop" id="adminDossierModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;">
+  <div class="modal-box" style="max-width:600px;width:100%;max-height:90vh;overflow-y:auto;background:white;border-radius:12px;padding:0;">
+    <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid #E8EDF5;">
+      <h2 style="margin:0;font-size:1.1rem;font-weight:600;">Nieuw dossier aanmaken</h2>
+      <button onclick="closeAdminDossierModal()" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form id="adminNewDossierForm" style="padding:24px;">
+      <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;">Namens reseller (optioneel)</div>
+      <div class="form-field" style="margin-bottom:16px;">
+        <label>Reseller e-mailadres</label>
+        <select id="adminOnBehalfOf" style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
+          <option value="">— Directe opdracht (geen reseller) —</option>
+        </select>
+      </div>
+      <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;margin-top:20px;">Klantgegevens</div>
+      <div class="form-field"><label>Bedrijfsnaam / Klant *</label><input type="text" id="adminClientName" placeholder="B.V. De Innovatie" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+      <div class="form-field" style="margin-top:12px;"><label>E-mailadres klant *</label><input type="email" id="adminClientEmail" placeholder="info@bedrijf.nl" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+      <div class="form-field" style="margin-top:12px;"><label>Telefoonnummer klant</label><input type="tel" id="adminClientPhone" placeholder="+31 6 12345678" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+      <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;margin-top:20px;">Oprichtingsgegevens</div>
+      <div class="form-field"><label>Wat oprichten? *</label>
+        <select id="adminOprichtingType" required style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
+          <option value="">— Kies —</option>
+          <option value="bv">Gewone BV</option>
+          <option value="bv-holding">BV + Holding structuur</option>
+          <option value="bv-spoed">BV met spoed (24-48 uur)</option>
+          <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
+          <option value="advies">Wil graag advies</option>
+        </select>
+      </div>
+      <div class="form-field" style="margin-top:12px;"><label>Gewenste naam BV *</label><input type="text" id="adminGewenstNaam" placeholder="Voorbeeld B.V." required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+      <div class="form-field" style="margin-top:12px;"><label>Doel van de BV *</label><textarea id="adminDoel" placeholder="Wat is het doel?" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:70px;resize:vertical;"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <div class="form-field"><label>Aantal aandeelhouders *</label><input type="number" id="adminAandeelhouders" value="1" min="1" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+        <div class="form-field"><label>Geplaatst kapitaal (€) *</label><input type="number" id="adminKapitaal" value="0.01" min="0.01" step="0.01" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+      </div>
+      <div class="form-field" style="margin-top:12px;"><label>Opmerkingen</label><textarea id="adminOpmerkingen" placeholder="Eventuele bijzonderheden..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:60px;resize:vertical;"></textarea></div>
+      <div id="adminDossierFormError" style="display:none;margin-top:12px;padding:10px 12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;font-size:0.85rem;color:#B91C1C;"></div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button type="button" onclick="closeAdminDossierModal()" style="flex:1;padding:11px;background:none;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;cursor:pointer;font-family:inherit;">Annuleren</button>
+        <button type="submit" class="btn-primary" style="flex:2;padding:11px;">Dossier aanmaken</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -1545,6 +1598,72 @@ document.addEventListener('DOMContentLoaded', () => {
   
   updateSortIndicators();
   updatePartnerSortIndicators();
+});
+
+// ── Admin create dossier modal ────────────────────────────────────────────────
+function openAdminDossierModal() {
+  const modal = document.getElementById('adminDossierModal');
+  modal.style.display = 'flex';
+  // Populate reseller dropdown
+  const sel = document.getElementById('adminOnBehalfOf');
+  // Clear existing except first
+  while (sel.options.length > 1) sel.remove(1);
+  fetch('/api/admin/users?type=reseller').then(r => r.ok ? r.json() : []).then(users => {
+    users.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.email;
+      opt.textContent = `${u.name} — ${u.company || u.email}`;
+      sel.appendChild(opt);
+    });
+  }).catch(() => {});
+}
+
+function closeAdminDossierModal() {
+  document.getElementById('adminDossierModal').style.display = 'none';
+  document.getElementById('adminNewDossierForm').reset();
+  document.getElementById('adminDossierFormError').style.display = 'none';
+}
+
+document.getElementById('adminDossierModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('adminDossierModal')) closeAdminDossierModal();
+});
+
+document.getElementById('adminNewDossierForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const errEl = document.getElementById('adminDossierFormError');
+  errEl.style.display = 'none';
+  const body = {
+    clientName:     document.getElementById('adminClientName').value,
+    clientEmail:    document.getElementById('adminClientEmail').value,
+    clientPhone:    document.getElementById('adminClientPhone').value,
+    oprichtingType: document.getElementById('adminOprichtingType').value,
+    gewenstNaam:    document.getElementById('adminGewenstNaam').value,
+    doel:           document.getElementById('adminDoel').value,
+    aandeelhouders: parseInt(document.getElementById('adminAandeelhouders').value) || 1,
+    kapitaal:       parseFloat(document.getElementById('adminKapitaal').value) || 0.01,
+    opmerkingen:    document.getElementById('adminOpmerkingen').value
+  };
+  const onBehalf = document.getElementById('adminOnBehalfOf').value;
+  if (onBehalf) body.onBehalfOf = onBehalf;
+  try {
+    const r = await fetch('/api/reseller-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const err = await r.json();
+      errEl.textContent = err.error || 'Onbekende fout';
+      errEl.style.display = 'block';
+      return;
+    }
+    closeAdminDossierModal();
+    await loadDossiers();
+    adminSaveToast('Dossier aangemaakt');
+  } catch(e) {
+    errEl.textContent = 'Fout: ' + e.message;
+    errEl.style.display = 'block';
+  }
 });
 
 loadUser();

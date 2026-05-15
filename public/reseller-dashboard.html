@@ -332,19 +332,15 @@
 </div>
 
 <script>
-let dossiers = [
-    { name: 'TechStart B.V.',       date: '2026-04-20', statusKey: 'notary',   statusText: 'Notariële akte', pct: 75,  dossierNr:'AX-2026-0042', clientEmail:'info@techstart.nl',      clientPhone:'+31 20 123 4567', kvk:'' },
-    { name: 'Consultancy Plus',     date: '2026-04-18', statusKey: 'ident',    statusText: 'iDIN verwerking',     pct: 50,  dossierNr:'AX-2026-0041', clientEmail:'info@consultancyplus.nl', clientPhone:'+31 30 987 6543', kvk:'' },
-    { name: 'Groen & Co',           date: '2026-04-15', statusKey: 'kvk',      statusText: 'KvK inschrijving',    pct: 90,  dossierNr:'AX-2026-0040', clientEmail:'j.groen@groenco.nl',     clientPhone:'+31 10 246 8135', kvk:'87654321' },
-    { name: 'Marketing Solutions',  date: '2026-04-12', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0039', clientEmail:'admin@marketsol.nl',     clientPhone:'+31 70 135 7924', kvk:'76543218' },
-    { name: 'Finance Advisors',     date: '2026-04-10', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0038', clientEmail:'post@financeadv.nl',     clientPhone:'+31 40 321 0987', kvk:'65432187' },
-    { name: 'Design Studio B.V.',   date: '2026-04-05', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0037', clientEmail:'studio@designbv.nl',    clientPhone:'+31 20 456 7890', kvk:'54321876' },
-    { name: 'HR Services',          date: '2026-03-28', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0036', clientEmail:'hr@hrservices.nl',       clientPhone:'+31 23 654 3210', kvk:'43218765' },
-    { name: 'Logistiek B.V.',       date: '2026-03-25', statusKey: 'complete', statusText: 'Voltooid',            pct: 100, dossierNr:'AX-2026-0035', clientEmail:'info@logistiek.nl',      clientPhone:'+31 50 111 2233', kvk:'32187654' },
-];
+let dossiers = [];
 
 function renderDossiers() {
-    document.getElementById('dossiersList').innerHTML = dossiers.map(d => `
+    const list = document.getElementById('dossiersList');
+    if (!dossiers.length) {
+        list.innerHTML = '<div style="padding:32px;text-align:center;color:#8A9BB5;font-size:0.9rem;">Nog geen dossiers aangemaakt. Klik op <strong>Nieuwe opdracht</strong> om te beginnen.</div>';
+        return;
+    }
+    list.innerHTML = dossiers.map(d => `
         <div class="dash-table-row table-cols-dossiers">
             <div style="font-weight:500">${d.name}</div>
             <div class="text-muted text-sm">${new Date(d.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
@@ -363,39 +359,34 @@ async function loadDossiers() {
         const r = await fetch('/api/my-requests');
         if (!r.ok) return;
         const requests = await r.json();
-        
-        // Convert pending requests to display format
-        const pendingDossiers = requests
-            .filter(req => req.status === 'pending')
-            .map(req => ({
-                name: req.clientName,
-                date: req.createdAt,
-                statusKey: 'pending',
-                statusText: 'Aanvraag ingediend',
-                pct: 5,
-                dossierNr: req.id,
+
+        const statusMap = {
+            'pending':  { key:'pending',  text:'Nieuw',           pct: 5  },
+            'approved': { key:'ident',    text:'In behandeling',  pct: 20 },
+            'rejected': { key:'new',      text:'Afgewezen',       pct: 0  }
+        };
+
+        dossiers = requests.map(req => {
+            const s = statusMap[req.status] || { key:'pending', text: req.status, pct: 5 };
+            return {
+                name:        req.gewenstNaam || req.clientName,
+                date:        req.createdAt,
+                statusKey:   s.key,
+                statusText:  s.text,
+                pct:         s.pct,
+                dossierNr:   req.id,
                 clientEmail: req.clientEmail,
                 clientPhone: req.clientPhone,
-                kvk: ''
-            }));
-        
-        // Convert approved requests to normal dossier format
-        const approvedDossiers = requests
-            .filter(req => req.status === 'approved')
-            .map(req => ({
-                name: req.clientName,
-                date: req.approvedAt,
-                statusKey: 'intake',
-                statusText: 'Intake',
-                pct: 15,
-                dossierNr: req.id,
-                clientEmail: req.clientEmail,
-                clientPhone: req.clientPhone,
-                kvk: ''
-            }));
-        
-        // Merge with hardcoded dossiers
-        dossiers = [...pendingDossiers, ...approvedDossiers, ...dossiers.filter(d => !d.dossierNr.startsWith('RR-') && !d.dossierNr.startsWith('5'))];
+                kvk:         ''
+            };
+        });
+
+        // Stat cards
+        document.getElementById('stat-total').textContent = dossiers.length;
+        const inProgress = dossiers.filter(d => d.statusKey !== 'new' && d.statusKey !== 'complete').length;
+        document.getElementById('stat-progress').textContent = inProgress;
+        const completedCount = dossiers.filter(d => d.statusKey === 'complete').length;
+        document.getElementById('stat-month').textContent = completedCount;
         renderDossiers();
     } catch(e) {
         console.error('Failed to load dossiers:', e);

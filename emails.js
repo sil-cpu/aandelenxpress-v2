@@ -229,10 +229,12 @@ async function emailResellerRequestApproved({ request }) {
     });
 }
 
-/** Klant: opdracht goedgekeurd — link naar vragenlijst */
+/** Klant: opdracht goedgekeurd — link naar vragenlijst + statuspagina met wachtwoord */
 async function emailClientCaseApproved({ request }) {
-    const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany } = request;
+    const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
     const vragenlijstUrl = `${SITE_URL}/vragenlijst?nr=${id}`;
+    const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
+    const wachtwoord = accessToken || '—';
 
     return sendEmail({
         to:      clientEmail,
@@ -249,9 +251,15 @@ async function emailClientCaseApproved({ request }) {
             <p><strong>Volgende stap: vul de vragenlijst in</strong><br>
                Om uw BV zo snel mogelijk op te richten hebben wij enkele gegevens van u nodig. 
                Dit duurt gemiddeld 10–15 minuten.</p>
-            <a class="btn" href="${vragenlijstUrl}">Vragenlijst invullen →</a>
+            <a class="btn" href="${vragenlijstUrl}">Vragenlijst invullen &rarr;</a>
+            <p style="margin-top:24px;"><strong>Volg uw aanvraag:</strong><br>
+               Via onderstaande link kunt u de voortgang van uw dossier volgen.</p>
+            <div class="info-box">
+                <strong>Statuspagina:</strong> <a href="${statusUrl}">${statusUrl}</a><br>
+                <strong>Wachtwoord:</strong> <span style="font-family:monospace;font-size:16px;letter-spacing:2px;">${wachtwoord}</span>
+            </div>
             <p style="font-size:13px;color:#888;margin-top:24px;">
-                Bewaar deze email — de link hierboven is uw persoonlijke toegang tot de vragenlijst.<br>
+                Bewaar deze email — de link en het wachtwoord hierboven geven u toegang tot uw persoonlijke dossier.<br>
                 Heeft u vragen? Neem contact op met uw adviseur of mail naar 
                 <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.
             </p>

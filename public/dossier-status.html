@@ -691,8 +691,23 @@
 <body>
 
 <div class="status-container">
+    <!-- Wachtwoord gate -->
+    <div id="passwordGate" style="display:none;max-width:420px;margin:60px auto;background:white;border-radius:12px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #E1E7F0;text-align:center;">
+        <div style="width:56px;height:56px;background:#EEF4FF;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg width="24" height="24" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h2 style="margin:0 0 8px;font-size:1.3rem;color:#0F1D3A;">Dossier beveiligd</h2>
+        <p style="color:#718096;font-size:0.9rem;margin:0 0 24px;">Voer het wachtwoord in dat u per e-mail heeft ontvangen.</p>
+        <input type="text" id="tokenInput" placeholder="bijv. ABC12345" autocomplete="off"
+            style="width:100%;box-sizing:border-box;padding:12px 16px;border:1px solid #E8EDF5;border-radius:8px;font-size:1rem;font-family:inherit;text-transform:uppercase;letter-spacing:2px;text-align:center;margin-bottom:12px;">
+        <div id="tokenError" style="display:none;color:#c53030;font-size:0.85rem;margin-bottom:12px;"></div>
+        <button onclick="submitPassword()" style="width:100%;padding:12px;background:#1A3B70;color:white;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit;">
+            Toegang krijgen →
+        </button>
+    </div>
+
     <!-- Header with Partner Logo -->
-    <div class="status-header">
+    <div class="status-header" id="mainContent" style="display:none;">
         <div class="header-top">
             <div class="partner-logo" id="partnerLogo"></div>
             <div class="header-info">
@@ -704,7 +719,7 @@
     </div>
 
     <!-- Status Card -->
-    <div class="status-card">
+    <div class="status-card" id="statusCard" style="display:none;">
         <div class="status-label">Status Voortgang</div>
         <div class="status-timeline" id="statusTimeline"></div>
         
@@ -716,7 +731,7 @@
     </div>
 
     <!-- To-Do List -->
-    <div class="status-card">
+    <div class="status-card" id="todoCard" style="display:none;">
         <div class="todo-section">
             <div class="todo-header">
                 <div class="todo-icon">✓</div>
@@ -727,7 +742,7 @@
     </div>
 
     <!-- Support Tickets -->
-    <div class="status-card">
+    <div class="status-card" id="supportCard" style="display:none;">
         <div class="todo-section">
             <div class="todo-header">
                 <div class="todo-icon">💬</div>
@@ -772,12 +787,10 @@
     </div>
 
     <!-- Footer -->
-    <div class="status-footer">
+    <div class="status-footer" id="footerSection" style="display:none;">
         <div class="footer-label">Vragen?</div>
         <div class="footer-contact">
-            Neem contact op met <strong id="partnerContactName"></strong><br>
-            📧 <a href="mailto:" id="partnerContactEmail"></a><br>
-            📞 <a href="tel:" id="partnerContactPhone"></a>
+            Neem contact op met uw adviseur via <a href="mailto:info@aandelenxpress.nl" id="partnerContactEmail">info@aandelenxpress.nl</a>
         </div>
         <div class="aaxp-logo">Powered by AandelenXpress</div>
     </div>
@@ -815,368 +828,159 @@
 <script>
 // Status configuration
 const statusSteps = [
-    { key: 'intake', label: 'Intake', description: 'Initële intake verwerking' },
-    { key: 'ident', label: 'iDIN Verificatie', description: 'Identiteitsverificatie' },
-    { key: 'kvk', label: 'KvK Inschrijving', description: 'Registratie bij KVK' },
-    { key: 'notary', label: 'Notariële Akte', description: 'Notariële verwerking' },
-    { key: 'complete', label: 'Voltooid', description: 'Dossier afgerond' }
+    { key: 'intake',  label: 'Aanvraag ontvangen',  description: 'Initële intake verwerking' },
+    { key: 'ident',   label: 'iDIN Verificatie',     description: 'Identiteitsverificatie' },
+    { key: 'kvk',     label: 'KvK Inschrijving',     description: 'Registratie bij KVK' },
+    { key: 'notary',  label: 'Notariële Akte',        description: 'Notariële verwerking' },
+    { key: 'complete',label: 'Voltooid',              description: 'Dossier afgerond' }
 ];
 
 const statusDescriptions = {
-    intake: 'Wij verwerkten uw aanvraag en stuurden u de nodige documenten op.',
-    ident: 'Uw identiteit wordt geverifieerd via iDIN.',
-    kvk: 'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel.',
-    notary: 'De notariële akte wordt opgesteld door onze partner.',
+    intake:   'Wij verwerkten uw aanvraag en stuurden u de nodige documenten op.',
+    ident:    'Uw identiteit wordt geverifieerd via iDIN.',
+    kvk:      'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel.',
+    notary:   'De notariële akte wordt opgesteld door onze partner.',
     complete: 'Uw dossier is volledig afgerond. Gefeliciteerd!'
 };
 
-// Todo items per status
 const todoItems = {
     intake: [
-        { title: 'Documenten ontvangen', desc: 'U ontvangt documentatie via email' },
-        { title: 'Formulieren invullen', desc: 'Vul alle vereiste formulieren in' },
+        { title: 'Documenten ontvangen',   desc: 'U ontvangt documentatie via email' },
+        { title: 'Formulieren invullen',   desc: 'Vul alle vereiste formulieren in' },
         { title: 'Documenten retourneren', desc: 'Stuur ingevulde formulieren terug' }
     ],
     ident: [
-        { title: 'iDIN login', desc: 'Log in met uw bank-app via iDIN' },
-        { title: 'Verificatie voltooien', desc: 'Voltooi alle verificatiestappen' },
+        { title: 'iDIN login',              desc: 'Log in met uw bank-app via iDIN' },
+        { title: 'Verificatie voltooien',   desc: 'Voltooi alle verificatiestappen' },
         { title: 'Wachten op bevestiging', desc: 'Wij verwerken uw gegevens' }
     ],
     kvk: [
         { title: 'KvK inschrijving starten', desc: 'Wij dienen uw aanvraag in' },
-        { title: 'Goedkeuring afwachten', desc: 'KvK keurt uw registratie goed' },
+        { title: 'Goedkeuring afwachten',    desc: 'KvK keurt uw registratie goed' },
         { title: 'Bedrijfsnummer ontvangen', desc: 'U ontvangt uw bedrijfsnummer' }
     ],
     notary: [
-        { title: 'Akte ondertekenen', desc: 'Onderteken de notariële akte' },
+        { title: 'Akte ondertekenen',           desc: 'Onderteken de notariële akte' },
         { title: 'Inschrijving Handelsregister', desc: 'Akte wordt geregistreerd' },
-        { title: 'Finalisering', desc: 'Finalisering van alle procedures' }
+        { title: 'Finalisering',                desc: 'Finalisering van alle procedures' }
     ],
     complete: [
-        { title: 'Alle stappen voltooid', desc: 'Uw bedrijf is volledig opgericht!' },
-        { title: 'Documenten beschikbaar', desc: 'Alle documenten zijn beschikbaar' },
-        { title: 'Support beschikbaar', desc: 'Ons team staat voor u klaar' }
+        { title: 'Alle stappen voltooid',   desc: 'Uw bedrijf is volledig opgericht!' },
+        { title: 'Documenten beschikbaar',  desc: 'Alle documenten zijn beschikbaar' },
+        { title: 'Support beschikbaar',     desc: 'Ons team staat voor u klaar' }
     ]
 };
 
-// Mock dossier data - in production this comes from backend
-const allDossiersData = [
-    { name:"TechStart B.V.", type:"B.V.", partner:"Bakker Accountants", statusKey:"notary", statusText:"Notariële akte", date:"2026-04-20", dossierNr:"AX-2026-0042", contact:"Jan de Vries", clientEmail:"info@techstart.nl", clientPhone:"+31 20 123 4567", kvk:"", assignedTo:"Jan Bakker" },
-    { name:"Consultancy Plus", type:"B.V.", partner:"Van der Berg & Co", statusKey:"ident", statusText:"iDIN verwerking", date:"2026-04-18", dossierNr:"AX-2026-0041", contact:"Marie Hendrikx", clientEmail:"info@consultancyplus.nl", clientPhone:"+31 30 987 6543", kvk:"", assignedTo:"Kees van Berg" },
-    { name:"Groen & Co", type:"Holdings B.V.", partner:"Bakker Accountants", statusKey:"kvk", statusText:"KvK inschrijving", date:"2026-04-15", dossierNr:"AX-2026-0040", contact:"Jan Groen", clientEmail:"j.groen@groenco.nl", clientPhone:"+31 10 246 8135", kvk:"87654321", assignedTo:"Jan Bakker" },
-    { name:"Marketing Solutions", type:"B.V.", partner:"Dijkstra Partners", statusKey:"complete", statusText:"Voltooid", date:"2026-04-12", dossierNr:"AX-2026-0039", contact:"Els de Boeck", clientEmail:"admin@marketsol.nl", clientPhone:"+31 70 135 7924", kvk:"76543218", assignedTo:"Els Dijkstra" },
-    { name:"Finance Advisors", type:"B.V.", partner:"Van der Berg & Co", statusKey:"complete", statusText:"Voltooid", date:"2026-04-10", dossierNr:"AX-2026-0038", contact:"Kees Vermeulen", clientEmail:"post@financeadv.nl", clientPhone:"+31 40 321 0987", kvk:"65432187", assignedTo:"Kees van Berg" },
-];
+const params = new URLSearchParams(window.location.search);
+const dossierNr = params.get('nr');
+const tokenFromUrl = params.get('token');
 
-const partners = [
-    { name:"Bakker Accountants", city:"Amsterdam", dossiers:89, color:"#1A3B70", contact:"Jan Bakker", email:"j.bakker@bakker-acc.nl", phone:"+31 20 555 0100", since:"2024-01", kvk:"11223344" },
-    { name:"Van der Berg & Co", city:"Rotterdam", dossiers:72, color:"#2A5BA0", contact:"Kees van Berg", email:"k.vanberg@vdberg.nl", phone:"+31 10 555 0200", since:"2024-03", kvk:"22334455" },
-    { name:"Dijkstra Partners", city:"Utrecht", dossiers:65, color:"#17518A", contact:"Els Dijkstra", email:"e.dijkstra@dijkstra.nl", phone:"+31 30 555 0300", since:"2024-02", kvk:"33445566" },
-    { name:"Smit & Assoc.", city:"Den Haag", dossiers:48, color:"#1D4477", contact:"Wim Smit", email:"w.smit@smitassoc.nl", phone:"+31 70 555 0400", since:"2024-06", kvk:"44556677" },
-];
-
-function getPartnersInitials(partnerName) {
-    return partnerName.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+function getStoredToken() {
+    try { return localStorage.getItem('ax_token_' + dossierNr); } catch(e) { return null; }
 }
-
-function getPartnerColor(partnerName) {
-    const partner = partners.find(p => p.name === partnerName);
-    return partner ? partner.color : "#1A3B70";
+function storeToken(t) {
+    try { localStorage.setItem('ax_token_' + dossierNr, t); } catch(e) {}
 }
 
 function renderStatusTimeline(currentStatus) {
     const timelineDiv = document.getElementById('statusTimeline');
     const currentIndex = statusSteps.findIndex(s => s.key === currentStatus);
-    
     timelineDiv.innerHTML = statusSteps.map((step, index) => {
         let stepClass = '';
         if (index < currentIndex) stepClass = 'completed';
         else if (index === currentIndex) stepClass = 'active';
-        
-        return `
-            <div class="timeline-step ${stepClass}">
-                <div class="timeline-circle">${index + 1}</div>
-                <div class="timeline-label">${step.label}</div>
-            </div>
-        `;
+        return `<div class="timeline-step ${stepClass}">
+            <div class="timeline-circle">${index + 1}</div>
+            <div class="timeline-label">${step.label}</div>
+        </div>`;
     }).join('');
 }
 
 function renderTodoList(currentStatus) {
     const todoList = document.getElementById('todoList');
     const todos = todoItems[currentStatus] || [];
-    
-    todoList.innerHTML = todos.map((todo, index) => {
+    todoList.innerHTML = todos.map(todo => {
         const isCompleted = currentStatus === 'complete';
-        const completedClass = isCompleted ? 'completed' : '';
-        
-        return `
-            <li class="todo-item ${completedClass}">
-                <div class="todo-checkbox">${isCompleted ? '✓' : ''}</div>
-                <div class="todo-content">
-                    <div class="todo-item-title">${todo.title}</div>
-                    <div class="todo-item-desc">${todo.desc}</div>
-                </div>
-            </li>
-        `;
+        return `<li class="todo-item ${isCompleted ? 'completed' : ''}">
+            <div class="todo-checkbox">${isCompleted ? '✓' : ''}</div>
+            <div class="todo-content">
+                <div class="todo-item-title">${todo.title}</div>
+                <div class="todo-item-desc">${todo.desc}</div>
+            </div>
+        </li>`;
     }).join('');
 }
 
-function loadTickets(dossierNr) {
-    fetch(`/api/tickets/${dossierNr}`)
-        .then(res => res.json())
-        .then(tickets => renderTickets(tickets))
-        .catch(err => console.error('Error loading tickets:', err));
-}
-
-function renderTickets(tickets) {
-    const ticketsList = document.getElementById('ticketsList');
-    
-    if (tickets.length === 0) {
-        ticketsList.innerHTML = '<li style="color: #8A9BB5; font-size: 0.9rem; padding: 16px; text-align: center;">Geen tickets ingediend</li>';
-        return;
-    }
-    
-    ticketsList.innerHTML = tickets.map(ticket => {
-        const isUnread = !ticket.read;
-        const date = new Date(ticket.createdAt).toLocaleDateString('nl-NL', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        return `
-            <li class="ticket-item ${isUnread ? 'unread' : ''}" data-ticket-id="${ticket.id}" onclick="openTicketDetail(event, '${ticket.id}')">
-                <div class="ticket-header">
-                    <div class="ticket-id">${ticket.id}</div>
-                    <span class="ticket-status ${isUnread ? 'unread' : ''}">${isUnread ? 'Nieuw' : 'Gelezen'}</span>
-                </div>
-                <div class="ticket-subject">${ticket.subject}</div>
-                <div class="ticket-message">${ticket.message}</div>
-                <div class="ticket-meta">
-                    Ingediend door ${ticket.senderName} • ${date}
-                </div>
-            </li>
-        `;
-    }).join('');
-    
-    // Mark unread tickets as read when user sees them
-    tickets.forEach(ticket => {
-        if (!ticket.read) {
-            markTicketAsRead(ticket.id);
-        }
+function showDossier(dossier) {
+    // Show all hidden cards
+    ['mainContent','statusCard','todoCard','supportCard','footerSection'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = '';
     });
-}
 
-function markTicketAsRead(ticketId) {
-    fetch(`/api/tickets/${ticketId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isRead: true })
-    }).catch(err => console.error('Error marking ticket as read:', err));
-}
+    document.title = `${dossier.name} \u2013 Dossier Status`;
 
-function openTicketDetail(event, ticketId) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    fetch(`/api/tickets/${ticketId}`)
-        .then(res => res.json())
-        .then(ticket => displayTicketModal(ticket))
-        .catch(err => {
-            console.error('Error loading ticket:', err);
-            alert('Er is een fout opgetreden bij het laden van het ticket.');
-        });
-}
-
-function displayTicketModal(ticket) {
-    const modal = document.getElementById('ticketModal');
-    const backdrop = document.getElementById('ticketModalBackdrop');
-    
-    // Set ticket details
-    document.getElementById('ticketModalTitle').textContent = ticket.subject;
-    document.getElementById('ticketModalId').textContent = ticket.id;
-    document.getElementById('ticketModalStatus').textContent = ticket.status || (ticket.read ? 'Gelezen' : 'Nieuw');
-    
-    const dateFmt = new Date(ticket.createdAt).toLocaleDateString('nl-NL', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    document.getElementById('ticketModalDate').textContent = dateFmt;
-    document.getElementById('ticketModalSender').textContent = ticket.senderName;
-    document.getElementById('ticketModalSenderEmail').textContent = ticket.senderEmail;
-    document.getElementById('ticketModalMessage').textContent = ticket.message;
-    
-    // Display replies
-    const repliesContainer = document.getElementById('ticketModalRepliesContainer');
-    const repliesDiv = document.getElementById('ticketModalReplies');
-    const noReplies = document.getElementById('ticketNoReplies');
-    
-    if (ticket.replies && ticket.replies.length > 0) {
-        repliesContainer.style.display = 'block';
-        noReplies.style.display = 'none';
-        
-        repliesDiv.innerHTML = ticket.replies.map(reply => {
-            const replyDate = new Date(reply.createdAt).toLocaleDateString('nl-NL', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            return `
-                <div class="ticket-reply">
-                    <div class="ticket-reply-header">
-                        ${reply.author} (${reply.email})
-                        <span class="ticket-reply-time">${replyDate}</span>
-                    </div>
-                    <div class="ticket-reply-message">${reply.message}</div>
-                </div>
-            `;
-        }).join('');
-    } else {
-        repliesContainer.style.display = 'none';
-        noReplies.style.display = 'block';
-    }
-    
-    // Show modal
-    modal.classList.add('active');
-    backdrop.classList.add('active');
-}
-
-function closeTicketModal() {
-    const modal = document.getElementById('ticketModal');
-    const backdrop = document.getElementById('ticketModalBackdrop');
-    
-    modal.classList.remove('active');
-    backdrop.classList.remove('active');
-}
-
-function submitTicket(formData) {
-    const params = new URLSearchParams(window.location.search);
-    const dossierNr = params.get('nr');
-    
-    return fetch('/api/tickets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            dossierNr,
-            subject: formData.subject,
-            message: formData.message,
-            senderName: formData.senderName,
-            senderEmail: formData.senderEmail
-        })
-    }).then(res => res.json());
-}
-
-function setupTicketForm() {
-    const form = document.getElementById('ticketForm');
-    if (!form) return;
-    
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = {
-            subject: form.subject.value,
-            message: form.message.value,
-            senderName: form.senderName.value,
-            senderEmail: form.senderEmail.value
-        };
-        
-        const submitBtn = form.querySelector('.submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Verzenden...';
-        
-        try {
-            const result = await submitTicket(formData);
-            
-            // Show success message
-            const successDiv = document.getElementById('formSuccess');
-            successDiv.textContent = '✓ Ticket succesvol ingediend! We nemen zo spoedig mogelijk contact met u op.';
-            successDiv.style.display = 'block';
-            
-            // Reset form
-            form.reset();
-            
-            // Reload tickets
-            const params = new URLSearchParams(window.location.search);
-            loadTickets(params.get('nr'));
-            
-            // Hide success message after 5 seconds
-            setTimeout(() => {
-                successDiv.style.display = 'none';
-            }, 5000);
-        } catch (error) {
-            alert('Er is een fout opgetreden bij het indienen van het ticket. Probeer het alstublieft opnieuw.');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Ticket indienen';
-        }
-    });
-}
-
-function loadDossierStatusWithTickets() {
-    const params = new URLSearchParams(window.location.search);
-    const dossierNr = params.get('nr');
-    
-    if (!dossierNr) {
-        document.body.innerHTML = '<div style="padding: 48px; text-align: center; font-size: 1.1rem; color: #8A9BB5;">Dossier niet gevonden. Controleer de URL.</div>';
-        return;
-    }
-    
-    const dossier = allDossiersData.find(d => d.dossierNr === dossierNr);
-    const partner = partners.find(p => p.name === dossier?.partner);
-    
-    if (!dossier || !partner) {
-        document.body.innerHTML = '<div style="padding: 48px; text-align: center; font-size: 1.1rem; color: #8A9BB5;">Dossier niet gevonden.</div>';
-        return;
-    }
-    
-    // Set page title
-    document.title = `${dossier.name} – Dossier Status`;
-    
-    // Set partner logo
+    // Partner logo (initials from partner name or dossier name)
     const logoDiv = document.getElementById('partnerLogo');
-    logoDiv.textContent = getPartnersInitials(partner.name);
-    logoDiv.style.background = getPartnerColor(partner.name);
-    
-    // Set dossier info
-    document.getElementById('partnerName').textContent = partner.name;
+    const initials = dossier.partner !== '\u2013' ? dossier.partner.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : dossier.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    logoDiv.textContent = initials;
+    logoDiv.style.background = '#1A3B70';
+
+    document.getElementById('partnerName').textContent = dossier.partner !== '\u2013' ? dossier.partner : 'AandelenXpress';
     document.getElementById('dossierTitle').textContent = dossier.name;
-    document.getElementById('dossierNumber').textContent = `Dossier nummmer: ${dossierNr}`;
-    
-    // Set status timeline and current status
+    document.getElementById('dossierNumber').textContent = 'Dossier nummer: ' + dossier.id;
+
     renderStatusTimeline(dossier.statusKey);
-    
     document.getElementById('statusBadge').textContent = dossier.statusText;
-    document.getElementById('statusDescription').textContent = statusDescriptions[dossier.statusKey];
-    document.getElementById('statusDetail').textContent = `Laats update: ${new Date(dossier.date).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'})}`;
-    
-    // Set todo list
+    document.getElementById('statusDescription').textContent = statusDescriptions[dossier.statusKey] || '';
+    document.getElementById('statusDetail').textContent = dossier.date ? 'Aangemeld: ' + new Date(dossier.date).toLocaleDateString('nl-NL', {day:'numeric',month:'long',year:'numeric'}) : '';
     renderTodoList(dossier.statusKey);
-    
-    // Set footer contact
-    document.getElementById('partnerContactName').textContent = partner.contact;
-    const emailLink = document.getElementById('partnerContactEmail');
-    emailLink.textContent = partner.email;
-    emailLink.href = `mailto:${partner.email}`;
-    
-    const phoneLink = document.getElementById('partnerContactPhone');
-    phoneLink.textContent = partner.phone;
-    phoneLink.href = `tel:${partner.phone}`;
-    
-    // Setup ticket form and load tickets
-    setupTicketForm();
-    loadTickets(dossierNr);
 }
 
-// Load on page load
-window.addEventListener('DOMContentLoaded', loadDossierStatusWithTickets);
+async function loadWithToken(token) {
+    if (!dossierNr) return;
+    try {
+        const r = await fetch('/api/dossier-status/' + encodeURIComponent(dossierNr) + '?token=' + encodeURIComponent(token));
+        if (!r.ok) {
+            const err = await r.json();
+            document.getElementById('tokenError').textContent = err.error || 'Ongeldig wachtwoord';
+            document.getElementById('tokenError').style.display = 'block';
+            return;
+        }
+        const dossier = await r.json();
+        storeToken(token);
+        document.getElementById('passwordGate').style.display = 'none';
+        showDossier(dossier);
+    } catch(e) {
+        document.getElementById('tokenError').textContent = 'Fout bij laden. Probeer opnieuw.';
+        document.getElementById('tokenError').style.display = 'block';
+    }
+}
+
+function submitPassword() {
+    const val = document.getElementById('tokenInput').value.trim().toUpperCase();
+    if (!val) return;
+    loadWithToken(val);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('passwordGate').style.display !== 'none') submitPassword();
+});
+
+// On page load
+window.addEventListener('DOMContentLoaded', () => {
+    if (!dossierNr) {
+        document.body.innerHTML = '<div style="padding:48px;text-align:center;color:#8A9BB5;">Geen dossiernummer opgegeven in de URL.</div>';
+        return;
+    }
+    // Check for token in URL (auto-login from email link)
+    if (tokenFromUrl) { loadWithToken(tokenFromUrl.toUpperCase()); return; }
+    // Check cached token
+    const cached = getStoredToken();
+    if (cached) { loadWithToken(cached); return; }
+    // Show password gate
+    document.getElementById('passwordGate').style.display = 'block';
+});
 </script>
 
 </body>

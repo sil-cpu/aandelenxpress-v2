@@ -157,23 +157,34 @@ function renderPage(d, role) {
     </div>
 
     <!-- White-label status pagina URL (full width) -->
+    ${role === 'admin' ? `
     <div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">White-label Status Pagina</div></div>
+      <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Statuspagina</div></div>
       <div class="detail-card-body">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Klantlink voor dossier status</div>
-            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/dossier-status.html?nr=${d.dossierNr}</div>
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Klantlink</div>
+            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/dossier-status?nr=${d.dossierNr}</div>
           </div>
-          <button onclick="copyToClipboard('${window.location.origin}/dossier-status.html?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;transition:background 0.2s;" onmouseover="this.style.background='#0F2851'" onmouseout="this.style.background='#1A3B70'">
-            📋 Kopiëren
+          <button onclick="copyToClipboard('${window.location.origin}/dossier-status?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
+            Kopiëren
           </button>
         </div>
-        <div style="font-size:0.8rem;color:#718096;margin-top:12px;line-height:1.4;">
-          ⓘ Stuur deze link naar de klant zodat zij hun dossier kunnen volgen. De pagina toont de huidige status, volgende stappen en een ticket systeem.
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+          <div style="flex:1;">
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Wachtwoord klant</div>
+            <div id="dossierToken" style="font-family:monospace;font-size:1.1rem;font-weight:600;letter-spacing:3px;color:#1A3B70;">${d.accessToken || '—'}</div>
+          </div>
+          <button onclick="resetDossierToken('${d.dossierNr}')" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;">
+            Nieuw wachtwoord
+          </button>
+          <button onclick="copyToClipboard(document.getElementById('dossierToken').textContent)" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;font-weight:500;">
+            Kopiëren
+          </button>
         </div>
+        <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de link + het wachtwoord. Via <em>Nieuw wachtwoord</em> stel je een nieuw wachtwoord in (het oude werkt dan niet meer).</div>
       </div>
-    </div>
+    </div>` : ''}
 
     <!-- Supportverzoeken (full width) -->
     <div class="detail-card">
@@ -365,6 +376,26 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 2500);
 }
 
+async function resetDossierToken(dossierNr) {
+  if (!confirm('Weet u zeker? Het huidige wachtwoord van de klant werkt daarna niet meer.')) return;
+  try {
+    const r = await fetch('/api/reseller-requests/' + encodeURIComponent(dossierNr) + '/token', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    if (!r.ok) throw new Error('API fout');
+    const data = await r.json();
+    const el = document.getElementById('dossierToken');
+    if (el) el.textContent = data.accessToken;
+    const toast = document.createElement('div');
+    toast.textContent = '✓ Nieuw wachtwoord ingesteld: ' + data.accessToken;
+    Object.assign(toast.style, { position:'fixed', bottom:'24px', right:'24px', background:'#0A1E42', color:'white', padding:'12px 20px', borderRadius:'8px', fontWeight:'500', fontSize:'0.9rem', zIndex:'9999' });
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  } catch(e) { alert('Fout bij resetten: ' + e.message); }
+}
+
 async function init() {
   const params = new URLSearchParams(location.search);
   const nr = params.get("nr");
@@ -388,7 +419,7 @@ async function init() {
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
           const statusMap = { 'pending':{ key:'pending', text:'Nieuw' }, 'approved':{ key:'ident', text:'In behandeling' }, 'rejected':{ key:'new', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'new', text: req.status };
-          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '' };
+          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '' };
         }
       } catch(e) { console.error('API fetch failed:', e); }
     } else {
@@ -400,11 +431,17 @@ async function init() {
     }
     document.title = d.name + " – AandelenXpress";
     document.getElementById("topbarTitle").textContent = d.name;
-    renderPage(d, u.type);
-    
-    // Load tickets after page is rendered
-    setTimeout(() => loadTickets(nr), 100);
-  } catch(e) { location.href = "/login"; }
+    try {
+      renderPage(d, u.type);
+      setTimeout(() => loadTickets(nr), 100);
+    } catch(re) {
+      console.error('renderPage error:', re);
+      document.getElementById("pageContent").innerHTML = '<div class="empty-state" style="padding:80px 32px;"><p>Fout bij laden paginainhoud.</p></div>';
+    }
+  } catch(e) {
+    console.error('Auth/load error:', e);
+    location.href = "/login";
+  }
 }
 
 function logout() {

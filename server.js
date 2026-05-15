@@ -68,6 +68,14 @@ const tickets = [
 let requestCounter = 5000;
 const resellerRequests = [];
 
+// Generate a short random access token for client dossier access
+function generateToken() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let t = '';
+  for (let i = 0; i < 8; i++) t += chars[Math.floor(Math.random() * chars.length)];
+  return t;
+}
+
 // Vragenlijst submissions (in-memory; resets on server restart)
 const vragenlijsten = [];
 
@@ -439,11 +447,17 @@ app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
         return res.status(400).json({ error: 'Verplichte velden ontbreken' });
     }
     
+    const isAdminCreate = req.session.user.type === 'admin';
+    const onBehalf = isAdminCreate && req.body.onBehalfOf ? allUsers[req.body.onBehalfOf] : null;
+    const resellerId = onBehalf ? req.body.onBehalfOf : req.session.user.email;
+    const resellerUser = onBehalf || req.session.user;
+
     const request = {
         id: `RR-${++requestCounter}`,
-        resellerId: req.session.user.email,
-        resellerName: req.session.user.name,
-        resellerCompany: req.session.user.company,
+        resellerId,
+        resellerName: resellerUser.name,
+        resellerCompany: resellerUser.company || 'AandelenXpress',
+        accessToken: generateToken(),
         clientName,
         clientEmail,
         clientPhone: clientPhone || '',
@@ -486,6 +500,30 @@ app.get('/api/reseller-requests', requireAdmin, (req, res) => {
     res.json(filtered);
 });
 
+// GET public dossier status (token-protected, no login needed)
+app.get('/api/dossier-status/:id', (req, res) => {
+    const request = resellerRequests.find(r => r.id === req.params.id);
+    if (!request) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    const { token } = req.query;
+    if (!token || request.accessToken !== token) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
+    const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
+    const statusMap = {
+      'pending':  { key:'intake',  text:'Aanvraag ontvangen' },
+      'approved': { key:'ident',   text:'iDIN Verificatie' },
+      'rejected': { key:'new',     text:'Afgewezen' }
+    };
+    const s = statusMap[request.status] || { key:'intake', text:'In behandeling' };
+    res.json({
+      id: request.id,
+      name: request.gewenstNaam || request.clientName,
+      type: typeMap[request.oprichtingType] || request.oprichtingType || '–',
+      partner: request.resellerCompany || '–',
+      statusKey: s.key,
+      statusText: s.text,
+      date: request.createdAt
+    });
+});
+
 // GET single reseller request by id (admin or owning reseller)
 app.get('/api/reseller-requests/:id', requireLogin, (req, res) => {
     const request = resellerRequests.find(r => r.id === req.params.id);
@@ -518,6 +556,15 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (r
     res.json(request);
 });
 
+// PATCH reset/set access token for a dossier (admin only)
+app.patch('/api/reseller-requests/:id/token', requireAdmin, (req, res) => {
+    const request = resellerRequests.find(r => r.id === req.params.id);
+    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+    const customToken = req.body && req.body.token;
+    request.accessToken = customToken || generateToken();
+    res.json({ accessToken: request.accessToken });
+});
+
 // PATCH reject reseller request (admin only)
 app.patch('/api/reseller-requests/:id/reject', requireAdmin, express.json(), (req, res) => {
     const { id } = req.params;
@@ -544,8 +591,8 @@ app.patch('/api/reseller-requests/:id/reject', requireAdmin, express.json(), (re
 app.get('/api/tickets/:id', (req, res) => {
     const { id } = req.params;
     
-    // If it's a dossier number (starts with AX-), return all tickets for that dossier
-    if (id.startsWith('AX-')) {
+    // If it's a dossier number (starts with AX- or RR-), return all tickets for that dossier
+    if (id.startsWith('AX-') || id.startsWith('RR-')) {
         const dossierTickets = tickets.filter(t => t.dossierNr === id);
         return res.json(dossierTickets);
     }
