@@ -159,16 +159,28 @@ function renderPage(d, role) {
     <!-- White-label status pagina URL (full width) -->
     ${role === 'admin' ? `
     <div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Statuspagina</div></div>
+      <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Links &amp; Wachtwoord</div></div>
       <div class="detail-card-body">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Klantlink</div>
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Statuspagina klant</div>
             <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/dossier-status?nr=${d.dossierNr}</div>
           </div>
           <button onclick="copyToClipboard('${window.location.origin}/dossier-status?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
             Kopiëren
           </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Formulier (vragenlijst)</div>
+            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/vragenlijst?nr=${d.dossierNr}</div>
+          </div>
+          <button onclick="copyToClipboard('${window.location.origin}/vragenlijst?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">
+            Kopiëren
+          </button>
+          <a href="${window.location.origin}/vragenlijst?nr=${d.dossierNr}" target="_blank" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;text-decoration:none;">
+            Openen ↗
+          </a>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
           <div style="flex:1;">
@@ -182,7 +194,7 @@ function renderPage(d, role) {
             Kopiëren
           </button>
         </div>
-        <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de link + het wachtwoord. Via <em>Nieuw wachtwoord</em> stel je een nieuw wachtwoord in (het oude werkt dan niet meer).</div>
+        <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de statuspagina + het wachtwoord. Het formulier (vragenlijst) is publiek toegankelijk via de link hierboven.</div>
       </div>
     </div>` : ''}
 
