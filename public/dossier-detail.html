@@ -186,27 +186,6 @@ function renderPage(d, role) {
       </div>
     </div>` : ''}
 
-    <!-- Supportverzoeken (full width) -->
-    <div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">Supportverzoeken</div></div>
-      <div class="detail-card-body">
-        <div style="margin-bottom:20px;">
-          <h4 style="font-size:0.9rem;font-weight:600;color:#0F1D3A;margin-bottom:12px;">Nieuw verzoek indienen</h4>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <input type="text" placeholder="Onderwerp" id="ticketSubject" style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;" />
-            <input type="email" placeholder="E-mailadres" id="ticketEmail" value="${d.clientEmail||''}" style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;" />
-          </div>
-          <textarea placeholder="Bericht..." id="ticketMessage" style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;width:100%;min-height:80px;box-sizing:border-box;margin-bottom:12px;"></textarea>
-          <button onclick="submitTicket('${d.dossierNr}')" style="background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:500;transition:background 0.2s;" onmouseover="this.style.background='#0F2851'" onmouseout="this.style.background='#1A3B70'">
-            Verzoek indienen
-          </button>
-        </div>
-        <div id="ticketsList" style="border-top:1px solid #E8EDF5;padding-top:20px; min-height:60px;">
-          <p style="color:#A0AEC0;font-size:0.9rem;">Geen verzoeken ingediend</p>
-        </div>
-      </div>
-    </div>
-
     <!-- Documenten (full width) -->
     <div class="detail-card">
       <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
@@ -295,20 +274,12 @@ function buildSidebar(role) {
   if (role === "admin") {
     html += '<span class="dash-nav-section">Navigatie</span>';
   }
-  html += items.slice(0, role === "admin" ? 6 : 3).map(it =>
+  html += items.map(it =>
     `<a href="${dashboard}#${it.section}" class="dash-nav-item">
       <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">${it.icon}</svg>
       ${it.label}
     </a>`
   ).join("");
-  
-  if (role === "admin") {
-    html += '<span class="dash-nav-section" style="margin-top:8px;">Systeem</span>';
-    html += `<a href="${dashboard}#instellingen" class="dash-nav-item">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">${adminItems[6].icon}</svg>
-      ${adminItems[6].label}
-    </a>`;
-  }
   
   document.getElementById("sidebarNav").innerHTML = html;
 }
@@ -433,7 +404,6 @@ async function init() {
     document.getElementById("topbarTitle").textContent = d.name;
     try {
       renderPage(d, u.type);
-      setTimeout(() => loadTickets(nr), 100);
     } catch(re) {
       console.error('renderPage error:', re);
       document.getElementById("pageContent").innerHTML = '<div class="empty-state" style="padding:80px 32px;"><p>Fout bij laden paginainhoud.</p></div>';
