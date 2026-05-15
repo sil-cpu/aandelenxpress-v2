@@ -74,14 +74,14 @@ function loadDB() {
             return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
         }
     } catch(e) { console.error('DB load error:', e.message); }
-    return { requestCounter: 5000, resellerRequests: [], vragenlijsten: [], emailTemplates: [] };
+    return { requestCounter: 5000, resellerRequests: [], vragenlijsten: [], emailTemplates: [], blogPosts: [], blogPostCounter: 1000 };
 }
 
 function saveDB() {
     try {
         const dir = path.dirname(DB_PATH);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(DB_PATH, JSON.stringify({ requestCounter, resellerRequests, vragenlijsten, emailTemplates }, null, 2));
+        fs.writeFileSync(DB_PATH, JSON.stringify({ requestCounter, resellerRequests, vragenlijsten, emailTemplates, blogPosts, blogPostCounter }, null, 2));
     } catch(e) { console.error('DB save error:', e.message); }
 }
 
@@ -134,9 +134,9 @@ function generateSmartToken(request) {
 // Vragenlijst submissions (persistent)
 const vragenlijsten = _db.vragenlijsten;
 
-// Blog posts (in-memory; resets on server restart)
-let blogPostCounter = 1000;
-const blogPosts = [];
+// Blog posts (persistent via db.json)
+let blogPostCounter = _db.blogPostCounter || 1000;
+const blogPosts = _db.blogPosts || [];
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
@@ -1001,7 +1001,7 @@ app.get('/api/blog/posts', (req, res) => {
 
 // POST create new blog post (admin only)
 app.post('/api/blog/posts', requireAdmin, (req, res) => {
-    const { title, excerpt, content, categories, featured, published, author } = req.body;
+    const { title, excerpt, content, categories, featured, published, author, image } = req.body;
     
     if (!title || !content) {
         return res.status(400).json({ error: 'Titel en inhoud verplicht' });
@@ -1012,6 +1012,7 @@ app.post('/api/blog/posts', requireAdmin, (req, res) => {
         title,
         excerpt: excerpt || title.substring(0, 100),
         content,
+        image: image || null,
         categories: categories || [],
         featured: featured || false,
         published: published || false,
@@ -1021,6 +1022,7 @@ app.post('/api/blog/posts', requireAdmin, (req, res) => {
     };
     
     blogPosts.push(post);
+    saveDB();
     res.status(201).json(post);
 });
 
@@ -1039,7 +1041,7 @@ app.get('/api/blog/posts/:id', (req, res) => {
 // PATCH update blog post (admin only)
 app.patch('/api/blog/posts/:id', requireAdmin, (req, res) => {
     const { id } = req.params;
-    const { title, excerpt, content, categories, featured, published, author } = req.body;
+    const { title, excerpt, content, categories, featured, published, author, image } = req.body;
     const post = blogPosts.find(p => p.id === id);
     
     if (!post) {
@@ -1049,12 +1051,13 @@ app.patch('/api/blog/posts/:id', requireAdmin, (req, res) => {
     if (title) post.title = title;
     if (excerpt !== undefined) post.excerpt = excerpt;
     if (content) post.content = content;
+    if (image !== undefined) post.image = image || null;
     if (categories) post.categories = categories;
     if (featured !== undefined) post.featured = featured;
     if (published !== undefined) post.published = published;
     if (author) post.author = author;
     post.updatedAt = new Date().toISOString();
-    
+    saveDB();
     res.json(post);
 });
 
@@ -1068,6 +1071,7 @@ app.delete('/api/blog/posts/:id', requireAdmin, (req, res) => {
     }
     
     blogPosts.splice(idx, 1);
+    saveDB();
     res.json({ success: true });
 });
 

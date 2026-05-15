@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="dashboard-shared.css">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <style>
         .blog-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
         .blog-form-grid.full { grid-column: 1/-1; }
@@ -15,6 +16,15 @@
         .blog-form-field label { font-size: 0.75rem; color: #8A9BB5; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
         .blog-form-field input, .blog-form-field textarea, .blog-form-field select { padding: 10px 12px; border: 1px solid #E8EDF5; border-radius: 6px; font-family: inherit; font-size: 0.9rem; }
         .blog-form-field textarea { resize: vertical; min-height: 120px; }
+        /* Quill editor */
+        .ql-toolbar { border-radius: 6px 6px 0 0; border-color: #E8EDF5 !important; background: #f8fafc; }
+        .ql-container { border-radius: 0 0 6px 6px; border-color: #E8EDF5 !important; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+        .ql-editor { min-height: 320px; }
+        /* Image upload */
+        .img-upload-area { border: 2px dashed #E8EDF5; border-radius: 8px; padding: 28px 16px; text-align: center; cursor: pointer; transition: border-color 0.2s; background: #fafbfd; }
+        .img-upload-area:hover { border-color: #1A3B70; }
+        .img-upload-area img { max-width: 100%; max-height: 220px; border-radius: 6px; margin-bottom: 10px; }
+        /* rest */
         .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 8px; }
         .category-check { display: flex; align-items: center; gap: 8px; }
         .category-check input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
@@ -40,7 +50,9 @@
 <div class="dash-wrap">
     <aside class="dash-sidebar">
         <div class="dash-logo">
-            <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+            <a href="/admin-dashboard" style="display:block;">
+                <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+            </a>
         </div>
         <nav class="dash-nav">
             <span class="dash-nav-section">Blog</span>
@@ -121,7 +133,22 @@
                         <div class="blog-form-grid full">
                             <div class="blog-form-field">
                                 <label>Artikelinhoud *</label>
-                                <textarea id="postContent" placeholder="Volledige artikel content (HTML toegestaan)" style="min-height: 300px;" required></textarea>
+                                <div id="quill-editor"></div>
+                            </div>
+                        </div>
+
+                        <div class="blog-form-grid full" style="margin-top:24px;">
+                            <div class="blog-form-field">
+                                <label>Omslagafbeelding</label>
+                                <div class="img-upload-area" id="imageUploadArea" onclick="document.getElementById('postImageFile').click()">
+                                    <img id="imagePreview" style="display:none;">
+                                    <div id="imagePlaceholder">
+                                        <svg width="36" height="36" fill="none" stroke="#8A9BB5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                        <p style="color:#8A9BB5;margin:8px 0 0;font-size:0.85rem;">Klik om een afbeelding te uploaden (JPG, PNG, WebP)</p>
+                                    </div>
+                                </div>
+                                <input type="file" id="postImageFile" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+                                <button type="button" id="clearImageBtn" onclick="clearImage()" style="display:none;margin-top:8px;padding:6px 12px;background:#fed7d7;color:#742a2a;border:none;border-radius:4px;cursor:pointer;font-size:0.8rem;">✕ Afbeelding verwijderen</button>
                             </div>
                         </div>
 
@@ -179,7 +206,74 @@
     </main>
 </div>
 
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script>
+// ── Quill rich text editor ───────────────────────────────────────────────────
+const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    placeholder: 'Schrijf hier de volledige artikel inhoud...',
+    modules: {
+        toolbar: {
+            container: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['blockquote', 'code-block'],
+                ['link', 'image'],
+                [{ color: [] }, { background: [] }],
+                [{ align: [] }],
+                ['clean']
+            ],
+            handlers: {
+                image: function() {
+                    const input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'image/*');
+                    input.click();
+                    input.onchange = () => {
+                        const file = input.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const range = quill.getSelection(true);
+                            quill.insertEmbed(range.index, 'image', e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                }
+            }
+        }
+    }
+});
+
+// ── Cover image upload ───────────────────────────────────────────────────────
+let postImageBase64 = '';
+
+function handleImageUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        postImageBase64 = e.target.result;
+        const preview = document.getElementById('imagePreview');
+        const placeholder = document.getElementById('imagePlaceholder');
+        preview.src = postImageBase64;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        document.getElementById('clearImageBtn').style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImage() {
+    postImageBase64 = '';
+    document.getElementById('postImageFile').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imagePlaceholder').style.display = 'block';
+    document.getElementById('clearImageBtn').style.display = 'none';
+}
+
+// ── Auth + load ──────────────────────────────────────────────────────────────
 async function loadUser() {
     try {
         const r = await fetch('/api/user');
@@ -229,10 +323,24 @@ async function editPost(id) {
         
         document.getElementById('postTitle').value = post.title;
         document.getElementById('postExcerpt').value = post.excerpt;
-        document.getElementById('postContent').value = post.content;
         document.getElementById('postAuthor').value = post.author;
         document.getElementById('postFeatured').checked = post.featured;
         document.getElementById('postPublished').checked = post.published;
+
+        // Quill content
+        quill.clipboard.dangerouslyPasteHTML(post.content || '');
+
+        // Cover image
+        if (post.image) {
+            postImageBase64 = post.image;
+            const preview = document.getElementById('imagePreview');
+            preview.src = post.image;
+            preview.style.display = 'block';
+            document.getElementById('imagePlaceholder').style.display = 'none';
+            document.getElementById('clearImageBtn').style.display = 'inline-block';
+        } else {
+            clearImage();
+        }
         
         document.querySelectorAll('input[name="categories"]').forEach(cb => {
             cb.checked = post.categories.includes(cb.value);
@@ -241,8 +349,8 @@ async function editPost(id) {
         document.getElementById('section-posts').classList.remove('active');
         document.getElementById('section-new').classList.add('active');
         document.getElementById('topbarTitle').textContent = 'Bewerk artikel';
+        document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
         
-        // Mark form as edit mode
         document.getElementById('newPostForm').dataset.editId = id;
     } catch(e) {
         alert('Fout bij laden artikel');
@@ -254,11 +362,7 @@ async function deletePost(id) {
     
     try {
         const r = await fetch(`/api/blog/posts/${id}`, { method: 'DELETE' });
-        if (!r.ok) {
-            alert('Fout bij verwijderen');
-            return;
-        }
-        
+        if (!r.ok) { alert('Fout bij verwijderen'); return; }
         loadPosts();
         showToast('Artikel verwijderd');
     } catch(e) {
@@ -270,12 +374,18 @@ document.getElementById('newPostForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const editId = e.target.dataset.editId;
+    const content = quill.root.innerHTML.trim();
+    if (!content || content === '<p><br></p>') {
+        alert('Vul de artikelinhoud in.');
+        return;
+    }
     const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(cb => cb.value);
     
     const data = {
         title: document.getElementById('postTitle').value,
         excerpt: document.getElementById('postExcerpt').value,
-        content: document.getElementById('postContent').value,
+        content,
+        image: postImageBase64 || null,
         author: document.getElementById('postAuthor').value,
         categories,
         featured: document.getElementById('postFeatured').checked,
@@ -300,12 +410,15 @@ document.getElementById('newPostForm').addEventListener('submit', async (e) => {
         
         // Reset form
         document.getElementById('newPostForm').reset();
+        quill.setContents([]);
+        clearImage();
         delete document.getElementById('newPostForm').dataset.editId;
         
-        // Reset UI
         document.getElementById('section-new').classList.remove('active');
         document.getElementById('section-posts').classList.add('active');
         document.getElementById('topbarTitle').textContent = 'Blog artikelen';
+        document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('[data-section="posts"]').classList.add('active');
         
         loadPosts();
         showToast(editId ? 'Artikel bijgewerkt' : 'Artikel gepubliceerd');
@@ -326,6 +439,8 @@ document.querySelectorAll('.dash-nav-item').forEach(item => {
         if (section === 'new') {
             document.getElementById('topbarTitle').textContent = 'Nieuw artikel';
             document.getElementById('newPostForm').reset();
+            quill.setContents([]);
+            clearImage();
             delete document.getElementById('newPostForm').dataset.editId;
         } else {
             document.getElementById('topbarTitle').textContent = 'Blog artikelen';
