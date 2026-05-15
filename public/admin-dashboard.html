@@ -31,10 +31,6 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         Alle dossiers
       </a>
-      <a href="#" class="dash-nav-item" data-section="support" id="navSupport">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Support
-      </a>
       <a href="#" class="dash-nav-item" data-section="aanmeldingen" id="navAanmeldingen">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         Aanmeldingen
@@ -84,7 +80,7 @@
         <div class="stats-grid mb-28">
           <div class="stat-card blue">
             <div class="stat-card-label">Totale dossiers</div>
-            <div class="stat-card-value">324</div>
+            <div class="stat-card-value" id="statTotalDossiers">–</div>
             <div class="stat-card-sub">Alle partners</div>
           </div>
           <div class="stat-card">
@@ -151,7 +147,7 @@
       <div class="dash-section" id="section-dossiers">
         <div class="section-row mb-20">
           <span class="section-heading">Alle dossiers</span>
-          <span class="text-muted text-sm" id="dossiersTotal">324 dossiers totaal</span>
+          <span class="text-muted text-sm" id="dossiersTotal">Laden...</span>
         </div>
         <div style="margin-bottom:12px;">
           <input type="text" id="dossierSearch" placeholder="Zoek op bedrijfsnaam, partner..." style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;width:100%;box-sizing:border-box;font-family:inherit;" />
@@ -159,13 +155,12 @@
         <div style="margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:center;">
           <div style="display:flex;flex-direction:column;gap:4px;">
             <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Assigned to</label>
-            <select id="dossierFilterAssigned" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
-              <option value="">Alle</option>
-              <option value="Jan Bakker">Jan Bakker</option>
-              <option value="Kees van Berg">Kees van Berg</option>
-              <option value="Els Dijkstra">Els Dijkstra</option>
-              <option value="Wim Smit">Wim Smit</option>
-            </select>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="dossierFilterAssigned" style="flex:1;padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
+                <option value="">Alle</option>
+                <option value="__mine__">Mijn dossiers</option>
+              </select>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;">
             <label style="font-size:0.8rem;color:#8A9BB5;font-weight:600;">Status</label>
@@ -207,24 +202,10 @@
               <span class="sortable-header" onclick="setSortColumn('date')" style="display:flex;align-items:center;gap:4px;">Datum <span class="sort-indicator" id="sort-date"></span></span>
               <span style="font-weight:500;color:#8A9BB5;">KvK</span>
               <span style="font-weight:500;color:#8A9BB5;">Contact</span>
-              <span style="font-weight:500;color:#8A9BB5;">Telefoon</span>
+              <span style="font-weight:500;color:#8A9BB5;">Toegewezen aan</span>
             </div>
             <div id="allDossiers"></div>
           </div>
-        </div>
-      </div>
-
-      <!-- SUPPORT -->
-      <div class="dash-section" id="section-support">
-        <div class="section-row mb-20">
-          <span class="section-heading">Supportverzoeken</span>
-          <span class="badge badge-intake" style="font-size:0.74rem;">3 open</span>
-        </div>
-        <div class="dash-card">
-          <div class="dash-table-head table-cols-tickets">
-            <span>Ticket</span><span>Partner</span><span>Onderwerp</span><span>Prioriteit</span><span>Status</span><span>Datum</span><span></span>
-          </div>
-          <div id="ticketList"></div>
         </div>
       </div>
 
@@ -354,80 +335,6 @@
           <div id="requestRejectionReason" style="display:none;margin-top:16px;padding:12px;background:#fed7d7;border-radius:6px;color:#742a2a;margin-bottom:20px;">
             <div style="font-weight:600;margin-bottom:4px;">Afwijzingsreden:</div>
             <div id="rfRejectionReason">–</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TICKET DRAWER -->
-      <div class="drawer-backdrop" id="ticketDrawerBackdrop" onclick="closeTicketDrawer()"></div>
-      <div class="detail-drawer" id="ticketDrawer">
-        <div class="drawer-header">
-          <div>
-            <h3 id="ticketDrawerTitle" style="margin:0;font-size:1.1rem;">–</h3>
-            <p id="ticketDrawerSub" style="margin:4px 0 0;font-size:0.85rem;color:#718096;">Details</p>
-          </div>
-          <button class="drawer-close" onclick="closeTicketDrawer()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </button>
-        </div>
-        <div class="drawer-body" style="max-height:calc(100vh - 120px);overflow-y:auto;">
-          <div style="display:grid;gap:20px;">
-            <!-- Onderwerp & Status -->
-            <div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-                <div>
-                  <div class="drawer-field-label">Onderwerp</div>
-                  <div class="drawer-field-value" id="tkSubject">–</div>
-                </div>
-                <div>
-                  <div class="drawer-field-label">Status</div>
-                  <select id="tkStatusSelect" style="padding:8px 12px;border:1px solid #D4DDE5;border-radius:6px;font-size:0.9rem;cursor:pointer;background:#F9FAFB;" onchange="updateTicketStatus()">
-                    <option value="Open">Open</option>
-                    <option value="Waiting">Waiting</option>
-                    <option value="Replied">Replied</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Closed">Closed</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <!-- Zender info -->
-            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
-              <div class="drawer-field-label" style="margin-bottom:12px;">Van:</div>
-              <div style="font-size:0.9rem;">
-                <div><strong id="tkSenderName">–</strong></div>
-                <div style="color:#718096;font-size:0.85rem;" id="tkSenderEmail">–</div>
-              </div>
-            </div>
-
-            <!-- Publieke link -->
-            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
-              <div class="drawer-field-label" style="margin-bottom:8px;">Publieke link (voor e-mail):</div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input type="text" id="tkPublicLink" value="" readonly style="flex:1;padding:8px 12px;border:1px solid #D4DDE5;border-radius:4px;font-size:0.85rem;background:#F9FAFB;color:#718096;">
-                <button onclick="copyTicketLink()" style="padding:8px 14px;background:#0A1E42;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;font-size:0.9rem;white-space:nowrap;">Kopieren</button>
-              </div>
-            </div>
-
-            <!-- Origineel bericht -->
-            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
-              <div class="drawer-field-label" style="margin-bottom:8px;">Origineel bericht:</div>
-              <div style="background:#f7fafc;padding:12px;border-radius:4px;font-size:0.9rem;white-space:pre-wrap;" id="tkMessage">–</div>
-            </div>
-
-            <!-- Antwoorden -->
-            <div id="tkRepliesSection" style="border-top:1px solid #E8EDF5;padding-top:16px;display:none;">
-              <div class="drawer-field-label" style="margin-bottom:12px;">Antwoorden:</div>
-              <div id="tkReplies" style="display:flex;flex-direction:column;gap:12px;"></div>
-            </div>
-
-            <!-- Antwoord formulier -->
-            <div style="border-top:1px solid #E8EDF5;padding-top:16px;">
-              <div class="drawer-field-label" style="margin-bottom:12px;">Antwoord toevoegen:</div>
-              <textarea id="tkReplyMessage" placeholder="Typ hier uw antwoord..." style="width:100%;padding:10px;border:1px solid #CBD5E0;border-radius:4px;font-family:inherit;font-size:0.9rem;min-height:100px;resize:vertical;"></textarea>
-              <button onclick="submitTicketReply()" style="margin-top:12px;padding:8px 16px;background:#0A1E42;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;">Antwoord verzenden</button>
-            </div>
           </div>
         </div>
       </div>
@@ -650,16 +557,89 @@
 </div>
 
 <script>
-const allDossiersData = [
-  { name:"TechStart B.V.",       type:"B.V.",          partner:"Bakker Accountants",  statusKey:"notary",   statusText:"Notariële akte",  date:"2026-04-20", dossierNr:"AX-2026-0042", contact:"Jan de Vries",      clientEmail:"info@techstart.nl",       clientPhone:"+31 20 123 4567", kvk:"", assignedTo:"Jan Bakker" },
-  { name:"Consultancy Plus",     type:"B.V.",          partner:"Van der Berg & Co",   statusKey:"ident",    statusText:"iDIN verwerking",      date:"2026-04-18", dossierNr:"AX-2026-0041", contact:"Marie Hendrikx",    clientEmail:"info@consultancyplus.nl",  clientPhone:"+31 30 987 6543", kvk:"", assignedTo:"Kees van Berg" },
-  { name:"Groen & Co",           type:"Holdings B.V.",  partner:"Bakker Accountants",  statusKey:"kvk",      statusText:"KvK inschrijving",     date:"2026-04-15", dossierNr:"AX-2026-0040", contact:"Jan Groen",         clientEmail:"j.groen@groenco.nl",      clientPhone:"+31 10 246 8135", kvk:"87654321", assignedTo:"Jan Bakker" },
-  { name:"Marketing Solutions",  type:"B.V.",          partner:"Dijkstra Partners",   statusKey:"complete", statusText:"Voltooid",             date:"2026-04-12", dossierNr:"AX-2026-0039", contact:"Els de Boeck",      clientEmail:"admin@marketsol.nl",      clientPhone:"+31 70 135 7924", kvk:"76543218", assignedTo:"Els Dijkstra" },
-  { name:"Finance Advisors",     type:"B.V.",          partner:"Van der Berg & Co",   statusKey:"complete", statusText:"Voltooid",             date:"2026-04-10", dossierNr:"AX-2026-0038", contact:"Kees Vermeulen",    clientEmail:"post@financeadv.nl",      clientPhone:"+31 40 321 0987", kvk:"65432187", assignedTo:"Kees van Berg" },
-  { name:"Design Studio B.V.",   type:"Holdings B.V.",  partner:"Smit & Assoc.",       statusKey:"complete", statusText:"Voltooid",             date:"2026-04-05", dossierNr:"AX-2026-0037", contact:"Wim Smit",          clientEmail:"studio@designbv.nl",      clientPhone:"+31 20 456 7890", kvk:"54321876", assignedTo:"Wim Smit" },
-  { name:"HR Services B.V.",     type:"B.V.",          partner:"Bakker Accountants",  statusKey:"intake",   statusText:"Intake",               date:"2026-04-22", dossierNr:"AX-2026-0043", contact:"Femke Jansen",      clientEmail:"hr@hrservices.nl",         clientPhone:"+31 23 654 3210", kvk:"", assignedTo:"Jan Bakker" },
-  { name:"Logistiek Noord",      type:"B.V.",          partner:"Dijkstra Partners",   statusKey:"complete", statusText:"Voltooid",             date:"2026-03-28", dossierNr:"AX-2026-0035", contact:"Pieter van Oss",   clientEmail:"info@logistieknrd.nl",    clientPhone:"+31 50 111 2233", kvk:"43218765", assignedTo:"Els Dijkstra" },
-];
+let allDossiersData = [];
+let currentAdmin = null;
+let allAdmins = [];
+let dossierAssignments = {};
+
+function mapRequestToDossier(req) {
+  const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
+  const statusMap = {
+    'pending':  { key:'pending',  text:'Nieuw' },
+    'approved': { key:'ident',    text:'In behandeling' },
+    'rejected': { key:'new',      text:'Afgewezen' }
+  };
+  const s = statusMap[req.status] || { key:'new', text: req.status };
+  return {
+    name:        req.gewenstNaam || req.clientName,
+    type:        typeMap[req.oprichtingType] || req.oprichtingType || '–',
+    partner:     req.resellerCompany || '–',
+    statusKey:   s.key,
+    statusText:  s.text,
+    date:        req.createdAt,
+    dossierNr:   req.id,
+    contact:     req.resellerName || '–',
+    clientEmail: req.clientEmail || '',
+    clientPhone: req.clientPhone || '',
+    kvk:         '',
+    assignedTo:  dossierAssignments[req.id] || null
+  };
+}
+
+async function loadDossiers() {
+  try {
+    const [reqRes, assignRes] = await Promise.all([
+      fetch('/api/reseller-requests?status=all'),
+      fetch('/api/dossier-assignments')
+    ]);
+    if (reqRes.ok) {
+      if (assignRes.ok) dossierAssignments = await assignRes.json();
+      const requests = await reqRes.json();
+      allDossiersData = requests.map(mapRequestToDossier);
+    }
+  } catch(e) {
+    console.error('Failed to load dossiers:', e);
+  }
+  document.getElementById('dossiersTotal').textContent = allDossiersData.length + ' dossiers';
+  const stat = document.getElementById('statTotalDossiers');
+  if (stat) stat.textContent = allDossiersData.length;
+  renderTable('recentDossiers', allDossiersData.slice(0,5));
+  renderTable('allDossiers', allDossiersData);
+}
+
+async function loadAdmins() {
+  try {
+    const r = await fetch('/api/admin/users?type=admin');
+    if (!r.ok) return;
+    allAdmins = await r.json();
+    const sel = document.getElementById('dossierFilterAssigned');
+    if (!sel) return;
+    // Clear existing dynamic options (keep Alle + Mijn dossiers)
+    while (sel.options.length > 2) sel.remove(2);
+    allAdmins.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.name;
+      opt.textContent = a.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.error('Failed to load admins:', e); }
+}
+
+async function assignDossier(nr, adminName) {
+  try {
+    const r = await fetch('/api/dossier-assignments/' + encodeURIComponent(nr), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminName })
+    });
+    if (r.ok) {
+      dossierAssignments[nr] = adminName || null;
+      const d = allDossiersData.find(x => x.dossierNr === nr);
+      if (d) d.assignedTo = adminName || null;
+      applyAllFilters();
+    }
+  } catch(e) { console.error('assignDossier error:', e); }
+}
 
 const partners = [
   { name:"Bakker Accountants",  city:"Amsterdam",  dossiers:89, color:"#1A3B70", contact:"Jan Bakker",     email:"j.bakker@bakker-acc.nl",   phone:"+31 20 555 0100", since:"2024-01", kvk:"11223344" },
@@ -688,33 +668,13 @@ function copyToClipboard(text) {
   });
 }
 
-// Load ticket badge count
-async function loadTicketBadge() {
-  const res = await fetch('/api/tickets-count');
-  if (!res.ok) return;
-  const data = await res.json();
-  const badge = document.getElementById('navSupport');
-  if (!badge) return;
-  
-  const existingBadge = badge.querySelector('.ticket-badge');
-  if (existingBadge) existingBadge.remove();
-  
-  if (data.count > 0) {
-    const badgeEl = document.createElement('span');
-    badgeEl.className = 'ticket-badge';
-    badgeEl.textContent = data.count;
-    badgeEl.style.cssText = 'display:inline-block;position:absolute;right:12px;background:#e53e3e;color:white;font-size:0.7rem;font-weight:700;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;';
-    badge.style.position = 'relative';
-    badge.appendChild(badgeEl);
-  }
-}
-
-// Reload badges periodically
-setInterval(loadTicketBadge, 5000);
-
 function renderTable(id, rows) {
   const container = document.getElementById(id);
+  if (!container) return;
   container.innerHTML = rows.map((d, idx) => {
+    const adminOptions = allAdmins.map(a =>
+      `<option value="${a.name}" ${d.assignedTo === a.name ? 'selected' : ''}>${a.name}</option>`
+    ).join('');
     return `
     <div class="dash-table-row table-cols-admin dossier-row" data-idx="${idx}">
       <div style="font-weight:500;color:#0F1D3A;">
@@ -726,9 +686,15 @@ function renderTable(id, rows) {
       <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${fmtDate(d.date)}</div>
       <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${d.kvk || '–'}</div>
       <div style="color:#8A9BB5;font-size:0.85rem;">${d.contact || '–'}</div>
-      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${d.clientPhone || '–'}</div>
+      <div onclick="event.stopPropagation()">
+        <select onchange="assignDossier('${d.dossierNr}', this.value)" style="padding:4px 8px;border:1px solid #E8EDF5;border-radius:5px;font-size:0.8rem;color:#0F1D3A;background:white;cursor:pointer;max-width:140px;">
+          <option value="">Niet toegewezen</option>
+          ${adminOptions}
+        </select>
+      </div>
     </div>
-  `}).join("");
+  `;
+  }).join("");
 }
 function renderPartners() {
   document.getElementById("partnerGrid").innerHTML = partners.map(p => {
@@ -785,7 +751,7 @@ document.querySelectorAll(".dash-nav-item").forEach(item => {
 function showSection(s) {
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   document.getElementById("section-" + s).classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", support:"Support", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
@@ -809,7 +775,7 @@ function showSectionSilent(s) {
   
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   section.classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", support:"Support", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
@@ -825,6 +791,7 @@ async function loadUser() {
     const r = await fetch("/api/user");
     if (!r.ok) { window.location.href = "/login"; return; }
     const u = await r.json();
+    currentAdmin = u;
     document.getElementById("userName").textContent = u.name;
     document.getElementById("userEmail").textContent = u.email;
     document.getElementById("userInitials").textContent = u.name.split(" ").map(p => p[0]).join("").slice(0,2).toUpperCase();
@@ -834,63 +801,6 @@ async function loadUser() {
 function logout() {
   if (confirm("Weet u zeker dat u wilt uitloggen?")) window.location.href = "/api/logout";
 }
-
-// ── Ticket data ──────────────────────────────────────────
-const tickets = [
-  { id:"TK-001", partner:"Bakker Accountants", subject:"Toegang iDIN portaal werkt niet", priority:"high",   date:"2026-04-24", status:"Open", email:"contact@bakker.nl", replies:[] },
-  { id:"TK-002", partner:"Van der Berg & Co",  subject:"KvK bevestiging niet ontvangen",  priority:"medium", date:"2026-04-23", status:"Open", email:"info@vandenberg.nl", replies:[] },
-  { id:"TK-003", partner:"Dijkstra Partners",  subject:"Vraag over facturatiemodel",       priority:"low",    date:"2026-04-22", status:"Open", email:"admin@dijkstra.nl", replies:[] },
-  { id:"TK-004", partner:"Smit & Assoc.",      subject:"Logo updaten in portaal",          priority:"low",    date:"2026-04-20", status:"Open", email:"office@smit.nl", replies:[] },
-];
-
-function loadAndRenderTickets() {
-  // Fetch tickets from API (includes all tickets)
-  fetch('/api/admin/tickets')
-    .then(res => res.json())
-    .then(apiTickets => {
-      // Combine test data with API tickets (test data is the base, API adds real tickets)
-      const allTickets = [...tickets];
-      
-      // Add API tickets that aren't in the test data
-      apiTickets.forEach(apiT => {
-        if (!allTickets.find(t => t.id === apiT.id)) {
-          allTickets.push(apiT);
-        }
-      });
-      
-      renderTickets(allTickets);
-    })
-    .catch(err => {
-      console.error('Error loading tickets:', err);
-      // Fallback to test data if API fails
-      renderTickets(tickets);
-    });
-}
-
-function renderTickets(allTickets = tickets) {
-  const pClass = { high:"badge-intake", medium:"badge-ident", low:"badge-new" };
-  const pLabel = { high:"Hoog", medium:"Gemiddeld", low:"Laag" };
-  const sClass = { Open:"badge-status-open", Waiting:"badge-status-waiting", Replied:"badge-status-replied", Resolved:"badge-status-resolved", Closed:"badge-status-closed" };
-  
-  document.getElementById("ticketList").innerHTML = allTickets.map(t => {
-    // For dossier tickets, use dossierNr instead of partner
-    const displayPartner = t.partner || `Dossier ${t.dossierNr}`;
-    // For dossier tickets, use default priority if not set
-    const priority = t.priority || 'medium';
-    
-    return `
-      <div class="dash-table-row table-cols-tickets" style="cursor:pointer;" onclick="openTicketDrawer('${t.id}')">
-        <div style="font-family:monospace;font-size:0.8rem;color:#718096;">${t.id}</div>
-        <div style="font-size:0.87rem;font-weight:500;">${displayPartner}</div>
-        <div style="font-size:0.87rem;">${t.subject}</div>
-        <div><span class="badge ${pClass[priority]}">${pLabel[priority]}</span></div>
-        <div><span class="badge ${sClass[t.status||'Open']}">${t.status||'Open'}</span></div>
-        <div class="text-muted text-sm">${fmtDate(t.date || t.createdAt)}</div>
-        <div><a href="#" class="table-link" onclick="openTicketDrawer('${t.id}');return false;">Bekijken →</a></div>
-      </div>`;
-  }).join("");
-}
-
 
 // ── Admin toast ───────────────────────────────────────────
 function adminSaveToast(msg) {
@@ -1413,7 +1323,9 @@ function applyAllFilters() {
   let filtered = allDossiersData;
   
   // Apply all filters
-  if (assignedFilter) {
+  if (assignedFilter === '__mine__') {
+    filtered = filtered.filter(d => d.assignedTo === (currentAdmin && currentAdmin.name));
+  } else if (assignedFilter) {
     filtered = filtered.filter(d => d.assignedTo === assignedFilter);
   }
   if (statusFilter) {
@@ -1611,199 +1523,6 @@ async function rejectResellerRequest() {
   }
 }
 
-// ─ Ticket Drawer Functions ─────────────────────────────────────────────
-let currentTicketDrawer = null;
-
-async function openTicketDrawer(ticketId) {
-  try {
-    // First try to find ticket in local array
-    let ticket = tickets.find(t => t.id === ticketId);
-    
-    // If not found locally, fetch from API
-    if (!ticket) {
-      const response = await fetch('/api/tickets/' + ticketId);
-      if (!response.ok) {
-        alert('Ticket niet gevonden');
-        return;
-      }
-      ticket = await response.json();
-    }
-    
-    currentTicketDrawer = ticket;
-    
-    document.getElementById('ticketDrawerTitle').textContent = ticket.id + ' - ' + ticket.subject;
-    
-    // Handle both support tickets (date) and dossier tickets (createdAt)
-    const ticketDate = ticket.date || ticket.createdAt;
-    document.getElementById('ticketDrawerSub').textContent = 'Ingediend op ' + fmtDate(ticketDate);
-    
-    document.getElementById('tkSubject').textContent = ticket.subject;
-    document.getElementById('tkStatusSelect').value = ticket.status || 'Open';
-    
-    // For dossier tickets, show dossier and sender info; for support tickets, show partner
-    if (ticket.dossierNr) {
-      document.getElementById('tkSenderName').textContent = ticket.senderName || '–';
-      document.getElementById('tkSenderEmail').textContent = ticket.senderEmail ? '(' + ticket.senderEmail + ')' : '';
-    } else {
-      document.getElementById('tkSenderName').textContent = ticket.partner || '–';
-      document.getElementById('tkSenderEmail').textContent = ticket.email ? '(' + ticket.email + ')' : '';
-    }
-    
-    // Generate public link
-    const publicLink = window.location.origin + '/ticket-detail.html?id=' + ticket.id;
-    document.getElementById('tkPublicLink').value = publicLink;
-    
-    // Show message
-    if (ticket.dossierNr) {
-      document.getElementById('tkMessage').textContent = ticket.message || 'Geen bericht';
-    } else {
-      document.getElementById('tkMessage').textContent = 'Dit is het originele verzoek van ' + (ticket.partner || 'de klant');
-    }
-    
-    // Show replies if any
-    const repliesSection = document.getElementById('tkRepliesSection');
-    if (ticket.replies && ticket.replies.length > 0) {
-      repliesSection.style.display = 'block';
-      const repliesHTML = ticket.replies.map(r => `
-        <div style="background:#f7fafc;padding:12px;border-radius:4px;border-left:3px solid #0A1E42;">
-          <div style="font-weight:600;font-size:0.9rem;">${r.author}</div>
-          <div style="font-size:0.8rem;color:#718096;margin-bottom:6px;">${new Date(r.createdAt).toLocaleString('nl-NL')}</div>
-          <div style="font-size:0.9rem;white-space:pre-wrap;">${r.message}</div>
-        </div>
-      `).join('');
-      document.getElementById('tkReplies').innerHTML = repliesHTML;
-    } else {
-      repliesSection.style.display = 'none';
-    }
-    
-    document.getElementById('tkReplyMessage').value = '';
-    
-    document.getElementById('ticketDrawerBackdrop').classList.add('open');
-    document.getElementById('ticketDrawer').classList.add('open');
-  } catch(e) {
-    console.error('Error opening ticket drawer:', e);
-    alert('Er is een fout opgetreden bij het laden van het ticket');
-  }
-}
-
-function closeTicketDrawer() {
-  document.getElementById('ticketDrawerBackdrop').classList.remove('open');
-  document.getElementById('ticketDrawer').classList.remove('open');
-  currentTicketDrawer = null;
-}
-
-async function submitTicketReply() {
-  if (!currentTicketDrawer) return;
-  
-  const message = document.getElementById('tkReplyMessage').value.trim();
-  if (!message) {
-    alert('Voer een antwoord in');
-    return;
-  }
-  
-  try {
-    const r = await fetch(`/api/tickets/${currentTicketDrawer.id}/reply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ message })
-    });
-    
-    if (!r.ok) {
-      const err = await r.json();
-      alert('Fout: ' + (err.error || 'Antwoord kon niet worden verzonden'));
-      return;
-    }
-    
-    const updated = await r.json();
-    
-    // Update the local tickets array with the updated ticket data
-    const ticketIndex = tickets.findIndex(t => t.id === currentTicketDrawer.id);
-    if (ticketIndex !== -1) {
-      tickets[ticketIndex] = updated;
-    }
-    
-    currentTicketDrawer = updated;
-    
-    // Re-render the drawer with the updated data
-    await openTicketDrawer(currentTicketDrawer.id);
-    
-    // Refresh the ticket table
-    await loadAndRenderTickets();
-    
-    const t = document.createElement('div');
-    t.textContent = '✓ Antwoord verzonden';
-    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  } catch(e) {
-    alert('Fout: ' + e.message);
-  }
-}
-
-async function updateTicketStatus() {
-  if (!currentTicketDrawer) return;
-  
-  const newStatus = document.getElementById('tkStatusSelect').value;
-  if (newStatus === currentTicketDrawer.status) return;
-  
-  try {
-    const r = await fetch(`/api/tickets/${currentTicketDrawer.id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ status: newStatus })
-    });
-    
-    if (!r.ok) {
-      const err = await r.json();
-      alert('Fout: ' + (err.error || 'Status kon niet worden gewijzigd'));
-      document.getElementById('tkStatusSelect').value = currentTicketDrawer.status;
-      return;
-    }
-    
-    const updated = await r.json();
-    
-    // Update the local tickets array
-    const ticketIndex = tickets.findIndex(t => t.id === currentTicketDrawer.id);
-    if (ticketIndex !== -1) {
-      tickets[ticketIndex] = updated;
-    }
-    
-    currentTicketDrawer = updated;
-    
-    // Refresh the ticket table
-    await loadAndRenderTickets();
-    
-    const t = document.createElement('div');
-    t.textContent = '✓ Status bijgewerkt naar ' + newStatus;
-    Object.assign(t.style, {position:'fixed',bottom:'24px',right:'24px',background:'#0A1E42',color:'white',padding:'14px 20px',borderRadius:'8px',fontWeight:'500',fontSize:'0.9rem',zIndex:9999,boxShadow:'0 8px 24px rgba(0,0,0,0.2)'});
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  } catch(e) {
-    alert('Fout: ' + e.message);
-    document.getElementById('tkStatusSelect').value = currentTicketDrawer.status;
-  }
-}
-
-function copyTicketLink() {
-  const link = document.getElementById('tkPublicLink').value;
-  if (!link) return;
-  
-  navigator.clipboard.writeText(link).then(() => {
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Gekopieerd';
-    btn.style.background = '#2E7D32';
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.style.background = '#0A1E42';
-    }, 2000);
-  }).catch(err => {
-    alert('Kon link niet kopiëren');
-  });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize hash-based routing
   const section = window.location.hash.slice(1) || "overzicht";
@@ -1829,10 +1548,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 loadUser();
-renderTable("recentDossiers", allDossiersData.slice(0,5));
-renderTable("allDossiers", allDossiersData);
+loadDossiers();
+loadAdmins();
 renderPartnersTable(partners);
-loadAndRenderTickets();
 loadPendingBadge();
 loadResellerRequests();
 </script>

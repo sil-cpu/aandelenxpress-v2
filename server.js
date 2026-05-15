@@ -410,6 +410,25 @@ app.post('/api/admin/users/delete', requireAdmin, (req, res) => {
     res.json({ success: true });
 });
 
+// ─ Dossier Assignments ───────────────────────────────────────────────────────
+const dossierAssignments = {};
+
+app.get('/api/dossier-assignments', requireAdmin, (req, res) => {
+    res.json(dossierAssignments);
+});
+
+app.patch('/api/dossier-assignments/:nr', requireAdmin, express.json(), (req, res) => {
+    const { nr } = req.params;
+    const { adminName } = req.body;
+    if (adminName === undefined) return res.status(400).json({ error: 'adminName vereist' });
+    if (!adminName) {
+        delete dossierAssignments[nr];
+    } else {
+        dossierAssignments[nr] = adminName;
+    }
+    res.json({ success: true, nr, assignedTo: adminName || null });
+});
+
 // ─ Reseller Request endpoints ────────────────────────────────────────────────
 
 // POST create new reseller request
