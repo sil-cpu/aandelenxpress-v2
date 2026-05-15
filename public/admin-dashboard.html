@@ -106,11 +106,13 @@
               <span class="section-heading">Recente opdrachten</span>
               <a href="#" class="dash-card-action" onclick="showSection('dossiers');return false;">Alles bekijken</a>
             </div>
-            <div class="dash-card">
-              <div class="dash-table-head table-cols-admin">
-                <span>Bedrijfsnaam</span><span>Type</span><span>Partner</span><span>Status</span><span>Datum</span><span>KvK</span><span>Contact</span><span>Toegewezen aan</span>
-              </div>
-              <div id="recentDossiers"></div>
+            <div class="dash-card table-scroll-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Bedrijfsnaam</th><th>Type</th><th>Partner</th><th>Status</th><th>Datum</th><th>KvK</th><th>Contact</th><th>Toegewezen aan</th></tr>
+                </thead>
+                <tbody id="recentDossiers"></tbody>
+              </table>
             </div>
           </div>
 
@@ -126,20 +128,22 @@
         <div style="margin-bottom:12px;">
           <input type="text" id="partnerSearch" placeholder="Zoek op parthernaam, contactperson, stad..." style="padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;width:100%;box-sizing:border-box;font-family:inherit;" />
         </div>
-        <div class="dash-card">
-          <div class="dash-table-wrapper">
-            <div class="dash-table-head table-cols-partners" style="cursor:pointer;user-select:none;">
-              <span class="sortable-header" onclick="setSortColumn('partnerName')" style="display:flex;align-items:center;gap:4px;">Naam <span class="sort-indicator" id="sort-partnerName"></span></span>
-              <span class="sortable-header" onclick="setSortColumn('partnerCity')" style="display:flex;align-items:center;gap:4px;">Stad <span class="sort-indicator" id="sort-partnerCity"></span></span>
-              <span style="font-weight:500;color:#8A9BB5;">Contact</span>
-              <span class="sortable-header" onclick="setSortColumn('partnerDossiers')" style="display:flex;align-items:center;gap:4px;">Dossiers <span class="sort-indicator" id="sort-partnerDossiers"></span></span>
-              <span style="font-weight:500;color:#8A9BB5;">KvK</span>
-              <span style="font-weight:500;color:#8A9BB5;">Email</span>
-              <span style="font-weight:500;color:#8A9BB5;">Telefoon</span>
-              <span style="font-weight:500;color:#8A9BB5;">Sinds</span>
-            </div>
-            <div id="allPartners"></div>
-          </div>
+        <div class="dash-card table-scroll-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th class="sortable" onclick="setSortColumn('partnerName')">Naam <span class="sort-indicator" id="sort-partnerName"></span></th>
+                <th class="sortable" onclick="setSortColumn('partnerCity')">Stad <span class="sort-indicator" id="sort-partnerCity"></span></th>
+                <th>Contact</th>
+                <th class="sortable" onclick="setSortColumn('partnerDossiers')">Dossiers <span class="sort-indicator" id="sort-partnerDossiers"></span></th>
+                <th>KvK</th>
+                <th>Email</th>
+                <th>Telefoon</th>
+                <th>Sinds</th>
+              </tr>
+            </thead>
+            <tbody id="allPartners"></tbody>
+          </table>
         </div>
       </div>
 
@@ -197,20 +201,22 @@
             </select>
           </div>
         </div>
-        <div class="dash-card">
-          <div class="dash-table-wrapper">
-            <div class="dash-table-head table-cols-admin" style="cursor:pointer;user-select:none;">
-              <span class="sortable-header" onclick="setSortColumn('name')" style="display:flex;align-items:center;gap:4px;">Bedrijfsnaam <span class="sort-indicator" id="sort-name"></span></span>
-              <span class="sortable-header" onclick="setSortColumn('type')" style="display:flex;align-items:center;gap:4px;">Type <span class="sort-indicator" id="sort-type"></span></span>
-              <span class="sortable-header" onclick="setSortColumn('partner')" style="display:flex;align-items:center;gap:4px;">Partner <span class="sort-indicator" id="sort-partner"></span></span>
-              <span class="sortable-header" onclick="setSortColumn('status')" style="display:flex;align-items:center;gap:4px;">Status <span class="sort-indicator" id="sort-status"></span></span>
-              <span class="sortable-header" onclick="setSortColumn('date')" style="display:flex;align-items:center;gap:4px;">Datum <span class="sort-indicator" id="sort-date"></span></span>
-              <span style="font-weight:500;color:#8A9BB5;">KvK</span>
-              <span style="font-weight:500;color:#8A9BB5;">Contact</span>
-              <span style="font-weight:500;color:#8A9BB5;">Toegewezen aan</span>
-            </div>
-            <div id="allDossiers"></div>
-          </div>
+        <div class="dash-card table-scroll-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th class="sortable" onclick="setSortColumn('name')">Bedrijfsnaam <span class="sort-indicator" id="sort-name"></span></th>
+                <th class="sortable" onclick="setSortColumn('type')">Type <span class="sort-indicator" id="sort-type"></span></th>
+                <th class="sortable" onclick="setSortColumn('partner')">Partner <span class="sort-indicator" id="sort-partner"></span></th>
+                <th class="sortable" onclick="setSortColumn('status')">Status <span class="sort-indicator" id="sort-status"></span></th>
+                <th class="sortable" onclick="setSortColumn('date')">Datum <span class="sort-indicator" id="sort-date"></span></th>
+                <th>KvK</th>
+                <th>Contact</th>
+                <th>Toegewezen aan</th>
+              </tr>
+            </thead>
+            <tbody id="allDossiers"></tbody>
+          </table>
         </div>
       </div>
 
@@ -271,10 +277,10 @@
           <span id="resellerRequestsCount" class="text-muted text-sm">Laden...</span>
         </div>
         <div class="dash-card">
-          <div class="dash-table-head table-cols-reseller-requests">
-            <span>Bedrijfsnaam</span><span>Partner</span><span>Status</span><span>Datum</span><span></span>
-          </div>
-          <div id="resellerRequestsList"></div>
+          <table class="admin-table">
+            <thead><tr><th>Bedrijfsnaam</th><th>Partner</th><th>Status</th><th>Datum</th><th></th></tr></thead>
+            <tbody id="resellerRequestsList"></tbody>
+          </table>
         </div>
       </div>
 
@@ -722,30 +728,32 @@ function copyToClipboard(text) {
 }
 
 function renderTable(id, rows) {
-  const container = document.getElementById(id);
-  if (!container) return;
-  container.innerHTML = rows.map((d, idx) => {
+  const tbody = document.getElementById(id);
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#8A9BB5;">Geen dossiers gevonden</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((d, idx) => {
     const adminOptions = allAdmins.map(a =>
       `<option value="${a.name}" ${d.assignedTo === a.name ? 'selected' : ''}>${a.name}</option>`
     ).join('');
     return `
-    <div class="dash-table-row table-cols-admin dossier-row" data-idx="${idx}">
-      <div style="font-weight:500;color:#0F1D3A;">
-        <a href="dossier-detail.html?nr=${d.dossierNr}" style="color:#0F1D3A;text-decoration:none;font-weight:500;display:block;">${d.name}</a>
-      </div>
-      <div style="color:#8A9BB5;font-size:0.85rem;">${d.type}</div>
-      <div style="color:#8A9BB5;font-size:0.9rem;">${d.partner}</div>
-      <div><span class="badge badge-${d.statusKey}" style="font-size:0.8rem;">${d.statusText}</span></div>
-      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${fmtDate(d.date)}</div>
-      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${d.kvk || '–'}</div>
-      <div style="color:#8A9BB5;font-size:0.85rem;">${d.contact || '–'}</div>
-      <div onclick="event.stopPropagation()">
-        <select onchange="assignDossier('${d.dossierNr}', this.value)" style="padding:4px 8px;border:1px solid #E8EDF5;border-radius:5px;font-size:0.8rem;color:#0F1D3A;background:white;cursor:pointer;max-width:140px;">
+    <tr class="dossier-row" data-idx="${idx}">
+      <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a></td>
+      <td class="td-muted">${d.type}</td>
+      <td class="td-muted">${d.partner}</td>
+      <td><span class="badge badge-${d.statusKey}">${d.statusText}</span></td>
+      <td class="td-muted" style="white-space:nowrap;">${fmtDate(d.date)}</td>
+      <td class="td-muted">${d.kvk || '–'}</td>
+      <td class="td-muted">${d.contact || '–'}</td>
+      <td onclick="event.stopPropagation()">
+        <select class="assign-select" onchange="assignDossier('${d.dossierNr}', this.value)">
           <option value="">Niet toegewezen</option>
           ${adminOptions}
         </select>
-      </div>
-    </div>
+      </td>
+    </tr>
   `;
   }).join("");
 }
@@ -767,18 +775,23 @@ function renderPartners() {
 }
 
 function renderPartnersTable(data) {
-  const container = document.getElementById('allPartners');
-  container.innerHTML = data.map((p, idx) => `
-    <div class="dash-table-row table-cols-partners" data-idx="${idx}" style="position:relative;grid-template-columns:140px 100px 150px 90px 90px 160px 130px 100px;">
-      <a href="partner-detail.html?name=${encodeURIComponent(p.name)}" style="font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#0F1D3A;text-decoration:none;cursor:pointer;display:block;">${p.name}</a>
-      <div style="color:#8A9BB5;font-size:0.9rem;">${p.city}</div>
-      <div style="color:#8A9BB5;font-size:0.9rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${p.contact || '–'}</div>
-      <div style="color:#8A9BB5;font-size:0.9rem;text-align:center;font-weight:500;">${p.dossiers}</div>
-      <div style="color:#8A9BB5;font-size:0.85rem;font-family:monospace;">${p.kvk}</div>
-      <div style="color:#8A9BB5;font-size:0.85rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"><a href="mailto:${p.email}" style="color:#1A3B70;text-decoration:none;">${p.email}</a></div>
-      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${p.phone}</div>
-      <div style="color:#8A9BB5;font-size:0.85rem;white-space:nowrap;">${p.since}</div>
-    </div>
+  const tbody = document.getElementById('allPartners');
+  if (!tbody) return;
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#8A9BB5;">Geen partners gevonden</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map((p, idx) => `
+    <tr data-idx="${idx}" style="cursor:pointer;" onclick="location.href='partner-detail.html?name='+encodeURIComponent('${p.name}')">
+      <td><a href="partner-detail.html?name=${encodeURIComponent(p.name)}" class="row-link" onclick="event.stopPropagation()">${p.name}</a></td>
+      <td class="td-muted">${p.city}</td>
+      <td class="td-muted">${p.contact || '–'}</td>
+      <td class="td-muted" style="font-weight:500;">${p.dossiers}</td>
+      <td class="td-muted" style="font-family:monospace;">${p.kvk}</td>
+      <td class="td-muted"><a href="mailto:${p.email}" style="color:#1A3B70;text-decoration:none;" onclick="event.stopPropagation()">${p.email}</a></td>
+      <td class="td-muted" style="white-space:nowrap;">${p.phone}</td>
+      <td class="td-muted" style="white-space:nowrap;">${p.since}</td>
+    </tr>
   `).join("");
 }
 
@@ -1424,17 +1437,17 @@ async function loadResellerRequests() {
     };
     
     const html = requests.map(req => `
-      <div class="dash-table-row table-cols-reseller-requests" style="cursor:pointer;" onclick="openRequestDrawer('${req.id}')">
-        <div style="font-weight:500">${escapeHtml(req.clientName)}</div>
-        <div class="text-muted text-sm">${escapeHtml(req.resellerCompany)}</div>
-        <div><span class="badge badge-pending">Aanvraag ingediend</span></div>
-        <div class="text-muted text-sm">${new Date(req.createdAt).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
-        <div><a href="#" class="table-link" onclick="openRequestDrawer('${req.id}');return false;">Details →</a></div>
-      </div>
+      <tr style="cursor:pointer;" onclick="openRequestDrawer('${req.id}')">
+        <td style="font-weight:500;">${escapeHtml(req.clientName)}</td>
+        <td class="td-muted">${escapeHtml(req.resellerCompany)}</td>
+        <td><span class="badge badge-pending">Aanvraag ingediend</span></td>
+        <td class="td-muted">${new Date(req.createdAt).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td>
+        <td><a href="#" class="table-link" onclick="openRequestDrawer('${req.id}');return false;">Details →</a></td>
+      </tr>
     `).join('');
     
     if (requests.length === 0) {
-      document.getElementById('resellerRequestsList').innerHTML = '<div style="padding:32px;text-align:center;color:#8A9BB5;">Geen aanvragen in behandeling</div>';
+      document.getElementById('resellerRequestsList').innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#8A9BB5;">Geen aanvragen in behandeling</td></tr>';
     } else {
       document.getElementById('resellerRequestsList').innerHTML = html;
     }
