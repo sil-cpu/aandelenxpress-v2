@@ -30,7 +30,6 @@
       .btn-trash-download:hover { background:#BEE3F8; }
       .btn-trash-empty { background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030; }
       .btn-trash-empty:hover { background:#FED7D7; }
-      #section-prullenbak { border-top:2px solid #FEB2B2;padding-top:24px; }
       .trash-header-icon { width:18px;height:18px;color:#C53030; }
     </style>
 </head>
@@ -265,10 +264,9 @@
             <tbody id="allDossiers"></tbody>
           </table>
         </div>
-      </div>
 
-      <!-- PRULLENBAK -->
-      <div class="dash-section" id="section-prullenbak">
+      <!-- PRULLENBAK (inside section-dossiers so nav doesn't hide it) -->
+      <div id="section-prullenbak" style="margin-top:32px;border-top:2px solid #FEB2B2;padding-top:24px;">
         <div class="section-row mb-20">
           <div style="display:flex;align-items:center;gap:10px;">
             <svg class="trash-header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -302,6 +300,7 @@
             <tbody id="trashTable"></tbody>
           </table>
         </div>
+      </div>
       </div>
 
       <!-- AANMELDINGEN -->
