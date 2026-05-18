@@ -386,7 +386,8 @@ app.get('/api/reseller-requests', requireAdmin, async (req, res) => {
     const status = req.query.status || 'pending';
     let q = supabase.from('reseller_requests').select('*').order('created_at', { ascending: false });
     if (status !== 'all') q = q.eq('status', status);
-    const { data } = await q;
+    const { data, error } = await q;
+    if (error) return res.status(500).json({ supabase_error: error.message, code: error.code, hint: error.hint });
     res.json((data || []).map(rowToReq));
 });
 
