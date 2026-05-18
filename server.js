@@ -4,91 +4,77 @@ const cookieSession = require('cookie-session');
 const path = require('path');
 const fs = require('fs');
 const emails = require('./emails');
+const { createClient } = require('@supabase/supabase-js');
 
 const PORT = process.env.PORT || 3000;
-
-// Create Express app
 const app = express();
 
-// Approved users (starts with demo accounts, grows as resellers are approved)
-const approvedUsers = {
-    'demo@kantoor.nl': {
-        password: '123456',
-        type: 'reseller',
-        name: 'Demo Kantoor',
-        company: 'Van der Bergh Accountants',
-        companyId: 'vdb-001',
-        status: 'active'
-    },
-    'admin@aandelenxpress.nl': {
-        password: '123456',
-        type: 'admin',
-        name: 'Admin User',
-        company: 'AandelenXpress',
-        companyId: 'aax-admin',
-        status: 'active'
-    }
-};
+// ── Supabase client (service role bypasses RLS) ────────────────────────────
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-// Additional test users
-const testUsers = {
-    'jan@bakker.nl': {
-        password: '123456',
-        type: 'reseller',
-        name: 'Jan Bakker',
-        company: 'Bakker Accountants',
-        companyId: 'bakker-001',
-        status: 'active'
-    },
-    'kees@vanderberg.nl': {
-        password: '123456',
-        type: 'reseller',
-        name: 'Kees van Berg',
-        company: 'Van der Berg & Co',
-        companyId: 'vdb-002',
-        status: 'active'
-    }
-};
-
-// All approved users combined
-const allUsers = { ...approvedUsers, ...testUsers };
-
-// Pending reseller registrations (in-memory; resets on server restart)
-const pendingResellers = [];
-
-// Support tickets (in-memory; resets on server restart)
-let ticketCounter = 1000;
-const tickets = [
-    { id: "TK-001", partner: "Bakker Accountants", subject: "Toegang iDIN portaal werkt niet", priority: "high", date: "2026-04-24", status: "Open", email: "contact@bakker.nl", replies: [] },
-    { id: "TK-002", partner: "Van der Berg & Co", subject: "KvK bevestiging niet ontvangen", priority: "medium", date: "2026-04-23", status: "Open", email: "info@vandenberg.nl", replies: [] },
-    { id: "TK-003", partner: "Dijkstra Partners", subject: "Vraag over facturatiemodel", priority: "low", date: "2026-04-22", status: "Open", email: "admin@dijkstra.nl", replies: [] },
-    { id: "TK-004", partner: "Smit & Assoc.", subject: "Logo updaten in portaal", priority: "low", date: "2026-04-20", status: "Open", email: "office@smit.nl", replies: [] }
-];
-
-// Reseller requests (persistent via data/db.json)
-const DB_PATH = path.join(__dirname, 'data', 'db.json');
-
-function loadDB() {
-    try {
-        if (fs.existsSync(DB_PATH)) {
-            return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-        }
-    } catch(e) { console.error('DB load error:', e.message); }
-    return { requestCounter: 5000, resellerRequests: [], vragenlijsten: [], emailTemplates: [], blogPosts: [], blogPostCounter: 1000 };
+// ── Helper: camelCase ↔ snake_case mapping voor reseller_requests ──────────
+function reqToRow(r) {
+    return {
+        id:                r.id,
+        reseller_id:       r.resellerId,
+        reseller_name:     r.resellerName,
+        reseller_company:  r.resellerCompany,
+        access_token:      r.accessToken,
+        client_name:       r.clientName,
+        client_email:      r.clientEmail,
+        client_phone:      r.clientPhone || '',
+        oprichting_type:   r.oprichtingType,
+        gewenst_naam:      r.gewenstNaam,
+        doel:              r.doel,
+        aandeelhouders:    r.aandeelhouders || 1,
+        kapitaal:          r.kapitaal || 0.01,
+        start_saldo:       r.startSaldo || 0,
+        opmerkingen:       r.opmerkingen || '',
+        status:            r.status,
+        created_at:        r.createdAt,
+        approved_at:       r.approvedAt || null,
+        approved_by:       r.approvedBy || null,
+        rejection_reason:  r.rejectionReason || null,
+        status_updated_at: r.statusUpdatedAt || null,
+        activities:        r.activities || []
+    };
 }
 
-function saveDB() {
-    try {
-        const dir = path.dirname(DB_PATH);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(DB_PATH, JSON.stringify({ requestCounter, resellerRequests, vragenlijsten, emailTemplates, blogPosts, blogPostCounter }, null, 2));
-    } catch(e) { console.error('DB save error:', e.message); }
+function rowToReq(row) {
+    if (!row) return null;
+    return {
+        id:               row.id,
+        resellerId:       row.reseller_id,
+        resellerName:     row.reseller_name,
+        resellerCompany:  row.reseller_company,
+        accessToken:      row.access_token,
+        clientName:       row.client_name,
+        clientEmail:      row.client_email,
+        clientPhone:      row.client_phone,
+        oprichtingType:   row.oprichting_type,
+        gewenstNaam:      row.gewenst_naam,
+        doel:             row.doel,
+        aandeelhouders:   row.aandeelhouders,
+        kapitaal:         row.kapitaal,
+        startSaldo:       row.start_saldo,
+        opmerkingen:      row.opmerkingen,
+        status:           row.status,
+        createdAt:        row.created_at,
+        approvedAt:       row.approved_at,
+        approvedBy:       row.approved_by,
+        rejectionReason:  row.rejection_reason,
+        statusUpdatedAt:  row.status_updated_at,
+        activities:       row.activities || []
+    };
 }
 
-function addActivity(requestObj, type, message, author) {
-    if (!requestObj.activities) requestObj.activities = [];
-    requestObj.activities.push({
-        id: Date.now() + Math.random(), // avoid collision on same ms
+function addActivity(request, type, message, author) {
+    if (!request.activities) request.activities = [];
+    request.activities.push({
+        id: Date.now() + Math.random(),
         type,
         message,
         author: author || null,
@@ -96,55 +82,44 @@ function addActivity(requestObj, type, message, author) {
     });
 }
 
-const _db = loadDB();
-let requestCounter = _db.requestCounter;
-const resellerRequests = _db.resellerRequests;
-const emailTemplates = _db.emailTemplates || [];
-let templateCounter = emailTemplates.length > 0 ? Math.max(...emailTemplates.map(t => parseInt((t.id || 'T-0').split('-')[1]) || 0)) + 1 : 1;
-
-// Generate a short random access token for client dossier access
 function generateToken() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let t = '';
-  for (let i = 0; i < 8; i++) t += chars[Math.floor(Math.random() * chars.length)];
-  return t;
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let t = '';
+    for (let i = 0; i < 8; i++) t += chars[Math.floor(Math.random() * chars.length)];
+    return t;
 }
 
-// Generate an opaque dossier number like AX-K7M3P9
 function generateDossierNr() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const existing = new Set(resellerRequests.map(r => r.id));
-  let id;
-  do {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let part = '';
     for (let i = 0; i < 6; i++) part += chars[Math.floor(Math.random() * chars.length)];
-    id = 'AX-' + part;
-  } while (existing.has(id));
-  return id;
+    return 'AX-' + part;
 }
 
 function generateSmartToken(request) {
-  // Format: voornaam + bvnaam (lowercase, alleen letters/cijfers)
-  const firstName = (request.clientName || '').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-  const bvName = (request.gewenstNaam || '').toLowerCase().replace(/\s+b\.?v\.?$/i, '').replace(/[^a-z0-9]/g, '');
-  const token = (firstName + bvName).slice(0, 20) || generateToken();
-  return token;
+    const firstName = (request.clientName || '').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const bvName = (request.gewenstNaam || '').toLowerCase().replace(/\s+b\.?v\.?$/i, '').replace(/[^a-z0-9]/g, '');
+    return (firstName + bvName).slice(0, 20) || generateToken();
 }
 
-// Vragenlijst submissions (persistent)
-const vragenlijsten = _db.vragenlijsten;
+// ── Auth middleware ────────────────────────────────────────────────────────
+function requireLogin(req, res, next) {
+    if (req.session && req.session.user) return next();
+    res.redirect('/login');
+}
 
-// Blog posts (persistent via db.json)
-let blogPostCounter = _db.blogPostCounter || 1000;
-const blogPosts = _db.blogPosts || [];
+function requireAdmin(req, res, next) {
+    if (req.session && req.session.user && req.session.user.type === 'admin') return next();
+    res.redirect('/login');
+}
 
-// Middleware
+// ── Express middleware ─────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 app.use(cookieSession({
     name: 'aax_session',
     keys: ['aandelenxpress-secret-key-2026'],
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax'
 }));
@@ -158,950 +133,596 @@ app.get('/:page.html', (req, res, next) => {
     return res.redirect(301, `/${page}`);
 });
 
-// Serve static files from the public directory
+// Static files
 const publicPath = path.join(__dirname, 'public');
 console.log('Serving static files from:', publicPath);
-
 app.use(express.static(publicPath, {
-  extensions: ['html'],
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.css')) {
-      res.set('Content-Type', 'text/css; charset=utf-8');
-    } else if (filePath.endsWith('.js')) {
-      res.set('Content-Type', 'application/javascript; charset=utf-8');
-    } else if (filePath.endsWith('.json')) {
-      res.set('Content-Type', 'application/json');
-    } else if (filePath.endsWith('.svg')) {
-      res.set('Content-Type', 'image/svg+xml');
-    } else if (filePath.endsWith('.avif')) {
-      res.set('Content-Type', 'image/avif');
-    } else if (filePath.endsWith('.png')) {
-      res.set('Content-Type', 'image/png');
-    } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
-      res.set('Content-Type', 'image/jpeg');
-    } else if (filePath.endsWith('.gif')) {
-      res.set('Content-Type', 'image/gif');
-    }
-  },
-  index: ['index.html']
+    extensions: ['html'],
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.css'))              res.set('Content-Type', 'text/css; charset=utf-8');
+        else if (filePath.endsWith('.js'))          res.set('Content-Type', 'application/javascript; charset=utf-8');
+        else if (filePath.endsWith('.json'))        res.set('Content-Type', 'application/json');
+        else if (filePath.endsWith('.svg'))         res.set('Content-Type', 'image/svg+xml');
+        else if (filePath.endsWith('.avif'))        res.set('Content-Type', 'image/avif');
+        else if (filePath.endsWith('.png'))         res.set('Content-Type', 'image/png');
+        else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) res.set('Content-Type', 'image/jpeg');
+        else if (filePath.endsWith('.gif'))         res.set('Content-Type', 'image/gif');
+    },
+    index: ['index.html']
 }));
 
-// Diagnostic endpoint (for debugging Vercel environment)
+// ── Static pages ───────────────────────────────────────────────────────────
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+
+// ── Diagnostic ─────────────────────────────────────────────────────────────
 app.get('/_debug/info', (req, res) => {
-    const fs = require('fs');
-    const info = {
+    res.json({
         node_version: process.version,
-        cwd: process.cwd(),
-        dirname: __dirname,
-        public_path: path.join(__dirname, 'public'),
-        public_exists: fs.existsSync(path.join(__dirname, 'public')),
-        env: process.env.NODE_ENV,
-        public_files: []
-    };
-    
-    try {
-        const publicDir = path.join(__dirname, 'public');
-        if (fs.existsSync(publicDir)) {
-            info.public_files = fs.readdirSync(publicDir).slice(0, 10);
-        }
-    } catch (e) {
-        info.error = e.message;
-    }
-    
-    res.json(info);
+        cwd:          process.cwd(),
+        supabase_url: process.env.SUPABASE_URL ? '✓ set' : '✗ not set',
+        supabase_key: process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓ set' : '✗ not set',
+        env:          process.env.NODE_ENV
+    });
 });
 
-// Auth middleware
-function requireLogin(req, res, next) {
-    if (req.session && req.session.user) {
-        next();
-    } else {
-        res.redirect('/login');
-    }
-}
-
-function requireAdmin(req, res, next) {
-    if (req.session && req.session.user && req.session.user.type === 'admin') {
-        next();
-    } else {
-        res.redirect('/login');
-    }
-}
-
-// Route for the homepage
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Login page (serve the form)
-app.get('/login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-// Handle login POST
-app.post('/api/login', (req, res) => {
+// ── Login / Auth ───────────────────────────────────────────────────────────
+app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email en wachtwoord vereist' });
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email en wachtwoord vereist' });
-    }
-
-    const user = allUsers[email];
-
+    const { data: user } = await supabase.from('users').select('*').eq('email', email).single();
     if (!user || user.password !== password) {
-        // Give a more helpful message if the email is in pending review
-        if (pendingResellers.find(r => r.email === email)) {
-            return res.status(401).json({ error: 'Uw aanmelding is ontvangen en wordt beoordeeld. U ontvangt bericht zodra uw account is goedgekeurd.' });
-        }
+        const { data: pending } = await supabase.from('pending_resellers').select('email').eq('email', email).single();
+        if (pending) return res.status(401).json({ error: 'Uw aanmelding is ontvangen en wordt beoordeeld. U ontvangt bericht zodra uw account is goedgekeurd.' });
         return res.status(401).json({ error: 'Ongeldig e-mailadres of wachtwoord' });
     }
+    if (user.status === 'inactive') return res.status(401).json({ error: 'Uw account is gedeactiveerd. Neem contact op met AandelenXpress.' });
 
-    // Set session
-    req.session.user = {
-        email,
-        name: user.name,
-        company: user.company,
-        type: user.type
-    };
-
-    // Redirect based on user type
-    const redirectUrl = user.type === 'admin' ? '/admin-dashboard' : '/reseller-dashboard';
-    res.json({ success: true, redirect: redirectUrl });
+    req.session.user = { email, name: user.name, company: user.company, type: user.type };
+    res.json({ success: true, redirect: user.type === 'admin' ? '/admin-dashboard' : '/reseller-dashboard' });
 });
 
-// Handle logout
 app.get('/api/logout', (req, res) => {
     req.session = null;
     res.redirect('/login');
 });
 
-// Reseller dashboard
-app.get('/reseller-dashboard.html', requireLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'reseller-dashboard.html'));
-});
-
-// Admin dashboard
-app.get('/admin-dashboard.html', requireAdmin, (req, res) => {
-    res.redirect(301, '/admin-dashboard');
-});
-
-// API endpoint to get current user
 app.get('/api/user', (req, res) => {
-    if (req.session && req.session.user) {
-        res.json(req.session.user);
-    } else {
-        res.status(401).json({ error: 'Not logged in' });
-    }
+    if (req.session && req.session.user) return res.json(req.session.user);
+    res.status(401).json({ error: 'Not logged in' });
 });
 
-// ── Registration ──────────────────────────────────────────
-app.post('/api/register', (req, res) => {
+// ── Registration ───────────────────────────────────────────────────────────
+app.post('/api/register', async (req, res) => {
     const { kantoor, kvk, naam, email, telefoon, password, password2 } = req.body;
 
-    if (!kantoor || !kvk || !naam || !email || !telefoon || !password || !password2) {
+    if (!kantoor || !kvk || !naam || !email || !telefoon || !password || !password2)
         return res.status(400).json({ error: 'Alle velden zijn verplicht' });
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         return res.status(400).json({ error: 'Voer een geldig e-mailadres in' });
-    }
-
-    if (password !== password2) {
+    if (password !== password2)
         return res.status(400).json({ error: 'Wachtwoorden komen niet overeen' });
-    }
-
-    if (password.length < 8) {
+    if (password.length < 8)
         return res.status(400).json({ error: 'Wachtwoord moet minimaal 8 tekens bevatten' });
-    }
 
-    if (approvedUsers[email]) {
-        return res.status(409).json({ error: 'Dit e-mailadres is al geregistreerd' });
-    }
+    const { data: existing } = await supabase.from('users').select('email').eq('email', email).single();
+    if (existing) return res.status(409).json({ error: 'Dit e-mailadres is al geregistreerd' });
 
-    if (pendingResellers.find(r => r.email === email)) {
-        return res.status(409).json({ error: 'Er staat al een aanmelding open voor dit e-mailadres' });
-    }
+    const { data: existingPending } = await supabase.from('pending_resellers').select('email').eq('email', email).single();
+    if (existingPending) return res.status(409).json({ error: 'Er staat al een aanmelding open voor dit e-mailadres' });
 
-    pendingResellers.push({
-        kantoor, kvk, naam, email, telefoon, password,
-        aangemeld: new Date().toISOString()
-    });
-
-    // Transactionele emails: admin notificatie + bevestiging aan aanvrager
+    await supabase.from('pending_resellers').insert({ email, kantoor, kvk, naam, telefoon, password, aangemeld: new Date().toISOString() });
     emails.emailAdminNewRegistration({ name: naam, email, company: kantoor, phone: telefoon });
     emails.emailApplicantRegistrationReceived({ name: naam, email });
-
     res.json({ success: true });
 });
 
-// ── Admin: list pending registrations ────────────────────
-app.get('/api/admin/pending', requireAdmin, (req, res) => {
-    // Return everything except the password
-    res.json(pendingResellers.map(({ password, ...rest }) => rest));
+// ── Admin: pending registrations ───────────────────────────────────────────
+app.get('/api/admin/pending', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('pending_resellers').select('email, kantoor, kvk, naam, telefoon, aangemeld').order('aangemeld', { ascending: false });
+    res.json(data || []);
 });
 
-// ── Admin: approve a registration ────────────────────────
-app.post('/api/admin/approve', requireAdmin, (req, res) => {
+app.post('/api/admin/approve', requireAdmin, async (req, res) => {
     const { email } = req.body;
-    const idx = pendingResellers.findIndex(r => r.email === email);
-    if (idx === -1) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
+    const { data: r } = await supabase.from('pending_resellers').select('*').eq('email', email).single();
+    if (!r) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
 
-    const r = pendingResellers[idx];
-    allUsers[r.email] = {
-        password: r.password,
-        type: 'reseller',
-        name: r.naam,
-        company: r.kantoor,
-        companyId: 'reseller-' + Math.random().toString(36).substr(2, 9),
+    await supabase.from('users').insert({
+        email: r.email, password: r.password, type: 'reseller',
+        name: r.naam, company: r.kantoor,
+        company_id: 'reseller-' + Math.random().toString(36).substr(2, 9),
         status: 'active'
-    };
-    pendingResellers.splice(idx, 1);
-
-    // Notificeer de reseller dat zijn account is goedgekeurd
+    });
+    await supabase.from('pending_resellers').delete().eq('email', email);
     emails.emailResellerApproved({ name: r.naam, email: r.email });
-
     res.json({ success: true });
 });
 
-// ── Admin: reject a registration ─────────────────────────
-app.post('/api/admin/reject', requireAdmin, (req, res) => {
+app.post('/api/admin/reject', requireAdmin, async (req, res) => {
     const { email } = req.body;
-    const idx = pendingResellers.findIndex(r => r.email === email);
-    if (idx === -1) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
+    const { data: r } = await supabase.from('pending_resellers').select('*').eq('email', email).single();
+    if (!r) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
 
-    const r = pendingResellers[idx];
-    pendingResellers.splice(idx, 1);
-
-    // Notificeer de reseller dat zijn aanmelding is afgewezen
+    await supabase.from('pending_resellers').delete().eq('email', email);
     emails.emailResellerRejected({ name: r.naam, email: r.email, reason: req.body.reason || null });
-
     res.json({ success: true });
 });
 
-// Serve registration page
-app.get('/register.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'register.html'));
+// ── User Management ────────────────────────────────────────────────────────
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+    const type = req.query.type || 'all';
+    let q = supabase.from('users').select('email, name, company, type, status, company_id');
+    if (type !== 'all') q = q.eq('type', type);
+    const { data } = await q;
+    res.json((data || []).map(u => ({ ...u, companyId: u.company_id })));
 });
 
-// ──────────────────────────────────────────────────────
-// ── USER MANAGEMENT (Admin only) ──────────────────────
-// ──────────────────────────────────────────────────────
-
-// Get all users (with filters)
-app.get('/api/admin/users', requireAdmin, (req, res) => {
-    const type = req.query.type || 'all'; // 'admin', 'reseller', 'all'
-    
-    const list = Object.entries(allUsers).map(([email, u]) => ({
-        email,
-        name: u.name,
-        company: u.company,
-        type: u.type,
-        status: u.status || 'active',
-        companyId: u.companyId || ''
-    })).filter(u => type === 'all' || u.type === type);
-    
-    res.json(list);
-});
-
-// Add new admin user
-app.post('/api/admin/users/add', requireAdmin, (req, res) => {
+app.post('/api/admin/users/add', requireAdmin, async (req, res) => {
     const { email, name, password } = req.body;
-    
-    if (!email || !name || !password) {
-        return res.status(400).json({ error: 'Alle velden verplicht' });
-    }
-    
-    if (allUsers[email]) {
-        return res.status(409).json({ error: 'Email bestaat al' });
-    }
-    
-    allUsers[email] = {
-        password,
-        type: 'admin',
-        name,
+    if (!email || !name || !password) return res.status(400).json({ error: 'Alle velden verplicht' });
+    const { error } = await supabase.from('users').insert({
+        email, name, password, type: 'admin',
         company: 'AandelenXpress',
-        companyId: 'aax-admin-' + Math.random().toString(36).substr(2, 5),
+        company_id: 'aax-admin-' + Math.random().toString(36).substr(2, 5),
         status: 'active'
-    };
-    
+    });
+    if (error) return res.status(409).json({ error: 'Email bestaat al' });
     res.json({ success: true });
 });
 
-// Reset user password
-app.post('/api/admin/users/reset-password', requireAdmin, (req, res) => {
+app.post('/api/admin/users/reset-password', requireAdmin, async (req, res) => {
     const { email, newPassword } = req.body;
-    
-    if (!email || !newPassword) {
-        return res.status(400).json({ error: 'Email en wachtwoord verplicht' });
-    }
-    
-    const user = allUsers[email];
-    if (!user) {
-        return res.status(404).json({ error: 'User niet gevonden' });
-    }
-    
-    user.password = newPassword;
+    if (!email || !newPassword) return res.status(400).json({ error: 'Email en wachtwoord verplicht' });
+    await supabase.from('users').update({ password: newPassword }).eq('email', email);
     res.json({ success: true });
 });
 
-// Toggle user status (active/inactive)
-app.post('/api/admin/users/toggle-status', requireAdmin, (req, res) => {
+app.post('/api/admin/users/toggle-status', requireAdmin, async (req, res) => {
     const { email } = req.body;
-    
-    const user = allUsers[email];
-    if (!user) {
-        return res.status(404).json({ error: 'User niet gevonden' });
-    }
-    
-    user.status = user.status === 'active' ? 'inactive' : 'active';
-    res.json({ success: true, status: user.status });
+    const { data: user } = await supabase.from('users').select('status').eq('email', email).single();
+    if (!user) return res.status(404).json({ error: 'User niet gevonden' });
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    await supabase.from('users').update({ status: newStatus }).eq('email', email);
+    res.json({ success: true, status: newStatus });
 });
 
-// Delete user
-app.post('/api/admin/users/delete', requireAdmin, (req, res) => {
+app.post('/api/admin/users/delete', requireAdmin, async (req, res) => {
     const { email } = req.body;
-    
-    if (email === 'admin@aandelenxpress.nl') {
-        return res.status(403).json({ error: 'Kan hoofdadmin niet verwijderen' });
-    }
-    
-    if (!allUsers[email]) {
-        return res.status(404).json({ error: 'User niet gevonden' });
-    }
-    
-    delete allUsers[email];
+    if (email === 'admin@aandelenxpress.nl') return res.status(403).json({ error: 'Kan hoofdadmin niet verwijderen' });
+    await supabase.from('users').delete().eq('email', email);
     res.json({ success: true });
 });
 
-// ─ Dossier Assignments ───────────────────────────────────────────────────────
-const dossierAssignments = {};
-
-app.get('/api/dossier-assignments', requireAdmin, (req, res) => {
-    res.json(dossierAssignments);
+app.get('/api/admin/admins', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('users').select('email, name').eq('type', 'admin');
+    res.json(data || []);
 });
 
-app.patch('/api/dossier-assignments/:nr', requireAdmin, express.json(), (req, res) => {
+// ── Dossier Assignments ────────────────────────────────────────────────────
+app.get('/api/dossier-assignments', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('dossier_assignments').select('*');
+    const map = {};
+    (data || []).forEach(a => { map[a.dossier_nr] = a.admin_name; });
+    res.json(map);
+});
+
+app.patch('/api/dossier-assignments/:nr', requireAdmin, async (req, res) => {
     const { nr } = req.params;
     const { adminName } = req.body;
     if (adminName === undefined) return res.status(400).json({ error: 'adminName vereist' });
+
     if (!adminName) {
-        delete dossierAssignments[nr];
+        await supabase.from('dossier_assignments').delete().eq('dossier_nr', nr);
     } else {
-        dossierAssignments[nr] = adminName;
+        await supabase.from('dossier_assignments').upsert({ dossier_nr: nr, admin_name: adminName });
     }
-    const request = resellerRequests.find(r => r.id === nr);
-    if (request) {
+
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', nr).single();
+    if (row) {
+        const request = rowToReq(row);
         const actor = req.session.user.name || req.session.user.email;
         const msg = adminName ? `Dossier toegewezen aan ${adminName} door ${actor}` : `Toewijzing verwijderd door ${actor}`;
         addActivity(request, 'system', msg, null);
-        saveDB();
+        await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', nr);
     }
     res.json({ success: true, nr, assignedTo: adminName || null });
 });
 
-// ─ Reseller Request endpoints ────────────────────────────────────────────────
-
-// POST create new reseller request
-app.post('/api/reseller-requests', requireLogin, express.json(), (req, res) => {
+// ── Reseller Requests ──────────────────────────────────────────────────────
+app.post('/api/reseller-requests', requireLogin, async (req, res) => {
     const { clientName, clientEmail, clientPhone, oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen } = req.body;
-    
-    if (!clientName || !clientEmail || !oprichtingType || !gewenstNaam || !doel) {
+
+    if (!clientName || !clientEmail || !oprichtingType || !gewenstNaam || !doel)
         return res.status(400).json({ error: 'Verplichte velden ontbreken' });
+
+    let resellerUser = req.session.user;
+    let resellerId   = req.session.user.email;
+
+    if (req.session.user.type === 'admin' && req.body.onBehalfOf) {
+        const { data: onBehalf } = await supabase.from('users').select('*').eq('email', req.body.onBehalfOf).single();
+        if (onBehalf) { resellerUser = onBehalf; resellerId = req.body.onBehalfOf; }
     }
-    
-    const isAdminCreate = req.session.user.type === 'admin';
-    const onBehalf = isAdminCreate && req.body.onBehalfOf ? allUsers[req.body.onBehalfOf] : null;
-    const resellerId = onBehalf ? req.body.onBehalfOf : req.session.user.email;
-    const resellerUser = onBehalf || req.session.user;
 
     const request = {
-        id: generateDossierNr(),
+        id:              generateDossierNr(),
         resellerId,
-        resellerName: resellerUser.name,
+        resellerName:    resellerUser.name,
         resellerCompany: resellerUser.company || 'AandelenXpress',
-        accessToken: null, // set after object creation
-        clientName,
-        clientEmail,
-        clientPhone: clientPhone || '',
-        oprichtingType,
-        gewenstNaam,
-        doel,
-        aandeelhouders: aandeelhouders || 1,
-        kapitaal: kapitaal || 0.01,
-        startSaldo: startSaldo || 0,
-        opmerkingen: opmerkingen || '',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        approvedAt: null,
-        approvedBy: null,
-        rejectionReason: null
+        accessToken:     null,
+        clientName, clientEmail,
+        clientPhone:     clientPhone || '',
+        oprichtingType, gewenstNaam, doel,
+        aandeelhouders:  aandeelhouders || 1,
+        kapitaal:        kapitaal || 0.01,
+        startSaldo:      startSaldo || 0,
+        opmerkingen:     opmerkingen || '',
+        status:          'pending',
+        createdAt:       new Date().toISOString(),
+        approvedAt: null, approvedBy: null, rejectionReason: null,
+        activities: []
     };
     request.accessToken = generateSmartToken(request);
     addActivity(request, 'system', `Dossier aangemaakt door ${resellerUser.name || resellerId}`, null);
-    
-    resellerRequests.push(request);
-    saveDB();
 
-    // Notificeer admin van nieuwe opdracht
-    // ⚠️  Klant ontvangt GEEN email bij aanmaken — alleen na goedkeuring (zie approve endpoint)
+    const { error } = await supabase.from('reseller_requests').insert(reqToRow(request));
+    if (error) return res.status(500).json({ error: error.message });
+
     emails.emailAdminNewRequest({ request });
-
     res.status(201).json(request);
 });
 
-// GET my reseller requests (reseller view)
-app.get('/api/my-requests', requireLogin, (req, res) => {
-    const userRequests = resellerRequests.filter(r => r.resellerId === req.session.user.email);
-    res.json(userRequests);
+app.get('/api/my-requests', requireLogin, async (req, res) => {
+    const { data } = await supabase
+        .from('reseller_requests').select('*')
+        .eq('reseller_id', req.session.user.email)
+        .order('created_at', { ascending: false });
+    res.json((data || []).map(rowToReq));
 });
 
-// GET all pending reseller requests (admin only)
-app.get('/api/reseller-requests', requireAdmin, (req, res) => {
-    const status = req.query.status || 'pending'; // 'pending', 'approved', 'rejected', 'all'
-    const filtered = status === 'all' 
-        ? resellerRequests 
-        : resellerRequests.filter(r => r.status === status);
-    
-    res.json(filtered);
+app.get('/api/reseller-requests', requireAdmin, async (req, res) => {
+    const status = req.query.status || 'pending';
+    let q = supabase.from('reseller_requests').select('*').order('created_at', { ascending: false });
+    if (status !== 'all') q = q.eq('status', status);
+    const { data } = await q;
+    res.json((data || []).map(rowToReq));
 });
 
-// GET public dossier status (token-protected, no login needed)
-app.get('/api/dossier-status/:id', (req, res) => {
-    const request = resellerRequests.find(r => r.id === req.params.id);
-    if (!request) return res.status(404).json({ error: 'Dossier niet gevonden' });
+// Public dossier status (token-protected)
+app.get('/api/dossier-status/:id', async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
     const { token } = req.query;
-    if (!token || request.accessToken !== token) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
-    const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
+    if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
+    const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak naar B.V.', 'advies':'Advies' };
     const statusMap = {
-      'pending':     { key:'pending',     text:'Aanvraag ingediend' },
-      'approved':    { key:'vragenlijst', text:'Vragenlijst' },
-      'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
-      'betaling':    { key:'betaling',    text:'Betaling' },
-      'notary':      { key:'notary',      text:'Notariële Akte' },
-      'kvk':         { key:'kvk',         text:'KvK inschrijving' },
-      'complete':    { key:'complete',    text:'Voltooid' },
-      'rejected':    { key:'rejected',    text:'Afgewezen' },
+        'pending':     { key:'pending',     text:'Aanvraag ingediend' },
+        'approved':    { key:'vragenlijst', text:'Vragenlijst' },
+        'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
+        'betaling':    { key:'betaling',    text:'Betaling' },
+        'notary':      { key:'notary',      text:'Notariele Akte' },
+        'kvk':         { key:'kvk',         text:'KvK inschrijving' },
+        'complete':    { key:'complete',    text:'Voltooid' },
+        'rejected':    { key:'rejected',    text:'Afgewezen' },
     };
-    const s = statusMap[request.status] || { key:'pending', text:'In behandeling' };
-    res.json({
-      id: request.id,
-      name: request.gewenstNaam || request.clientName,
-      type: typeMap[request.oprichtingType] || request.oprichtingType || '–',
-      partner: request.resellerCompany || '–',
-      statusKey: s.key,
-      statusText: s.text,
-      date: request.createdAt
-    });
+    const s = statusMap[row.status] || { key: 'pending', text: 'In behandeling' };
+    res.json({ id: row.id, name: row.gewenst_naam || row.client_name, type: typeMap[row.oprichting_type] || row.oprichting_type || '-', partner: row.reseller_company || '-', statusKey: s.key, statusText: s.text, date: row.created_at });
 });
 
-// GET single reseller request by id (admin or owning reseller)
-
-// POST resend access token to client email (public, no auth required)
-app.post('/api/dossier-status/:id/resend-token', express.json(), async (req, res) => {
-    const request = resellerRequests.find(r => r.id === req.params.id);
-    if (!request) return res.status(404).json({ error: 'Dossier niet gevonden' });
-    if (!request.clientEmail) return res.status(400).json({ error: 'Geen e-mailadres bekend bij dit dossier' });
-    if (!request.accessToken) return res.status(400).json({ error: 'Geen toegangscode beschikbaar' });
+app.post('/api/dossier-status/:id/resend-token', async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (!row.client_email) return res.status(400).json({ error: 'Geen e-mailadres bekend bij dit dossier' });
+    if (!row.access_token) return res.status(400).json({ error: 'Geen toegangscode beschikbaar' });
     try {
-        await emails.emailClientResendToken({ request });
-        // Mask the email in the response for privacy
-        const parts = request.clientEmail.split('@');
-        const masked = parts[0].slice(0,2) + '***@' + parts[1];
-        res.json({ success: true, maskedEmail: masked });
-    } catch(e) {
-        res.status(500).json({ error: 'Fout bij verzenden: ' + e.message });
-    }
+        await emails.emailClientResendToken({ request: rowToReq(row) });
+        const parts = row.client_email.split('@');
+        res.json({ success: true, maskedEmail: parts[0].slice(0,2) + '***@' + parts[1] });
+    } catch(e) { res.status(500).json({ error: 'Fout bij verzenden: ' + e.message }); }
 });
 
-app.get('/api/reseller-requests/:id', requireLogin, (req, res) => {
-    const request = resellerRequests.find(r => r.id === req.params.id);
-    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
-    const user = req.session.user;
-    if (user.type !== 'admin' && request.resellerId !== user.email) {
+app.get('/api/reseller-requests/:id', requireLogin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Niet gevonden' });
+    if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
         return res.status(403).json({ error: 'Geen toegang' });
-    }
-    res.json(request);
+    res.json(rowToReq(row));
 });
 
-// PATCH approve reseller request (admin only)
-app.patch('/api/reseller-requests/:id/approve', requireAdmin, express.json(), (req, res) => {
-    const { id } = req.params;
-    const request = resellerRequests.find(r => r.id === id);
-    
-    if (!request) {
-        return res.status(404).json({ error: 'Aanvraag niet gevonden' });
-    }
-    
-    // Move to vragenlijst status
-    request.status = 'vragenlijst';
+app.patch('/api/reseller-requests/:id/approve', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Aanvraag niet gevonden' });
+
+    const request = rowToReq(row);
+    request.status     = 'vragenlijst';
     request.approvedAt = new Date().toISOString();
     request.approvedBy = req.session.user.email;
     const approver = req.session.user.name || req.session.user.email;
     addActivity(request, 'system', `Dossier goedgekeurd door ${approver}. Vragenlijst email verstuurd naar ${request.clientEmail}.`, approver);
-    saveDB();
-    // Notificeer reseller + stuur klant email met link naar vragenlijst
+
+    await supabase.from('reseller_requests').update({
+        status: request.status, approved_at: request.approvedAt,
+        approved_by: request.approvedBy, activities: request.activities
+    }).eq('id', req.params.id);
+
     emails.emailResellerRequestApproved({ request });
     emails.emailClientCaseApproved({ request });
-
     res.json(request);
 });
 
-// PATCH reset/set access token for a dossier (admin only)
-app.patch('/api/reseller-requests/:id/token', requireAdmin, express.json(), (req, res) => {
-    const request = resellerRequests.find(r => r.id === req.params.id);
-    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
-    const customToken = req.body && req.body.token;
-    request.accessToken = customToken || generateSmartToken(request);
-    saveDB();
-    res.json({ accessToken: request.accessToken });
+app.patch('/api/reseller-requests/:id/token', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Niet gevonden' });
+    const newToken = (req.body && req.body.token) || generateSmartToken(rowToReq(row));
+    await supabase.from('reseller_requests').update({ access_token: newToken }).eq('id', req.params.id);
+    res.json({ accessToken: newToken });
 });
 
-// PATCH update dossier status (admin only)
-app.patch('/api/reseller-requests/:id/status', requireAdmin, express.json(), (req, res) => {
+app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     const valid = ['pending', 'vragenlijst', 'betaling', 'notary', 'kvk', 'complete', 'rejected', 'approved'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
-    const request = resellerRequests.find(r => r.id === id);
-    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
-    const oldStatus = request.status;
-    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', betaling:'Betaling', notary:'Notariële Akte', kvk:'KvK inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
-    request.status = status;
-    request.statusUpdatedAt = new Date().toISOString();
+
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', id).single();
+    if (!row) return res.status(404).json({ error: 'Niet gevonden' });
+
+    const request = rowToReq(row);
+    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', betaling:'Betaling', notary:'Notariele Akte', kvk:'KvK inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
     const adminName = req.session.user.name || req.session.user.email;
-    addActivity(request, 'system', `Status gewijzigd van "${statusLabels[oldStatus]||oldStatus}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
-    saveDB();
+    addActivity(request, 'system', `Status gewijzigd van "${statusLabels[request.status]||request.status}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
+
+    await supabase.from('reseller_requests').update({
+        status, status_updated_at: new Date().toISOString(), activities: request.activities
+    }).eq('id', id);
+
     res.json({ success: true, status });
 });
 
-// GET activity log for a dossier
-app.get('/api/reseller-requests/:id/activities', requireLogin, (req, res) => {
-    const { id } = req.params;
-    const request = resellerRequests.find(r => r.id === id);
-    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
-    if (req.session.user.type !== 'admin' && request.resellerId !== req.session.user.email) {
-        return res.status(403).json({ error: 'Geen toegang' });
-    }
-    res.json(request.activities || []);
+app.patch('/api/reseller-requests/:id/reject', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Aanvraag niet gevonden' });
+
+    await supabase.from('reseller_requests').update({
+        status: 'rejected', rejection_reason: req.body.reason || 'Aanvraag afgewezen'
+    }).eq('id', req.params.id);
+
+    const request = rowToReq(row);
+    request.status = 'rejected';
+    request.rejectionReason = req.body.reason || 'Aanvraag afgewezen';
+    emails.emailResellerRequestRejected({ request });
+    res.json(request);
 });
 
-// POST add admin comment to a dossier
-app.post('/api/reseller-requests/:id/activities', requireAdmin, express.json(), (req, res) => {
-    const { id } = req.params;
+app.get('/api/reseller-requests/:id/activities', requireLogin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('id, reseller_id, activities').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Niet gevonden' });
+    if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
+        return res.status(403).json({ error: 'Geen toegang' });
+    res.json(row.activities || []);
+});
+
+app.post('/api/reseller-requests/:id/activities', requireAdmin, async (req, res) => {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'Bericht is verplicht' });
-    const request = resellerRequests.find(r => r.id === id);
-    if (!request) return res.status(404).json({ error: 'Niet gevonden' });
+
+    const { data: row } = await supabase.from('reseller_requests').select('activities').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Niet gevonden' });
+
     const adminName = req.session.user.name || req.session.user.email;
-    const entry = {
-        id: Date.now() + Math.random(),
-        type: 'comment',
-        message: message.trim(),
-        author: adminName,
-        timestamp: new Date().toISOString()
-    };
-    if (!request.activities) request.activities = [];
-    request.activities.push(entry);
-    saveDB();
+    const entry = { id: Date.now() + Math.random(), type: 'comment', message: message.trim(), author: adminName, timestamp: new Date().toISOString() };
+    await supabase.from('reseller_requests').update({ activities: [...(row.activities || []), entry] }).eq('id', req.params.id);
     res.json(entry);
 });
 
-// GET admin users list (admin only)
-app.get('/api/admin/admins', requireAdmin, (req, res) => {
-    const admins = Object.entries(allUsers)
-        .filter(([, u]) => u.type === 'admin')
-        .map(([email, u]) => ({ email, name: u.name }));
-    res.json(admins);
-});
-
-// POST send custom email (admin only)
-app.post('/api/email-send', requireAdmin, express.json(), async (req, res) => {
+// ── Email templates ────────────────────────────────────────────────────────
+app.post('/api/email-send', requireAdmin, async (req, res) => {
     const { to, subject, body, bodyHtml, attachment } = req.body;
     if (!to || !subject || (!body && !bodyHtml)) return res.status(400).json({ error: 'to, subject en body zijn verplicht' });
     try {
         await emails.emailCustom({ to, subject, body, bodyHtml, attachment });
         res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ error: 'Fout bij verzenden: ' + e.message });
-    }
+    } catch(e) { res.status(500).json({ error: 'Fout bij verzenden: ' + e.message }); }
 });
 
-// GET email templates (admin only)
-app.get('/api/email-templates', requireAdmin, (req, res) => {
-    res.json(emailTemplates);
+app.get('/api/email-templates', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('email_templates').select('*').order('created_at', { ascending: true });
+    res.json((data || []).map(t => ({ ...t, createdAt: t.created_at })));
 });
 
-// POST save email template (admin only)
-app.post('/api/email-templates', requireAdmin, express.json(), (req, res) => {
+app.post('/api/email-templates', requireAdmin, async (req, res) => {
     const { name, subject, body } = req.body;
     if (!name || !subject || !body) return res.status(400).json({ error: 'name, subject en body zijn verplicht' });
-    const template = { id: `T-${templateCounter++}`, name, subject, body, createdAt: new Date().toISOString() };
-    emailTemplates.push(template);
-    saveDB();
-    res.json(template);
+    const { data: idData } = await supabase.rpc('next_template_id');
+    const template = { id: idData, name, subject, body, created_at: new Date().toISOString() };
+    await supabase.from('email_templates').insert(template);
+    res.json({ ...template, createdAt: template.created_at });
 });
 
-// DELETE email template (admin only)
-app.delete('/api/email-templates/:id', requireAdmin, (req, res) => {
-    const idx = emailTemplates.findIndex(t => t.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Template niet gevonden' });
-    emailTemplates.splice(idx, 1);
-    saveDB();
+app.delete('/api/email-templates/:id', requireAdmin, async (req, res) => {
+    await supabase.from('email_templates').delete().eq('id', req.params.id);
     res.json({ success: true });
 });
 
-// PATCH reject reseller request (admin only)
-app.patch('/api/reseller-requests/:id/reject', requireAdmin, express.json(), (req, res) => {
+// ── Tickets ────────────────────────────────────────────────────────────────
+app.get('/api/tickets/:id', async (req, res) => {
     const { id } = req.params;
-    const { reason } = req.body;
-    const request = resellerRequests.find(r => r.id === id);
-    
-    if (!request) {
-        return res.status(404).json({ error: 'Aanvraag niet gevonden' });
-    }
-    
-    // Mark as rejected
-    request.status = 'rejected';
-    request.rejectionReason = reason || 'Aanvraag afgewezen';
-    saveDB();
-
-    // Notificeer reseller dat opdracht is afgewezen
-    emails.emailResellerRequestRejected({ request });
-
-    res.json(request);
-});
-
-// ─ Ticket endpoints ────────────────────────────────────────────────────────
-
-// GET ticket (can be dossier tickets or single ticket)
-app.get('/api/tickets/:id', (req, res) => {
-    const { id } = req.params;
-    
-    // If it's a dossier number (starts with AX- or RR-), return all tickets for that dossier
     if (id.startsWith('AX-') || id.startsWith('RR-')) {
-        const dossierTickets = tickets.filter(t => t.dossierNr === id);
-        return res.json(dossierTickets);
+        const { data } = await supabase.from('tickets').select('*').eq('dossier_nr', id);
+        return res.json(data || []);
     }
-    
-    // Otherwise, treat it as a ticket ID (TK-xxx)
-    const ticket = tickets.find(t => t.id === id);
-    if (!ticket) {
-        return res.status(404).json({ error: 'Ticket niet gevonden' });
-    }
+    const { data: ticket } = await supabase.from('tickets').select('*').eq('id', id).single();
+    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
     res.json(ticket);
 });
 
-// GET count of new/unread tickets (updates since last check)
-app.get('/api/tickets-count', (req, res) => {
-    const newCount = tickets.filter(t => !t.read).length;
-    res.json({ count: newCount });
+app.get('/api/tickets-count', async (req, res) => {
+    const { count } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('read', false);
+    res.json({ count: count || 0 });
 });
 
-// POST create new ticket
-app.post('/api/tickets', express.json(), (req, res) => {
+app.post('/api/tickets', async (req, res) => {
     const { dossierNr, subject, message, senderName, senderEmail } = req.body;
-    
-    if (!dossierNr || !subject || !message) {
-        return res.status(400).json({ error: 'Dossier, onderwerp en bericht vereist' });
-    }
-    
-    const ticket = {
-        id: `TK-${++ticketCounter}`,
-        dossierNr,
-        subject,
-        message,
-        senderName,
-        senderEmail,
-        status: 'open',
-        read: false,
-        createdAt: new Date().toISOString()
-    };
-    
-    tickets.push(ticket);
+    if (!dossierNr || !subject || !message) return res.status(400).json({ error: 'Dossier, onderwerp en bericht vereist' });
 
-    // Notificeer admin + stuur bevestiging aan indiener
-    emails.emailAdminNewTicket({ ticket });
-    emails.emailTicketSenderConfirmation({ ticket });
+    const { data: idData } = await supabase.rpc('next_ticket_id');
+    const now = new Date().toISOString();
+    const ticketRow = { id: idData, dossier_nr: dossierNr, subject, message, sender_name: senderName, sender_email: senderEmail, status: 'open', read: false, created_at: now, replies: [] };
+    await supabase.from('tickets').insert(ticketRow);
 
-    res.status(201).json(ticket);
+    const ticketEmail = { id: ticketRow.id, dossierNr, subject, message, senderName, senderEmail, status: 'open', read: false, createdAt: now, replies: [] };
+    emails.emailAdminNewTicket({ ticket: ticketEmail });
+    emails.emailTicketSenderConfirmation({ ticket: ticketEmail });
+    res.status(201).json(ticketEmail);
 });
 
-// PATCH mark ticket as read
-app.patch('/api/tickets/:ticketId', express.json(), (req, res) => {
-    const { ticketId } = req.params;
-    const ticket = tickets.find(t => t.id === ticketId);
-    
-    if (!ticket) {
-        return res.status(404).json({ error: 'Ticket niet gevonden' });
-    }
-    
-    ticket.read = true;
+app.patch('/api/tickets/:ticketId', async (req, res) => {
+    const { data: ticket } = await supabase.from('tickets').update({ read: true }).eq('id', req.params.ticketId).select().single();
+    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
     res.json(ticket);
 });
 
-// GET all tickets (admin only)
-app.get('/api/admin/tickets', requireAdmin, (req, res) => {
-    res.json(tickets);
+app.get('/api/admin/tickets', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
+    res.json(data || []);
 });
 
-// POST reply to ticket (admin only)
-app.post('/api/tickets/:ticketId/reply', requireAdmin, express.json(), (req, res) => {
-    const { ticketId } = req.params;
+app.post('/api/tickets/:ticketId/reply', requireAdmin, async (req, res) => {
     const { message } = req.body;
-    
-    const ticket = tickets.find(t => t.id === ticketId);
-    if (!ticket) {
-        return res.status(404).json({ error: 'Ticket niet gevonden' });
-    }
-    
-    if (!message || !message.trim()) {
-        return res.status(400).json({ error: 'Bericht is vereist' });
-    }
-    
-    // Initialize replies array if needed
-    if (!ticket.replies) {
-        ticket.replies = [];
-    }
-    
-    // Add reply and auto-set status to 'Replied' if not yet replied
-    ticket.replies.push({
-        author: req.session.user.name,
-        email: req.session.user.email,
-        message: message.trim(),
-        createdAt: new Date().toISOString()
-    });
-    
-    // Auto-update status to 'Replied' on first reply
-    if (ticket.status === 'open' || ticket.status === 'Open') {
-        ticket.status = 'Replied';
-    }
+    if (!message?.trim()) return res.status(400).json({ error: 'Bericht is vereist' });
 
-    // Notificeer de indiener van het ticket over de reactie
-    emails.emailTicketReply({
-        ticket,
-        replyMessage: message.trim(),
-        adminName: req.session.user.name,
-    });
+    const { data: ticket } = await supabase.from('tickets').select('*').eq('id', req.params.ticketId).single();
+    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
 
-    res.json(ticket);
+    const reply = { author: req.session.user.name, email: req.session.user.email, message: message.trim(), createdAt: new Date().toISOString() };
+    const replies = [...(ticket.replies || []), reply];
+    const newStatus = (ticket.status === 'open' || ticket.status === 'Open') ? 'Replied' : ticket.status;
+    await supabase.from('tickets').update({ replies, status: newStatus }).eq('id', req.params.ticketId);
+    emails.emailTicketReply({ ticket: { ...ticket, replies, status: newStatus }, replyMessage: message.trim(), adminName: req.session.user.name });
+    res.json({ ...ticket, replies, status: newStatus });
 });
 
-// PATCH update ticket status (admin only)
-app.patch('/api/tickets/:ticketId/status', requireAdmin, express.json(), (req, res) => {
-    const { ticketId } = req.params;
+app.patch('/api/tickets/:ticketId/status', requireAdmin, async (req, res) => {
     const { status } = req.body;
-    
-    const ticket = tickets.find(t => t.id === ticketId);
-    if (!ticket) {
-        return res.status(404).json({ error: 'Ticket niet gevonden' });
-    }
-    
-    const validStatuses = ['Open', 'Waiting', 'Replied', 'Resolved', 'Closed'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({ error: 'Ongeldig status' });
-    }
-    
-    ticket.status = status;
+    const valid = ['Open', 'Waiting', 'Replied', 'Resolved', 'Closed'];
+    if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldig status' });
+    const { data: ticket } = await supabase.from('tickets').update({ status }).eq('id', req.params.ticketId).select().single();
+    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
     res.json(ticket);
 });
 
-// ─ Vragenlijst endpoints ────────────────────────────────────────────────────
-
-// GET public case info (only for approved cases — used by vragenlijst page)
-app.get('/api/request-info/:id', (req, res) => {
-    const request = resellerRequests.find(r => r.id === req.params.id);
-    if (!request || request.status !== 'approved') {
-        return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
-    }
+// ── Vragenlijsten ──────────────────────────────────────────────────────────
+app.get('/api/request-info/:id', async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row || row.status !== 'approved') return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
     const { token } = req.query;
-    if (!token || request.accessToken !== token) {
-        return res.status(401).json({ error: 'Ongeldige toegangscode' });
-    }
-    res.json({
-        id: request.id,
-        clientName: request.clientName,
-        clientEmail: request.clientEmail,
-        oprichtingType: request.oprichtingType,
-        gewenstNaam: request.gewenstNaam,
-        resellerName: request.resellerName,
-        resellerCompany: request.resellerCompany,
-    });
+    if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    res.json({ id: row.id, clientName: row.client_name, clientEmail: row.client_email, oprichtingType: row.oprichting_type, gewenstNaam: row.gewenst_naam, resellerName: row.reseller_name, resellerCompany: row.reseller_company });
 });
 
-// POST submit vragenlijst (public — client fills this in)
-app.post('/api/vragenlijst', express.json({ limit: '25mb' }), (req, res) => {
+app.post('/api/vragenlijst', async (req, res) => {
     const { caseId, token, contactEmail } = req.body;
+    if (!caseId || !contactEmail) return res.status(400).json({ error: 'Verplichte velden ontbreken' });
 
-    if (!caseId || !contactEmail) {
-        return res.status(400).json({ error: 'Verplichte velden ontbreken' });
-    }
-
-    const request = resellerRequests.find(r => r.id === caseId && ['approved','vragenlijst','betaling','notary','kvk','complete'].includes(r.status));
-    if (!request) {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
+    if (!row || !['approved','vragenlijst','betaling','notary','kvk','complete'].includes(row.status))
         return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
-    }
+    if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
 
-    // Verify token before accepting submission
-    if (!token || request.accessToken !== token) {
-        return res.status(401).json({ error: 'Ongeldige toegangscode' });
-    }
-
-    // Upsert: overschrijf als de klant al eerder indiende
-    // Strip token from stored data, add server-side metadata
     const { token: _tok, ...formData } = req.body;
-    const existing = vragenlijsten.findIndex(v => v.caseId === caseId);
-    const submission = {
-        ...formData,
-        caseId,
-        clientName: request.clientName,
-        clientEmail: request.clientEmail,
-        resellerCompany: request.resellerCompany,
-        gewenstNaam: request.gewenstNaam,
-        oprichtingType: request.oprichtingType,
-        submittedAt: new Date().toISOString(),
-    };
-
-    if (existing !== -1) {
-        vragenlijsten[existing] = submission;
-    } else {
-        vragenlijsten.push(submission);
-    }
-    saveDB();
-
-    // Notificeer admin
+    const submission = { ...formData, caseId, clientName: row.client_name, clientEmail: row.client_email, resellerCompany: row.reseller_company, gewenstNaam: row.gewenst_naam, oprichtingType: row.oprichting_type, submittedAt: new Date().toISOString() };
+    await supabase.from('vragenlijsten').upsert({ case_id: caseId, data: submission, submitted_at: submission.submittedAt });
     emails.emailAdminVragenlijstSubmitted({ submission });
-
     res.json({ success: true });
 });
 
-// GET all vragenlijst submissions (admin only)
-app.get('/api/admin/vragenlijsten', requireAdmin, (req, res) => {
-    // Return without raw file data to keep response small
-    const result = vragenlijsten.map(({ datacardBestandData, pepBestandData, ...rest }) => rest);
+app.get('/api/admin/vragenlijsten', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('vragenlijsten').select('case_id, submitted_at, data');
+    const result = (data || []).map(row => {
+        const { datacardBestandData, pepBestandData, ...rest } = row.data || {};
+        return { caseId: row.case_id, submittedAt: row.submitted_at, ...rest };
+    });
     res.json(result);
 });
 
-// GET single vragenlijst submission by caseId (admin only)
-app.get('/api/vragenlijsten/:caseId', requireAdmin, (req, res) => {
-    const sub = vragenlijsten.find(v => v.caseId === req.params.caseId);
-    if (!sub) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
-    // Strip binary file data from response
-    const { datacardBestandData, pepBestandData, ...rest } = sub;
-    res.json({ ...rest, datacardIngediend: !!sub.datacardBestandNaam, pepIngediend: !!sub.pepBestandNaam });
+app.get('/api/vragenlijsten/:caseId', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', req.params.caseId).single();
+    if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
+    const { datacardBestandData, pepBestandData, ...rest } = row.data || {};
+    res.json({ caseId: row.case_id, submittedAt: row.submitted_at, ...rest, datacardIngediend: !!row.data?.datacardBestandNaam, pepIngediend: !!row.data?.pepBestandNaam });
 });
 
-// ─ Blog endpoints ──────────────────────────────────────────────────────────
-
-// GET all published blog posts (public)
-app.get('/api/blog/posts', (req, res) => {
+// ── Blog ───────────────────────────────────────────────────────────────────
+app.get('/api/blog/posts', async (req, res) => {
     const draft = req.query.draft === 'true';
-    const filtered = draft ? blogPosts : blogPosts.filter(p => p.published);
-    res.json(filtered);
+    let q = supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
+    if (!draft) q = q.eq('published', true);
+    const { data } = await q;
+    res.json((data || []).map(p => ({ ...p, createdAt: p.created_at, updatedAt: p.updated_at })));
 });
 
-// POST create new blog post (admin only)
-app.post('/api/blog/posts', requireAdmin, (req, res) => {
+app.post('/api/blog/posts', requireAdmin, async (req, res) => {
     const { title, excerpt, content, categories, featured, published, author, image } = req.body;
-    
-    if (!title || !content) {
-        return res.status(400).json({ error: 'Titel en inhoud verplicht' });
-    }
-    
-    const post = {
-        id: `blog-${++blogPostCounter}`,
-        title,
-        excerpt: excerpt || title.substring(0, 100),
-        content,
-        image: image || null,
-        categories: categories || [],
-        featured: featured || false,
-        published: published || false,
-        author: author || req.session.user.name,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    
-    blogPosts.push(post);
-    saveDB();
-    res.status(201).json(post);
+    if (!title || !content) return res.status(400).json({ error: 'Titel en inhoud verplicht' });
+    const { data: idData } = await supabase.rpc('next_blog_post_id');
+    const now = new Date().toISOString();
+    const post = { id: idData, title, excerpt: excerpt || title.substring(0, 100), content, image: image || null, categories: categories || [], featured: featured || false, published: published || false, author: author || req.session.user.name, created_at: now, updated_at: now };
+    await supabase.from('blog_posts').insert(post);
+    res.status(201).json({ ...post, createdAt: post.created_at, updatedAt: post.updated_at });
 });
 
-// GET single blog post (public)
-app.get('/api/blog/posts/:id', (req, res) => {
-    const { id } = req.params;
-    const post = blogPosts.find(p => p.id === id);
-    
-    if (!post || (!post.published && (!req.session || !req.session.user || req.session.user.type !== 'admin'))) {
+app.get('/api/blog/posts/:id', async (req, res) => {
+    const { data: p } = await supabase.from('blog_posts').select('*').eq('id', req.params.id).single();
+    if (!p || (!p.published && (!req.session?.user || req.session.user.type !== 'admin')))
         return res.status(404).json({ error: 'Post niet gevonden' });
-    }
-    
-    res.json(post);
+    res.json({ ...p, createdAt: p.created_at, updatedAt: p.updated_at });
 });
 
-// PATCH update blog post (admin only)
-app.patch('/api/blog/posts/:id', requireAdmin, (req, res) => {
-    const { id } = req.params;
+app.patch('/api/blog/posts/:id', requireAdmin, async (req, res) => {
     const { title, excerpt, content, categories, featured, published, author, image } = req.body;
-    const post = blogPosts.find(p => p.id === id);
-    
-    if (!post) {
-        return res.status(404).json({ error: 'Post niet gevonden' });
-    }
-    
-    if (title) post.title = title;
-    if (excerpt !== undefined) post.excerpt = excerpt;
-    if (content) post.content = content;
-    if (image !== undefined) post.image = image || null;
-    if (categories) post.categories = categories;
-    if (featured !== undefined) post.featured = featured;
-    if (published !== undefined) post.published = published;
-    if (author) post.author = author;
-    post.updatedAt = new Date().toISOString();
-    saveDB();
-    res.json(post);
+    const updates = { updated_at: new Date().toISOString() };
+    if (title !== undefined)      updates.title      = title;
+    if (excerpt !== undefined)    updates.excerpt    = excerpt;
+    if (content !== undefined)    updates.content    = content;
+    if (image !== undefined)      updates.image      = image || null;
+    if (categories !== undefined) updates.categories = categories;
+    if (featured !== undefined)   updates.featured   = featured;
+    if (published !== undefined)  updates.published  = published;
+    if (author !== undefined)     updates.author     = author;
+    const { data: p, error } = await supabase.from('blog_posts').update(updates).eq('id', req.params.id).select().single();
+    if (error || !p) return res.status(404).json({ error: 'Post niet gevonden' });
+    res.json({ ...p, createdAt: p.created_at, updatedAt: p.updated_at });
 });
 
-// DELETE blog post (admin only)
-app.delete('/api/blog/posts/:id', requireAdmin, (req, res) => {
-    const { id } = req.params;
-    const idx = blogPosts.findIndex(p => p.id === id);
-    
-    if (idx === -1) {
-        return res.status(404).json({ error: 'Post niet gevonden' });
-    }
-    
-    blogPosts.splice(idx, 1);
-    saveDB();
+app.delete('/api/blog/posts/:id', requireAdmin, async (req, res) => {
+    await supabase.from('blog_posts').delete().eq('id', req.params.id);
     res.json({ success: true });
 });
 
-// Fallback: Serve public files directly if static middleware didn't catch them
+// ── Admin dashboard redirect ───────────────────────────────────────────────
+app.get('/admin-dashboard.html', requireAdmin, (req, res) => {
+    res.redirect(301, '/admin-dashboard');
+});
+
+// ── Fallback static ────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-    const fs = require('fs');
     const filePath = path.join(__dirname, 'public', req.path);
     try {
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-            // Determine MIME type and serve
-            if (filePath.endsWith('.css')) {
-                res.set('Content-Type', 'text/css; charset=utf-8');
-            } else if (filePath.endsWith('.js')) {
-                res.set('Content-Type', 'application/javascript; charset=utf-8');
-            }
+            if (filePath.endsWith('.css'))     res.set('Content-Type', 'text/css; charset=utf-8');
+            else if (filePath.endsWith('.js')) res.set('Content-Type', 'application/javascript; charset=utf-8');
             return res.sendFile(filePath);
         }
-    } catch (e) {
-        // Continue to next middleware
-    }
+    } catch(e) {}
     next();
 });
 
-// Export app for Vercel
+// Export for Vercel
 module.exports = app;
 
-// Export app for Vercel serverless
-module.exports = app;
-
-// Start server if running directly (not as a Vercel function)
+// Start locally
 if (require.main === module) {
     app.listen(PORT, () => {
         console.log(`
