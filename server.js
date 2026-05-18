@@ -506,21 +506,20 @@ app.get('/api/reseller-requests/:id/activities', requireLogin, async (req, res) 
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
     if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
         return res.status(403).json({ error: 'Geen toegang' });
-    res.json(row.activities || []);
+    const activities = row.activities || [];
+    const isAdmin = req.session.user.type === 'admin';
+    res.json(isAdmin ? activities : activities.filter(a => a.type !== 'comment'));
 });
 
-app.post('/api/reseller-requests/:id/activities', requireLogin, async (req, res) => {
+app.post('/api/reseller-requests/:id/activities', requireAdmin, async (req, res) => {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'Bericht is verplicht' });
 
-    const { data: row } = await supabase.from('reseller_requests').select('activities, reseller_id').eq('id', req.params.id).single();
+    const { data: row } = await supabase.from('reseller_requests').select('activities').eq('id', req.params.id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
-    if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
-        return res.status(403).json({ error: 'Geen toegang' });
-
-    const authorName = req.session.user.name || req.session.user.email;
-    const entry = { id: Date.now() + Math.random(), type: 'comment', message: message.trim(), author: authorName, timestamp: new Date().toISOString() };
+    const adminName = req.session.user.name || req.session.user.email;
+    const entry = { id: Date.now() + Math.random(), type: 'comment', message: message.trim(), author: adminName, timestamp: new Date().toISOString() };
     await supabase.from('reseller_requests').update({ activities: [...(row.activities || []), entry] }).eq('id', req.params.id);
     res.json(entry);
 });
@@ -624,7 +623,8 @@ app.patch('/api/tickets/:ticketId/status', requireAdmin, async (req, res) => {
 // ── Vragenlijsten ──────────────────────────────────────────────────────────
 app.get('/api/request-info/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
-    if (!row || row.status !== 'approved') return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
+    if (!row || !['approved','vragenlijst','betaling','ident','notary','kvk','complete'].includes(row.status))
+        return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
     const { token } = req.query;
     if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
     res.json({ id: row.id, clientName: row.client_name, clientEmail: row.client_email, oprichtingType: row.oprichting_type, gewenstNaam: row.gewenst_naam, resellerName: row.reseller_name, resellerCompany: row.reseller_company });

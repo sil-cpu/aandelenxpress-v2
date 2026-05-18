@@ -345,14 +345,14 @@ function renderPage(d, role) {
       </div>
     </div>`;
 
-  const composeBar = `
+  const composeBar = role === 'admin' ? `
     <div class="act-compose">
       <textarea id="actInput" placeholder="Opmerking toevoegen..." rows="2" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))postComment()"></textarea>
       <button class="act-send-btn" onclick="postComment()">
         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Sturen
       </button>
-    </div>`;
+    </div>` : '';
 
   document.getElementById("pageContent").innerHTML = `
     <a href="${role==='admin'?'admin-dashboard.html':'reseller-dashboard.html'}" class="back-btn">
