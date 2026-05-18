@@ -75,19 +75,19 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-label">Voltooid deze maand</div>
-                        <div class="stat-card-value" id="stat-month">6</div>
-                        <div class="stat-card-sub">April 2026</div>
+                        <div class="stat-card-value" id="stat-month">–</div>
+                        <div class="stat-card-sub" id="stat-month-label">–</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-label">Gem. doorlooptijd</div>
-                        <div class="stat-card-value">3,2<span style="font-size:1rem;font-weight:400;color:#8A9BB5"> d</span></div>
+                        <div class="stat-card-value"><span id="stat-doorlooptijd">–</span><span id="stat-doorlooptijd-unit" style="font-size:1rem;font-weight:400;color:#8A9BB5"></span></div>
                         <div class="stat-card-sub">Werkdagen</div>
                     </div>
                 </div>
 
                 <div class="section-row mb-20">
-                    <span class="section-heading">Recente dossiers</span>
-                    <a href="#" class="dash-card-action">Alles bekijken</a>
+                    <span class="section-heading" id="dossiersSectionTitle">Recente dossiers</span>
+                    <a href="#" class="dash-card-action" id="toggleAlleBtn" onclick="toggleAlleDossiers();return false;">Alles bekijken</a>
                 </div>
 
                 <div class="dash-card">
@@ -198,12 +198,12 @@
                     </div>
                     <div class="settings-block-body">
                         <div class="settings-field-grid">
-                            <div class="form-field"><label>Kantoornaam</label><input type="text" value="Bakker Accountants B.V."></div>
-                            <div class="form-field"><label>Website</label><input type="url" value="https://bakker-acc.nl"></div>
-                            <div class="form-field"><label>KvK-nummer</label><input type="text" value="11223344"></div>
-                            <div class="form-field"><label>BTW-nummer</label><input type="text" value="NL123456789B01"></div>
-                            <div class="form-field"><label>Bedrijfsadres</label><input type="text" value="Keizersgracht 123, Amsterdam"></div>
-                            <div class="form-field"><label>Telefoonnummer</label><input type="tel" value="+31 20 555 0100"></div>
+                            <div class="form-field"><label>Kantoornaam</label><input type="text" id="set-company" placeholder="Kantoornaam"></div>
+                            <div class="form-field"><label>Website</label><input type="url" id="set-website" placeholder="https://"></div>
+                            <div class="form-field"><label>KvK-nummer</label><input type="text" id="set-kvk" placeholder="–"></div>
+                            <div class="form-field"><label>BTW-nummer</label><input type="text" id="set-btw" placeholder="–"></div>
+                            <div class="form-field"><label>Bedrijfsadres</label><input type="text" id="set-adres" placeholder="–"></div>
+                            <div class="form-field"><label>Telefoonnummer</label><input type="tel" id="set-telefoon" placeholder="–"></div>
                         </div>
                     </div>
                     <div class="settings-footer">
@@ -218,10 +218,10 @@
                     </div>
                     <div class="settings-block-body">
                         <div class="settings-field-grid">
-                            <div class="form-field"><label>Volledige naam</label><input type="text" value="Jan Bakker"></div>
-                            <div class="form-field"><label>Functie</label><input type="text" value="Directeur"></div>
-                            <div class="form-field"><label>Zakelijk e-mailadres</label><input type="email" value="j.bakker@bakker-acc.nl"></div>
-                            <div class="form-field"><label>Mobiel nummer</label><input type="tel" value="+31 6 12345678"></div>
+                            <div class="form-field"><label>Volledige naam</label><input type="text" id="set-naam" placeholder="–"></div>
+                            <div class="form-field"><label>Functie</label><input type="text" id="set-functie" placeholder="–"></div>
+                            <div class="form-field"><label>Zakelijk e-mailadres</label><input type="email" id="set-email" placeholder="–"></div>
+                            <div class="form-field"><label>Mobiel nummer</label><input type="tel" id="set-mobiel" placeholder="–"></div>
                         </div>
                     </div>
                     <div class="settings-footer">
@@ -333,6 +333,19 @@
 
 <script>
 let dossiers = [];
+let showAll = false;
+
+const STATUS_MAP = {
+    'pending':     { key:'pending',     text:'Aanvraag ingediend', pct: 5   },
+    'vragenlijst': { key:'vragenlijst', text:'Vragenlijst',        pct: 20  },
+    'approved':    { key:'vragenlijst', text:'Vragenlijst',        pct: 20  },
+    'betaling':    { key:'betaling',    text:'Betaling',           pct: 35  },
+    'ident':       { key:'ident',       text:'iDIN verwerking',    pct: 50  },
+    'notary':      { key:'notary',      text:'Notariële Akte',     pct: 70  },
+    'kvk':         { key:'kvk',         text:'KvK inschrijving',   pct: 90  },
+    'complete':    { key:'complete',    text:'Voltooid',           pct: 100 },
+    'rejected':    { key:'rejected',    text:'Afgewezen',          pct: 0   }
+};
 
 function renderDossiers() {
     const list = document.getElementById('dossiersList');
@@ -340,7 +353,8 @@ function renderDossiers() {
         list.innerHTML = '<div style="padding:32px;text-align:center;color:#8A9BB5;font-size:0.9rem;">Nog geen dossiers aangemaakt. Klik op <strong>Nieuwe opdracht</strong> om te beginnen.</div>';
         return;
     }
-    list.innerHTML = dossiers.map(d => `
+    const toShow = showAll ? dossiers : dossiers.slice(0, 5);
+    list.innerHTML = toShow.map(d => `
         <div class="dash-table-row table-cols-dossiers">
             <div style="font-weight:500">${d.name}</div>
             <div class="text-muted text-sm">${new Date(d.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
@@ -354,44 +368,64 @@ function renderDossiers() {
     `).join('');
 }
 
+function toggleAlleDossiers() {
+    showAll = !showAll;
+    document.getElementById('dossiersSectionTitle').textContent = showAll ? 'Alle dossiers' : 'Recente dossiers';
+    document.getElementById('toggleAlleBtn').textContent = showAll ? 'Minder tonen' : 'Alles bekijken';
+    renderDossiers();
+}
+
 async function loadDossiers() {
     try {
         const r = await fetch('/api/my-requests');
         if (!r.ok) return;
         const requests = await r.json();
 
-        const statusMap = {
-            'pending':     { key:'pending',     text:'Aanvraag ingediend', pct: 5  },
-            'vragenlijst': { key:'vragenlijst', text:'Vragenlijst',        pct: 20 },
-            'approved':    { key:'vragenlijst', text:'Vragenlijst',        pct: 20 },
-            'betaling':    { key:'betaling',    text:'Betaling',           pct: 40 },
-            'notary':      { key:'notary',      text:'Notariële Akte',     pct: 60 },
-            'kvk':         { key:'kvk',         text:'KvK inschrijving',   pct: 80 },
-            'complete':    { key:'complete',    text:'Voltooid',           pct: 100 },
-            'rejected':    { key:'rejected',    text:'Afgewezen',          pct: 0  }
-        };
+        // Sort newest first
+        requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         dossiers = requests.map(req => {
-            const s = statusMap[req.status] || { key:'pending', text: req.status, pct: 5 };
+            const s = STATUS_MAP[req.status] || { key: req.status, text: req.status, pct: 5 };
             return {
                 name:        req.gewenstNaam || req.clientName,
                 date:        req.createdAt,
+                completedAt: req.status === 'complete' ? (req.statusUpdatedAt || req.createdAt) : null,
                 statusKey:   s.key,
                 statusText:  s.text,
                 pct:         s.pct,
-                dossierNr:   req.id,
-                clientEmail: req.clientEmail,
-                clientPhone: req.clientPhone,
-                kvk:         ''
+                dossierNr:   req.id
             };
         });
 
-        // Stat cards
+        // Stat: total
         document.getElementById('stat-total').textContent = dossiers.length;
-        const inProgress = dossiers.filter(d => d.statusKey !== 'new' && d.statusKey !== 'complete').length;
+
+        // Stat: in behandeling (active statuses, not pending/complete/rejected)
+        const inProgress = dossiers.filter(d => !['complete','rejected','pending'].includes(d.statusKey)).length;
         document.getElementById('stat-progress').textContent = inProgress;
-        const completedCount = dossiers.filter(d => d.statusKey === 'complete').length;
-        document.getElementById('stat-month').textContent = completedCount;
+
+        // Stat: voltooid deze maand
+        const now = new Date();
+        const completedThisMonth = dossiers.filter(d => {
+            if (d.statusKey !== 'complete') return false;
+            const dt = new Date(d.completedAt || d.date);
+            return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+        }).length;
+        document.getElementById('stat-month').textContent = completedThisMonth;
+        const maand = now.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+        document.getElementById('stat-month-label').textContent = maand.charAt(0).toUpperCase() + maand.slice(1);
+
+        // Stat: gem. doorlooptijd
+        const completed = dossiers.filter(d => d.statusKey === 'complete' && d.completedAt);
+        if (completed.length > 0) {
+            const avgMs = completed.reduce((sum, d) => sum + (new Date(d.completedAt) - new Date(d.date)), 0) / completed.length;
+            const avgDays = (avgMs / (1000 * 60 * 60 * 24)).toFixed(1);
+            document.getElementById('stat-doorlooptijd').textContent = avgDays;
+            document.getElementById('stat-doorlooptijd-unit').textContent = ' d';
+        } else {
+            document.getElementById('stat-doorlooptijd').textContent = '–';
+        }
+
         renderDossiers();
     } catch(e) {
         console.error('Failed to load dossiers:', e);
@@ -419,7 +453,13 @@ async function loadUser() {
         document.getElementById('userCompany').textContent = u.company;
         document.getElementById('userEmail').textContent = u.email;
         document.getElementById('userInitials').textContent = u.name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
-        
+
+        // Populate settings with real user data
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+        setVal('set-company', u.company);
+        setVal('set-naam', u.name);
+        setVal('set-email', u.email);
+
         // Load dossiers after user is loaded
         await loadDossiers();
     } catch(e) { window.location.href = '/login'; }
