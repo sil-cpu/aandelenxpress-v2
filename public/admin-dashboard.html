@@ -415,6 +415,7 @@
               <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Doel van de BV</div><div class="drawer-field-value" style="white-space:pre-wrap;padding:8px;background:#f7fafc;border-radius:4px;margin-top:4px;" id="rfDoel">–</div></div>
               <div class="drawer-field"><div class="drawer-field-label">Aantal aandeelhouders</div><div class="drawer-field-value" id="rfAandeelhouders">–</div></div>
               <div class="drawer-field"><div class="drawer-field-label">Geplaatst kapitaal</div><div class="drawer-field-value" id="rfKapitaal">–</div></div>
+              <div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">Prijsopbouw</div><div class="drawer-field-value" style="padding:8px;background:#f7fafc;border-radius:4px;margin-top:4px;" id="rfPricingBreakdown">Nog geen prijsopbouw beschikbaar.</div></div>
             </div>
           </div>
           
@@ -788,6 +789,32 @@ const DOSSIER_EXTRA_PRICES = {
 
 function fmtCurrency(amount) {
   return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount || 0);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = String(text || '');
+  return div.innerHTML;
+}
+
+function renderRequestPricingBreakdown(pricing) {
+  if (!pricing || !pricing.base) {
+    return '<span style="color:#8A9BB5;">Nog geen prijsopbouw beschikbaar.</span>';
+  }
+
+  const rows = [pricing.base, ...(pricing.extras || [])];
+  const lines = rows.map(x => `
+    <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #E8EDF5;">
+      <span>${escapeHtml(x.label || 'Onbekend')}</span>
+      <strong>${fmtCurrency(x.amount || 0)}</strong>
+    </div>
+  `).join('');
+
+  return `${lines}
+    <div style="display:flex;justify-content:space-between;gap:10px;padding-top:10px;margin-top:4px;font-weight:700;color:#1A3B70;">
+      <span>Totaal</span>
+      <span>${fmtCurrency(pricing.total || 0)}</span>
+    </div>`;
 }
 
 function adminBuildPricingSelection() {
@@ -2070,10 +2097,10 @@ async function openRequestDrawer(requestId) {
     };
     document.getElementById('rfType').textContent = typeMap[request.oprichtingType] || request.oprichtingType || '–';
     document.getElementById('rfGewenstNaam').textContent = request.gewenstNaam || '–';
-    const priceText = request.pricing?.total ? `\n\nPrijsopbouw totaal: ${fmtCurrency(request.pricing.total)}` : '';
-    document.getElementById('rfDoel').textContent = (request.doel || '–') + priceText;
+    document.getElementById('rfDoel').textContent = request.doel || '–';
     document.getElementById('rfAandeelhouders').textContent = (request.aandeelhouders || 1) + ' persoon(en)';
     document.getElementById('rfKapitaal').textContent = '€ ' + (request.kapitaal || 0.01).toLocaleString('nl-NL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('rfPricingBreakdown').innerHTML = renderRequestPricingBreakdown(request.pricing);
     
     // Aanvullende gegevens
     document.getElementById('rfStartSaldo').textContent = request.startSaldo ? '€ ' + request.startSaldo.toLocaleString('nl-NL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '–';
