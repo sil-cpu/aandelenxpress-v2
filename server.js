@@ -282,7 +282,7 @@ app.get('/reseller-dashboard.html', requireLogin, (req, res) => {
 
 // Admin dashboard
 app.get('/admin-dashboard.html', requireAdmin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+    res.redirect(301, '/admin-dashboard');
 });
 
 // API endpoint to get current user
