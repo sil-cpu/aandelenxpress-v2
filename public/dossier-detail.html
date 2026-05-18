@@ -1073,7 +1073,7 @@ async function init() {
 
     // Fetch dossier from API
     let d = null;
-    if (nr && nr.startsWith('RR-')) {
+    if (nr && (nr.startsWith('RR-') || nr.startsWith('AX-'))) {
       try {
         const dr = await fetch('/api/reseller-requests/' + encodeURIComponent(nr));
         if (dr.ok) {
@@ -1092,7 +1092,7 @@ async function init() {
       return;
     }
     // Check if questionnaire was submitted (admin only)
-    if (u.type === 'admin' && d.dossierNr && d.dossierNr.startsWith('RR-')) {
+    if (u.type === 'admin' && d.dossierNr) {
       try {
         const vlr = await fetch('/api/vragenlijsten/' + encodeURIComponent(d.dossierNr));
         if (vlr.ok) { d.hasVragenlijst = true; currentVragenlijstData = await vlr.json(); }
@@ -1108,7 +1108,7 @@ async function init() {
       console.error('renderPage error:', re);
       document.getElementById("pageContent").innerHTML = '<div class="empty-state" style="padding:80px 32px;"><p>Fout bij laden paginainhoud.</p></div>';
     }
-    if (u.type === 'admin' && d.dossierNr && d.dossierNr.startsWith('RR-')) {
+    if (u.type === 'admin' && d.dossierNr) {
       renderActionBar(d);
     }
   } catch(e) {
