@@ -265,67 +265,108 @@
             </button>
         </div>
         <form id="newDossierForm">
-            <div style="font-weight:600;margin-bottom:16px;font-size:0.95rem;">Klantgegevens</div>
-            <div class="form-field">
-                <label>Bedrijfsnaam *</label>
-                <input type="text" id="clientName" placeholder="B.V. De Innovatie" required>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:10px 12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+                <div id="resellerStepIndicator" style="font-size:0.83rem;font-weight:700;color:#1A3B70;letter-spacing:0.03em;text-transform:uppercase;">Stap 1 van 2 · Samenstellen & prijs</div>
+                <div style="font-size:0.8rem;color:#718096;">Directe prijsberekening</div>
             </div>
-            <div class="form-field">
-                <label>E-mailadres klant *</label>
-                <input type="email" id="clientEmail" placeholder="info@bedrijf.nl" required>
+
+            <div id="resellerFormStep1">
+                <div class="form-field">
+                    <label>Type dossier *</label>
+                    <select id="serviceType" required onchange="updatePricingPreview()">
+                        <option value="">-- Kies dossier type --</option>
+                        <option value="bv">Oprichting van een B.V. (€ 540,00)</option>
+                        <option value="geruisloze-inbreng">Geruisloze inbreng (€ 1.095,00)</option>
+                        <option value="holding-aanbod">Gelimiteerd aanbod: Holding + Werkmaatschappij (€ 724,00)</option>
+                        <option value="geruisloze-ez-bv">Geruisloze inbreng Eenmanszaak -> BV (€ 1.095,00)</option>
+                        <option value="geruisloze-vof-bv">Geruisloze inbreng VOF -> BV (€ 1.745,00)</option>
+                        <option value="spoed-holding">SPOED Holding + Werkmaatschappij (€ 2.850,00)</option>
+                        <option value="spoed-bv">Spoed - Oprichting van een B.V. (€ 1.449,00)</option>
+                        <option value="geruisloze-ez-holding-bv">Geruisloze inbreng Eenmanszaak -> Holding + BV (€ 1.995,00)</option>
+                        <option value="geruisloze-vof-2h-1bv">Geruisloze inbreng VOF -> 2 holdings + 1 BV (€ 3.245,00)</option>
+                    </select>
+                </div>
+
+                <div style="margin-top:16px;font-weight:600;margin-bottom:10px;font-size:0.9rem;">Eventuele toeslagen</div>
+                <div id="extrasWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-bottom:14px;"></div>
+
+                <div style="padding:12px;border:1px solid #E8EDF5;border-radius:8px;background:#FAFCFF;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <div style="font-size:0.8rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:0.05em;">Prijsopbouw</div>
+                        <div id="pricingTotal" style="font-size:1rem;font-weight:700;color:#0F1D3A;">€ 0,00</div>
+                    </div>
+                    <div id="pricingLines" style="font-size:0.84rem;color:#4A5568;line-height:1.5;">Kies eerst een dossier type.</div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-ghost" onclick="closeModal()">Annuleren</button>
+                    <button type="button" class="btn-primary" onclick="goToStep2()">Volgende stap →</button>
+                </div>
             </div>
-            <div class="form-field">
-                <label>Telefoonnummer klant</label>
-                <input type="tel" id="clientPhone" placeholder="+31 6 12345678">
-            </div>
-            
-            <div style="margin-top:24px;font-weight:600;margin-bottom:16px;font-size:0.95rem;">Oprichtingsgegevens</div>
-            
-            <div class="form-field">
-                <label>Wat wil je oprichten? *</label>
-                <select id="oprichtingType" required>
-                    <option value="">-- Kies een optie --</option>
-                    <option value="bv">Gewone BV</option>
-                    <option value="bv-holding">BV + Holding structuur</option>
-                    <option value="bv-spoed">BV met spoed (24-48 uur)</option>
-                    <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
-                    <option value="advies">Wil graag advies (geen oprichting)</option>
-                </select>
-            </div>
-            
-            <div class="form-field">
-                <label>Gewenste naam BV *</label>
-                <input type="text" id="gewenstNaam" placeholder="Voorbeeld B.V." required>
-            </div>
-            
-            <div class="form-field">
-                <label>Doel van de BV op hoofdlijnen *</label>
-                <textarea id="doel" placeholder="Wat is het doel van de BV?" style="min-height:80px;resize:vertical;" required></textarea>
-            </div>
-            
-            <div class="form-field">
-                <label>Aantal aandeelhouders *</label>
-                <input type="number" id="aandeelhouders" placeholder="1" min="1" required>
-            </div>
-            
-            <div class="form-field">
-                <label>Geplaatst kapitaal (in €) *</label>
-                <input type="number" id="kapitaal" placeholder="0.01" min="0.01" step="0.01" required>
-            </div>
-            
-            <div class="form-field">
-                <label>Startsaldo bank rekening (optioneel)</label>
-                <input type="number" id="startSaldo" placeholder="0.00" min="0" step="0.01">
-            </div>
-            
-            <div class="form-field">
-                <label>Opmerkingen/bijzonderheden (optioneel)</label>
-                <textarea id="opmerkingen" placeholder="Eventuele speciale wensen..." style="min-height:80px;resize:vertical;"></textarea>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn-ghost" onclick="closeModal()">Annuleren</button>
-                <button type="submit" class="btn-primary">Opdracht indienen</button>
+
+            <div id="resellerFormStep2" style="display:none;">
+                <div style="font-weight:600;margin-bottom:16px;font-size:0.95rem;">Klantgegevens</div>
+                <div class="form-field">
+                    <label>Bedrijfsnaam *</label>
+                    <input type="text" id="clientName" placeholder="B.V. De Innovatie" required>
+                </div>
+                <div class="form-field">
+                    <label>E-mailadres klant *</label>
+                    <input type="email" id="clientEmail" placeholder="info@bedrijf.nl" required>
+                </div>
+                <div class="form-field">
+                    <label>Telefoonnummer klant</label>
+                    <input type="tel" id="clientPhone" placeholder="+31 6 12345678">
+                </div>
+
+                <div style="margin-top:24px;font-weight:600;margin-bottom:16px;font-size:0.95rem;">Oprichtingsgegevens</div>
+
+                <div class="form-field">
+                    <label>Wat wil je oprichten? *</label>
+                    <select id="oprichtingType" required>
+                        <option value="">-- Kies een optie --</option>
+                        <option value="bv">Gewone BV</option>
+                        <option value="bv-holding">BV + Holding structuur</option>
+                        <option value="bv-spoed">BV met spoed (24-48 uur)</option>
+                        <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
+                        <option value="advies">Wil graag advies (geen oprichting)</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Gewenste naam BV *</label>
+                    <input type="text" id="gewenstNaam" placeholder="Voorbeeld B.V." required>
+                </div>
+
+                <div class="form-field">
+                    <label>Doel van de BV op hoofdlijnen *</label>
+                    <textarea id="doel" placeholder="Wat is het doel van de BV?" style="min-height:80px;resize:vertical;" required></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label>Aantal aandeelhouders *</label>
+                    <input type="number" id="aandeelhouders" placeholder="1" min="1" required>
+                </div>
+
+                <div class="form-field">
+                    <label>Geplaatst kapitaal (in €) *</label>
+                    <input type="number" id="kapitaal" placeholder="0.01" min="0.01" step="0.01" required>
+                </div>
+
+                <div class="form-field">
+                    <label>Startsaldo bank rekening (optioneel)</label>
+                    <input type="number" id="startSaldo" placeholder="0.00" min="0" step="0.01">
+                </div>
+
+                <div class="form-field">
+                    <label>Opmerkingen/bijzonderheden (optioneel)</label>
+                    <textarea id="opmerkingen" placeholder="Eventuele speciale wensen..." style="min-height:80px;resize:vertical;"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-ghost" onclick="backToStep1()">← Terug</button>
+                    <button type="submit" class="btn-primary">Opdracht indienen</button>
+                </div>
             </div>
         </form>
     </div>
@@ -334,6 +375,85 @@
 <script>
 let dossiers = [];
 let showAll = false;
+
+const BASE_PRICES = {
+    'bv': { label: 'Oprichting van een B.V.', amount: 540.00, oprichtingType: 'bv' },
+    'geruisloze-inbreng': { label: 'Geruisloze inbreng', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
+    'holding-aanbod': { label: 'Gelimiteerd aanbod: Holding + Werkmaatschappij', amount: 724.00, oprichtingType: 'bv-holding' },
+    'geruisloze-ez-bv': { label: 'Geruisloze inbreng Eenmanszaak -> BV', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
+    'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00, oprichtingType: 'eenmanszaak-omzetten' },
+    'spoed-holding': { label: 'SPOED Holding + Werkmaatschappij', amount: 2850.00, oprichtingType: 'bv-holding' },
+    'spoed-bv': { label: 'Spoed - Oprichting van een B.V.', amount: 1449.00, oprichtingType: 'bv-spoed' },
+    'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00, oprichtingType: 'bv-holding' },
+    'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00, oprichtingType: 'bv-holding' }
+};
+
+const EXTRA_PRICES = {
+    'aandeelhoudersregister': { label: 'Nieuw aandeelhoudersregister', amount: 325.00 },
+    'ah-buiten-eu': { label: 'Aandeelhouder woonachtig buiten de EU', amount: 500.00 },
+    'persoon-buiten-nl-met-nl-bank': { label: 'Natuurlijk persoon buiten NL met NL-bankrekening', amount: 50.00 },
+    'persoon-buiten-nl-zonder-bank': { label: 'Natuurlijk persoon buiten NL zonder NL-bankrekening', amount: 250.00 },
+    'bestaande-holding': { label: 'Bestaande Holding als aandeelhouder', amount: 50.00 },
+    'compliance-tussenholdings': { label: 'Aanvullende compliancecontrole bij tussen holdings', amount: 50.00 },
+    'bedrijfsadres-anders': { label: 'Bedrijfsadres afwijkend van aandeelhouder', amount: 50.00 },
+    'tolk-30min': { label: 'Belafspraak met tolk (30 min)', amount: 250.00 },
+    'no-show-notaris': { label: 'Belafspraak notaris (no-show/onvolledig)', amount: 250.00 },
+    'engelse-vertaling': { label: 'Engelse vertaling statuten', amount: 125.00 },
+    'extra-aandeelhouder': { label: 'Extra aandeelhouder', amount: 50.00 },
+    'naamswijziging-concept': { label: 'Naamswijziging in conceptakten', amount: 250.00 },
+    'advocaten-statuten': { label: 'Advocaten statuten', amount: 250.00 },
+    'vastgoed-statuten': { label: 'Vastgoed statuten', amount: 250.00 },
+    'wtza-statuten': { label: 'WTZA statuten', amount: 250.00 }
+};
+
+function fmtCurrency(amount) {
+    return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount || 0);
+}
+
+function buildPricingSelection() {
+    const baseCode = document.getElementById('serviceType')?.value;
+    const base = BASE_PRICES[baseCode];
+    if (!base) return null;
+    const extras = [...document.querySelectorAll('#extrasWrap input[type="checkbox"]:checked')]
+        .map(cb => ({ code: cb.value, ...(EXTRA_PRICES[cb.value] || {}) }))
+        .filter(x => x.label);
+    const baseLine = { code: baseCode, label: base.label, amount: base.amount };
+    const total = [baseLine, ...extras].reduce((sum, x) => sum + x.amount, 0);
+    return { base: baseLine, extras, total };
+}
+
+function updatePricingPreview() {
+    const selection = buildPricingSelection();
+    const linesEl = document.getElementById('pricingLines');
+    const totalEl = document.getElementById('pricingTotal');
+    if (!linesEl || !totalEl) return;
+    if (!selection) {
+        linesEl.textContent = 'Kies eerst een dossier type.';
+        totalEl.textContent = fmtCurrency(0);
+        return;
+    }
+    const rows = [selection.base, ...selection.extras];
+    linesEl.innerHTML = rows.map(x => `<div style="display:flex;justify-content:space-between;gap:10px;"><span>${x.label}</span><strong>${fmtCurrency(x.amount)}</strong></div>`).join('');
+    totalEl.textContent = fmtCurrency(selection.total);
+}
+
+function goToStep2() {
+    const selection = buildPricingSelection();
+    if (!selection) return alert('Kies eerst een dossier type om verder te gaan.');
+    const baseCode = document.getElementById('serviceType').value;
+    const mappedType = BASE_PRICES[baseCode]?.oprichtingType;
+    const oprSel = document.getElementById('oprichtingType');
+    if (mappedType && oprSel) oprSel.value = mappedType;
+    document.getElementById('resellerFormStep1').style.display = 'none';
+    document.getElementById('resellerFormStep2').style.display = '';
+    document.getElementById('resellerStepIndicator').textContent = 'Stap 2 van 2 · Klant- en dossiergegevens';
+}
+
+function backToStep1() {
+    document.getElementById('resellerFormStep2').style.display = 'none';
+    document.getElementById('resellerFormStep1').style.display = '';
+    document.getElementById('resellerStepIndicator').textContent = 'Stap 1 van 2 · Samenstellen & prijs';
+}
 
 const STATUS_MAP = {
     'pending':     { key:'pending',     text:'Aanvraag ingediend', pct: 5   },
@@ -356,7 +476,7 @@ function renderDossiers() {
     const toShow = showAll ? dossiers : dossiers.slice(0, 5);
     list.innerHTML = toShow.map(d => `
         <div class="dash-table-row table-cols-dossiers">
-            <div style="font-weight:500">${d.name}</div>
+            <div style="font-weight:500">${d.name}${d.pricingTotal ? `<div style="font-size:0.78rem;color:#2B6CB5;font-weight:600;margin-top:2px;">${fmtCurrency(d.pricingTotal)}</div>` : ''}</div>
             <div class="text-muted text-sm">${new Date(d.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div>
             <div><span class="badge badge-${d.statusKey}">${d.statusText}</span></div>
             <div class="progress-wrap">
@@ -393,7 +513,8 @@ async function loadDossiers() {
                 statusKey:   s.key,
                 statusText:  s.text,
                 pct:         s.pct,
-                dossierNr:   req.id
+                dossierNr:   req.id,
+                pricingTotal: req.pricing?.total || 0
             };
         });
 
@@ -465,12 +586,37 @@ async function loadUser() {
     } catch(e) { window.location.href = '/login'; }
 }
 
-function openModal() { document.getElementById('modal').classList.add('active'); }
-function closeModal() { document.getElementById('modal').classList.remove('active'); }
+function openModal() {
+    const extrasWrap = document.getElementById('extrasWrap');
+    if (extrasWrap && !extrasWrap.dataset.ready) {
+        extrasWrap.innerHTML = Object.entries(EXTRA_PRICES).map(([code, x]) => `
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;color:#0F1D3A;cursor:pointer;">
+                <input type="checkbox" value="${code}" onchange="updatePricingPreview()" style="width:14px;height:14px;"> ${x.label} (${fmtCurrency(x.amount)})
+            </label>
+        `).join('');
+        extrasWrap.dataset.ready = '1';
+    }
+    backToStep1();
+    updatePricingPreview();
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() {
+    document.getElementById('newDossierForm').reset();
+    document.querySelectorAll('#extrasWrap input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    backToStep1();
+    updatePricingPreview();
+    document.getElementById('modal').classList.remove('active');
+}
 document.getElementById('modal').addEventListener('click', e => { if(e.target.id==='modal') closeModal(); });
 
 document.getElementById('newDossierForm').addEventListener('submit', async e => {
     e.preventDefault();
+    const pricing = buildPricingSelection();
+    if (!pricing) {
+        alert('Kies in stap 1 eerst een dossier type.');
+        backToStep1();
+        return;
+    }
     const clientName = document.getElementById('clientName').value;
     const clientEmail = document.getElementById('clientEmail').value;
     const clientPhone = document.getElementById('clientPhone').value;
@@ -488,7 +634,7 @@ document.getElementById('newDossierForm').addEventListener('submit', async e => 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 clientName, clientEmail, clientPhone,
-                oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen
+                oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen, pricing
             })
         });
         

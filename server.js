@@ -9,6 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const PORT = process.env.PORT || 3000;
 const app = express();
 const DOSSIER_AUTO_TRASH_MS = 14 * 24 * 60 * 60 * 1000;
+const PRICING_MARKER = '[AX_PRICING]';
 
 // ── Supabase client (service role bypasses RLS) ────────────────────────────
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -22,6 +23,9 @@ const supabase = createClient(
 
 // ── Helper: camelCase ↔ snake_case mapping voor reseller_requests ──────────
 function reqToRow(r) {
+    const pricingBlob = r.pricing ? `${PRICING_MARKER}${JSON.stringify(r.pricing)}` : '';
+    const cleanNote = (r.opmerkingen || '').trim();
+    const opmerkingen = pricingBlob ? (cleanNote ? `${cleanNote}\n\n${pricingBlob}` : pricingBlob) : cleanNote;
     return {
         id:                r.id,
         reseller_id:       r.resellerId,
@@ -37,7 +41,7 @@ function reqToRow(r) {
         aandeelhouders:    r.aandeelhouders || 1,
         kapitaal:          r.kapitaal || 0.01,
         start_saldo:       r.startSaldo || 0,
-        opmerkingen:       r.opmerkingen || '',
+        opmerkingen,
         status:            r.status,
         created_at:        r.createdAt,
         approved_at:       r.approvedAt || null,
@@ -51,6 +55,7 @@ function reqToRow(r) {
 function rowToReq(row) {
     if (!row) return null;
     const lifecycle = getDossierLifecycle(row.activities || []);
+    const parsed = parsePricingFromOpmerkingen(row.opmerkingen || '');
     return {
         id:               row.id,
         resellerId:       row.reseller_id,
@@ -66,7 +71,8 @@ function rowToReq(row) {
         aandeelhouders:   row.aandeelhouders,
         kapitaal:         row.kapitaal,
         startSaldo:       row.start_saldo,
-        opmerkingen:      row.opmerkingen,
+        opmerkingen:      parsed.opmerkingen,
+        pricing:          parsed.pricing,
         status:           row.status,
         createdAt:        row.created_at,
         approvedAt:       row.approved_at,
@@ -77,6 +83,22 @@ function rowToReq(row) {
         archivedAt:       lifecycle.archivedAt,
         trashedAt:        lifecycle.trashedAt
     };
+}
+
+function parsePricingFromOpmerkingen(rawText) {
+    const text = String(rawText || '');
+    const idx = text.lastIndexOf(PRICING_MARKER);
+    if (idx === -1) return { opmerkingen: text, pricing: null };
+
+    const before = text.slice(0, idx).replace(/\n\s*$/g, '').trim();
+    const jsonPart = text.slice(idx + PRICING_MARKER.length).trim();
+    let pricing = null;
+    try {
+        pricing = JSON.parse(jsonPart);
+    } catch (e) {
+        pricing = null;
+    }
+    return { opmerkingen: before, pricing };
 }
 
 function getDossierLifecycle(activities) {
@@ -376,7 +398,7 @@ app.patch('/api/dossier-assignments/:nr', requireAdmin, async (req, res) => {
 
 // ── Reseller Requests ──────────────────────────────────────────────────────
 app.post('/api/reseller-requests', requireLogin, async (req, res) => {
-    const { clientName, clientEmail, clientPhone, oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen } = req.body;
+    const { clientName, clientEmail, clientPhone, oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen, pricing } = req.body;
 
     if (!clientName || !clientEmail || !oprichtingType || !gewenstNaam || !doel)
         return res.status(400).json({ error: 'Verplichte velden ontbreken' });
@@ -402,6 +424,7 @@ app.post('/api/reseller-requests', requireLogin, async (req, res) => {
         kapitaal:        kapitaal || 0.01,
         startSaldo:      startSaldo || 0,
         opmerkingen:     opmerkingen || '',
+        pricing:         pricing || null,
         status:          'pending',
         createdAt:       new Date().toISOString(),
         approvedAt: null, approvedBy: null, rejectionReason: null,

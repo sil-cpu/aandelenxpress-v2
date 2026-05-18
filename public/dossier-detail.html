@@ -310,6 +310,37 @@ function buildTimeline(statusKey) {
   }).join("");
 }
 
+function renderPricingCard(d) {
+  const pricing = d.pricing;
+  if (!pricing || !pricing.base) {
+    return `<div class="detail-card">
+      <div class="detail-card-head"><div class="detail-card-title">Prijsopbouw</div></div>
+      <div class="detail-card-body">
+        <div style="color:#8A9BB5;font-size:0.88rem;">Voor dit dossier is nog geen prijsopbouw opgeslagen.</div>
+      </div>
+    </div>`;
+  }
+
+  const lines = [pricing.base, ...(pricing.extras || [])];
+  const linesHtml = lines.map(x => `
+    <div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #EEF2F7;">
+      <span style="font-size:0.88rem;color:#0F1D3A;">${escHtml(x.label || 'Onbekend')}</span>
+      <strong style="font-size:0.88rem;color:#0F1D3A;">${fmtMoney(x.amount || 0)}</strong>
+    </div>
+  `).join('');
+
+  return `<div class="detail-card">
+    <div class="detail-card-head"><div class="detail-card-title">Prijsopbouw</div></div>
+    <div class="detail-card-body">
+      ${linesHtml}
+      <div style="display:flex;justify-content:space-between;gap:10px;padding-top:12px;margin-top:8px;font-size:1rem;font-weight:700;color:#1A3B70;">
+        <span>Totaal</span>
+        <span>${fmtMoney(pricing.total || 0)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderPage(d, role) {
   const partnerField = role === "admin"
     ? `<div class="detail-field"><label>Partner</label><div class="val">${d.partner}</div></div>` : "";
@@ -406,6 +437,8 @@ function renderPage(d, role) {
           </div>
         </div>
 
+        ${renderPricingCard(d)}
+
         ${accessSection}
 
         <!-- Documenten -->
@@ -486,6 +519,10 @@ function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString("nl-NL", { day:"numeric", month:"long", year:"numeric" });
+}
+
+function fmtMoney(amount) {
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount || 0);
 }
 
 function fmtDateTime(iso) {
@@ -1081,7 +1118,7 @@ async function init() {
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
           const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'notary':{ key:'notary', text:'Notariële Akte' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'pending', text: req.status };
-          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', hasVragenlijst: false };
+          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', pricing: req.pricing || null, hasVragenlijst: false };
         }
       } catch(e) { console.error('API fetch failed:', e); }
     } else {

@@ -670,39 +670,80 @@
       </button>
     </div>
     <form id="adminNewDossierForm" style="padding:24px;">
-      <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;">Namens reseller (optioneel)</div>
-      <div class="form-field" style="margin-bottom:16px;">
-        <label>Reseller e-mailadres</label>
-        <select id="adminOnBehalfOf" style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
-          <option value="">— Directe opdracht (geen reseller) —</option>
-        </select>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:10px 12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+        <div id="adminStepIndicator" style="font-size:0.83rem;font-weight:700;color:#1A3B70;letter-spacing:0.03em;text-transform:uppercase;">Stap 1 van 2 · Samenstellen & prijs</div>
+        <div style="font-size:0.8rem;color:#718096;">Prijs wordt direct berekend</div>
       </div>
-      <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;margin-top:20px;">Klantgegevens</div>
-      <div class="form-field"><label>Bedrijfsnaam / Klant *</label><input type="text" id="adminClientName" placeholder="B.V. De Innovatie" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
-      <div class="form-field" style="margin-top:12px;"><label>E-mailadres klant *</label><input type="email" id="adminClientEmail" placeholder="info@bedrijf.nl" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
-      <div class="form-field" style="margin-top:12px;"><label>Telefoonnummer klant</label><input type="tel" id="adminClientPhone" placeholder="+31 6 12345678" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
-      <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;margin-top:20px;">Oprichtingsgegevens</div>
-      <div class="form-field"><label>Wat oprichten? *</label>
-        <select id="adminOprichtingType" required style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
-          <option value="">— Kies —</option>
-          <option value="bv">Gewone BV</option>
-          <option value="bv-holding">BV + Holding structuur</option>
-          <option value="bv-spoed">BV met spoed (24-48 uur)</option>
-          <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
-          <option value="advies">Wil graag advies</option>
-        </select>
+
+      <div id="adminFormStep1">
+        <div class="form-field" style="margin-bottom:12px;">
+          <label>Type dossier *</label>
+          <select id="adminServiceType" required onchange="adminUpdatePricingPreview()" style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
+            <option value="">— Kies dossier type —</option>
+            <option value="bv">Oprichting van een B.V. (€ 540,00)</option>
+            <option value="geruisloze-inbreng">Geruisloze inbreng (€ 1.095,00)</option>
+            <option value="holding-aanbod">Gelimiteerd aanbod: Holding + Werkmaatschappij (€ 724,00)</option>
+            <option value="geruisloze-ez-bv">Geruisloze inbreng Eenmanszaak → BV (€ 1.095,00)</option>
+            <option value="geruisloze-vof-bv">Geruisloze inbreng VOF → BV (€ 1.745,00)</option>
+            <option value="spoed-holding">SPOED Holding + Werkmaatschappij (€ 2.850,00)</option>
+            <option value="spoed-bv">Spoed - Oprichting B.V. (€ 1.449,00)</option>
+            <option value="geruisloze-ez-holding-bv">Geruisloze inbreng Eenmanszaak → Holding + BV (€ 1.995,00)</option>
+            <option value="geruisloze-vof-2h-1bv">Geruisloze inbreng VOF → 2 holdings + 1 BV (€ 3.245,00)</option>
+          </select>
+        </div>
+
+        <div style="font-weight:600;margin:14px 0 8px;font-size:0.88rem;color:#0F1D3A;">Eventuele toeslagen</div>
+        <div id="adminExtrasWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-bottom:14px;"></div>
+
+        <div style="padding:12px;border:1px solid #E8EDF5;border-radius:8px;background:#FAFCFF;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:0.8rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:0.05em;">Prijsopbouw</div>
+            <div id="adminPricingTotal" style="font-size:1rem;font-weight:700;color:#0F1D3A;">€ 0,00</div>
+          </div>
+          <div id="adminPricingLines" style="font-size:0.84rem;color:#4A5568;line-height:1.5;">Kies eerst een dossier type.</div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:18px;">
+          <button type="button" onclick="closeAdminDossierModal()" style="flex:1;padding:11px;background:none;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;cursor:pointer;font-family:inherit;">Annuleren</button>
+          <button type="button" class="btn-primary" onclick="adminGoToStep2()" style="flex:2;padding:11px;">Volgende stap →</button>
+        </div>
       </div>
-      <div class="form-field" style="margin-top:12px;"><label>Gewenste naam BV *</label><input type="text" id="adminGewenstNaam" placeholder="Voorbeeld B.V." required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
-      <div class="form-field" style="margin-top:12px;"><label>Doel van de BV *</label><textarea id="adminDoel" placeholder="Wat is het doel?" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:70px;resize:vertical;"></textarea></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
-        <div class="form-field"><label>Aantal aandeelhouders *</label><input type="number" id="adminAandeelhouders" value="1" min="1" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
-        <div class="form-field"><label>Geplaatst kapitaal (€) *</label><input type="number" id="adminKapitaal" value="0.01" min="0.01" step="0.01" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
-      </div>
-      <div class="form-field" style="margin-top:12px;"><label>Opmerkingen</label><textarea id="adminOpmerkingen" placeholder="Eventuele bijzonderheden..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:60px;resize:vertical;"></textarea></div>
-      <div id="adminDossierFormError" style="display:none;margin-top:12px;padding:10px 12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;font-size:0.85rem;color:#B91C1C;"></div>
-      <div style="display:flex;gap:10px;margin-top:20px;">
-        <button type="button" onclick="closeAdminDossierModal()" style="flex:1;padding:11px;background:none;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;cursor:pointer;font-family:inherit;">Annuleren</button>
-        <button type="submit" class="btn-primary" style="flex:2;padding:11px;">Dossier aanmaken</button>
+
+      <div id="adminFormStep2" style="display:none;">
+        <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;">Namens reseller (optioneel)</div>
+        <div class="form-field" style="margin-bottom:16px;">
+          <label>Reseller e-mailadres</label>
+          <select id="adminOnBehalfOf" style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
+            <option value="">— Directe opdracht (geen reseller) —</option>
+          </select>
+        </div>
+        <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;margin-top:20px;">Klantgegevens</div>
+        <div class="form-field"><label>Bedrijfsnaam / Klant *</label><input type="text" id="adminClientName" placeholder="B.V. De Innovatie" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+        <div class="form-field" style="margin-top:12px;"><label>E-mailadres klant *</label><input type="email" id="adminClientEmail" placeholder="info@bedrijf.nl" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+        <div class="form-field" style="margin-top:12px;"><label>Telefoonnummer klant</label><input type="tel" id="adminClientPhone" placeholder="+31 6 12345678" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+        <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem;color:#0F1D3A;margin-top:20px;">Oprichtingsgegevens</div>
+        <div class="form-field"><label>Wat oprichten? *</label>
+          <select id="adminOprichtingType" required style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
+            <option value="">— Kies —</option>
+            <option value="bv">Gewone BV</option>
+            <option value="bv-holding">BV + Holding structuur</option>
+            <option value="bv-spoed">BV met spoed (24-48 uur)</option>
+            <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
+            <option value="advies">Wil graag advies</option>
+          </select>
+        </div>
+        <div class="form-field" style="margin-top:12px;"><label>Gewenste naam BV *</label><input type="text" id="adminGewenstNaam" placeholder="Voorbeeld B.V." required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+        <div class="form-field" style="margin-top:12px;"><label>Doel van de BV *</label><textarea id="adminDoel" placeholder="Wat is het doel?" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:70px;resize:vertical;"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+          <div class="form-field"><label>Aantal aandeelhouders *</label><input type="number" id="adminAandeelhouders" value="1" min="1" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+          <div class="form-field"><label>Geplaatst kapitaal (€) *</label><input type="number" id="adminKapitaal" value="0.01" min="0.01" step="0.01" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+        </div>
+        <div class="form-field" style="margin-top:12px;"><label>Opmerkingen</label><textarea id="adminOpmerkingen" placeholder="Eventuele bijzonderheden..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:60px;resize:vertical;"></textarea></div>
+        <div id="adminDossierFormError" style="display:none;margin-top:12px;padding:10px 12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;font-size:0.85rem;color:#B91C1C;"></div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="button" onclick="adminBackToStep1()" style="flex:1;padding:11px;background:none;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;cursor:pointer;font-family:inherit;">← Terug</button>
+          <button type="submit" class="btn-primary" style="flex:2;padding:11px;">Dossier aanmaken</button>
+        </div>
       </div>
     </form>
   </div>
@@ -714,6 +755,85 @@ let currentAdmin = null;
 let allAdmins = [];
 let dossierAssignments = {};
 let showArchived = false;
+
+const DOSSIER_BASE_PRICES = {
+  'bv': { label: 'Oprichting van een B.V.', amount: 540.00, oprichtingType: 'bv' },
+  'geruisloze-inbreng': { label: 'Geruisloze inbreng', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
+  'holding-aanbod': { label: 'Gelimiteerd aanbod: Holding + Werkmaatschappij', amount: 724.00, oprichtingType: 'bv-holding' },
+  'geruisloze-ez-bv': { label: 'Geruisloze inbreng Eenmanszaak -> BV', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
+  'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00, oprichtingType: 'eenmanszaak-omzetten' },
+  'spoed-holding': { label: 'SPOED Holding + Werkmaatschappij', amount: 2850.00, oprichtingType: 'bv-holding' },
+  'spoed-bv': { label: 'Spoed - Oprichting van een B.V.', amount: 1449.00, oprichtingType: 'bv-spoed' },
+  'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00, oprichtingType: 'bv-holding' },
+  'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00, oprichtingType: 'bv-holding' }
+};
+
+const DOSSIER_EXTRA_PRICES = {
+  'aandeelhoudersregister': { label: 'Nieuw aandeelhoudersregister', amount: 325.00 },
+  'ah-buiten-eu': { label: 'Aandeelhouder woonachtig buiten de EU', amount: 500.00 },
+  'persoon-buiten-nl-met-nl-bank': { label: 'Natuurlijk persoon buiten NL met NL-bankrekening', amount: 50.00 },
+  'persoon-buiten-nl-zonder-bank': { label: 'Natuurlijk persoon buiten NL zonder NL-bankrekening', amount: 250.00 },
+  'bestaande-holding': { label: 'Bestaande Holding als aandeelhouder', amount: 50.00 },
+  'compliance-tussenholdings': { label: 'Aanvullende compliancecontrole bij tussen holdings', amount: 50.00 },
+  'bedrijfsadres-anders': { label: 'Bedrijfsadres afwijkend van aandeelhouder', amount: 50.00 },
+  'tolk-30min': { label: 'Belafspraak met tolk (30 min)', amount: 250.00 },
+  'no-show-notaris': { label: 'Belafspraak notaris (no-show/onvolledig)', amount: 250.00 },
+  'engelse-vertaling': { label: 'Engelse vertaling statuten', amount: 125.00 },
+  'extra-aandeelhouder': { label: 'Extra aandeelhouder', amount: 50.00 },
+  'naamswijziging-concept': { label: 'Naamswijziging in conceptakten', amount: 250.00 },
+  'advocaten-statuten': { label: 'Advocaten statuten', amount: 250.00 },
+  'vastgoed-statuten': { label: 'Vastgoed statuten', amount: 250.00 },
+  'wtza-statuten': { label: 'WTZA statuten', amount: 250.00 }
+};
+
+function fmtCurrency(amount) {
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount || 0);
+}
+
+function adminBuildPricingSelection() {
+  const baseCode = document.getElementById('adminServiceType')?.value;
+  const base = DOSSIER_BASE_PRICES[baseCode];
+  if (!base) return null;
+  const extras = [...document.querySelectorAll('#adminExtrasWrap input[type="checkbox"]:checked')]
+    .map(cb => ({ code: cb.value, ...(DOSSIER_EXTRA_PRICES[cb.value] || {}) }))
+    .filter(x => x.label);
+  const baseLine = { code: baseCode, label: base.label, amount: base.amount };
+  const total = [baseLine, ...extras].reduce((sum, x) => sum + x.amount, 0);
+  return { base: baseLine, extras, total };
+}
+
+function adminUpdatePricingPreview() {
+  const selection = adminBuildPricingSelection();
+  const linesEl = document.getElementById('adminPricingLines');
+  const totalEl = document.getElementById('adminPricingTotal');
+  if (!linesEl || !totalEl) return;
+  if (!selection) {
+    linesEl.textContent = 'Kies eerst een dossier type.';
+    totalEl.textContent = fmtCurrency(0);
+    return;
+  }
+  const rows = [selection.base, ...selection.extras];
+  linesEl.innerHTML = rows.map(x => `<div style="display:flex;justify-content:space-between;gap:10px;"><span>${x.label}</span><strong>${fmtCurrency(x.amount)}</strong></div>`).join('');
+  totalEl.textContent = fmtCurrency(selection.total);
+}
+
+function adminGoToStep2() {
+  const selection = adminBuildPricingSelection();
+  if (!selection) return alert('Kies eerst een dossier type om verder te gaan.');
+  const baseCode = document.getElementById('adminServiceType').value;
+  const mappedType = DOSSIER_BASE_PRICES[baseCode]?.oprichtingType;
+  const oprSel = document.getElementById('adminOprichtingType');
+  if (mappedType && oprSel) oprSel.value = mappedType;
+  document.getElementById('adminFormStep1').style.display = 'none';
+  document.getElementById('adminFormStep2').style.display = '';
+  document.getElementById('adminStepIndicator').textContent = 'Stap 2 van 2 · Klant- en dossiergegevens';
+}
+
+function adminBackToStep1() {
+  document.getElementById('adminFormStep2').style.display = 'none';
+  document.getElementById('adminFormStep1').style.display = '';
+  document.getElementById('adminStepIndicator').textContent = 'Stap 1 van 2 · Samenstellen & prijs';
+}
 
 function mapRequestToDossier(req) {
   const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
@@ -742,7 +862,9 @@ function mapRequestToDossier(req) {
     kvk:         '',
     assignedTo:  dossierAssignments[req.id] || null,
     archivedAt:  req.archivedAt || null,
-    trashedAt:   req.trashedAt || null
+    trashedAt:   req.trashedAt || null,
+    pricing:     req.pricing || null,
+    pricingTotal: req.pricing?.total || 0
   };
 }
 
@@ -915,9 +1037,10 @@ function renderTable(id, rows, withActions = false) {
           </div>
         </div>
       </td>` : '';
+    const priceHint = d.pricingTotal ? `<div style="font-size:0.78rem;color:#2B6CB5;font-weight:600;margin-top:2px;">${fmtCurrency(d.pricingTotal)}</div>` : '';
     return `
     <tr class="dossier-row${isArchived ? ' row-archived' : ''}" data-idx="${idx}">
-      <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a></td>
+      <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a>${priceHint}</td>
       <td class="td-muted">${d.type}</td>
       <td class="td-muted">${d.partner}</td>
       <td><span class="badge badge-${d.statusKey}">${d.statusText}</span></td>
@@ -1947,7 +2070,8 @@ async function openRequestDrawer(requestId) {
     };
     document.getElementById('rfType').textContent = typeMap[request.oprichtingType] || request.oprichtingType || '–';
     document.getElementById('rfGewenstNaam').textContent = request.gewenstNaam || '–';
-    document.getElementById('rfDoel').textContent = request.doel || '–';
+    const priceText = request.pricing?.total ? `\n\nPrijsopbouw totaal: ${fmtCurrency(request.pricing.total)}` : '';
+    document.getElementById('rfDoel').textContent = (request.doel || '–') + priceText;
     document.getElementById('rfAandeelhouders').textContent = (request.aandeelhouders || 1) + ' persoon(en)';
     document.getElementById('rfKapitaal').textContent = '€ ' + (request.kapitaal || 0.01).toLocaleString('nl-NL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
@@ -2077,6 +2201,17 @@ document.addEventListener('DOMContentLoaded', () => {
 function openAdminDossierModal() {
   const modal = document.getElementById('adminDossierModal');
   modal.style.display = 'flex';
+  adminBackToStep1();
+  const extrasWrap = document.getElementById('adminExtrasWrap');
+  if (extrasWrap && !extrasWrap.dataset.ready) {
+    extrasWrap.innerHTML = Object.entries(DOSSIER_EXTRA_PRICES).map(([code, x]) => `
+      <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;color:#0F1D3A;cursor:pointer;">
+        <input type="checkbox" value="${code}" onchange="adminUpdatePricingPreview()" style="width:14px;height:14px;"> ${x.label} (${fmtCurrency(x.amount)})
+      </label>
+    `).join('');
+    extrasWrap.dataset.ready = '1';
+  }
+  adminUpdatePricingPreview();
   // Populate reseller dropdown
   const sel = document.getElementById('adminOnBehalfOf');
   // Clear existing except first
@@ -2094,7 +2229,11 @@ function openAdminDossierModal() {
 function closeAdminDossierModal() {
   document.getElementById('adminDossierModal').style.display = 'none';
   document.getElementById('adminNewDossierForm').reset();
-  document.getElementById('adminDossierFormError').style.display = 'none';
+  document.querySelectorAll('#adminExtrasWrap input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+  adminBackToStep1();
+  adminUpdatePricingPreview();
+  const errEl = document.getElementById('adminDossierFormError');
+  if (errEl) errEl.style.display = 'none';
 }
 
 document.getElementById('adminDossierModal').addEventListener('click', e => {
@@ -2105,6 +2244,13 @@ document.getElementById('adminNewDossierForm').addEventListener('submit', async 
   e.preventDefault();
   const errEl = document.getElementById('adminDossierFormError');
   errEl.style.display = 'none';
+  const pricing = adminBuildPricingSelection();
+  if (!pricing) {
+    errEl.textContent = 'Kies in stap 1 eerst een dossier type.';
+    errEl.style.display = 'block';
+    adminBackToStep1();
+    return;
+  }
   const body = {
     clientName:     document.getElementById('adminClientName').value,
     clientEmail:    document.getElementById('adminClientEmail').value,
@@ -2114,7 +2260,8 @@ document.getElementById('adminNewDossierForm').addEventListener('submit', async 
     doel:           document.getElementById('adminDoel').value,
     aandeelhouders: parseInt(document.getElementById('adminAandeelhouders').value) || 1,
     kapitaal:       parseFloat(document.getElementById('adminKapitaal').value) || 0.01,
-    opmerkingen:    document.getElementById('adminOpmerkingen').value
+    opmerkingen:    document.getElementById('adminOpmerkingen').value,
+    pricing
   };
   const onBehalf = document.getElementById('adminOnBehalfOf').value;
   if (onBehalf) body.onBehalfOf = onBehalf;
