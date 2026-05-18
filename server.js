@@ -8,6 +8,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+const DOSSIER_AUTO_TRASH_MS = 14 * 24 * 60 * 60 * 1000;
 
 // ── Supabase client (service role bypasses RLS) ────────────────────────────
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -49,6 +50,7 @@ function reqToRow(r) {
 
 function rowToReq(row) {
     if (!row) return null;
+    const lifecycle = getDossierLifecycle(row.activities || []);
     return {
         id:               row.id,
         resellerId:       row.reseller_id,
@@ -71,8 +73,45 @@ function rowToReq(row) {
         approvedBy:       row.approved_by,
         rejectionReason:  row.rejection_reason,
         statusUpdatedAt:  row.status_updated_at,
-        activities:       row.activities || []
+        activities:       row.activities || [],
+        archivedAt:       lifecycle.archivedAt,
+        trashedAt:        lifecycle.trashedAt
     };
+}
+
+function getDossierLifecycle(activities) {
+    let archivedAt = null;
+    let trashedAt = null;
+
+    for (const entry of activities || []) {
+        if (!entry || !entry.type) continue;
+        if (entry.type === 'archived') {
+            archivedAt = entry.timestamp || new Date().toISOString();
+            trashedAt = null;
+        }
+        if (entry.type === 'unarchived') {
+            archivedAt = null;
+            trashedAt = null;
+        }
+        if (entry.type === 'trashed') {
+            archivedAt = null;
+            trashedAt = entry.timestamp || new Date().toISOString();
+        }
+    }
+
+    if (archivedAt && !trashedAt) {
+        const autoTrashAt = new Date(new Date(archivedAt).getTime() + DOSSIER_AUTO_TRASH_MS).toISOString();
+        if (Date.now() >= new Date(autoTrashAt).getTime()) {
+            archivedAt = null;
+            trashedAt = autoTrashAt;
+        }
+    }
+
+    return { archivedAt, trashedAt };
+}
+
+function isDossierTrashed(row) {
+    return !!getDossierLifecycle(row?.activities || []).trashedAt;
 }
 
 function addActivity(request, type, message, author) {
@@ -383,7 +422,7 @@ app.get('/api/my-requests', requireLogin, async (req, res) => {
         .from('reseller_requests').select('*')
         .eq('reseller_id', req.session.user.email)
         .order('created_at', { ascending: false });
-    res.json((data || []).map(rowToReq));
+    res.json((data || []).map(rowToReq).filter(request => !request.trashedAt));
 });
 
 app.get('/api/reseller-requests', requireAdmin, async (req, res) => {
@@ -392,13 +431,15 @@ app.get('/api/reseller-requests', requireAdmin, async (req, res) => {
     if (status !== 'all') q = q.eq('status', status);
     const { data, error } = await q;
     if (error) return res.status(500).json({ supabase_error: error.message, code: error.code, hint: error.hint });
-    res.json((data || []).map(rowToReq));
+    const requests = (data || []).map(rowToReq);
+    res.json(status === 'all' ? requests : requests.filter(request => !request.trashedAt));
 });
 
 // Public dossier status (token-protected)
 app.get('/api/dossier-status/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
     if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet gevonden' });
     const { token } = req.query;
     if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
     const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak naar B.V.', 'advies':'Advies' };
@@ -433,6 +474,8 @@ app.get('/api/reseller-requests/:id', requireLogin, async (req, res) => {
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
     if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
         return res.status(403).json({ error: 'Geen toegang' });
+    if (req.session.user.type !== 'admin' && isDossierTrashed(row))
+        return res.status(404).json({ error: 'Niet gevonden' });
     res.json(rowToReq(row));
 });
 
@@ -501,6 +544,45 @@ app.patch('/api/reseller-requests/:id/reject', requireAdmin, async (req, res) =>
     res.json(request);
 });
 
+app.patch('/api/reseller-requests/:id/archive', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+
+    const request = rowToReq(row);
+    const actor = req.session.user.name || req.session.user.email;
+    addActivity(request, 'archived', `Dossier gearchiveerd door ${actor}`, actor);
+
+    const { error } = await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(request);
+});
+
+app.patch('/api/reseller-requests/:id/unarchive', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+
+    const request = rowToReq(row);
+    const actor = req.session.user.name || req.session.user.email;
+    addActivity(request, 'unarchived', `Dossier uit archief gehaald door ${actor}`, actor);
+
+    const { error } = await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(request);
+});
+
+app.patch('/api/reseller-requests/:id/trash', requireAdmin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+
+    const request = rowToReq(row);
+    const actor = req.session.user.name || req.session.user.email;
+    addActivity(request, 'trashed', `Dossier verplaatst naar prullenbak door ${actor}`, actor);
+
+    const { error } = await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(request);
+});
+
 app.delete('/api/reseller-requests/:id', requireAdmin, async (req, res) => {
     const { error } = await supabase.from('reseller_requests').delete().eq('id', req.params.id);
     if (error) return res.status(500).json({ error: error.message });
@@ -524,7 +606,7 @@ app.post('/api/admin/trash/export', requireAdmin, async (req, res) => {
     const vMap = {};
     (vragenlijsten || []).forEach(v => { vMap[v.case_id] = v; });
 
-    res.json((dossiers || []).map(d => ({
+    res.json((dossiers || []).filter(isDossierTrashed).map(d => ({
         dossier: d,
         vragenlijst: vMap[d.id] || null
     })));
@@ -668,6 +750,7 @@ app.get('/api/request-info/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
     if (!row || !['approved','vragenlijst','betaling','ident','notary','kvk','complete'].includes(row.status))
         return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
+    if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet gevonden of niet beschikbaar' });
     const { token } = req.query;
     if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
     res.json({ id: row.id, clientName: row.client_name, clientEmail: row.client_email, oprichtingType: row.oprichting_type, gewenstNaam: row.gewenst_naam, resellerName: row.reseller_name, resellerCompany: row.reseller_company });
@@ -680,6 +763,7 @@ app.post('/api/vragenlijst', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
     if (!row || !['approved','vragenlijst','betaling','notary','kvk','complete'].includes(row.status))
         return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
+    if (isDossierTrashed(row)) return res.status(404).json({ error: 'Opdracht niet beschikbaar' });
     if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
 
     const { token: _tok, ...formData } = req.body;
