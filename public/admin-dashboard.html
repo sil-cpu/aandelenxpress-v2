@@ -196,6 +196,10 @@
               <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
               Archief tonen
             </button>
+            <button id="trashNavBtn" class="archive-toggle-btn" onclick="showSection('prullenbak')" style="border-color:#FEB2B2;color:#C53030;">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              Prullenbak<span id="trashNavBadge" style="display:none;margin-left:5px;background:#C53030;color:white;font-size:0.7rem;font-weight:700;padding:1px 6px;border-radius:20px;">0</span>
+            </button>
             <button class="btn-primary" style="font-size:0.85rem;padding:7px 14px;" onclick="openAdminDossierModal()">
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nieuw dossier
             </button>
@@ -264,14 +268,21 @@
             <tbody id="allDossiers"></tbody>
           </table>
         </div>
+      </div>
 
-      <!-- PRULLENBAK (inside section-dossiers so nav doesn't hide it) -->
-      <div id="section-prullenbak" style="margin-top:32px;border-top:2px solid #FEB2B2;padding-top:24px;">
+      <!-- PRULLENBAK -->
+      <div class="dash-section" id="section-prullenbak">
         <div class="section-row mb-20">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <svg class="trash-header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-            <span class="section-heading" style="color:#C53030;">Prullenbak</span>
-            <span id="trashCount" style="background:#FED7D7;color:#C53030;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:20px;">0</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="archive-toggle-btn" onclick="showSection('dossiers')" style="padding:6px 10px;">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              Alle dossiers
+            </button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <svg class="trash-header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              <span class="section-heading" style="color:#C53030;">Prullenbak</span>
+              <span id="trashCount" style="background:#FED7D7;color:#C53030;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:20px;">0</span>
+            </div>
           </div>
           <div style="display:flex;gap:10px;">
             <button class="btn-trash-action btn-trash-download" onclick="downloadTrash()">
@@ -300,7 +311,6 @@
             <tbody id="trashTable"></tbody>
           </table>
         </div>
-      </div>
       </div>
 
       <!-- AANMELDINGEN -->
@@ -1073,7 +1083,7 @@ document.querySelectorAll(".dash-nav-item").forEach(item => {
 function showSection(s) {
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   document.getElementById("section-" + s).classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
@@ -1769,7 +1779,13 @@ function renderTrash() {
 
   const ids = Object.keys(trashedDossiers);
   countEl.textContent = ids.length;
-  section.style.display = ''; // always visible
+
+  // Update the nav button badge in the dossiers header
+  const navBadge = document.getElementById('trashNavBadge');
+  if (navBadge) {
+    navBadge.textContent = ids.length;
+    navBadge.style.display = ids.length ? 'inline' : 'none';
+  }
 
   if (!ids.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">De prullenbak is leeg. Dossiers worden hier automatisch geplaatst na 2 weken in het archief.</td></tr>';
