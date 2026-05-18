@@ -268,7 +268,7 @@
       </div>
 
       <!-- PRULLENBAK -->
-      <div class="dash-section" id="section-prullenbak" style="display:none;">
+      <div class="dash-section" id="section-prullenbak">
         <div class="section-row mb-20">
           <div style="display:flex;align-items:center;gap:10px;">
             <svg class="trash-header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -1770,9 +1770,12 @@ function renderTrash() {
 
   const ids = Object.keys(trashedDossiers);
   countEl.textContent = ids.length;
-  section.style.display = ids.length ? '' : 'none';
+  section.style.display = ''; // always visible
 
-  if (!ids.length) { tbody.innerHTML = ''; return; }
+  if (!ids.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">De prullenbak is leeg. Dossiers worden hier automatisch geplaatst na 2 weken in het archief.</td></tr>';
+    return;
+  }
 
   tbody.innerHTML = ids.map(id => {
     const d = allDossiersData.find(x => x.dossierNr === id);
