@@ -386,12 +386,6 @@ app.get('/api/my-requests', requireLogin, async (req, res) => {
     res.json((data || []).map(rowToReq));
 });
 
-// TEMP DEBUG – verwijder na testen
-app.get('/api/debug-requests', async (req, res) => {
-    const { data, error } = await supabase.from('reseller_requests').select('id, status, reseller_id');
-    res.json({ count: data ? data.length : null, error: error ? error.message : null, rows: data });
-});
-
 app.get('/api/reseller-requests', requireAdmin, async (req, res) => {
     const status = req.query.status || 'pending';
     let q = supabase.from('reseller_requests').select('*').order('created_at', { ascending: false });
@@ -515,15 +509,18 @@ app.get('/api/reseller-requests/:id/activities', requireLogin, async (req, res) 
     res.json(row.activities || []);
 });
 
-app.post('/api/reseller-requests/:id/activities', requireAdmin, async (req, res) => {
+app.post('/api/reseller-requests/:id/activities', requireLogin, async (req, res) => {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'Bericht is verplicht' });
 
-    const { data: row } = await supabase.from('reseller_requests').select('activities').eq('id', req.params.id).single();
+    const { data: row } = await supabase.from('reseller_requests').select('activities, reseller_id').eq('id', req.params.id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
-    const adminName = req.session.user.name || req.session.user.email;
-    const entry = { id: Date.now() + Math.random(), type: 'comment', message: message.trim(), author: adminName, timestamp: new Date().toISOString() };
+    if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
+        return res.status(403).json({ error: 'Geen toegang' });
+
+    const authorName = req.session.user.name || req.session.user.email;
+    const entry = { id: Date.now() + Math.random(), type: 'comment', message: message.trim(), author: authorName, timestamp: new Date().toISOString() };
     await supabase.from('reseller_requests').update({ activities: [...(row.activities || []), entry] }).eq('id', req.params.id);
     res.json(entry);
 });

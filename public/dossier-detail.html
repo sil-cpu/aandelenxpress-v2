@@ -314,7 +314,7 @@ function renderPage(d, role) {
   const partnerField = role === "admin"
     ? `<div class="detail-field"><label>Partner</label><div class="val">${d.partner}</div></div>` : "";
 
-  const accessSection = role === 'admin' ? `
+  const accessSection = `
     <div class="detail-card">
       <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Links &amp; Wachtwoord</div></div>
       <div class="detail-card-body">
@@ -338,21 +338,21 @@ function renderPage(d, role) {
             <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Toegangscode (status &amp; formulier)</div>
             <div id="dossierToken" style="font-family:monospace;font-size:1.1rem;font-weight:600;letter-spacing:3px;color:#1A3B70;">${d.accessToken || '—'}</div>
           </div>
-          <button onclick="resetDossierToken('${d.dossierNr}')" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;">Nieuw wachtwoord</button>
+          ${role === 'admin' ? `<button onclick="resetDossierToken('${d.dossierNr}')" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;">Nieuw wachtwoord</button>` : ''}
           <button onclick="copyToClipboard(document.getElementById('dossierToken').textContent)" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
         </div>
         <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de statuspagina + het wachtwoord. Het formulier (vragenlijst) is publiek toegankelijk via de link hierboven.</div>
       </div>
-    </div>` : '';
+    </div>`;
 
-  const composeBar = role === 'admin' ? `
+  const composeBar = `
     <div class="act-compose">
       <textarea id="actInput" placeholder="Opmerking toevoegen..." rows="2" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))postComment()"></textarea>
       <button class="act-send-btn" onclick="postComment()">
         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Sturen
       </button>
-    </div>` : '';
+    </div>`;
 
   document.getElementById("pageContent").innerHTML = `
     <a href="${role==='admin'?'admin-dashboard.html':'reseller-dashboard.html'}" class="back-btn">
