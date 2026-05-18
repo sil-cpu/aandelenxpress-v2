@@ -507,6 +507,43 @@ app.delete('/api/reseller-requests/:id', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
+// ── Prullenbak: export + bulk delete ──────────────────────────────────────
+app.post('/api/admin/trash/export', requireAdmin, async (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length)
+        return res.status(400).json({ error: 'Geen IDs opgegeven' });
+
+    const { data: dossiers, error: e1 } = await supabase
+        .from('reseller_requests').select('*').in('id', ids);
+    if (e1) return res.status(500).json({ error: e1.message });
+
+    const { data: vragenlijsten, error: e2 } = await supabase
+        .from('vragenlijsten').select('*').in('case_id', ids);
+    if (e2) return res.status(500).json({ error: e2.message });
+
+    const vMap = {};
+    (vragenlijsten || []).forEach(v => { vMap[v.case_id] = v; });
+
+    res.json((dossiers || []).map(d => ({
+        dossier: d,
+        vragenlijst: vMap[d.id] || null
+    })));
+});
+
+app.delete('/api/admin/trash/empty', requireAdmin, async (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length)
+        return res.status(400).json({ error: 'Geen IDs opgegeven' });
+
+    const { error: e1 } = await supabase.from('vragenlijsten').delete().in('case_id', ids);
+    if (e1) return res.status(500).json({ error: e1.message });
+
+    const { error: e2 } = await supabase.from('reseller_requests').delete().in('id', ids);
+    if (e2) return res.status(500).json({ error: e2.message });
+
+    res.json({ success: true, deleted: ids.length });
+});
+
 app.get('/api/reseller-requests/:id/activities', requireLogin, async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('id, reseller_id, activities').eq('id', req.params.id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });

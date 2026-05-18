@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="dashboard-shared.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
       .dossier-menu-wrap { position:relative; }
       .dossier-menu-btn { background:none;border:none;cursor:pointer;padding:5px 8px;border-radius:5px;color:#A0AEC0;display:flex;align-items:center;transition:background .15s,color .15s; }
@@ -23,6 +24,14 @@
       .archive-toggle-btn:hover { background:#F0F4FA;border-color:#CBD5E0; }
       .archive-toggle-btn.active { background:#FFF3CD;border-color:#F6C90E;color:#92700A; }
       tr.row-archived td { opacity:.55; }
+      .trash-section-info { font-size:0.85rem;color:#8A9BB5;margin:0 0 16px 0; }
+      .btn-trash-action { display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:0.85rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s; }
+      .btn-trash-download { background:#EBF8FF;border:1px solid #BEE3F8;color:#2B6CB0; }
+      .btn-trash-download:hover { background:#BEE3F8; }
+      .btn-trash-empty { background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030; }
+      .btn-trash-empty:hover { background:#FED7D7; }
+      #section-prullenbak { border-top:2px solid #FEB2B2;padding-top:24px; }
+      .trash-header-icon { width:18px;height:18px;color:#C53030; }
     </style>
 </head>
 <body>
@@ -254,6 +263,43 @@
               </tr>
             </thead>
             <tbody id="allDossiers"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PRULLENBAK -->
+      <div class="dash-section" id="section-prullenbak" style="display:none;">
+        <div class="section-row mb-20">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <svg class="trash-header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            <span class="section-heading" style="color:#C53030;">Prullenbak</span>
+            <span id="trashCount" style="background:#FED7D7;color:#C53030;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:20px;">0</span>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-trash-action btn-trash-download" onclick="downloadTrash()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Alles downloaden (.zip)
+            </button>
+            <button class="btn-trash-action btn-trash-empty" onclick="emptyTrash()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              Prullenbak legen
+            </button>
+          </div>
+        </div>
+        <p class="trash-section-info">Dossiers worden automatisch verplaatst naar de prullenbak na 2 weken in het archief. Download alle gegevens vóór het legen — dit verwijdert de dossiers <strong>definitief</strong> van de server.</p>
+        <div class="dash-card table-scroll-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Bedrijfsnaam</th>
+                <th>Type</th>
+                <th>Partner</th>
+                <th>Status</th>
+                <th>In prullenbak sinds</th>
+                <th>Dossier nr.</th>
+              </tr>
+            </thead>
+            <tbody id="trashTable"></tbody>
           </table>
         </div>
       </div>
@@ -658,8 +704,51 @@ let allDossiersData = [];
 let currentAdmin = null;
 let allAdmins = [];
 let dossierAssignments = {};
-let archivedSet = new Set(JSON.parse(localStorage.getItem('ax_archived_dossiers') || '[]'));
+let archiveTimestamps = {};  // { dossierNr: ISO8601 }
+let trashedDossiers   = {};  // { dossierNr: ISO8601 }
+let archivedSet = new Set(); // derived from archiveTimestamps
 let showArchived = false;
+
+function loadArchiveState() {
+  // One-time migration from old flat array format
+  const old = localStorage.getItem('ax_archived_dossiers');
+  if (old) {
+    const oldIds = JSON.parse(old);
+    const existing = JSON.parse(localStorage.getItem('ax_archive_timestamps') || '{}');
+    const now = new Date().toISOString();
+    oldIds.forEach(id => { if (!existing[id]) existing[id] = now; });
+    archiveTimestamps = existing;
+    localStorage.removeItem('ax_archived_dossiers');
+    saveArchiveState();
+  } else {
+    archiveTimestamps = JSON.parse(localStorage.getItem('ax_archive_timestamps') || '{}');
+  }
+  trashedDossiers = JSON.parse(localStorage.getItem('ax_trashed_dossiers') || '{}');
+  archivedSet = new Set(Object.keys(archiveTimestamps));
+}
+
+function saveArchiveState() {
+  localStorage.setItem('ax_archive_timestamps', JSON.stringify(archiveTimestamps));
+  localStorage.setItem('ax_trashed_dossiers',   JSON.stringify(trashedDossiers));
+  archivedSet = new Set(Object.keys(archiveTimestamps));
+}
+
+function checkAutoTrash() {
+  const TWO_WEEKS = 14 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let changed = false;
+  Object.entries(archiveTimestamps).forEach(([id, ts]) => {
+    if (now - new Date(ts).getTime() >= TWO_WEEKS) {
+      trashedDossiers[id] = new Date().toISOString();
+      delete archiveTimestamps[id];
+      changed = true;
+    }
+  });
+  if (changed) saveArchiveState();
+}
+
+loadArchiveState();
+checkAutoTrash();
 
 function mapRequestToDossier(req) {
   const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
@@ -1570,6 +1659,8 @@ function applyAllFilters() {
   // Start with all data
   let filtered = allDossiersData;
 
+  // Trashed dossiers are always hidden from the main table
+  filtered = filtered.filter(d => !trashedDossiers[d.dossierNr]);
   // Hide archived by default; show them when showArchived is true
   if (!showArchived) {
     filtered = filtered.filter(d => !archivedSet.has(d.dossierNr));
@@ -1601,6 +1692,7 @@ function applyAllFilters() {
   document.getElementById('dossiersTotal').textContent = filtered.length + ' dossiers';
   
   renderTable('allDossiers', filtered, true);
+  renderTrash();
 }
 
 function toggleArchived() {
@@ -1629,16 +1721,17 @@ function closeAllDossierMenus() {
 }
 
 function archiveDossier(nr) {
-  archivedSet.add(nr);
-  localStorage.setItem('ax_archived_dossiers', JSON.stringify([...archivedSet]));
+  archiveTimestamps[nr] = new Date().toISOString();
+  delete trashedDossiers[nr];
+  saveArchiveState();
   closeAllDossierMenus();
   applyAllFilters();
   adminSaveToast('Dossier gearchiveerd');
 }
 
 function unarchiveDossier(nr) {
-  archivedSet.delete(nr);
-  localStorage.setItem('ax_archived_dossiers', JSON.stringify([...archivedSet]));
+  delete archiveTimestamps[nr];
+  saveArchiveState();
   closeAllDossierMenus();
   applyAllFilters();
   adminSaveToast('Dossier gedearchiveerd');
@@ -1651,9 +1744,11 @@ function deleteDossier(nr) {
     .then(r => {
       if (r.ok) {
         allDossiersData = allDossiersData.filter(d => d.dossierNr !== nr);
-        archivedSet.delete(nr);
-        localStorage.setItem('ax_archived_dossiers', JSON.stringify([...archivedSet]));
+        delete archiveTimestamps[nr];
+        delete trashedDossiers[nr];
+        saveArchiveState();
         applyAllFilters();
+        renderTrash();
         adminSaveToast('Dossier verwijderd');
       } else {
         alert('Fout bij verwijderen');
@@ -1665,6 +1760,117 @@ function deleteDossier(nr) {
 function applyDossierFilter() {
   applyAllFilters();
 }
+
+// ── Trash ──────────────────────────────────────────────────────────────────
+function renderTrash() {
+  const section = document.getElementById('section-prullenbak');
+  const tbody   = document.getElementById('trashTable');
+  const countEl = document.getElementById('trashCount');
+  if (!section || !tbody || !countEl) return;
+
+  const ids = Object.keys(trashedDossiers);
+  countEl.textContent = ids.length;
+  section.style.display = ids.length ? '' : 'none';
+
+  if (!ids.length) { tbody.innerHTML = ''; return; }
+
+  tbody.innerHTML = ids.map(id => {
+    const d = allDossiersData.find(x => x.dossierNr === id);
+    const trashedAt = fmtDate(trashedDossiers[id]);
+    return `
+    <tr>
+      <td style="font-weight:500;">${d ? d.name : id}</td>
+      <td class="td-muted">${d ? d.type : '–'}</td>
+      <td class="td-muted">${d ? d.partner : '–'}</td>
+      <td>${d ? `<span class="badge badge-${d.statusKey}">${d.statusText}</span>` : '–'}</td>
+      <td class="td-muted">${trashedAt}</td>
+      <td class="td-muted" style="font-family:monospace;font-size:0.82rem;">${id}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function downloadTrash() {
+  const ids = Object.keys(trashedDossiers);
+  if (!ids.length) return alert('De prullenbak is leeg.');
+
+  try {
+    adminSaveToast('Export voorbereiden...');
+    const res = await fetch('/api/admin/trash/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids })
+    });
+    if (!res.ok) throw new Error('Serverfout bij exporteren');
+    const exportData = await res.json();
+
+    const zip = new JSZip();
+    for (const item of exportData) {
+      const { dossier, vragenlijst } = item;
+      const safeName = (dossier.gewenst_naam || dossier.client_name || dossier.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const folder = zip.folder(`${dossier.id}_${safeName}`);
+
+      // Full dossier record (no files here — files are in vragenlijst)
+      folder.file('dossier.json', JSON.stringify(dossier, null, 2));
+
+      if (vragenlijst) {
+        const { datacardBestandData, pepBestandData, datacardBestandNaam, pepBestandNaam, ...formData } = vragenlijst.data || {};
+        folder.file('vragenlijst.json', JSON.stringify({ caseId: vragenlijst.case_id, submittedAt: vragenlijst.submitted_at, antwoorden: formData }, null, 2));
+
+        // Decode and store uploaded files
+        if (datacardBestandData) {
+          const b64 = datacardBestandData.includes(',') ? datacardBestandData.split(',')[1] : datacardBestandData;
+          const ext = (datacardBestandNaam || 'datacard.pdf').split('.').pop();
+          folder.file(`datacard.${ext}`, b64, { base64: true });
+        }
+        if (pepBestandData) {
+          const b64 = pepBestandData.includes(',') ? pepBestandData.split(',')[1] : pepBestandData;
+          const ext = (pepBestandNaam || 'pep.pdf').split('.').pop();
+          folder.file(`pep.${ext}`, b64, { base64: true });
+        }
+      }
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `prullenbak-export-${new Date().toISOString().slice(0,10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    adminSaveToast('Download gestart');
+  } catch (err) {
+    alert('Fout bij downloaden: ' + err.message);
+  }
+}
+
+async function emptyTrash() {
+  const ids = Object.keys(trashedDossiers);
+  if (!ids.length) return alert('De prullenbak is al leeg.');
+  if (!confirm(`${ids.length} dossier(s) definitief van de server verwijderen?\n\nDit kan NIET ongedaan worden gemaakt.\nZorg dat je eerst de data hebt gedownload.`)) return;
+
+  try {
+    const res = await fetch('/api/admin/trash/empty', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return alert('Fout bij legen: ' + (err.error || 'Onbekende fout'));
+    }
+    allDossiersData = allDossiersData.filter(d => !trashedDossiers[d.dossierNr]);
+    trashedDossiers = {};
+    saveArchiveState();
+    applyAllFilters();
+    renderTrash();
+    adminSaveToast('Prullenbak geleegd');
+  } catch (err) {
+    alert('Verbindingsfout: ' + err.message);
+  }
+}
+
 
 // ────── RESELLER REQUESTS ──────────────────────────────────
 
