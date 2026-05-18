@@ -10,6 +10,10 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 // ── Supabase client (service role bypasses RLS) ────────────────────────────
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('FATAL: SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY zijn vereist. Stel deze in als environment variables.');
+    process.exit(1);
+}
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
