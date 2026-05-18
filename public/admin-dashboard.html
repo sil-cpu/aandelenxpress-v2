@@ -725,14 +725,37 @@ async function assignDossier(nr, adminName) {
   } catch(e) { console.error('assignDossier error:', e); }
 }
 
-const partners = [
-  { name:"Bakker Accountants",  city:"Amsterdam",  dossiers:89, color:"#1A3B70", contact:"Jan Bakker",     email:"j.bakker@bakker-acc.nl",   phone:"+31 20 555 0100", since:"2024-01", kvk:"11223344" },
-  { name:"Van der Berg & Co",   city:"Rotterdam",  dossiers:72, color:"#2A5BA0", contact:"Kees van Berg",  email:"k.vanberg@vdberg.nl",       phone:"+31 10 555 0200", since:"2024-03", kvk:"22334455" },
-  { name:"Dijkstra Partners",   city:"Utrecht",    dossiers:65, color:"#17518A", contact:"Els Dijkstra",   email:"e.dijkstra@dijkstra.nl",    phone:"+31 30 555 0300", since:"2024-02", kvk:"33445566" },
-  { name:"Smit & Assoc.",       city:"Den Haag",   dossiers:48, color:"#1D4477", contact:"Wim Smit",       email:"w.smit@smitassoc.nl",       phone:"+31 70 555 0400", since:"2024-06", kvk:"44556677" },
-  { name:"De Groot Financieel", city:"Eindhoven",  dossiers:31, color:"#1A3B70", contact:"Hans de Groot",  email:"h.degroot@degroot.nl",      phone:"+31 40 555 0500", since:"2025-01", kvk:"55667788" },
-  { name:"Jansen Advies",       city:"Groningen",  dossiers:19, color:"#2A5BA0", contact:"Marie Jansen",   email:"m.jansen@jansenadvies.nl",  phone:"+31 50 555 0600", since:"2025-04", kvk:"66778899" },
-];
+let partners = [];
+const PARTNER_COLORS = ["#1A3B70","#2A5BA0","#17518A","#1D4477","#0D3060","#2048A8","#153580","#0A2850"];
+
+async function loadPartners() {
+  try {
+    const [usersRes, reqRes] = await Promise.all([
+      fetch('/api/admin/users?type=reseller'),
+      fetch('/api/reseller-requests?status=all')
+    ]);
+    const users    = usersRes.ok ? await usersRes.json() : [];
+    const requests = reqRes.ok   ? await reqRes.json()   : [];
+    partners = users.map((u, i) => ({
+      name:     u.company || u.name,
+      contact:  u.name,
+      email:    u.email,
+      city:     '—',
+      phone:    '—',
+      kvk:      u.companyId || '—',
+      since:    '—',
+      dossiers: requests.filter(r => r.resellerId === u.email).length,
+      color:    PARTNER_COLORS[i % PARTNER_COLORS.length]
+    }));
+    partners.sort((a, b) => b.dossiers - a.dossiers);
+  } catch(e) {
+    console.error('Failed to load partners:', e);
+    partners = [];
+  }
+  document.getElementById('partnersTotal').textContent = partners.length + ' partner' + (partners.length !== 1 ? 's' : '');
+  renderPartners();
+  applyPartnerSearch();
+}
 
 const monthData = [
   { m:"Oct", v:28 }, { m:"Nov", v:35 }, { m:"Dec", v:22 },
@@ -783,10 +806,11 @@ function renderTable(id, rows) {
   }).join("");
 }
 function renderPartners() {
+  const maxD = Math.max(1, ...partners.map(p => p.dossiers));
   document.getElementById("partnerGrid").innerHTML = partners.map(p => {
     const initials = p.name.split(" ").map(w => w[0]).join("").slice(0,2);
-    const pct = Math.round(p.dossiers / 89 * 100);
-    return `<div class="partner-card" style="cursor:pointer;" onclick="location.href='partner-detail.html?name='+encodeURIComponent('${p.name}')">
+    const pct = Math.round(p.dossiers / maxD * 100);
+    return `<div class="partner-card" style="cursor:pointer;" onclick="location.href='partner-detail.html?email='+encodeURIComponent('${p.email}')">
       <div class="partner-card-header" style="background:${p.color};">${initials}</div>
       <div class="partner-card-body">
         <div class="partner-card-name">${p.name}</div>
@@ -807,8 +831,8 @@ function renderPartnersTable(data) {
     return;
   }
   tbody.innerHTML = data.map((p, idx) => `
-    <tr data-idx="${idx}" style="cursor:pointer;" onclick="location.href='partner-detail.html?name='+encodeURIComponent('${p.name}')">
-      <td><a href="partner-detail.html?name=${encodeURIComponent(p.name)}" class="row-link" onclick="event.stopPropagation()">${p.name}</a></td>
+    <tr data-idx="${idx}" style="cursor:pointer;" onclick="location.href='partner-detail.html?email='+encodeURIComponent('${p.email}')">
+      <td><a href="partner-detail.html?email=${encodeURIComponent(p.email)}" class="row-link" onclick="event.stopPropagation()">${p.name}</a></td>
       <td class="td-muted">${p.city}</td>
       <td class="td-muted">${p.contact || '–'}</td>
       <td class="td-muted" style="font-weight:500;">${p.dossiers}</td>
@@ -1378,12 +1402,12 @@ function searchPartners(data) {
   const searchTerm = document.getElementById('partnerSearch')?.value.toLowerCase() || '';
   if (!searchTerm) return data;
   
-  return data.filter(p => 
-    p.name.toLowerCase().includes(searchTerm) ||
-    p.city.toLowerCase().includes(searchTerm) ||
-    p.contact.toLowerCase().includes(searchTerm) ||
-    p.email.toLowerCase().includes(searchTerm) ||
-    p.phone.toLowerCase().includes(searchTerm)
+  return data.filter(p =>
+    (p.name    || '').toLowerCase().includes(searchTerm) ||
+    (p.city    || '').toLowerCase().includes(searchTerm) ||
+    (p.contact || '').toLowerCase().includes(searchTerm) ||
+    (p.email   || '').toLowerCase().includes(searchTerm) ||
+    (p.phone   || '').toLowerCase().includes(searchTerm)
   );
 }
 
@@ -1799,7 +1823,7 @@ document.getElementById('adminNewDossierForm').addEventListener('submit', async 
 loadUser();
 loadDossiers();
 loadAdmins();
-renderPartnersTable(partners);
+loadPartners();
 loadPendingBadge();
 loadResellerRequests();
 </script>
