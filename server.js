@@ -382,6 +382,12 @@ app.get('/api/my-requests', requireLogin, async (req, res) => {
     res.json((data || []).map(rowToReq));
 });
 
+// TEMP DEBUG – verwijder na testen
+app.get('/api/debug-requests', async (req, res) => {
+    const { data, error } = await supabase.from('reseller_requests').select('id, status, reseller_id');
+    res.json({ count: data ? data.length : null, error: error ? error.message : null, rows: data });
+});
+
 app.get('/api/reseller-requests', requireAdmin, async (req, res) => {
     const status = req.query.status || 'pending';
     let q = supabase.from('reseller_requests').select('*').order('created_at', { ascending: false });
