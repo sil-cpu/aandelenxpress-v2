@@ -918,7 +918,7 @@ function renderTable(id, rows, withActions = false) {
             <button onclick="location.href='dossier-detail.html?nr=${d.dossierNr}'">Dossier bekijken</button>
             <button onclick="${isArchived ? `unarchiveDossier('${d.dossierNr}')` : `archiveDossier('${d.dossierNr}')`}">${isArchived ? 'Dearchiveren' : 'Dossier archiveren'}</button>
             <hr/>
-            <button class="danger" onclick="deleteDossier('${d.dossierNr}')">Dossier verwijderen</button>
+            <button class="danger" onclick="deleteDossier('${d.dossierNr}')">Naar prullenbak</button>
           </div>
         </div>
       </td>` : '';
@@ -1748,22 +1748,12 @@ function unarchiveDossier(nr) {
 
 function deleteDossier(nr) {
   closeAllDossierMenus();
-  if (!confirm('Dossier definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
-  fetch(`/api/reseller-requests/${encodeURIComponent(nr)}`, { method: 'DELETE' })
-    .then(r => {
-      if (r.ok) {
-        allDossiersData = allDossiersData.filter(d => d.dossierNr !== nr);
-        delete archiveTimestamps[nr];
-        delete trashedDossiers[nr];
-        saveArchiveState();
-        applyAllFilters();
-        renderTrash();
-        adminSaveToast('Dossier verwijderd');
-      } else {
-        alert('Fout bij verwijderen');
-      }
-    })
-    .catch(() => alert('Verbindingsfout bij verwijderen'));
+  trashedDossiers[nr] = new Date().toISOString();
+  delete archiveTimestamps[nr];
+  saveArchiveState();
+  applyAllFilters();
+  renderTrash();
+  adminSaveToast('Dossier verplaatst naar prullenbak');
 }
 
 function applyDossierFilter() {
