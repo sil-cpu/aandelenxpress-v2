@@ -9,6 +9,21 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="dashboard-shared.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+      .dossier-menu-wrap { position:relative; }
+      .dossier-menu-btn { background:none;border:none;cursor:pointer;padding:5px 8px;border-radius:5px;color:#A0AEC0;display:flex;align-items:center;transition:background .15s,color .15s; }
+      .dossier-menu-btn:hover { background:#F0F4FA;color:#1A3B70; }
+      .dossier-dropdown { display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:200;background:white;border:1px solid #E8EDF5;border-radius:8px;box-shadow:0 6px 24px rgba(15,29,58,.12);min-width:190px;padding:4px 0;white-space:nowrap; }
+      .dossier-dropdown button { display:block;width:100%;text-align:left;padding:10px 16px;background:none;border:none;cursor:pointer;font-size:0.875rem;color:#0F1D3A;font-family:inherit;transition:background .1s; }
+      .dossier-dropdown button:hover { background:#F7FAFC; }
+      .dossier-dropdown button.danger { color:#C53030; }
+      .dossier-dropdown button.danger:hover { background:#FFF5F5; }
+      .dossier-dropdown hr { margin:4px 0;border:none;border-top:1px solid #E8EDF5; }
+      .archive-toggle-btn { display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #E8EDF5;border-radius:6px;background:white;font-size:0.82rem;font-weight:500;color:#4A5568;cursor:pointer;transition:all .15s;font-family:inherit; }
+      .archive-toggle-btn:hover { background:#F0F4FA;border-color:#CBD5E0; }
+      .archive-toggle-btn.active { background:#FFF3CD;border-color:#F6C90E;color:#92700A; }
+      tr.row-archived td { opacity:.55; }
+    </style>
 </head>
 <body>
 <div class="dash-wrap">
@@ -167,8 +182,12 @@
       <div class="dash-section" id="section-dossiers">
         <div class="section-row mb-20">
           <span class="section-heading">Alle dossiers</span>
-          <div style="display:flex;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
             <span class="text-muted text-sm" id="dossiersTotal">Laden...</span>
+            <button id="archiveToggleBtn" class="archive-toggle-btn" onclick="toggleArchived()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+              Archief tonen
+            </button>
             <button class="btn-primary" style="font-size:0.85rem;padding:7px 14px;" onclick="openAdminDossierModal()">
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nieuw dossier
             </button>
@@ -231,6 +250,7 @@
                 <th class="sortable" onclick="setSortColumn('kvk')">KvK <span class="sort-indicator" id="sort-kvk"></span></th>
                 <th class="sortable" onclick="setSortColumn('contact')">Contact <span class="sort-indicator" id="sort-contact"></span></th>
                 <th class="sortable" onclick="setSortColumn('assigned')">Toegewezen aan <span class="sort-indicator" id="sort-assigned"></span></th>
+                <th style="width:44px;"></th>
               </tr>
             </thead>
             <tbody id="allDossiers"></tbody>
@@ -638,6 +658,8 @@ let allDossiersData = [];
 let currentAdmin = null;
 let allAdmins = [];
 let dossierAssignments = {};
+let archivedSet = new Set(JSON.parse(localStorage.getItem('ax_archived_dossiers') || '[]'));
+let showArchived = false;
 
 function mapRequestToDossier(req) {
   const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
@@ -686,7 +708,7 @@ async function loadDossiers() {
   const stat = document.getElementById('statTotalDossiers');
   if (stat) stat.textContent = allDossiersData.length;
   renderTable('recentDossiers', allDossiersData.slice(0,5));
-  renderTable('allDossiers', sortDossiers(allDossiersData));
+  applyAllFilters();
   updateSortIndicators();
   initRequestsChart();
 }
@@ -775,19 +797,35 @@ function copyToClipboard(text) {
   });
 }
 
-function renderTable(id, rows) {
+function renderTable(id, rows, withActions = false) {
   const tbody = document.getElementById(id);
   if (!tbody) return;
+  const colspan = withActions ? 9 : 8;
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#8A9BB5;">Geen dossiers gevonden</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${colspan}" style="padding:32px;text-align:center;color:#8A9BB5;">Geen dossiers gevonden</td></tr>`;
     return;
   }
   tbody.innerHTML = rows.map((d, idx) => {
     const adminOptions = allAdmins.map(a =>
       `<option value="${a.name}" ${d.assignedTo === a.name ? 'selected' : ''}>${a.name}</option>`
     ).join('');
+    const isArchived = archivedSet.has(d.dossierNr);
+    const actionsCell = withActions ? `
+      <td onclick="event.stopPropagation()" style="width:44px;">
+        <div class="dossier-menu-wrap">
+          <button class="dossier-menu-btn" onclick="openDossierMenu('${d.dossierNr}', event)" title="Acties">
+            <svg width="4" height="16" viewBox="0 0 4 16" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/></svg>
+          </button>
+          <div id="menu-${d.dossierNr}" class="dossier-dropdown">
+            <button onclick="location.href='dossier-detail.html?nr=${d.dossierNr}'">Dossier bekijken</button>
+            <button onclick="${isArchived ? `unarchiveDossier('${d.dossierNr}')` : `archiveDossier('${d.dossierNr}')`}">${isArchived ? 'Dearchiveren' : 'Dossier archiveren'}</button>
+            <hr/>
+            <button class="danger" onclick="deleteDossier('${d.dossierNr}')">Dossier verwijderen</button>
+          </div>
+        </div>
+      </td>` : '';
     return `
-    <tr class="dossier-row" data-idx="${idx}">
+    <tr class="dossier-row${isArchived ? ' row-archived' : ''}" data-idx="${idx}">
       <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a></td>
       <td class="td-muted">${d.type}</td>
       <td class="td-muted">${d.partner}</td>
@@ -801,13 +839,16 @@ function renderTable(id, rows) {
           ${adminOptions}
         </select>
       </td>
+      ${actionsCell}
     </tr>
   `;
   }).join("");
 }
 function renderPartners() {
+  const partnerGrid = document.getElementById("partnerGrid");
+  if (!partnerGrid) return;
   const maxD = Math.max(1, ...partners.map(p => p.dossiers));
-  document.getElementById("partnerGrid").innerHTML = partners.map(p => {
+  partnerGrid.innerHTML = partners.map(p => {
     const initials = p.name.split(" ").map(w => w[0]).join("").slice(0,2);
     const pct = Math.round(p.dossiers / maxD * 100);
     return `<div class="partner-card" style="cursor:pointer;" onclick="location.href='partner-detail.html?email='+encodeURIComponent('${p.email}')">
@@ -1528,7 +1569,12 @@ function applyAllFilters() {
   
   // Start with all data
   let filtered = allDossiersData;
-  
+
+  // Hide archived by default; show them when showArchived is true
+  if (!showArchived) {
+    filtered = filtered.filter(d => !archivedSet.has(d.dossierNr));
+  }
+
   // Apply all filters
   if (assignedFilter === '__mine__') {
     filtered = filtered.filter(d => d.assignedTo === (currentAdmin && currentAdmin.name));
@@ -1554,7 +1600,66 @@ function applyAllFilters() {
   // Update total display
   document.getElementById('dossiersTotal').textContent = filtered.length + ' dossiers';
   
-  renderTable('allDossiers', filtered);
+  renderTable('allDossiers', filtered, true);
+}
+
+function toggleArchived() {
+  showArchived = !showArchived;
+  const btn = document.getElementById('archiveToggleBtn');
+  if (btn) {
+    btn.textContent = '';
+    btn.innerHTML = showArchived
+      ? '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Archief verbergen'
+      : '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Archief tonen';
+    btn.classList.toggle('active', showArchived);
+  }
+  applyAllFilters();
+}
+
+function openDossierMenu(nr, e) {
+  e.stopPropagation();
+  const menu = document.getElementById('menu-' + nr);
+  const isOpen = menu && menu.style.display === 'block';
+  closeAllDossierMenus();
+  if (menu && !isOpen) menu.style.display = 'block';
+}
+
+function closeAllDossierMenus() {
+  document.querySelectorAll('.dossier-dropdown').forEach(m => m.style.display = 'none');
+}
+
+function archiveDossier(nr) {
+  archivedSet.add(nr);
+  localStorage.setItem('ax_archived_dossiers', JSON.stringify([...archivedSet]));
+  closeAllDossierMenus();
+  applyAllFilters();
+  adminSaveToast('Dossier gearchiveerd');
+}
+
+function unarchiveDossier(nr) {
+  archivedSet.delete(nr);
+  localStorage.setItem('ax_archived_dossiers', JSON.stringify([...archivedSet]));
+  closeAllDossierMenus();
+  applyAllFilters();
+  adminSaveToast('Dossier gedearchiveerd');
+}
+
+function deleteDossier(nr) {
+  closeAllDossierMenus();
+  if (!confirm('Dossier definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  fetch(`/api/reseller-requests/${encodeURIComponent(nr)}`, { method: 'DELETE' })
+    .then(r => {
+      if (r.ok) {
+        allDossiersData = allDossiersData.filter(d => d.dossierNr !== nr);
+        archivedSet.delete(nr);
+        localStorage.setItem('ax_archived_dossiers', JSON.stringify([...archivedSet]));
+        applyAllFilters();
+        adminSaveToast('Dossier verwijderd');
+      } else {
+        alert('Fout bij verwijderen');
+      }
+    })
+    .catch(() => alert('Verbindingsfout bij verwijderen'));
 }
 
 function applyDossierFilter() {
@@ -1826,6 +1931,7 @@ loadAdmins();
 loadPartners();
 loadPendingBadge();
 loadResellerRequests();
+document.addEventListener('click', closeAllDossierMenus);
 </script>
 </body>
 </html>

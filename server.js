@@ -501,6 +501,12 @@ app.patch('/api/reseller-requests/:id/reject', requireAdmin, async (req, res) =>
     res.json(request);
 });
 
+app.delete('/api/reseller-requests/:id', requireAdmin, async (req, res) => {
+    const { error } = await supabase.from('reseller_requests').delete().eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+});
+
 app.get('/api/reseller-requests/:id/activities', requireLogin, async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('id, reseller_id, activities').eq('id', req.params.id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
