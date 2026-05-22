@@ -675,7 +675,10 @@
                     <div id="formErrorMsg" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:12px 14px;font-size:.88rem;color:#C53030;margin-bottom:16px;">
                         ⚠️ Vul alle verplichte velden in voordat u het formulier indient.
                     </div>
-                    <button type="submit" class="btn-submit" id="btnSubmit">Formulier indienen →</button>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button type="button" class="btn-submit" id="btnSaveDraft" onclick="saveDraft()" style="background:#F0F4FF;color:#1A3B70;border:1px solid #C3DAFE;flex:1;min-width:220px;">Tussendoor opslaan</button>
+                        <button type="submit" class="btn-submit" id="btnSubmit" style="flex:2;min-width:240px;">Formulier indienen →</button>
+                    </div>
                 </div>
             </div>
 
@@ -699,6 +702,7 @@ function showError(title, sub) {
 
 // ── Password gate + load dossier ─────────────
 let verifiedToken = null;
+let existingSubmissionData = null;
 
 const params = new URLSearchParams(window.location.search);
 const caseId = params.get('nr');
@@ -783,6 +787,128 @@ function populateForm(data) {
     showState('stateForm');
     document.getElementById('contactSidebar').style.display = 'block';
     updateOnlineStatus();
+    loadSavedForm();
+}
+
+function syncOptionUi() {
+    document.querySelectorAll('.option-item').forEach(li => {
+        const input = li.querySelector('input');
+        if (!input) return;
+        li.classList.toggle('selected', !!input.checked);
+    });
+}
+
+function applySavedFormValues(saved) {
+    if (!saved) return;
+    const form = document.getElementById('vragenlijstForm');
+    form.querySelectorAll('input, textarea, select').forEach(el => {
+        if (!el.name) return;
+        const value = saved[el.name];
+        if (value === undefined || value === null) return;
+        if (el.type === 'radio') el.checked = String(value) === el.value;
+        else if (el.type === 'checkbox') el.checked = !!value;
+        else if (el.type !== 'file') el.value = String(value);
+    });
+
+    const fileMap = {
+        huurovereenkomst: ['huurovereenkomstZone', 'huurovereenkomstSelected'],
+        kvkUittreksel: ['kvkUittrekselZone', 'kvkUittrekselSelected'],
+        verzekering: ['verzekeringZone', 'verzekeringSelected'],
+        ontvangstIntent: ['ontvangstIntentZone', 'ontvangstIntentSelected'],
+        intentverklaring: ['intentverklaringZone', 'intentverklaringSelected'],
+        bijlageIntent: ['bijlageIntentZone', 'bijlageIntentSelected'],
+        interim: ['interimZone', 'interimSelected'],
+        uboUittreksel: ['uboZone', 'uboSelected'],
+        personeelsplan: ['personeelsplanZone', 'personeelsplanSelected'],
+        datacardBestand: ['datacardZone', 'datacardSelected'],
+        pepBestand: ['pepZone', 'pepSelected']
+    };
+    Object.entries(fileMap).forEach(([key, [zoneId, selectedId]]) => {
+        const item = saved[key];
+        if (!item?.naam) return;
+        document.getElementById(zoneId)?.classList.add('has-file');
+        const label = document.getElementById(selectedId);
+        if (label) {
+            label.textContent = `✓ ${item.naam}`;
+            label.style.display = 'block';
+        }
+    });
+
+    checkTaal();
+    syncOptionUi();
+}
+
+async function loadSavedForm() {
+    if (!caseId || !verifiedToken) return;
+    try {
+        const r = await fetch(`/api/vragenlijst/${encodeURIComponent(caseId)}?token=${encodeURIComponent(verifiedToken)}`);
+        if (!r.ok) return;
+        const data = await r.json();
+        existingSubmissionData = data.data || null;
+        applySavedFormValues(existingSubmissionData);
+    } catch (_) {}
+}
+
+function collectDraftData() {
+    const form = document.getElementById('vragenlijstForm');
+    const data = {};
+    form.querySelectorAll('input, textarea, select').forEach(el => {
+        if (!el.name || el.type === 'file') return;
+        if (el.type === 'radio') {
+            if (el.checked) data[el.name] = el.value;
+        } else if (el.type === 'checkbox') {
+            data[el.name] = el.checked;
+        } else {
+            data[el.name] = el.value;
+        }
+    });
+    return data;
+}
+
+async function buildFilePayload(inputId, key) {
+    const file = document.getElementById(inputId).files[0];
+    if (file) return { naam: file.name, data: await fileToBase64(file) };
+    return existingSubmissionData?.[key] || null;
+}
+
+async function saveDraft() {
+    if (!caseId || !verifiedToken) return;
+    const btn = document.getElementById('btnSaveDraft');
+    btn.disabled = true;
+    btn.textContent = 'Opslaan...';
+    try {
+        const draftData = collectDraftData();
+        const fileSpecs = [
+            ['huurovereenkomstFile','huurovereenkomst'],
+            ['kvkUittrekselFile','kvkUittreksel'],
+            ['verzekeringFile','verzekering'],
+            ['ontvangstIntentFile','ontvangstIntent'],
+            ['intentverklaringFile','intentverklaring'],
+            ['bijlageIntentFile','bijlageIntent'],
+            ['interimFile','interim'],
+            ['uboFile','uboUittreksel'],
+            ['personeelsplanFile','personeelsplan'],
+            ['datacardFile','datacardBestand'],
+            ['pepFile','pepBestand']
+        ];
+        for (const [inputId, key] of fileSpecs) {
+            draftData[key] = await buildFilePayload(inputId, key);
+        }
+
+        const r = await fetch('/api/vragenlijst/save', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ caseId, token: verifiedToken, draftData })
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Opslaan mislukt');
+        existingSubmissionData = { ...(existingSubmissionData || {}), ...draftData };
+        alert('Concept opgeslagen. U kunt later verdergaan via dezelfde link.');
+    } catch (e) {
+        alert('Kon concept niet opslaan: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Tussendoor opslaan';
+    }
 }
 
 // ── Radio / checkbox helpers ──────────────────
@@ -918,7 +1044,19 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
         ['pepFile','fieldPep'],
     ];
     requiredFiles.forEach(([inputId, fieldId]) => {
-        if (!document.getElementById(inputId).files[0]) {
+        const keyMap = {
+            huurovereenkomstFile: 'huurovereenkomst',
+            kvkUittrekselFile: 'kvkUittreksel',
+            verzekeringFile: 'verzekering',
+            ontvangstIntentFile: 'ontvangstIntent',
+            intentverklaringFile: 'intentverklaring',
+            bijlageIntentFile: 'bijlageIntent',
+            interimFile: 'interim',
+            datacardFile: 'datacardBestand',
+            pepFile: 'pepBestand'
+        };
+        const key = keyMap[inputId];
+        if (!document.getElementById(inputId).files[0] && !existingSubmissionData?.[key]) {
             document.getElementById(fieldId).classList.add('field-error');
             valid = false;
         }
@@ -940,24 +1078,19 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
     btn.textContent = 'Bezig met indienen…';
 
     try {
-        // Convert required files
-        const [huurB64, kvkB64, verzB64, ontvangstB64, intentB64, bijlageB64, interimB64, datacardB64, pepB64] = await Promise.all([
-            fileToBase64(document.getElementById('huurovereenkomstFile').files[0]),
-            fileToBase64(document.getElementById('kvkUittrekselFile').files[0]),
-            fileToBase64(document.getElementById('verzekeringFile').files[0]),
-            fileToBase64(document.getElementById('ontvangstIntentFile').files[0]),
-            fileToBase64(document.getElementById('intentverklaringFile').files[0]),
-            fileToBase64(document.getElementById('bijlageIntentFile').files[0]),
-            fileToBase64(document.getElementById('interimFile').files[0]),
-            fileToBase64(document.getElementById('datacardFile').files[0]),
-            fileToBase64(document.getElementById('pepFile').files[0]),
+        const [huurPayload, kvkPayload, verzPayload, ontvangstPayload, intentPayload, bijlagePayload, interimPayload, datacardPayload, pepPayload, uboPayload, planPayload] = await Promise.all([
+            buildFilePayload('huurovereenkomstFile', 'huurovereenkomst'),
+            buildFilePayload('kvkUittrekselFile', 'kvkUittreksel'),
+            buildFilePayload('verzekeringFile', 'verzekering'),
+            buildFilePayload('ontvangstIntentFile', 'ontvangstIntent'),
+            buildFilePayload('intentverklaringFile', 'intentverklaring'),
+            buildFilePayload('bijlageIntentFile', 'bijlageIntent'),
+            buildFilePayload('interimFile', 'interim'),
+            buildFilePayload('datacardFile', 'datacardBestand'),
+            buildFilePayload('pepFile', 'pepBestand'),
+            buildFilePayload('uboFile', 'uboUittreksel'),
+            buildFilePayload('personeelsplanFile', 'personeelsplan'),
         ]);
-
-        // Optional files
-        const uboFileEl = document.getElementById('uboFile').files[0];
-        const planFileEl = document.getElementById('personeelsplanFile').files[0];
-        const uboB64   = uboFileEl  ? await fileToBase64(uboFileEl)  : null;
-        const planB64  = planFileEl ? await fileToBase64(planFileEl) : null;
 
         const kanalen = ['Nationaal','Internationaal','B2B','Retail','Anders']
             .filter((_,i) => ['kanaalNationaal','kanaalInternationaal','kanaalB2b','kanaalRetail','kanaalAnders'][i] && f.querySelector('[name="' + ['kanaalNationaal','kanaalInternationaal','kanaalB2b','kanaalRetail','kanaalAnders'][i] + '"]')?.checked)
@@ -993,17 +1126,17 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
             personeelFulltime:      f.querySelector('[name="personeelFulltime"]').value || '0',
             personeelParttime:      f.querySelector('[name="personeelParttime"]').value || '0',
             opmerkingen:            f.querySelector('[name="opmerkingen"]').value.trim(),
-            huurovereenkomst:       { naam: document.getElementById('huurovereenkomstFile').files[0].name, data: huurB64 },
-            kvkUittreksel:          { naam: document.getElementById('kvkUittrekselFile').files[0].name,    data: kvkB64 },
-            verzekering:            { naam: document.getElementById('verzekeringFile').files[0].name,      data: verzB64 },
-            ontvangstIntent:        { naam: document.getElementById('ontvangstIntentFile').files[0].name, data: ontvangstB64 },
-            intentverklaring:       { naam: document.getElementById('intentverklaringFile').files[0].name, data: intentB64 },
-            bijlageIntent:          { naam: document.getElementById('bijlageIntentFile').files[0].name,    data: bijlageB64 },
-            interim:                { naam: document.getElementById('interimFile').files[0].name,          data: interimB64 },
-            datacardBestand:        { naam: document.getElementById('datacardFile').files[0].name,         data: datacardB64 },
-            pepBestand:             { naam: document.getElementById('pepFile').files[0].name,              data: pepB64 },
-            uboUittreksel:          uboFileEl  ? { naam: uboFileEl.name,  data: uboB64  } : null,
-            personeelsplan:         planFileEl ? { naam: planFileEl.name, data: planB64 } : null,
+            huurovereenkomst:       huurPayload,
+            kvkUittreksel:          kvkPayload,
+            verzekering:            verzPayload,
+            ontvangstIntent:        ontvangstPayload,
+            intentverklaring:       intentPayload,
+            bijlageIntent:          bijlagePayload,
+            interim:                interimPayload,
+            datacardBestand:        datacardPayload,
+            pepBestand:             pepPayload,
+            uboUittreksel:          uboPayload,
+            personeelsplan:         planPayload,
         };
 
         const res = await fetch('/api/vragenlijst', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });

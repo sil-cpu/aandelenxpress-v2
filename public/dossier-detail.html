@@ -282,6 +282,8 @@
       <div style="text-align:center;padding:32px;color:#94A3B8;">Laden…</div>
     </div>
     <div class="em-footer">
+      <button class="em-cancel" id="vlRejectBtn" style="display:none;background:#FFF5F5;color:#C53030;border:1px solid #FECACA;" onclick="toggleRejectFeedback()">Afkeuren</button>
+      <button class="em-send" id="vlApproveBtn" style="display:none;" onclick="reviewVragenlijst('approve')">Goedkeuren</button>
       <button class="em-cancel" onclick="closeVragenlijstModal()">Sluiten</button>
     </div>
   </div>
@@ -615,8 +617,9 @@ function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
   return stages.map((s,i) => {
     const done = allDone || i < cur;
     const active = !allDone && i === cur;
+    const reviewStatus = currentVragenlijstData?.reviewStatus || currentVragenlijstData?.data?.reviewStatus || 'pending';
     const vlBtn = (i === 1 && hasVragenlijst && role === 'admin')
-      ? `<button onclick="openVragenlijstModal()" style="margin-top:6px;padding:3px 9px;background:#EEF4FF;color:#2B6CB5;border:1px solid #C3DAFE;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#x1F4CB; Bekijk vragenlijst</button>`
+      ? `<button onclick="openVragenlijstModal()" style="margin-top:6px;padding:3px 9px;background:#EEF4FF;color:#2B6CB5;border:1px solid #C3DAFE;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#x1F4CB; ${reviewStatus === 'approved' ? 'Vragenlijst beoordeeld' : 'Vragenlijst beoordelen'}</button>`
       : '';
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;">
       ${i > 0 ? `<div style="position:absolute;top:14px;right:50%;width:100%;height:2px;background:${done||active?'#1A3B70':'#E8EDF5'};z-index:0;"></div>` : ''}
@@ -1336,8 +1339,55 @@ async function openVragenlijstModal() {
 function closeVragenlijstModal() {
   document.getElementById('vlModal').classList.remove('open');
 }
+
+function toggleRejectFeedback() {
+  const wrap = document.getElementById('vlRejectFeedbackWrap');
+  if (!wrap) return;
+  if (wrap.style.display === 'none') {
+    wrap.style.display = '';
+    const fb = document.getElementById('vlRejectFeedback');
+    if (fb) fb.focus();
+    return;
+  }
+  reviewVragenlijst('reject');
+}
+
+async function reviewVragenlijst(action) {
+  if (!currentDossier?.dossierNr) return;
+  let feedback = '';
+  if (action === 'reject') {
+    const fb = document.getElementById('vlRejectFeedback');
+    feedback = String(fb?.value || '').trim();
+    if (!feedback) return alert('Voer feedback in om de vragenlijst af te keuren.');
+  }
+  try {
+    const r = await fetch(`/api/vragenlijsten/${encodeURIComponent(currentDossier.dossierNr)}/review`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, feedback })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Actie mislukt');
+
+    if (action === 'approve') {
+      currentDossier.apiStatus = 'betaling';
+      currentDossier.statusKey = 'betaling';
+      currentDossier.statusText = 'Betaling';
+    }
+    currentVragenlijstData = { ...(currentVragenlijstData || {}), reviewStatus: action === 'approve' ? 'approved' : 'rejected', reviewFeedback: feedback };
+    renderPage(currentDossier, currentRole);
+    if (currentRole === 'admin') renderActionBar(currentDossier);
+    closeVragenlijstModal();
+    showToast(action === 'approve' ? 'Vragenlijst goedgekeurd' : 'Vragenlijst afgekeurd en teruggestuurd');
+  } catch (e) {
+    alert('Fout: ' + e.message);
+  }
+}
+
 function renderVlModal(d) {
   const fv = v => escHtml(v || '—');
+  const reviewStatus = d.reviewStatus || 'pending';
+  const feedback = d.reviewFeedback || '';
   document.getElementById('vlModalBody').innerHTML = `
     <div style="margin-bottom:16px;padding:10px 16px;background:#F5F8FF;border-left:4px solid #1A3B70;border-radius:4px;font-size:.83rem;color:#4A5568;">
       Ingediend op: <strong>${d.submittedAt ? new Date(d.submittedAt).toLocaleString('nl-NL') : '—'}</strong>
@@ -1370,7 +1420,19 @@ function renderVlModal(d) {
         ${d.pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
       </div>
     </div>
+    <div id="vlRejectFeedbackWrap" style="display:${reviewStatus === 'rejected' ? '' : 'none'};margin-top:16px;">
+      <div style="font-size:.78rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Feedback bij afkeuren</div>
+      <textarea id="vlRejectFeedback" style="width:100%;min-height:90px;border:1px solid #DDE5F4;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:.88rem;color:#0F1D3A;" placeholder="Beschrijf wat aangepast moet worden...">${escHtml(feedback)}</textarea>
+    </div>
   `;
+
+  const canReview = currentRole === 'admin';
+  const approveBtn = document.getElementById('vlApproveBtn');
+  const rejectBtn = document.getElementById('vlRejectBtn');
+  if (approveBtn) approveBtn.style.display = canReview ? '' : 'none';
+  if (rejectBtn) rejectBtn.style.display = canReview ? '' : 'none';
+  if (approveBtn) approveBtn.textContent = reviewStatus === 'approved' ? 'Opnieuw goedkeuren' : 'Goedkeuren';
+  if (rejectBtn) rejectBtn.textContent = reviewStatus === 'rejected' ? 'Feedback wijzigen' : 'Afkeuren';
 }
 
 // ── Rich text editor toolbar ───────────────────────────────

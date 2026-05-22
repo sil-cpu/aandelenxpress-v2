@@ -401,6 +401,52 @@ async function emailAdminVragenlijstSubmitted({ submission }) {
     });
 }
 
+/** Klant: bevestiging dat vragenlijst is ingediend */
+async function emailClientVragenlijstSubmitted({ submission }) {
+    const { caseId, clientName, clientEmail, gewenstNaam, submittedAt } = submission;
+    const datum = new Date(submittedAt).toLocaleString('nl-NL', {
+        day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    const statusUrl = `${SITE_URL}/dossier-status?nr=${caseId}`;
+
+    return sendEmail({
+        to:      clientEmail,
+        subject: `Uw vragenlijst is ontvangen — ${gewenstNaam}`,
+        html:    layout(`
+            <h2>Bedankt, ${clientName}</h2>
+            <p>Wij hebben uw vragenlijst voor dossier <strong>${gewenstNaam}</strong> succesvol ontvangen.</p>
+            <div class="info-box">
+                <strong>Referentie:</strong> ${caseId}<br>
+                <strong>Ontvangen op:</strong> ${datum}
+            </div>
+            <p>Uw dossier wordt nu beoordeeld door ons team. U ontvangt automatisch bericht zodra de beoordeling is afgerond.</p>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${statusUrl}">Dossierstatus bekijken</a>
+        `),
+    });
+}
+
+/** Klant: vragenlijst afgekeurd met feedback */
+async function emailClientVragenlijstRejected({ request, feedback, formUrl }) {
+    const statusUrl = `${SITE_URL}/dossier-status?nr=${request.id}`;
+    return sendEmail({
+        to:      request.clientEmail,
+        subject: `Aanvulling nodig voor uw vragenlijst — ${request.gewenstNaam || request.clientName}`,
+        html:    layout(`
+            <h2>Uw vragenlijst heeft aanvulling nodig</h2>
+            <p>Beste ${request.clientName},</p>
+            <p>We hebben uw vragenlijst bekeken, maar er zijn nog enkele punten die aangepast of aangevuld moeten worden.</p>
+            <div class="info-box">
+                <strong>Feedback van ons team:</strong><br>
+                ${escHtml(feedback).replace(/\n/g, '<br>')}
+            </div>
+            <p>U kunt via onderstaande knop verdergaan met uw eerder ingevulde antwoorden en deze aanpassen:</p>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${formUrl}">Vragenlijst opnieuw openen</a>
+            <p style="font-size:13px;color:#888;margin-top:20px;">Na opnieuw indienen beoordelen wij uw vragenlijst direct opnieuw.</p>
+            <p><a href="${statusUrl}">Bekijk dossierstatus</a></p>
+        `),
+    });
+}
+
 /** Klant: betalingsverzoek — stap na vragenlijst */
 async function emailClientBetaling({ request }) {
     const { id, clientName, clientEmail, gewenstNaam, resellerName, resellerCompany } = request;
@@ -474,4 +520,6 @@ module.exports = {
     emailTicketSenderConfirmation,
     emailTicketReply,
     emailAdminVragenlijstSubmitted,
+    emailClientVragenlijstSubmitted,
+    emailClientVragenlijstRejected,
 };

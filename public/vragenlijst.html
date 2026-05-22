@@ -722,9 +722,14 @@
                         ⚠️ Vul alle verplichte velden in voordat u de vragenlijst indient.
                     </div>
 
-                    <button type="submit" class="btn-submit" id="btnSubmit">
-                        Vragenlijst indienen →
-                    </button>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button type="button" class="btn-submit" id="btnSaveDraft" onclick="saveDraft()" style="background:#F0F4FF;color:#1A3B70;border:1px solid #C3DAFE;flex:1;min-width:220px;">
+                            Tussendoor opslaan
+                        </button>
+                        <button type="submit" class="btn-submit" id="btnSubmit" style="flex:2;min-width:240px;">
+                            Vragenlijst indienen →
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -755,6 +760,7 @@ function showError(title, sub) {
 // Password gate + load dossier
 // ─────────────────────────────────────────────
 let verifiedToken = null;
+let existingSubmissionData = null;
 
 const params = new URLSearchParams(window.location.search);
 const caseId = params.get('nr');
@@ -850,6 +856,106 @@ function populateForm(data) {
     showState('stateForm');
     document.getElementById('contactSidebar').style.display = 'block';
     updateOnlineStatus();
+    loadSavedForm();
+}
+
+function syncOptionUi() {
+    document.querySelectorAll('.option-item').forEach(li => {
+        const input = li.querySelector('input');
+        if (!input) return;
+        li.classList.toggle('selected', !!input.checked);
+    });
+}
+
+function applySavedFormValues(saved) {
+    if (!saved) return;
+    const form = document.getElementById('vragenlijstForm');
+    form.querySelectorAll('input, textarea, select').forEach(el => {
+        if (!el.name) return;
+        const value = saved[el.name];
+        if (value === undefined || value === null) return;
+        if (el.type === 'radio') el.checked = String(value) === el.value;
+        else if (el.type === 'checkbox') el.checked = !!value;
+        else if (el.type !== 'file') el.value = String(value);
+    });
+
+    const datacard = saved.datacardBestand;
+    const pep = saved.pepBestand;
+    if (datacard?.naam) {
+        document.getElementById('datacardZone').classList.add('has-file');
+        const el = document.getElementById('datacardSelected');
+        el.textContent = `✓ ${datacard.naam}`;
+        el.style.display = 'block';
+    }
+    if (pep?.naam) {
+        document.getElementById('pepZone').classList.add('has-file');
+        const el = document.getElementById('pepSelected');
+        el.textContent = `✓ ${pep.naam}`;
+        el.style.display = 'block';
+    }
+
+    checkTaal();
+    syncOptionUi();
+}
+
+async function loadSavedForm() {
+    if (!caseId || !verifiedToken) return;
+    try {
+        const r = await fetch(`/api/vragenlijst/${encodeURIComponent(caseId)}?token=${encodeURIComponent(verifiedToken)}`);
+        if (!r.ok) return;
+        const data = await r.json();
+        existingSubmissionData = data.data || null;
+        applySavedFormValues(existingSubmissionData);
+    } catch (_) {}
+}
+
+function collectDraftData() {
+    const form = document.getElementById('vragenlijstForm');
+    const data = {};
+    form.querySelectorAll('input, textarea, select').forEach(el => {
+        if (!el.name || el.type === 'file') return;
+        if (el.type === 'radio') {
+            if (el.checked) data[el.name] = el.value;
+        } else if (el.type === 'checkbox') {
+            data[el.name] = el.checked;
+        } else {
+            data[el.name] = el.value;
+        }
+    });
+    return data;
+}
+
+async function buildFilePayload(inputId, key) {
+    const file = document.getElementById(inputId).files[0];
+    if (file) return { naam: file.name, data: await fileToBase64(file) };
+    return existingSubmissionData?.[key] || null;
+}
+
+async function saveDraft() {
+    if (!caseId || !verifiedToken) return;
+    const btn = document.getElementById('btnSaveDraft');
+    btn.disabled = true;
+    btn.textContent = 'Opslaan...';
+    try {
+        const draftData = collectDraftData();
+        draftData.datacardBestand = await buildFilePayload('datacardFile', 'datacardBestand');
+        draftData.pepBestand = await buildFilePayload('pepFile', 'pepBestand');
+
+        const r = await fetch('/api/vragenlijst/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ caseId, token: verifiedToken, draftData })
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Opslaan mislukt');
+        existingSubmissionData = { ...(existingSubmissionData || {}), ...draftData };
+        alert('Concept opgeslagen. U kunt later verdergaan via dezelfde link.');
+    } catch (e) {
+        alert('Kon concept niet opslaan: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Tussendoor opslaan';
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -983,8 +1089,8 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
     // Validate file uploads
     const datacardFile = document.getElementById('datacardFile').files[0];
     const pepFile      = document.getElementById('pepFile').files[0];
-    if (!datacardFile) { document.getElementById('datacardZone').style.borderColor = '#E03D3D'; valid = false; }
-    if (!pepFile)      { document.getElementById('pepZone').style.borderColor = '#E03D3D'; valid = false; }
+    if (!datacardFile && !existingSubmissionData?.datacardBestand) { document.getElementById('datacardZone').style.borderColor = '#E03D3D'; valid = false; }
+    if (!pepFile && !existingSubmissionData?.pepBestand)      { document.getElementById('pepZone').style.borderColor = '#E03D3D'; valid = false; }
 
     // Validate privacy
     if (!document.getElementById('privacyCheck').checked) {
@@ -1004,10 +1110,9 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
     btn.textContent = 'Bezig met indienen…';
 
     try {
-        // Convert files to base64
-        const [datacardB64, pepB64] = await Promise.all([
-            fileToBase64(datacardFile),
-            fileToBase64(pepFile),
+        const [datacardBestandPayload, pepBestandPayload] = await Promise.all([
+            buildFilePayload('datacardFile', 'datacardBestand'),
+            buildFilePayload('pepFile', 'pepBestand'),
         ]);
 
         const payload = {
@@ -1020,8 +1125,8 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
             contactEmail:    emailVal,
             sector:          f.querySelector('[name="sector"]:checked').value,
             typeOprichting:  f.querySelector('[name="typeOprichting"]:checked').value,
-            datacardBestand: { naam: datacardFile.name, data: datacardB64 },
-            pepBestand:      { naam: pepFile.name,      data: pepB64 },
+            datacardBestand: datacardBestandPayload,
+            pepBestand:      pepBestandPayload,
             opmerkingen:     f.querySelector('[name="opmerkingen"]').value.trim(),
         };
 

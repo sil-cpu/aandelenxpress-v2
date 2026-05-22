@@ -861,6 +861,60 @@ app.get('/api/request-info/:id', async (req, res) => {
     res.json({ id: row.id, clientName: row.client_name, clientEmail: row.client_email, oprichtingType: row.oprichting_type, gewenstNaam: row.gewenst_naam, resellerName: row.reseller_name, resellerCompany: row.reseller_company });
 });
 
+app.get('/api/vragenlijst/:caseId', async (req, res) => {
+    const { caseId } = req.params;
+    const { token } = req.query;
+
+    if (!token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet beschikbaar' });
+    if (row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+
+    const { data: saved } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
+    if (!saved) return res.status(404).json({ error: 'Geen opgeslagen vragenlijst' });
+
+    res.json({
+        caseId: saved.case_id,
+        submittedAt: saved.submitted_at,
+        data: saved.data || {}
+    });
+});
+
+app.post('/api/vragenlijst/save', async (req, res) => {
+    const { caseId, token, draftData } = req.body || {};
+    if (!caseId || !token) return res.status(400).json({ error: 'caseId en token zijn verplicht' });
+
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet beschikbaar' });
+    if (row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+
+    const { data: existing } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
+    const base = existing?.data || {};
+    const merged = {
+        ...base,
+        ...(draftData || {}),
+        caseId,
+        clientName: row.client_name,
+        clientEmail: row.client_email,
+        resellerCompany: row.reseller_company,
+        gewenstNaam: row.gewenst_naam,
+        oprichtingType: row.oprichting_type,
+        isDraft: true,
+        draftSavedAt: new Date().toISOString()
+    };
+
+    await supabase.from('vragenlijsten').upsert({
+        case_id: caseId,
+        data: merged,
+        submitted_at: existing?.submitted_at || null
+    });
+
+    res.json({ success: true, savedAt: merged.draftSavedAt });
+});
+
 app.post('/api/vragenlijst', async (req, res) => {
     const { caseId, token, contactEmail } = req.body;
     if (!caseId || !contactEmail) return res.status(400).json({ error: 'Verplichte velden ontbreken' });
@@ -872,9 +926,22 @@ app.post('/api/vragenlijst', async (req, res) => {
     if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
 
     const { token: _tok, ...formData } = req.body;
-    const submission = { ...formData, caseId, clientName: row.client_name, clientEmail: row.client_email, resellerCompany: row.reseller_company, gewenstNaam: row.gewenst_naam, oprichtingType: row.oprichting_type, submittedAt: new Date().toISOString() };
+    const submission = {
+        ...formData,
+        caseId,
+        clientName: row.client_name,
+        clientEmail: row.client_email,
+        resellerCompany: row.reseller_company,
+        gewenstNaam: row.gewenst_naam,
+        oprichtingType: row.oprichting_type,
+        submittedAt: new Date().toISOString(),
+        isDraft: false,
+        reviewStatus: 'pending',
+        reviewFeedback: ''
+    };
     await supabase.from('vragenlijsten').upsert({ case_id: caseId, data: submission, submitted_at: submission.submittedAt });
     emails.emailAdminVragenlijstSubmitted({ submission });
+    emails.emailClientVragenlijstSubmitted({ submission });
     res.json({ success: true });
 });
 
@@ -892,6 +959,59 @@ app.get('/api/vragenlijsten/:caseId', requireAdmin, async (req, res) => {
     if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
     const { datacardBestandData, pepBestandData, ...rest } = row.data || {};
     res.json({ caseId: row.case_id, submittedAt: row.submitted_at, ...rest, datacardIngediend: !!row.data?.datacardBestandNaam, pepIngediend: !!row.data?.pepBestandNaam });
+});
+
+app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) => {
+    const { caseId } = req.params;
+    const { action, feedback } = req.body || {};
+    if (!['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'Ongeldige actie' });
+
+    const { data: qRow } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
+    if (!qRow) return res.status(404).json({ error: 'Vragenlijst niet gevonden' });
+
+    const { data: reqRow } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
+    if (!reqRow) return res.status(404).json({ error: 'Dossier niet gevonden' });
+
+    const request = rowToReq(reqRow);
+    const actor = req.session.user.name || req.session.user.email;
+    const formData = qRow.data || {};
+
+    if (action === 'reject' && !String(feedback || '').trim()) {
+        return res.status(400).json({ error: 'Feedback is verplicht bij afkeuren' });
+    }
+
+    const reviewedData = {
+        ...formData,
+        reviewStatus: action === 'approve' ? 'approved' : 'rejected',
+        reviewFeedback: action === 'reject' ? String(feedback).trim() : '',
+        reviewedAt: new Date().toISOString(),
+        reviewedBy: actor
+    };
+
+    await supabase.from('vragenlijsten').update({ data: reviewedData }).eq('case_id', caseId);
+
+    if (action === 'approve') {
+        request.status = 'betaling';
+        request.statusUpdatedAt = new Date().toISOString();
+        addActivity(request, 'system', `Vragenlijst goedgekeurd door ${actor}. Status gewijzigd naar betaling.`, actor);
+        await supabase.from('reseller_requests').update({
+            status: request.status,
+            status_updated_at: request.statusUpdatedAt,
+            activities: request.activities
+        }).eq('id', caseId);
+        emails.emailClientBetaling({ request });
+    } else {
+        addActivity(request, 'system', `Vragenlijst afgekeurd door ${actor}. Feedback teruggestuurd naar klant.`, actor);
+        await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', caseId);
+
+        const formSlug = request.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos'
+            : request.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding'
+            : 'vragenlijst';
+        const formUrl = `${process.env.SITE_URL || 'https://aandelenxpress.vercel.app'}/${formSlug}?nr=${request.id}`;
+        emails.emailClientVragenlijstRejected({ request, feedback: String(feedback).trim(), formUrl });
+    }
+
+    res.json({ success: true, reviewStatus: reviewedData.reviewStatus, dossierStatus: action === 'approve' ? 'betaling' : request.status });
 });
 
 // ── Blog ───────────────────────────────────────────────────────────────────
