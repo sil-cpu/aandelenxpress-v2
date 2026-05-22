@@ -343,6 +343,7 @@ let currentRole = null;let currentEmailMode = 'compose'; // 'compose' | 'status'
 let pendingStatusChange = null;   // { value, oldValue }
 let currentVragenlijstData = null;
 let currentEditSection = null;
+let vlRejectMode = false;
 
 const EDIT_BASE_PRICES = {
   'bv': { label: 'Oprichting van een B.V.', amount: 540.00 },
@@ -1337,19 +1338,51 @@ async function openVragenlijstModal() {
   }
 }
 function closeVragenlijstModal() {
+  vlRejectMode = false;
   document.getElementById('vlModal').classList.remove('open');
 }
 
-function toggleRejectFeedback() {
+function updateVlReviewButtons(canReview) {
+  const approveBtn = document.getElementById('vlApproveBtn');
+  const rejectBtn = document.getElementById('vlRejectBtn');
   const wrap = document.getElementById('vlRejectFeedbackWrap');
-  if (!wrap) return;
-  if (wrap.style.display === 'none') {
-    wrap.style.display = '';
-    const fb = document.getElementById('vlRejectFeedback');
-    if (fb) fb.focus();
+  if (!approveBtn || !rejectBtn || !wrap) return;
+
+  if (!canReview) {
+    approveBtn.style.display = 'none';
+    rejectBtn.style.display = 'none';
+    wrap.style.display = 'none';
     return;
   }
-  reviewVragenlijst('reject');
+
+  approveBtn.style.display = '';
+  rejectBtn.style.display = '';
+
+  if (vlRejectMode) {
+    wrap.style.display = '';
+    approveBtn.textContent = 'Feedback versturen';
+    approveBtn.onclick = () => reviewVragenlijst('reject');
+    rejectBtn.textContent = 'Annuleren';
+    rejectBtn.onclick = cancelRejectFeedback;
+  } else {
+    wrap.style.display = 'none';
+    approveBtn.textContent = 'Goedkeuren';
+    approveBtn.onclick = () => reviewVragenlijst('approve');
+    rejectBtn.textContent = 'Afkeuren';
+    rejectBtn.onclick = toggleRejectFeedback;
+  }
+}
+
+function toggleRejectFeedback() {
+  vlRejectMode = true;
+  updateVlReviewButtons(currentRole === 'admin');
+  const fb = document.getElementById('vlRejectFeedback');
+  if (fb) fb.focus();
+}
+
+function cancelRejectFeedback() {
+  vlRejectMode = false;
+  updateVlReviewButtons(currentRole === 'admin');
 }
 
 async function reviewVragenlijst(action) {
@@ -1374,6 +1407,7 @@ async function reviewVragenlijst(action) {
       currentDossier.statusKey = 'betaling';
       currentDossier.statusText = 'Betaling';
     }
+    vlRejectMode = false;
     currentVragenlijstData = { ...(currentVragenlijstData || {}), reviewStatus: action === 'approve' ? 'approved' : 'rejected', reviewFeedback: feedback };
     renderPage(currentDossier, currentRole);
     if (currentRole === 'admin') renderActionBar(currentDossier);
@@ -1389,6 +1423,7 @@ function renderVlModal(d) {
   const pick = (...vals) => vals.find(v => v !== undefined && v !== null && String(v).trim() !== '') || '';
   const reviewStatus = d.reviewStatus || 'pending';
   const feedback = d.reviewFeedback || '';
+  vlRejectMode = false;
   const spoedVal = String(pick(d.spoed, '')).toLowerCase();
   const spoedLabel = (spoedVal === 'spoed' || spoedVal === 'ja' || spoedVal === 'yes') ? 'Ja — met spoed' : 'Nee — standaard';
   const naamBv = pick(d.gewenstNaam, d.bvNaam, d.clientName);
@@ -1455,19 +1490,14 @@ function renderVlModal(d) {
         </div>` : ''}
       </div>
     </div>
-    <div id="vlRejectFeedbackWrap" style="display:${reviewStatus === 'rejected' ? '' : 'none'};margin-top:16px;">
+    <div id="vlRejectFeedbackWrap" style="display:none;margin-top:16px;">
       <div style="font-size:.78rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Feedback bij afkeuren</div>
       <textarea id="vlRejectFeedback" style="width:100%;min-height:90px;border:1px solid #DDE5F4;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:.88rem;color:#0F1D3A;" placeholder="Beschrijf wat aangepast moet worden...">${escHtml(feedback)}</textarea>
     </div>
   `;
 
   const canReview = currentRole === 'admin';
-  const approveBtn = document.getElementById('vlApproveBtn');
-  const rejectBtn = document.getElementById('vlRejectBtn');
-  if (approveBtn) approveBtn.style.display = canReview ? '' : 'none';
-  if (rejectBtn) rejectBtn.style.display = canReview ? '' : 'none';
-  if (approveBtn) approveBtn.textContent = reviewStatus === 'approved' ? 'Opnieuw goedkeuren' : 'Goedkeuren';
-  if (rejectBtn) rejectBtn.textContent = reviewStatus === 'rejected' ? 'Feedback wijzigen' : 'Afkeuren';
+  updateVlReviewButtons(canReview);
 }
 
 // ── Rich text editor toolbar ───────────────────────────────
