@@ -305,13 +305,15 @@
                 </div>
 
                 <div class="form-field" style="margin-bottom:14px;">
-                    <label>Is het bedrijfsadres afwijkend van de aandeelhouder?</label>
-                    <div class="pricing-question-row" style="margin-top:6px;">
+                    <div class="pricing-question-row" style="margin-top:4px;">
                         <div class="pricing-question-main">
                             <div class="pricing-question-top">
-                                <span class="pricing-question-price" id="addressDiffPrice">€ 0,00</span>
-                                <span class="pricing-info-tip" tabindex="0" aria-label="Meer informatie">i<span class="pricing-info-tip-bubble">Extra verwerking wanneer het bedrijfsadres afwijkt van het adres van de aandeelhouder.</span></span>
+                                <span class="pricing-question-label-wrap">
+                                    <span class="pricing-question-label">Is het bedrijfsadres afwijkend van de aandeelhouder?</span>
+                                    <span class="pricing-info-tip" tabindex="0" aria-label="Meer informatie">i<span class="pricing-info-tip-bubble">Extra verwerking wanneer het bedrijfsadres afwijkt van het adres van de aandeelhouder.</span></span>
+                                </span>
                             </div>
+                            <div class="pricing-question-price" id="addressDiffPrice">€ 0,00</div>
                         </div>
                         <div class="pricing-question-controls">
                             <label class="pricing-radio-label">
@@ -679,8 +681,10 @@ function openModal() {
             <div class="pricing-question-row">
                 <div class="pricing-question-main">
                     <div class="pricing-question-top">
-                        <span class="pricing-question-label">${escapeHtml(x.label)}</span>
-                        ${renderPricingInfoTip(EXTRA_TOOLTIPS[code] || x.label)}
+                        <span class="pricing-question-label-wrap">
+                            <span class="pricing-question-label">${escapeHtml(x.label)}</span>
+                            ${renderPricingInfoTip(EXTRA_TOOLTIPS[code] || x.label)}
+                        </span>
                     </div>
                     <div class="pricing-question-price">${fmtCurrency(x.amount)}</div>
                 </div>

@@ -780,9 +780,15 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 10px 12px;
-    border: 1px solid #E3EAF3;
+    padding: 11px 14px;
+    border: 1px solid #D6E0EC;
     border-radius: 8px;
+    background: #FCFDFF;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pricing-question-row:hover {
+    border-color: #C4D3E5;
     background: #FFFFFF;
 }
 
@@ -796,6 +802,13 @@ body {
     align-items: center;
     gap: 6px;
     margin-bottom: 3px;
+}
+
+.pricing-question-label-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
 }
 
 .pricing-question-label {
@@ -813,9 +826,13 @@ body {
 
 .pricing-question-controls {
     display: flex;
-    gap: 14px;
+    gap: 10px;
     align-items: center;
     justify-content: flex-end;
+    padding: 3px 8px;
+    border: 1px solid #D7E1EE;
+    border-radius: 999px;
+    background: #FFFFFF;
     min-width: 122px;
     flex-shrink: 0;
 }
@@ -854,10 +871,11 @@ body {
 
 .pricing-info-tip-bubble {
     position: absolute;
-    left: 50%;
+    left: 0;
     top: calc(100% + 8px);
-    transform: translateX(-50%);
-    width: 240px;
+    transform: none;
+    width: 220px;
+    max-width: min(220px, calc(100vw - 64px));
     padding: 8px 10px;
     border-radius: 8px;
     border: 1px solid #D7E0EB;
@@ -1258,7 +1276,7 @@ body {
     .pricing-info-tip-bubble {
         left: 0;
         transform: none;
-        width: 210px;
+        width: 190px;
     }
 
     .pricing-step-head {
