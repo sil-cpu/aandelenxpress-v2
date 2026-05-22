@@ -3440,6 +3440,26 @@ ul { list-style: none; }
     height: 1px;
     background: var(--border);
 }
+.login-partner-cta-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.login-partner-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 340px;
+    padding-left: 40px;
+    padding-right: 40px;
+    text-decoration: none;
+    background: #0F4C2A;
+}
+.login-partner-cta:hover {
+    background: #0B3D22;
+}
 .login-demo-cta {
     display: block;
     text-align: center;
