@@ -722,12 +722,10 @@
               <div class="pricing-question-price" id="adminAddressDiffPrice">€ 0,00</div>
             </div>
             <div class="pricing-question-controls">
-              <label class="pricing-radio-label">
-                <input type="radio" name="adminAddressDiff" value="nee" checked onchange="adminUpdatePricingPreview()"> Nee
-              </label>
-              <label class="pricing-radio-label">
-                <input type="radio" name="adminAddressDiff" value="ja" onchange="adminUpdatePricingPreview()"> Ja
-              </label>
+              <select id="adminAddressDiffSelect" class="pricing-yn-select" onchange="adminUpdatePricingPreview()">
+                <option value="nee" selected>Nee</option>
+                <option value="ja">Ja</option>
+              </select>
             </div>
           </div>
         </div>
@@ -883,10 +881,11 @@ function adminBuildPricingSelection() {
   if (!base) return null;
 
   const aandeelhoudersCount = parseInt(document.getElementById('adminShareholderCount')?.value || '1', 10);
-  const hasAddressDiff = document.querySelector('input[name="adminAddressDiff"]:checked')?.value === 'ja';
+  const hasAddressDiff = document.getElementById('adminAddressDiffSelect')?.value === 'ja';
 
-  const extras = [...document.querySelectorAll('#adminExtrasWrap input[type="radio"][value="ja"]:checked')]
-    .map(rb => ({ code: rb.dataset.code, ...(DOSSIER_EXTRA_PRICES[rb.dataset.code] || {}) }))
+  const extras = [...document.querySelectorAll('#adminExtrasWrap select.pricing-yn-select[data-code]')]
+    .filter(sel => sel.value === 'ja')
+    .map(sel => ({ code: sel.dataset.code, ...(DOSSIER_EXTRA_PRICES[sel.dataset.code] || {}) }))
     .filter(x => x.label);
 
   const extraAandeelhouderPrice = DOSSIER_EXTRA_PRICES['extra-aandeelhouder']?.amount || 50;
@@ -2328,12 +2327,10 @@ function openAdminDossierModal() {
           <div class="pricing-question-price">${fmtCurrency(x.amount)}</div>
         </div>
         <div class="pricing-question-controls">
-          <label class="pricing-radio-label">
-            <input type="radio" name="admin_extra_${code}" value="nee" data-code="${code}" checked onchange="adminUpdatePricingPreview()"> Nee
-          </label>
-          <label class="pricing-radio-label">
-            <input type="radio" name="admin_extra_${code}" value="ja" data-code="${code}" onchange="adminUpdatePricingPreview()"> Ja
-          </label>
+          <select class="pricing-yn-select" data-code="${code}" onchange="adminUpdatePricingPreview()">
+            <option value="nee" selected>Nee</option>
+            <option value="ja">Ja</option>
+          </select>
         </div>
       </div>
     `).join('');
@@ -2345,8 +2342,8 @@ function openAdminDossierModal() {
   }
   const shareholderCount = document.getElementById('adminShareholderCount');
   if (shareholderCount) shareholderCount.value = '1';
-  const addressNo = document.querySelector('input[name="adminAddressDiff"][value="nee"]');
-  if (addressNo) addressNo.checked = true;
+  const addressSel = document.getElementById('adminAddressDiffSelect');
+  if (addressSel) addressSel.value = 'nee';
   adminUpdatePricingPreview();
   // Populate reseller dropdown
   const sel = document.getElementById('adminOnBehalfOf');
@@ -2365,11 +2362,11 @@ function openAdminDossierModal() {
 function closeAdminDossierModal() {
   document.getElementById('adminDossierModal').style.display = 'none';
   document.getElementById('adminNewDossierForm').reset();
-  document.querySelectorAll('#adminExtrasWrap input[type="radio"][value="nee"]').forEach(rb => { rb.checked = true; });
+  document.querySelectorAll('#adminExtrasWrap select.pricing-yn-select').forEach(sel => { sel.value = 'nee'; });
   const shareholderCount = document.getElementById('adminShareholderCount');
   if (shareholderCount) shareholderCount.value = '1';
-  const addressNo = document.querySelector('input[name="adminAddressDiff"][value="nee"]');
-  if (addressNo) addressNo.checked = true;
+  const addressSel = document.getElementById('adminAddressDiffSelect');
+  if (addressSel) addressSel.value = 'nee';
   adminBackToStep1();
   adminUpdatePricingPreview();
   const errEl = document.getElementById('adminDossierFormError');

@@ -316,12 +316,10 @@
                             <div class="pricing-question-price" id="addressDiffPrice">€ 0,00</div>
                         </div>
                         <div class="pricing-question-controls">
-                            <label class="pricing-radio-label">
-                                <input type="radio" name="addressDiff" value="nee" checked onchange="updatePricingPreview()"> Nee
-                            </label>
-                            <label class="pricing-radio-label">
-                                <input type="radio" name="addressDiff" value="ja" onchange="updatePricingPreview()"> Ja
-                            </label>
+                            <select id="addressDiffSelect" class="pricing-yn-select" onchange="updatePricingPreview()">
+                                <option value="nee" selected>Nee</option>
+                                <option value="ja">Ja</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -479,10 +477,11 @@ function buildPricingSelection() {
     if (!base) return null;
 
     const aandeelhoudersCount = parseInt(document.getElementById('shareholderCount')?.value || '1', 10);
-    const hasAddressDiff = document.querySelector('input[name="addressDiff"]:checked')?.value === 'ja';
+    const hasAddressDiff = document.getElementById('addressDiffSelect')?.value === 'ja';
 
-    const extras = [...document.querySelectorAll('#extrasWrap input[type="radio"][value="ja"]:checked')]
-        .map(rb => ({ code: rb.dataset.code, ...(EXTRA_PRICES[rb.dataset.code] || {}) }))
+    const extras = [...document.querySelectorAll('#extrasWrap select.pricing-yn-select[data-code]')]
+        .filter(sel => sel.value === 'ja')
+        .map(sel => ({ code: sel.dataset.code, ...(EXTRA_PRICES[sel.dataset.code] || {}) }))
         .filter(x => x.label);
 
     const extraAandeelhouderPrice = EXTRA_PRICES['extra-aandeelhouder']?.amount || 50;
@@ -689,12 +688,10 @@ function openModal() {
                     <div class="pricing-question-price">${fmtCurrency(x.amount)}</div>
                 </div>
                 <div class="pricing-question-controls">
-                    <label class="pricing-radio-label">
-                        <input type="radio" name="extra_${code}" value="nee" data-code="${code}" checked onchange="updatePricingPreview()"> Nee
-                    </label>
-                    <label class="pricing-radio-label">
-                        <input type="radio" name="extra_${code}" value="ja" data-code="${code}" onchange="updatePricingPreview()"> Ja
-                    </label>
+                    <select class="pricing-yn-select" data-code="${code}" onchange="updatePricingPreview()">
+                        <option value="nee" selected>Nee</option>
+                        <option value="ja">Ja</option>
+                    </select>
                 </div>
             </div>
         `).join('');
@@ -706,19 +703,19 @@ function openModal() {
     }
     const shareholderCount = document.getElementById('shareholderCount');
     if (shareholderCount) shareholderCount.value = '1';
-    const addressNo = document.querySelector('input[name="addressDiff"][value="nee"]');
-    if (addressNo) addressNo.checked = true;
+    const addressSel = document.getElementById('addressDiffSelect');
+    if (addressSel) addressSel.value = 'nee';
     backToStep1();
     updatePricingPreview();
     document.getElementById('modal').classList.add('active');
 }
 function closeModal() {
     document.getElementById('newDossierForm').reset();
-    document.querySelectorAll('#extrasWrap input[type="radio"][value="nee"]').forEach(rb => { rb.checked = true; });
+    document.querySelectorAll('#extrasWrap select.pricing-yn-select').forEach(sel => { sel.value = 'nee'; });
     const shareholderCount = document.getElementById('shareholderCount');
     if (shareholderCount) shareholderCount.value = '1';
-    const addressNo = document.querySelector('input[name="addressDiff"][value="nee"]');
-    if (addressNo) addressNo.checked = true;
+    const addressSel = document.getElementById('addressDiffSelect');
+    if (addressSel) addressSel.value = 'nee';
     backToStep1();
     updatePricingPreview();
     document.getElementById('modal').classList.remove('active');
