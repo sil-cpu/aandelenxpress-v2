@@ -1040,10 +1040,29 @@ app.get('/api/vragenlijsten/:caseId', requireAdmin, async (req, res) => {
     res.json(normalizeVragenlijstForAdmin(row));
 });
 
-app.get('/api/vragenlijsten/:caseId/files/:kind', requireAdmin, async (req, res) => {
+app.get('/api/vragenlijsten/:caseId/files/:kind', requireLogin, async (req, res) => {
     const { caseId, kind } = req.params;
-    const keyBase = kind === 'datacard' ? 'datacardBestand' : (kind === 'pep' ? 'pepBestand' : null);
+    const kindMap = {
+        datacard: 'datacardBestand',
+        pep: 'pepBestand',
+        huurovereenkomst: 'huurovereenkomst',
+        'kvk-uittreksel': 'kvkUittreksel',
+        verzekering: 'verzekering',
+        'ontvangst-intent': 'ontvangstIntent',
+        intentverklaring: 'intentverklaring',
+        'bijlage-intent': 'bijlageIntent',
+        interim: 'interim',
+        'ubo-uittreksel': 'uboUittreksel',
+        personeelsplan: 'personeelsplan'
+    };
+    const keyBase = kindMap[kind] || null;
     if (!keyBase) return res.status(400).json({ error: 'Ongeldig bestandstype' });
+
+    const { data: reqRow } = await supabase.from('reseller_requests').select('id, reseller_id').eq('id', caseId).single();
+    if (!reqRow) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (req.session.user.type !== 'admin' && reqRow.reseller_id !== req.session.user.email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
 
     const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
     if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });

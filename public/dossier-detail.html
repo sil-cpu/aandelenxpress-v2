@@ -485,6 +485,116 @@ function renderCompactAccessSection(d, role) {
     </div>`;
 }
 
+function getVraagFileMeta(data, key) {
+  const obj = data?.[key];
+  const name = (obj && typeof obj === 'object' && (obj.naam || obj.filename || obj.name))
+    || data?.[`${key}Naam`]
+    || '';
+  const hasData = !!(
+    (obj && typeof obj === 'object' && (obj.data || obj.content || obj.naam || obj.filename || obj.name))
+    || data?.[`${key}Data`]
+  );
+  return { name: String(name || ''), hasData };
+}
+
+function downloadBlob(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadDossierSnapshot() {
+  if (!currentDossier) return;
+  const payload = {
+    dossier: currentDossier,
+    vragenlijst: currentVragenlijstData || null,
+    exportedAt: new Date().toISOString()
+  };
+  downloadBlob(`${currentDossier.dossierNr || 'dossier'}-overzicht.json`, JSON.stringify(payload, null, 2), 'application/json');
+}
+
+function downloadPricingSnapshot() {
+  if (!currentDossier?.pricing) return;
+  const payload = {
+    dossierNr: currentDossier.dossierNr,
+    pricing: currentDossier.pricing,
+    exportedAt: new Date().toISOString()
+  };
+  downloadBlob(`${currentDossier.dossierNr || 'dossier'}-prijsopbouw.json`, JSON.stringify(payload, null, 2), 'application/json');
+}
+
+function renderDocumentsCard(d) {
+  const q = currentVragenlijstData || {};
+  const caseId = encodeURIComponent(d.dossierNr || '');
+  const vraagFileDefs = [
+    ['datacardBestand', 'datacard', 'Datacard (vragenlijst)'],
+    ['pepBestand', 'pep', 'PEP-verklaring (vragenlijst)'],
+    ['huurovereenkomst', 'huurovereenkomst', 'Huurovereenkomst'],
+    ['kvkUittreksel', 'kvk-uittreksel', 'KvK uittreksel (vragenlijst)'],
+    ['verzekering', 'verzekering', 'Verzekeringsbewijs'],
+    ['ontvangstIntent', 'ontvangst-intent', 'Ontvangst intentieverklaring'],
+    ['intentverklaring', 'intentverklaring', 'Intentieverklaring'],
+    ['bijlageIntent', 'bijlage-intent', 'Bijlage intentieverklaring'],
+    ['interim', 'interim', 'Interim document'],
+    ['uboUittreksel', 'ubo-uittreksel', 'UBO uittreksel'],
+    ['personeelsplan', 'personeelsplan', 'Personeelsplan']
+  ];
+
+  const vraagItems = vraagFileDefs
+    .map(([key, kind, label]) => {
+      const f = getVraagFileMeta(q, key);
+      if (!f.hasData && !f.name) return null;
+      return {
+        label,
+        meta: f.name || 'Ingediend',
+        status: 'Ingediend',
+        downloadUrl: `/api/vragenlijsten/${caseId}/files/${kind}?download=1`
+      };
+    })
+    .filter(Boolean);
+
+  const dossierItems = [{
+    label: 'Dossieroverzicht',
+    meta: 'Actuele dossierdata',
+    status: 'Beschikbaar',
+    onClick: 'downloadDossierSnapshot()'
+  }];
+  if (d.pricing) {
+    dossierItems.push({
+      label: 'Prijsopbouw',
+      meta: 'Huidige prijsstructuur',
+      status: 'Beschikbaar',
+      onClick: 'downloadPricingSnapshot()'
+    });
+  }
+
+  const items = [...vraagItems, ...dossierItems];
+  return `<div class="detail-card">
+    <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
+    <div class="detail-card-body">
+      <div class="doc-list">
+        ${items.map(item => `
+          <div class="doc-item">
+            <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <span class="doc-name">${escHtml(item.label)}</span>
+            <span class="doc-meta">${escHtml(item.status || '')}</span>
+            <span style="font-size:0.8rem;color:#718096;min-width:190px;text-align:right;">${escHtml(item.meta || '')}</span>
+            ${item.downloadUrl
+              ? `<a class="btn-ghost" style="margin-left:auto;font-size:0.8rem;text-decoration:none;" href="${item.downloadUrl}">Download</a>`
+              : `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="${item.onClick}">Download</button>`}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderPage(d, role) {
   const partnerField = role === "admin"
     ? `<div class="detail-field"><label>Partner</label><div class="val">${d.partner}</div></div>` : "";
@@ -557,31 +667,7 @@ function renderPage(d, role) {
 
         ${renderPricingCard(d)}
 
-        <!-- Documenten -->
-        <div class="detail-card">
-          <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
-          <div class="detail-card-body">
-            <div class="doc-list">
-              <div class="doc-item">
-                <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                <span class="doc-name">Oprichtingsakte concept</span>
-                <span class="doc-meta">${["complete","kvk","notary"].includes(d.statusKey)?"Beschikbaar":"Nog niet beschikbaar"}</span>
-                ${["complete","kvk","notary"].includes(d.statusKey)?`<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="alert('Downloaden niet beschikbaar in demo')">Download</button>`:""}
-              </div>
-              <div class="doc-item">
-                <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                <span class="doc-name">Paspoort / ID-bewijs</span>
-                <span class="doc-meta">${!["new","intake"].includes(d.statusKey)?"Ingediend":"Verwacht"}</span>
-              </div>
-              <div class="doc-item">
-                <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                <span class="doc-name">KvK uittreksel</span>
-                <span class="doc-meta">${d.statusKey==="complete"?"Beschikbaar":"Verwacht na voltooiing"}</span>
-                ${d.statusKey==="complete"?`<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="alert('Downloaden niet beschikbaar in demo')">Download</button>`:""}
-              </div>
-            </div>
-          </div>
-        </div>
+        ${renderDocumentsCard(d)}
 
       </div><!-- /detail-left-col -->
 
