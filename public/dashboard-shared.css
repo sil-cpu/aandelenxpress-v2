@@ -767,12 +767,107 @@ body {
 
 .pricing-extras-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 9px 12px;
+    grid-template-columns: 1fr;
+    gap: 8px;
     margin-bottom: 14px;
-    max-height: 280px;
+    max-height: 320px;
     overflow-y: auto;
     padding: 2px;
+}
+
+.pricing-question-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 10px 12px;
+    border: 1px solid #E3EAF3;
+    border-radius: 8px;
+    background: #FFFFFF;
+}
+
+.pricing-question-main {
+    min-width: 0;
+}
+
+.pricing-question-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.pricing-question-label {
+    font-size: 0.84rem;
+    line-height: 1.35;
+    color: #0F1D3A;
+    font-weight: 600;
+}
+
+.pricing-question-price {
+    font-size: 0.8rem;
+    color: #4A5568;
+    font-weight: 600;
+}
+
+.pricing-question-controls {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.pricing-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #0F1D3A;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pricing-info-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    border: 1px solid #C8D3E0;
+    color: #607289;
+    background: #F8FAFD;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: help;
+}
+
+.pricing-info-tip-bubble {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 240px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #D7E0EB;
+    background: #FFFFFF;
+    color: #334155;
+    font-size: 0.76rem;
+    line-height: 1.35;
+    box-shadow: 0 10px 24px rgba(15, 29, 58, 0.12);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.pricing-info-tip:hover .pricing-info-tip-bubble,
+.pricing-info-tip:focus-within .pricing-info-tip-bubble {
+    visibility: visible;
+    opacity: 1;
 }
 
 .pricing-extra-item {
@@ -1139,6 +1234,22 @@ body {
     .pricing-extras-grid {
         grid-template-columns: 1fr;
         max-height: 240px;
+    }
+
+    .pricing-question-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pricing-question-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .pricing-info-tip-bubble {
+        left: 0;
+        transform: none;
+        width: 210px;
     }
 
     .pricing-step-head {

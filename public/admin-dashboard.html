@@ -712,13 +712,21 @@
 
         <div class="form-field" style="margin-bottom:14px;">
           <label>Is het bedrijfsadres afwijkend van de aandeelhouder?</label>
-          <div style="display:flex;gap:16px;align-items:center;margin-top:6px;">
-            <label style="display:flex;gap:6px;align-items:center;font-size:0.86rem;color:#0F1D3A;cursor:pointer;">
-              <input type="radio" name="adminAddressDiff" value="nee" checked onchange="adminUpdatePricingPreview()"> Nee
-            </label>
-            <label style="display:flex;gap:6px;align-items:center;font-size:0.86rem;color:#0F1D3A;cursor:pointer;">
-              <input type="radio" name="adminAddressDiff" value="ja" onchange="adminUpdatePricingPreview()"> Ja
-            </label>
+          <div class="pricing-question-row" style="margin-top:6px;">
+            <div class="pricing-question-main">
+              <div class="pricing-question-top">
+                <span class="pricing-question-price" id="adminAddressDiffPrice">€ 0,00</span>
+                <span class="pricing-info-tip" tabindex="0" aria-label="Meer informatie">i<span class="pricing-info-tip-bubble">Extra verwerking wanneer het bedrijfsadres afwijkt van het adres van de aandeelhouder.</span></span>
+              </div>
+            </div>
+            <div class="pricing-question-controls">
+              <label class="pricing-radio-label">
+                <input type="radio" name="adminAddressDiff" value="nee" checked onchange="adminUpdatePricingPreview()"> Nee
+              </label>
+              <label class="pricing-radio-label">
+                <input type="radio" name="adminAddressDiff" value="ja" onchange="adminUpdatePricingPreview()"> Ja
+              </label>
+            </div>
           </div>
         </div>
 
@@ -816,6 +824,23 @@ const DOSSIER_EXTRA_PRICES = {
   'wtza-statuten': { label: 'WTZA statuten', amount: 250.00 }
 };
 
+const DOSSIER_EXTRA_TOOLTIPS = {
+  'aandeelhoudersregister': 'Selecteer Ja als je direct een nieuw aandeelhoudersregister wilt laten opstellen.',
+  'ah-buiten-eu': 'Kies Ja wanneer een aandeelhouder buiten de EU woont, vanwege extra compliance checks.',
+  'persoon-buiten-nl-met-nl-bank': 'Voor natuurlijke personen buiten NL met een Nederlandse bankrekening.',
+  'persoon-buiten-nl-zonder-bank': 'Voor natuurlijke personen buiten NL zonder Nederlandse bankrekening; extra identificatie is nodig.',
+  'bestaande-holding': 'Kies Ja als een bestaande holding als aandeelhouder wordt opgenomen.',
+  'compliance-tussenholdings': 'Extra controle voor structuren met tussenholdings.',
+  'bedrijfsadres-anders': 'Extra verwerking wanneer het bedrijfsadres afwijkt van het adres van de aandeelhouder.',
+  'tolk-30min': 'Belafspraak met tolk van 30 minuten voor extra taalondersteuning.',
+  'no-show-notaris': 'Toeslag bij no-show of onvolledige voorbereiding voor de notarisafspraak.',
+  'engelse-vertaling': 'Officiele Engelse vertaling van de statuten.',
+  'naamswijziging-concept': 'Aanpassing van de naam in reeds opgestelde conceptakten.',
+  'advocaten-statuten': 'Uitbreiding met clausules voor advocatenpraktijken.',
+  'vastgoed-statuten': 'Uitbreiding met clausules voor vastgoedactiviteiten.',
+  'wtza-statuten': 'Uitbreiding met WTZA-gerelateerde bepalingen.'
+};
+
 function fmtCurrency(amount) {
   return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount || 0);
 }
@@ -824,6 +849,10 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = String(text || '');
   return div.innerHTML;
+}
+
+function renderPricingInfoTip(text) {
+  return `<span class="pricing-info-tip" tabindex="0" aria-label="Meer informatie">i<span class="pricing-info-tip-bubble">${escapeHtml(text)}</span></span>`;
 }
 
 function renderRequestPricingBreakdown(pricing) {
@@ -2286,20 +2315,29 @@ function openAdminDossierModal() {
     extrasWrap.innerHTML = Object.entries(DOSSIER_EXTRA_PRICES)
       .filter(([code]) => !['extra-aandeelhouder', 'bedrijfsadres-anders'].includes(code))
       .map(([code, x]) => `
-      <div style="border:1px solid #E3EAF3;border-radius:8px;padding:10px;background:white;">
-        <div style="font-size:0.83rem;color:#0F1D3A;font-weight:500;line-height:1.35;">${x.label}</div>
-        <div style="font-size:0.78rem;color:#5A6A7E;margin-top:2px;">${fmtCurrency(x.amount)}</div>
-        <div style="display:flex;gap:14px;align-items:center;margin-top:8px;">
-          <label style="display:flex;gap:6px;align-items:center;font-size:0.82rem;color:#4A5568;cursor:pointer;">
+      <div class="pricing-question-row">
+        <div class="pricing-question-main">
+          <div class="pricing-question-top">
+            <span class="pricing-question-label">${escapeHtml(x.label)}</span>
+            ${renderPricingInfoTip(DOSSIER_EXTRA_TOOLTIPS[code] || x.label)}
+          </div>
+          <div class="pricing-question-price">${fmtCurrency(x.amount)}</div>
+        </div>
+        <div class="pricing-question-controls">
+          <label class="pricing-radio-label">
             <input type="radio" name="admin_extra_${code}" value="nee" data-code="${code}" checked onchange="adminUpdatePricingPreview()"> Nee
           </label>
-          <label style="display:flex;gap:6px;align-items:center;font-size:0.82rem;color:#0F1D3A;cursor:pointer;">
+          <label class="pricing-radio-label">
             <input type="radio" name="admin_extra_${code}" value="ja" data-code="${code}" onchange="adminUpdatePricingPreview()"> Ja
           </label>
         </div>
       </div>
     `).join('');
     extrasWrap.dataset.ready = '1';
+  }
+  const addressDiffPrice = document.getElementById('adminAddressDiffPrice');
+  if (addressDiffPrice) {
+    addressDiffPrice.textContent = fmtCurrency(DOSSIER_EXTRA_PRICES['bedrijfsadres-anders']?.amount || 50);
   }
   const shareholderCount = document.getElementById('adminShareholderCount');
   if (shareholderCount) shareholderCount.value = '1';
