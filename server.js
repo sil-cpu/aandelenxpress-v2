@@ -898,6 +898,42 @@ function normalizeVragenlijstForAdmin(row) {
     };
 }
 
+function getStoredVragenlijstFile(formData, keyBase) {
+    const legacyName = formData?.[`${keyBase}Naam`] || '';
+    const legacyData = formData?.[`${keyBase}Data`] || '';
+    const value = formData?.[keyBase];
+
+    let name = legacyName;
+    let rawData = legacyData;
+
+    if (value && typeof value === 'object') {
+        name = name || value.naam || value.filename || value.name || '';
+        rawData = rawData || value.data || value.content || '';
+    }
+
+    if (!rawData) return null;
+
+    const str = String(rawData);
+    const m = /^data:([^;]+);base64,(.*)$/i.exec(str);
+    if (m) {
+        return { name, mime: m[1] || 'application/octet-stream', base64: m[2] || '' };
+    }
+
+    return { name, mime: 'application/octet-stream', base64: str };
+}
+
+function extFromMime(mime) {
+    const map = {
+        'application/pdf': 'pdf',
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/webp': 'webp',
+        'image/gif': 'gif'
+    };
+    return map[String(mime || '').toLowerCase()] || 'bin';
+}
+
 app.get('/api/request-info/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
     if (!row || !['approved','vragenlijst','betaling','ident','notary','kvk','complete'].includes(row.status))
@@ -1002,6 +1038,33 @@ app.get('/api/vragenlijsten/:caseId', requireAdmin, async (req, res) => {
     const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', req.params.caseId).single();
     if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
     res.json(normalizeVragenlijstForAdmin(row));
+});
+
+app.get('/api/vragenlijsten/:caseId/files/:kind', requireAdmin, async (req, res) => {
+    const { caseId, kind } = req.params;
+    const keyBase = kind === 'datacard' ? 'datacardBestand' : (kind === 'pep' ? 'pepBestand' : null);
+    if (!keyBase) return res.status(400).json({ error: 'Ongeldig bestandstype' });
+
+    const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
+    if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
+
+    const file = getStoredVragenlijstFile(row.data || {}, keyBase);
+    if (!file || !file.base64) return res.status(404).json({ error: 'Bestand niet gevonden' });
+
+    let buffer;
+    try {
+        buffer = Buffer.from(file.base64, 'base64');
+    } catch (_) {
+        return res.status(500).json({ error: 'Bestand kon niet worden gelezen' });
+    }
+
+    const fallbackName = `${kind}.${extFromMime(file.mime)}`;
+    const filename = String(file.name || fallbackName).replace(/[\r\n"]/g, '_');
+    const disposition = req.query.download === '1' ? 'attachment' : 'inline';
+
+    res.setHeader('Content-Type', file.mime || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
+    res.send(buffer);
 });
 
 app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) => {

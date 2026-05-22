@@ -1398,6 +1398,9 @@ function renderVlModal(d) {
   const pepNaam = pick(d.pepBestandNaam, d.pepBestand?.naam, d.pepBestand?.filename);
   const datacardIngediend = !!(d.datacardIngediend || datacardNaam);
   const pepIngediend = !!(d.pepIngediend || pepNaam);
+  const caseRef = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
+  const datacardViewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/datacard` : '';
+  const pepViewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/pep` : '';
 
   const extraFields = [
     ['Telefoon', pick(d.bvTelefoon, d.clientPhone)],
@@ -1437,11 +1440,19 @@ function renderVlModal(d) {
         <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Datacard</div>
         <div style="font-size:.85rem;color:#0F1D3A;">${fv(datacardNaam || (datacardIngediend ? 'Ingediend (bestandsnaam niet opgeslagen)' : '—'))}</div>
         ${datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+        ${datacardIngediend && datacardViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="${datacardViewUrl}" target="_blank" rel="noopener" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Bekijken</a>
+          <a href="${datacardViewUrl}?download=1" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Downloaden</a>
+        </div>` : ''}
       </div>
       <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
         <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PEP-verklaring</div>
         <div style="font-size:.85rem;color:#0F1D3A;">${fv(pepNaam || (pepIngediend ? 'Ingediend (bestandsnaam niet opgeslagen)' : '—'))}</div>
         ${pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+        ${pepIngediend && pepViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="${pepViewUrl}" target="_blank" rel="noopener" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Bekijken</a>
+          <a href="${pepViewUrl}?download=1" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Downloaden</a>
+        </div>` : ''}
       </div>
     </div>
     <div id="vlRejectFeedbackWrap" style="display:${reviewStatus === 'rejected' ? '' : 'none'};margin-top:16px;">
