@@ -788,6 +788,7 @@ body {
 
 .pricing-question-main {
     min-width: 0;
+    flex: 1;
 }
 
 .pricing-question-top {
@@ -814,17 +815,25 @@ body {
     display: flex;
     gap: 14px;
     align-items: center;
+    justify-content: flex-end;
+    min-width: 122px;
     flex-shrink: 0;
 }
 
 .pricing-radio-label {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 6px;
+    min-width: 50px;
     font-size: 0.82rem;
     color: #0F1D3A;
     cursor: pointer;
     white-space: nowrap;
+}
+
+.pricing-radio-label input[type="radio"] {
+    margin: 0;
 }
 
 .pricing-info-tip {
