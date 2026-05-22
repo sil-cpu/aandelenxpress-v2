@@ -1386,19 +1386,39 @@ async function reviewVragenlijst(action) {
 
 function renderVlModal(d) {
   const fv = v => escHtml(v || '—');
+  const pick = (...vals) => vals.find(v => v !== undefined && v !== null && String(v).trim() !== '') || '';
   const reviewStatus = d.reviewStatus || 'pending';
   const feedback = d.reviewFeedback || '';
+  const spoedVal = String(pick(d.spoed, '')).toLowerCase();
+  const spoedLabel = (spoedVal === 'spoed' || spoedVal === 'ja' || spoedVal === 'yes') ? 'Ja — met spoed' : 'Nee — standaard';
+  const naamBv = pick(d.gewenstNaam, d.bvNaam, d.clientName);
+  const contactEmail = pick(d.contactEmail, d.bvEmail, d.clientEmail);
+  const typeOprichting = pick(d.typeOprichting, d.oprichtingType, d.formulierType);
+  const datacardNaam = pick(d.datacardBestandNaam, d.datacardBestand?.naam, d.datacardBestand?.filename);
+  const pepNaam = pick(d.pepBestandNaam, d.pepBestand?.naam, d.pepBestand?.filename);
+  const datacardIngediend = !!(d.datacardIngediend || datacardNaam);
+  const pepIngediend = !!(d.pepIngediend || pepNaam);
+
+  const extraFields = [
+    ['Telefoon', pick(d.bvTelefoon, d.clientPhone)],
+    ['Aantal aandeelhouders', d.aandeelhouders],
+    ['Formulier type', d.formulierType],
+    ['Partner', d.resellerCompany],
+    ['Taal NL', d.nederlandsTaal],
+    ['Taal EN', d.engelsTaal]
+  ].filter(([, val]) => String(val || '').trim() !== '');
+
   document.getElementById('vlModalBody').innerHTML = `
     <div style="margin-bottom:16px;padding:10px 16px;background:#F5F8FF;border-left:4px solid #1A3B70;border-radius:4px;font-size:.83rem;color:#4A5568;">
       Ingediend op: <strong>${d.submittedAt ? new Date(d.submittedAt).toLocaleString('nl-NL') : '—'}</strong>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin-bottom:20px;">
       ${[
-        ['Naam BV', d.gewenstNaam],
-        ['Contact e-mail', d.contactEmail],
-        ['Type oprichting', d.typeOprichting],
+        ['Naam BV', naamBv],
+        ['Contact e-mail', contactEmail],
+        ['Type oprichting', typeOprichting],
         ['Sector', d.sector],
-        ['Spoed', d.spoed === 'spoed' ? '⚡ Ja — binnen 48 uur' : 'Nee — standaard'],
+        ['Spoed', spoedLabel],
         ['Klant naam', d.clientName],
         ['Klant e-mail', d.clientEmail],
         ['Opdracht-ID', d.caseId],
@@ -1407,17 +1427,21 @@ function renderVlModal(d) {
         <div style="font-size:.9rem;color:#0F1D3A;font-weight:500;">${fv(val)}</div>
       </div>`).join('')}
     </div>
+    ${extraFields.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin:-4px 0 18px;">${extraFields.map(([lbl,val]) => `<div>
+      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">${lbl}</div>
+      <div style="font-size:.88rem;color:#0F1D3A;">${fv(val)}</div>
+    </div>`).join('')}</div>` : ''}
     ${d.opmerkingen ? `<div style="margin-bottom:16px;padding:12px 16px;background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:4px;font-size:.85rem;color:#78350F;"><strong>Opmerkingen klant:</strong><br>${escHtml(d.opmerkingen).replace(/\n/g,'<br>')}</div>` : ''}
     <div style="display:flex;gap:12px;flex-wrap:wrap;">
       <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
         <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Datacard</div>
-        <div style="font-size:.85rem;color:#0F1D3A;">${fv(d.datacardBestandNaam)}</div>
-        ${d.datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+        <div style="font-size:.85rem;color:#0F1D3A;">${fv(datacardNaam || (datacardIngediend ? 'Ingediend (bestandsnaam niet opgeslagen)' : '—'))}</div>
+        ${datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
       </div>
       <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
         <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PEP-verklaring</div>
-        <div style="font-size:.85rem;color:#0F1D3A;">${fv(d.pepBestandNaam)}</div>
-        ${d.pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+        <div style="font-size:.85rem;color:#0F1D3A;">${fv(pepNaam || (pepIngediend ? 'Ingediend (bestandsnaam niet opgeslagen)' : '—'))}</div>
+        ${pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
       </div>
     </div>
     <div id="vlRejectFeedbackWrap" style="display:${reviewStatus === 'rejected' ? '' : 'none'};margin-top:16px;">

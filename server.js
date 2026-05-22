@@ -851,6 +851,53 @@ app.patch('/api/tickets/:ticketId/status', requireAdmin, async (req, res) => {
 });
 
 // ── Vragenlijsten ──────────────────────────────────────────────────────────
+function extractVragenlijstFileMeta(formData, keyBase) {
+    const fileObj = formData?.[keyBase];
+    const legacyName = formData?.[`${keyBase}Naam`];
+    const legacyData = formData?.[`${keyBase}Data`];
+    const objectName = fileObj && typeof fileObj === 'object'
+        ? (fileObj.naam || fileObj.filename || fileObj.name || '')
+        : '';
+    const hasObjectData = !!(fileObj && typeof fileObj === 'object' && (fileObj.data || fileObj.content));
+
+    return {
+        name: legacyName || objectName || '',
+        hasData: !!legacyData || hasObjectData
+    };
+}
+
+function normalizeVragenlijstForAdmin(row) {
+    const baseData = { ...(row?.data || {}) };
+    const datacard = extractVragenlijstFileMeta(baseData, 'datacardBestand');
+    const pep = extractVragenlijstFileMeta(baseData, 'pepBestand');
+
+    // Never expose raw base64 blobs in admin list/detail payloads.
+    delete baseData.datacardBestandData;
+    delete baseData.pepBestandData;
+    if (baseData.datacardBestand && typeof baseData.datacardBestand === 'object') {
+        const { data, content, ...safe } = baseData.datacardBestand;
+        baseData.datacardBestand = safe;
+    }
+    if (baseData.pepBestand && typeof baseData.pepBestand === 'object') {
+        const { data, content, ...safe } = baseData.pepBestand;
+        baseData.pepBestand = safe;
+    }
+
+    if (!baseData.gewenstNaam) baseData.gewenstNaam = baseData.bvNaam || '';
+    if (!baseData.contactEmail) baseData.contactEmail = baseData.bvEmail || baseData.clientEmail || '';
+    if (!baseData.typeOprichting) baseData.typeOprichting = baseData.oprichtingType || baseData.formulierType || '';
+
+    return {
+        caseId: row.case_id,
+        submittedAt: row.submitted_at,
+        ...baseData,
+        datacardBestandNaam: datacard.name || baseData.datacardBestandNaam || '',
+        pepBestandNaam: pep.name || baseData.pepBestandNaam || '',
+        datacardIngediend: !!(datacard.name || datacard.hasData),
+        pepIngediend: !!(pep.name || pep.hasData)
+    };
+}
+
 app.get('/api/request-info/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
     if (!row || !['approved','vragenlijst','betaling','ident','notary','kvk','complete'].includes(row.status))
@@ -947,18 +994,14 @@ app.post('/api/vragenlijst', async (req, res) => {
 
 app.get('/api/admin/vragenlijsten', requireAdmin, async (req, res) => {
     const { data } = await supabase.from('vragenlijsten').select('case_id, submitted_at, data');
-    const result = (data || []).map(row => {
-        const { datacardBestandData, pepBestandData, ...rest } = row.data || {};
-        return { caseId: row.case_id, submittedAt: row.submitted_at, ...rest };
-    });
+    const result = (data || []).map(row => normalizeVragenlijstForAdmin(row));
     res.json(result);
 });
 
 app.get('/api/vragenlijsten/:caseId', requireAdmin, async (req, res) => {
     const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', req.params.caseId).single();
     if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
-    const { datacardBestandData, pepBestandData, ...rest } = row.data || {};
-    res.json({ caseId: row.case_id, submittedAt: row.submitted_at, ...rest, datacardIngediend: !!row.data?.datacardBestandNaam, pepIngediend: !!row.data?.pepBestandNaam });
+    res.json(normalizeVragenlijstForAdmin(row));
 });
 
 app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) => {
