@@ -265,9 +265,9 @@
             </button>
         </div>
         <form id="newDossierForm">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:10px 12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-                <div id="resellerStepIndicator" style="font-size:0.83rem;font-weight:700;color:#1A3B70;letter-spacing:0.03em;text-transform:uppercase;">Stap 1 van 2 · Samenstellen & prijs</div>
-                <div style="font-size:0.8rem;color:#718096;">Directe prijsberekening</div>
+            <div class="pricing-step-head">
+                <div id="resellerStepIndicator" class="pricing-step-meta">Stap 1 van 2 · Samenstellen & prijs</div>
+                <div class="pricing-step-sub">Directe prijsberekening</div>
             </div>
 
             <div id="resellerFormStep1">
@@ -287,15 +287,15 @@
                     </select>
                 </div>
 
-                <div style="margin-top:16px;font-weight:600;margin-bottom:10px;font-size:0.9rem;">Eventuele toeslagen</div>
-                <div id="extrasWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-bottom:14px;"></div>
+                <div class="pricing-extras-title">Eventuele toeslagen</div>
+                <div id="extrasWrap" class="pricing-extras-grid"></div>
 
-                <div style="padding:12px;border:1px solid #E8EDF5;border-radius:8px;background:#FAFCFF;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <div style="font-size:0.8rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:0.05em;">Prijsopbouw</div>
-                        <div id="pricingTotal" style="font-size:1rem;font-weight:700;color:#0F1D3A;">€ 0,00</div>
+                <div class="pricing-summary-card">
+                    <div class="pricing-summary-head">
+                        <div class="pricing-summary-title">Prijsopbouw</div>
+                        <div id="pricingTotal" class="pricing-summary-total">€ 0,00</div>
                     </div>
-                    <div id="pricingLines" style="font-size:0.84rem;color:#4A5568;line-height:1.5;">Kies eerst een dossier type.</div>
+                    <div id="pricingLines" class="pricing-summary-lines">Kies eerst een dossier type.</div>
                 </div>
 
                 <div class="modal-footer">
@@ -433,7 +433,7 @@ function updatePricingPreview() {
         return;
     }
     const rows = [selection.base, ...selection.extras];
-    linesEl.innerHTML = rows.map(x => `<div style="display:flex;justify-content:space-between;gap:10px;"><span>${x.label}</span><strong>${fmtCurrency(x.amount)}</strong></div>`).join('');
+    linesEl.innerHTML = rows.map(x => `<div class="pricing-line"><span>${x.label}</span><strong>${fmtCurrency(x.amount)}</strong></div>`).join('');
     totalEl.textContent = fmtCurrency(selection.total);
 }
 
@@ -590,8 +590,14 @@ function openModal() {
     const extrasWrap = document.getElementById('extrasWrap');
     if (extrasWrap && !extrasWrap.dataset.ready) {
         extrasWrap.innerHTML = Object.entries(EXTRA_PRICES).map(([code, x]) => `
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;color:#0F1D3A;cursor:pointer;">
-                <input type="checkbox" value="${code}" onchange="updatePricingPreview()" style="width:14px;height:14px;"> ${x.label} (${fmtCurrency(x.amount)})
+            <label class="pricing-extra-item">
+                <input class="pricing-extra-check" type="checkbox" value="${code}" onchange="updatePricingPreview()">
+                <span class="pricing-extra-item-box">
+                    <span>
+                        <span class="pricing-extra-label">${x.label}</span>
+                        <span class="pricing-extra-amount">${fmtCurrency(x.amount)}</span>
+                    </span>
+                </span>
             </label>
         `).join('');
         extrasWrap.dataset.ready = '1';

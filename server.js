@@ -502,6 +502,88 @@ app.get('/api/reseller-requests/:id', requireLogin, async (req, res) => {
     res.json(rowToReq(row));
 });
 
+app.patch('/api/reseller-requests/:id/details', requireLogin, async (req, res) => {
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
+    if (!row) return res.status(404).json({ error: 'Niet gevonden' });
+    if (req.session.user.type !== 'admin' && row.reseller_id !== req.session.user.email)
+        return res.status(403).json({ error: 'Geen toegang' });
+    if (req.session.user.type !== 'admin' && isDossierTrashed(row))
+        return res.status(404).json({ error: 'Niet gevonden' });
+
+    const {
+        clientName,
+        clientEmail,
+        clientPhone,
+        pricing
+    } = req.body || {};
+
+    const hasClientChanges = clientName !== undefined || clientEmail !== undefined || clientPhone !== undefined;
+    const hasPricingChanges = pricing !== undefined;
+    if (!hasClientChanges && !hasPricingChanges)
+        return res.status(400).json({ error: 'Geen wijzigingen opgegeven' });
+
+    const request = rowToReq(row);
+
+    if (clientName !== undefined) {
+        if (!String(clientName).trim()) return res.status(400).json({ error: 'Bedrijfsnaam is verplicht' });
+        request.clientName = String(clientName).trim();
+    }
+    if (clientEmail !== undefined) {
+        const email = String(clientEmail).trim();
+        if (!email) return res.status(400).json({ error: 'E-mailadres is verplicht' });
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Ongeldig e-mailadres' });
+        request.clientEmail = email;
+    }
+    if (clientPhone !== undefined) {
+        request.clientPhone = String(clientPhone || '').trim();
+    }
+
+    if (hasPricingChanges) {
+        if (!pricing || typeof pricing !== 'object') return res.status(400).json({ error: 'Ongeldige prijsopbouw' });
+        if (!pricing.base || typeof pricing.base !== 'object') return res.status(400).json({ error: 'Basisregel ontbreekt' });
+        const baseAmount = Number(pricing.base.amount || 0);
+        if (!Number.isFinite(baseAmount) || baseAmount < 0) return res.status(400).json({ error: 'Ongeldig basisbedrag' });
+
+        const extrasIn = Array.isArray(pricing.extras) ? pricing.extras : [];
+        const extras = extrasIn.map(x => ({
+            code: x.code || '',
+            label: String(x.label || '').trim(),
+            amount: Number(x.amount || 0)
+        })).filter(x => x.label && Number.isFinite(x.amount) && x.amount >= 0);
+
+        const normalizedBase = {
+            code: pricing.base.code || '',
+            label: String(pricing.base.label || '').trim(),
+            amount: baseAmount
+        };
+        if (!normalizedBase.label) return res.status(400).json({ error: 'Basistitel ontbreekt' });
+
+        const total = [normalizedBase, ...extras].reduce((sum, x) => sum + Number(x.amount || 0), 0);
+        request.pricing = { base: normalizedBase, extras, total };
+    }
+
+    const actor = req.session.user.name || req.session.user.email;
+    if (hasClientChanges && hasPricingChanges) {
+        addActivity(request, 'system', `Klantgegevens en prijsopbouw aangepast door ${actor}`, actor);
+    } else if (hasClientChanges) {
+        addActivity(request, 'system', `Klantgegevens aangepast door ${actor}`, actor);
+    } else if (hasPricingChanges) {
+        addActivity(request, 'system', `Prijsopbouw aangepast door ${actor}`, actor);
+    }
+
+    const rowUpdate = reqToRow(request);
+    const { error } = await supabase.from('reseller_requests').update({
+        client_name: rowUpdate.client_name,
+        client_email: rowUpdate.client_email,
+        client_phone: rowUpdate.client_phone,
+        opmerkingen: rowUpdate.opmerkingen,
+        activities: rowUpdate.activities
+    }).eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json(request);
+});
+
 app.patch('/api/reseller-requests/:id/approve', requireAdmin, async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
     if (!row) return res.status(404).json({ error: 'Aanvraag niet gevonden' });

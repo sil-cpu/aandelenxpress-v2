@@ -671,9 +671,9 @@
       </button>
     </div>
     <form id="adminNewDossierForm" style="padding:24px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:10px 12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-        <div id="adminStepIndicator" style="font-size:0.83rem;font-weight:700;color:#1A3B70;letter-spacing:0.03em;text-transform:uppercase;">Stap 1 van 2 · Samenstellen & prijs</div>
-        <div style="font-size:0.8rem;color:#718096;">Prijs wordt direct berekend</div>
+      <div class="pricing-step-head">
+        <div id="adminStepIndicator" class="pricing-step-meta">Stap 1 van 2 · Samenstellen & prijs</div>
+        <div class="pricing-step-sub">Prijs wordt direct berekend</div>
       </div>
 
       <div id="adminFormStep1">
@@ -693,15 +693,15 @@
           </select>
         </div>
 
-        <div style="font-weight:600;margin:14px 0 8px;font-size:0.88rem;color:#0F1D3A;">Eventuele toeslagen</div>
-        <div id="adminExtrasWrap" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-bottom:14px;"></div>
+        <div class="pricing-extras-title">Eventuele toeslagen</div>
+        <div id="adminExtrasWrap" class="pricing-extras-grid"></div>
 
-        <div style="padding:12px;border:1px solid #E8EDF5;border-radius:8px;background:#FAFCFF;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <div style="font-size:0.8rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:0.05em;">Prijsopbouw</div>
-            <div id="adminPricingTotal" style="font-size:1rem;font-weight:700;color:#0F1D3A;">€ 0,00</div>
+        <div class="pricing-summary-card">
+          <div class="pricing-summary-head">
+            <div class="pricing-summary-title">Prijsopbouw</div>
+            <div id="adminPricingTotal" class="pricing-summary-total">€ 0,00</div>
           </div>
-          <div id="adminPricingLines" style="font-size:0.84rem;color:#4A5568;line-height:1.5;">Kies eerst een dossier type.</div>
+          <div id="adminPricingLines" class="pricing-summary-lines">Kies eerst een dossier type.</div>
         </div>
 
         <div style="display:flex;gap:10px;margin-top:18px;">
@@ -840,7 +840,7 @@ function adminUpdatePricingPreview() {
     return;
   }
   const rows = [selection.base, ...selection.extras];
-  linesEl.innerHTML = rows.map(x => `<div style="display:flex;justify-content:space-between;gap:10px;"><span>${x.label}</span><strong>${fmtCurrency(x.amount)}</strong></div>`).join('');
+  linesEl.innerHTML = rows.map(x => `<div class="pricing-line"><span>${x.label}</span><strong>${fmtCurrency(x.amount)}</strong></div>`).join('');
   totalEl.textContent = fmtCurrency(selection.total);
 }
 
@@ -2232,8 +2232,14 @@ function openAdminDossierModal() {
   const extrasWrap = document.getElementById('adminExtrasWrap');
   if (extrasWrap && !extrasWrap.dataset.ready) {
     extrasWrap.innerHTML = Object.entries(DOSSIER_EXTRA_PRICES).map(([code, x]) => `
-      <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;color:#0F1D3A;cursor:pointer;">
-        <input type="checkbox" value="${code}" onchange="adminUpdatePricingPreview()" style="width:14px;height:14px;"> ${x.label} (${fmtCurrency(x.amount)})
+      <label class="pricing-extra-item">
+        <input class="pricing-extra-check" type="checkbox" value="${code}" onchange="adminUpdatePricingPreview()">
+        <span class="pricing-extra-item-box">
+          <span>
+            <span class="pricing-extra-label">${x.label}</span>
+            <span class="pricing-extra-amount">${fmtCurrency(x.amount)}</span>
+          </span>
+        </span>
       </label>
     `).join('');
     extrasWrap.dataset.ready = '1';

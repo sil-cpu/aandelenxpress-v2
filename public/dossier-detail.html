@@ -39,7 +39,10 @@
     .act-send-btn:disabled { opacity: .6; cursor: default; }
     .detail-card { background: white; border: 1px solid #E8EDF5; border-radius: 12px; overflow: hidden; }
     .detail-card-head { padding: 18px 24px; border-bottom: 1px solid #EEF1F7; }
+    .detail-card-head.with-action { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .detail-card-title { font-size: 0.9rem; font-weight: 600; color: #0F1D3A; }
+    .detail-card-link { font-size:0.82rem; color:#2B6CB5; font-weight:600; cursor:pointer; text-decoration:none; }
+    .detail-card-link:hover { color:#1A3B70; text-decoration:underline; }
     .detail-card-body { padding: 24px; }
     .detail-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
     .detail-field label { display: block; font-size: 0.76rem; font-weight: 600; color: #8A9BB5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
@@ -97,6 +100,24 @@
     .em-cancel { background: #F0F4FF; color: #0F1D3A; border: 1px solid #DDE5F4 !important; }
     .em-send { background: #1A3B70; color: #fff; }
     .em-send:hover { background: #0F2658; }
+
+    .compact-access { display:flex; flex-direction:column; gap:8px; }
+    .compact-access-item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#F7FAFC; border:1px solid #E8EDF5; border-radius:8px; }
+    .compact-access-label { font-size:0.72rem; font-weight:700; color:#8A9BB5; text-transform:uppercase; letter-spacing:.05em; min-width:86px; }
+    .compact-access-val { flex:1; min-width:0; font-family:monospace; font-size:0.78rem; color:#0F1D3A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .icon-btn { width:28px; height:28px; border:1px solid #DDE5F4; background:white; border-radius:7px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#1A3B70; }
+    .icon-btn:hover { background:#EDF3FD; border-color:#C3DAFE; }
+    .compact-access-note { font-size:0.74rem; color:#718096; margin-top:2px; line-height:1.35; }
+
+    .edit-overlay { display:none; position:fixed; inset:0; background:rgba(10,20,50,.45); backdrop-filter:blur(2px); z-index:1100; align-items:center; justify-content:center; }
+    .edit-overlay.open { display:flex; }
+    .edit-modal { width:620px; max-width:calc(100vw - 28px); max-height:90vh; overflow-y:auto; background:white; border-radius:14px; border:1px solid #E8EDF5; box-shadow:0 24px 64px rgba(0,0,0,.2); }
+    .edit-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #EEF1F7; }
+    .edit-title { font-size:.98rem; font-weight:600; color:#0F1D3A; }
+    .edit-body { padding:18px 20px; }
+    .edit-close { border:none; background:none; cursor:pointer; color:#94A3B8; font-size:1.1rem; }
+    .edit-close:hover { color:#0F1D3A; }
+    .edit-actions { display:flex; justify-content:flex-end; gap:10px; padding:14px 20px; border-top:1px solid #EEF1F7; }
   </style>
 </head>
 <body>
@@ -167,7 +188,7 @@
               Verstuur email
             </button>
             <div class="acties-sep"></div>
-            <button onclick="closeActies();alert('Binnenkort beschikbaar')">
+            <button onclick="closeActies();openEditModal('client')">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Gegevens wijzigen
             </button>
@@ -265,6 +286,53 @@
     </div>
   </div>
 </div>
+
+<div id="editDossierModal" class="edit-overlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal">
+    <div class="edit-head">
+      <div class="edit-title" id="editModalTitle">Gegevens wijzigen</div>
+      <button class="edit-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="edit-body">
+      <div id="editClientFields" style="display:none;">
+        <div class="form-field">
+          <label>Bedrijfsnaam</label>
+          <input type="text" id="editClientName" placeholder="Bedrijfsnaam">
+        </div>
+        <div class="form-field">
+          <label>E-mailadres</label>
+          <input type="email" id="editClientEmail" placeholder="naam@bedrijf.nl">
+        </div>
+        <div class="form-field" style="margin-bottom:0;">
+          <label>Telefoonnummer</label>
+          <input type="text" id="editClientPhone" placeholder="+31 6 12345678">
+        </div>
+      </div>
+
+      <div id="editPricingFields" style="display:none;">
+        <div class="form-field">
+          <label>Type dossier</label>
+          <select id="editServiceType" onchange="updateEditPricingPreview()"></select>
+        </div>
+        <div class="pricing-extras-title" style="margin-top:6px;">Toeslagen</div>
+        <div id="editExtrasWrap" class="pricing-extras-grid" style="max-height:220px;"></div>
+        <div class="pricing-summary-card">
+          <div class="pricing-summary-head">
+            <div class="pricing-summary-title">Prijsopbouw</div>
+            <div id="editPricingTotal" class="pricing-summary-total">€ 0,00</div>
+          </div>
+          <div id="editPricingLines" class="pricing-summary-lines">Kies eerst een dossier type.</div>
+        </div>
+      </div>
+
+      <div id="editError" style="display:none;margin-top:12px;padding:10px 12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;color:#B91C1C;font-size:0.84rem;"></div>
+    </div>
+    <div class="edit-actions">
+      <button class="btn-ghost" onclick="closeEditModal()">Annuleren</button>
+      <button class="btn-primary" id="editSaveBtn" onclick="saveEditModal()">Opslaan</button>
+    </div>
+  </div>
+</div>
 </div>
 <script>
 // ── Global state ───────────────────────────────────────────
@@ -272,6 +340,37 @@ let currentDossier = null;
 let currentRole = null;let currentEmailMode = 'compose'; // 'compose' | 'status'
 let pendingStatusChange = null;   // { value, oldValue }
 let currentVragenlijstData = null;
+let currentEditSection = null;
+
+const EDIT_BASE_PRICES = {
+  'bv': { label: 'Oprichting van een B.V.', amount: 540.00 },
+  'geruisloze-inbreng': { label: 'Geruisloze inbreng', amount: 1095.00 },
+  'holding-aanbod': { label: 'Gelimiteerd aanbod: Holding + Werkmaatschappij', amount: 724.00 },
+  'geruisloze-ez-bv': { label: 'Geruisloze inbreng Eenmanszaak -> BV', amount: 1095.00 },
+  'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00 },
+  'spoed-holding': { label: 'SPOED Holding + Werkmaatschappij', amount: 2850.00 },
+  'spoed-bv': { label: 'Spoed - Oprichting van een B.V.', amount: 1449.00 },
+  'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00 },
+  'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00 }
+};
+
+const EDIT_EXTRA_PRICES = {
+  'aandeelhoudersregister': { label: 'Nieuw aandeelhoudersregister', amount: 325.00 },
+  'ah-buiten-eu': { label: 'Aandeelhouder woonachtig buiten de EU', amount: 500.00 },
+  'persoon-buiten-nl-met-nl-bank': { label: 'Natuurlijk persoon buiten NL met NL-bankrekening', amount: 50.00 },
+  'persoon-buiten-nl-zonder-bank': { label: 'Natuurlijk persoon buiten NL zonder NL-bankrekening', amount: 250.00 },
+  'bestaande-holding': { label: 'Bestaande Holding als aandeelhouder', amount: 50.00 },
+  'compliance-tussenholdings': { label: 'Aanvullende compliancecontrole bij tussen holdings', amount: 50.00 },
+  'bedrijfsadres-anders': { label: 'Bedrijfsadres afwijkend van aandeelhouder', amount: 50.00 },
+  'tolk-30min': { label: 'Belafspraak met tolk (30 min)', amount: 250.00 },
+  'no-show-notaris': { label: 'Belafspraak notaris (no-show/onvolledig)', amount: 250.00 },
+  'engelse-vertaling': { label: 'Engelse vertaling statuten', amount: 125.00 },
+  'extra-aandeelhouder': { label: 'Extra aandeelhouder', amount: 50.00 },
+  'naamswijziging-concept': { label: 'Naamswijziging in conceptakten', amount: 250.00 },
+  'advocaten-statuten': { label: 'Advocaten statuten', amount: 250.00 },
+  'vastgoed-statuten': { label: 'Vastgoed statuten', amount: 250.00 },
+  'wtza-statuten': { label: 'WTZA statuten', amount: 250.00 }
+};
 // ── All dossier data ───────────────────────────────────────
 const allDossiers = [
   { name:"TechStart B.V.",       partner:"Bakker Accountants",  statusKey:"notary",   statusText:"Notariële akte",  date:"2026-04-20", dossierNr:"AX-2026-0042", clientEmail:"info@techstart.nl",       clientPhone:"+31 20 123 4567", kvk:"" },
@@ -314,7 +413,10 @@ function renderPricingCard(d) {
   const pricing = d.pricing;
   if (!pricing || !pricing.base) {
     return `<div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">Prijsopbouw</div></div>
+      <div class="detail-card-head with-action">
+        <div class="detail-card-title">Prijsopbouw</div>
+        <a href="#" class="detail-card-link" onclick="openEditModal('pricing');return false;">Gegevens wijzigen</a>
+      </div>
       <div class="detail-card-body">
         <div style="color:#8A9BB5;font-size:0.88rem;">Voor dit dossier is nog geen prijsopbouw opgeslagen.</div>
       </div>
@@ -330,7 +432,10 @@ function renderPricingCard(d) {
   `).join('');
 
   return `<div class="detail-card">
-    <div class="detail-card-head"><div class="detail-card-title">Prijsopbouw</div></div>
+    <div class="detail-card-head with-action">
+      <div class="detail-card-title">Prijsopbouw</div>
+      <a href="#" class="detail-card-link" onclick="openEditModal('pricing');return false;">Gegevens wijzigen</a>
+    </div>
     <div class="detail-card-body">
       ${linesHtml}
       <div style="display:flex;justify-content:space-between;gap:10px;padding-top:12px;margin-top:8px;font-size:1rem;font-weight:700;color:#1A3B70;">
@@ -341,40 +446,45 @@ function renderPricingCard(d) {
   </div>`;
 }
 
+function renderCompactAccessSection(d, role) {
+  const statusUrl = `${window.location.origin}/dossier-status?nr=${d.dossierNr}`;
+  const vragenlijstUrl = `${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}`;
+  return `
+    <div class="detail-card">
+      <div class="detail-card-head"><div class="detail-card-title">Klant toegang</div></div>
+      <div class="detail-card-body" style="padding:14px 16px;">
+        <div class="compact-access">
+          <div class="compact-access-item">
+            <div class="compact-access-label">Status</div>
+            <div class="compact-access-val">${statusUrl}</div>
+            <button class="icon-btn" onclick="copyToClipboard('${statusUrl}')" title="Kopieer statuslink">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+          <div class="compact-access-item">
+            <div class="compact-access-label">Formulier</div>
+            <div class="compact-access-val">${vragenlijstUrl}</div>
+            <button class="icon-btn" onclick="copyToClipboard('${vragenlijstUrl}')" title="Kopieer formulierlink">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+          <div class="compact-access-item">
+            <div class="compact-access-label">Code</div>
+            <div class="compact-access-val" id="dossierToken">${d.accessToken || '—'}</div>
+            ${role === 'admin' ? `<button class="icon-btn" onclick="resetDossierToken('${d.dossierNr}')" title="Nieuw wachtwoord"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15A9 9 0 1 1 23 10"></path></svg></button>` : ''}
+            <button class="icon-btn" onclick="copyToClipboard(document.getElementById('dossierToken').textContent)" title="Kopieer toegangscode">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="compact-access-note">Kopieer de statuslink en toegangscode voor de klant.</div>
+      </div>
+    </div>`;
+}
+
 function renderPage(d, role) {
   const partnerField = role === "admin"
     ? `<div class="detail-field"><label>Partner</label><div class="val">${d.partner}</div></div>` : "";
-
-  const accessSection = `
-    <div class="detail-card">
-      <div class="detail-card-head"><div class="detail-card-title">Klant toegang — Links &amp; Wachtwoord</div></div>
-      <div class="detail-card-body">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Statuspagina klant</div>
-            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/dossier-status?nr=${d.dossierNr}</div>
-          </div>
-          <button onclick="copyToClipboard('${window.location.origin}/dossier-status?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:12px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Formulier (vragenlijst)</div>
-            <div style="font-family:monospace;font-size:0.85rem;color:#0F1D3A;word-break:break-all;">${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}</div>
-          </div>
-          <button onclick="copyToClipboard('${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}')" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
-          <a href="${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}" target="_blank" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;text-decoration:none;">Openen ↗</a>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-          <div style="flex:1;">
-            <div style="font-size:0.75rem;color:#8A9BB5;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Toegangscode (status &amp; formulier)</div>
-            <div id="dossierToken" style="font-family:monospace;font-size:1.1rem;font-weight:600;letter-spacing:3px;color:#1A3B70;">${d.accessToken || '—'}</div>
-          </div>
-          ${role === 'admin' ? `<button onclick="resetDossierToken('${d.dossierNr}')" style="flex-shrink:0;background:none;border:1px solid #E8EDF5;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;color:#0F1D3A;font-weight:500;">Nieuw wachtwoord</button>` : ''}
-          <button onclick="copyToClipboard(document.getElementById('dossierToken').textContent)" style="flex-shrink:0;background:#1A3B70;color:white;border:none;border-radius:6px;padding:10px 14px;cursor:pointer;font-size:0.85rem;font-weight:500;">Kopiëren</button>
-        </div>
-        <div style="font-size:0.8rem;color:#718096;margin-top:10px;line-height:1.4;">Stuur de klant de statuspagina + het wachtwoord. Het formulier (vragenlijst) is publiek toegankelijk via de link hierboven.</div>
-      </div>
-    </div>`;
 
   const composeBar = role === 'admin' ? `
     <div class="act-compose">
@@ -424,12 +534,17 @@ function renderPage(d, role) {
           </div>
         </div>
 
+        ${renderCompactAccessSection(d, role)}
+
         <!-- Klantgegevens -->
         <div class="detail-card">
-          <div class="detail-card-head"><div class="detail-card-title">Klantgegevens</div></div>
+          <div class="detail-card-head with-action">
+            <div class="detail-card-title">Klantgegevens</div>
+            <a href="#" class="detail-card-link" onclick="openEditModal('client');return false;">Gegevens wijzigen</a>
+          </div>
           <div class="detail-card-body">
             <div class="detail-field-grid">
-              <div class="detail-field"><label>Bedrijfsnaam</label><div class="val">${d.name}</div></div>
+              <div class="detail-field"><label>Bedrijfsnaam</label><div class="val">${d.clientName || d.name}</div></div>
               <div class="detail-field"><label>KvK-nummer</label><div class="val">${d.kvk||"—"}</div></div>
               <div class="detail-field"><label>E-mailadres</label><div class="val">${d.clientEmail||"—"}</div></div>
               <div class="detail-field"><label>Telefoonnummer</label><div class="val">${d.clientPhone||"—"}</div></div>
@@ -438,8 +553,6 @@ function renderPage(d, role) {
         </div>
 
         ${renderPricingCard(d)}
-
-        ${accessSection}
 
         <!-- Documenten -->
         <div class="detail-card">
@@ -603,7 +716,7 @@ async function postComment() {
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
     const toast = document.createElement("div");
-    toast.textContent = "✓ Link gekopieerd";
+    toast.textContent = "✓ Gekopieerd";
     Object.assign(toast.style, {
       position: "fixed", bottom: "24px", right: "24px", background: "#0A1E42",
       color: "white", padding: "12px 20px", borderRadius: "8px", fontWeight: "500",
@@ -612,6 +725,157 @@ function copyToClipboard(text) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
   }).catch(() => alert("Kon link niet kopiëren"));
+}
+
+function buildEditPricingSelection() {
+  const baseCode = document.getElementById('editServiceType')?.value;
+  const base = EDIT_BASE_PRICES[baseCode];
+  if (!base) return null;
+  const extras = [...document.querySelectorAll('#editExtrasWrap input[type="checkbox"]:checked')]
+    .map(cb => ({ code: cb.value, ...(EDIT_EXTRA_PRICES[cb.value] || {}) }))
+    .filter(x => x.label);
+  const baseLine = { code: baseCode, label: base.label, amount: base.amount };
+  const total = [baseLine, ...extras].reduce((sum, x) => sum + x.amount, 0);
+  return { base: baseLine, extras, total };
+}
+
+function updateEditPricingPreview() {
+  const linesEl = document.getElementById('editPricingLines');
+  const totalEl = document.getElementById('editPricingTotal');
+  if (!linesEl || !totalEl) return;
+  const selection = buildEditPricingSelection();
+  if (!selection) {
+    linesEl.textContent = 'Kies eerst een dossier type.';
+    totalEl.textContent = fmtMoney(0);
+    return;
+  }
+  const rows = [selection.base, ...selection.extras];
+  linesEl.innerHTML = rows.map(x => `<div class="pricing-line"><span>${escHtml(x.label)}</span><strong>${fmtMoney(x.amount)}</strong></div>`).join('');
+  totalEl.textContent = fmtMoney(selection.total);
+}
+
+function initEditPricingControls() {
+  const serviceSel = document.getElementById('editServiceType');
+  if (serviceSel && !serviceSel.dataset.ready) {
+    serviceSel.innerHTML = '<option value="">— Kies dossier type —</option>' + Object.entries(EDIT_BASE_PRICES)
+      .map(([code, x]) => `<option value="${code}">${x.label} (${fmtMoney(x.amount)})</option>`).join('');
+    serviceSel.dataset.ready = '1';
+  }
+
+  const extrasWrap = document.getElementById('editExtrasWrap');
+  if (extrasWrap && !extrasWrap.dataset.ready) {
+    extrasWrap.innerHTML = Object.entries(EDIT_EXTRA_PRICES).map(([code, x]) => `
+      <label class="pricing-extra-item">
+        <input class="pricing-extra-check" type="checkbox" value="${code}" onchange="updateEditPricingPreview()">
+        <span class="pricing-extra-item-box">
+          <span>
+            <span class="pricing-extra-label">${x.label}</span>
+            <span class="pricing-extra-amount">${fmtMoney(x.amount)}</span>
+          </span>
+        </span>
+      </label>
+    `).join('');
+    extrasWrap.dataset.ready = '1';
+  }
+}
+
+function detectBaseCodeFromPricing(pricing) {
+  if (pricing?.base?.code && EDIT_BASE_PRICES[pricing.base.code]) return pricing.base.code;
+  const base = pricing?.base;
+  if (!base) return '';
+  const found = Object.entries(EDIT_BASE_PRICES).find(([_, x]) => x.label === base.label && Number(x.amount) === Number(base.amount));
+  return found ? found[0] : '';
+}
+
+function openEditModal(section) {
+  if (!currentDossier?.dossierNr) return;
+  currentEditSection = section;
+  document.getElementById('editError').style.display = 'none';
+
+  const clientFields = document.getElementById('editClientFields');
+  const pricingFields = document.getElementById('editPricingFields');
+  const title = document.getElementById('editModalTitle');
+
+  if (section === 'client') {
+    title.textContent = 'Klantgegevens wijzigen';
+    clientFields.style.display = '';
+    pricingFields.style.display = 'none';
+    document.getElementById('editClientName').value = currentDossier.clientName || currentDossier.name || '';
+    document.getElementById('editClientEmail').value = currentDossier.clientEmail || '';
+    document.getElementById('editClientPhone').value = currentDossier.clientPhone || '';
+  } else {
+    title.textContent = 'Prijsopbouw wijzigen';
+    clientFields.style.display = 'none';
+    pricingFields.style.display = '';
+    initEditPricingControls();
+
+    const baseCode = detectBaseCodeFromPricing(currentDossier.pricing);
+    document.getElementById('editServiceType').value = baseCode;
+    const selectedExtras = new Set((currentDossier.pricing?.extras || []).map(x => x.code));
+    document.querySelectorAll('#editExtrasWrap input[type="checkbox"]').forEach(cb => {
+      cb.checked = selectedExtras.has(cb.value);
+    });
+    updateEditPricingPreview();
+  }
+
+  document.getElementById('editDossierModal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editDossierModal').classList.remove('open');
+  currentEditSection = null;
+}
+
+async function saveEditModal() {
+  if (!currentEditSection || !currentDossier?.dossierNr) return;
+  const errEl = document.getElementById('editError');
+  const saveBtn = document.getElementById('editSaveBtn');
+  errEl.style.display = 'none';
+
+  let payload = {};
+  if (currentEditSection === 'client') {
+    payload = {
+      clientName: document.getElementById('editClientName').value.trim(),
+      clientEmail: document.getElementById('editClientEmail').value.trim(),
+      clientPhone: document.getElementById('editClientPhone').value.trim()
+    };
+  } else {
+    const pricing = buildEditPricingSelection();
+    if (!pricing) {
+      errEl.textContent = 'Kies eerst een dossier type.';
+      errEl.style.display = 'block';
+      return;
+    }
+    payload = { pricing };
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Opslaan...';
+  try {
+    const r = await fetch(`/api/reseller-requests/${encodeURIComponent(currentDossier.dossierNr)}/details`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Opslaan mislukt');
+
+    currentDossier.clientName = data.clientName || currentDossier.clientName;
+    currentDossier.clientEmail = data.clientEmail || currentDossier.clientEmail;
+    currentDossier.clientPhone = data.clientPhone || currentDossier.clientPhone;
+    if (data.pricing !== undefined) currentDossier.pricing = data.pricing;
+
+    renderPage(currentDossier, currentRole);
+    if (currentRole === 'admin') renderActionBar(currentDossier);
+    showToast('Gegevens opgeslagen');
+    closeEditModal();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Opslaan';
+  }
 }
 
 function buildSidebar(role) {
@@ -1118,11 +1382,12 @@ async function init() {
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
           const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'notary':{ key:'notary', text:'Notariële Akte' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'pending', text: req.status };
-          d = { name: req.gewenstNaam || req.clientName, partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', pricing: req.pricing || null, hasVragenlijst: false };
+          d = { name: req.gewenstNaam || req.clientName, clientName: req.clientName || req.gewenstNaam || '', partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', pricing: req.pricing || null, hasVragenlijst: false };
         }
       } catch(e) { console.error('API fetch failed:', e); }
     } else {
       d = allDossiers.find(x => x.dossierNr === nr);
+      if (d && !d.clientName) d.clientName = d.name;
     }
     if (!d) {
       document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Dossier niet gevonden.</p><a href="${u.type==='admin'?'admin-dashboard.html':'reseller-dashboard.html'}" class="btn-primary" style="margin-top:16px;">Terug naar dashboard</a></div>`;
