@@ -316,7 +316,7 @@
                     </div>
                 </div>
 
-                <div class="pricing-extras-title">Overige opties (optioneel)</div>
+                <div class="pricing-extras-title">Aanvullende vragen (optioneel)</div>
                 <div id="extrasWrap" class="pricing-extras-grid"></div>
 
                 <div class="pricing-summary-card">
@@ -444,8 +444,8 @@ function buildPricingSelection() {
     const aandeelhoudersCount = parseInt(document.getElementById('shareholderCount')?.value || '1', 10);
     const hasAddressDiff = document.querySelector('input[name="addressDiff"]:checked')?.value === 'ja';
 
-    const extras = [...document.querySelectorAll('#extrasWrap input[type="checkbox"]:checked')]
-        .map(cb => ({ code: cb.value, ...(EXTRA_PRICES[cb.value] || {}) }))
+    const extras = [...document.querySelectorAll('#extrasWrap input[type="radio"][value="ja"]:checked')]
+        .map(rb => ({ code: rb.dataset.code, ...(EXTRA_PRICES[rb.dataset.code] || {}) }))
         .filter(x => x.label);
 
     const extraAandeelhouderPrice = EXTRA_PRICES['extra-aandeelhouder']?.amount || 50;
@@ -641,15 +641,18 @@ function openModal() {
         extrasWrap.innerHTML = Object.entries(EXTRA_PRICES)
             .filter(([code]) => !['extra-aandeelhouder', 'bedrijfsadres-anders'].includes(code))
             .map(([code, x]) => `
-            <label class="pricing-extra-item">
-                <input class="pricing-extra-check" type="checkbox" value="${code}" onchange="updatePricingPreview()">
-                <span class="pricing-extra-item-box">
-                    <span>
-                        <span class="pricing-extra-label">${x.label}</span>
-                        <span class="pricing-extra-amount">${fmtCurrency(x.amount)}</span>
-                    </span>
-                </span>
-            </label>
+            <div style="border:1px solid #E3EAF3;border-radius:8px;padding:10px;background:white;">
+                <div style="font-size:0.83rem;color:#0F1D3A;font-weight:500;line-height:1.35;">${x.label}</div>
+                <div style="font-size:0.78rem;color:#5A6A7E;margin-top:2px;">${fmtCurrency(x.amount)}</div>
+                <div style="display:flex;gap:14px;align-items:center;margin-top:8px;">
+                    <label style="display:flex;gap:6px;align-items:center;font-size:0.82rem;color:#4A5568;cursor:pointer;">
+                        <input type="radio" name="extra_${code}" value="nee" data-code="${code}" checked onchange="updatePricingPreview()"> Nee
+                    </label>
+                    <label style="display:flex;gap:6px;align-items:center;font-size:0.82rem;color:#0F1D3A;cursor:pointer;">
+                        <input type="radio" name="extra_${code}" value="ja" data-code="${code}" onchange="updatePricingPreview()"> Ja
+                    </label>
+                </div>
+            </div>
         `).join('');
         extrasWrap.dataset.ready = '1';
     }
@@ -663,7 +666,7 @@ function openModal() {
 }
 function closeModal() {
     document.getElementById('newDossierForm').reset();
-    document.querySelectorAll('#extrasWrap input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('#extrasWrap input[type="radio"][value="nee"]').forEach(rb => { rb.checked = true; });
     const shareholderCount = document.getElementById('shareholderCount');
     if (shareholderCount) shareholderCount.value = '1';
     const addressNo = document.querySelector('input[name="addressDiff"][value="nee"]');
