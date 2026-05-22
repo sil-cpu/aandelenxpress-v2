@@ -779,12 +779,47 @@ function initEditPricingControls() {
   }
 }
 
+function normalizePricingLabel(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/\u2192/g, '->')
+    .replace(/\s+/g, ' ')
+    .replace(/\./g, '')
+    .trim();
+}
+
 function detectBaseCodeFromPricing(pricing) {
   if (pricing?.base?.code && EDIT_BASE_PRICES[pricing.base.code]) return pricing.base.code;
   const base = pricing?.base;
   if (!base) return '';
-  const found = Object.entries(EDIT_BASE_PRICES).find(([_, x]) => x.label === base.label && Number(x.amount) === Number(base.amount));
+  const baseAmount = Number(base.amount);
+  const normalized = normalizePricingLabel(base.label);
+  const found = Object.entries(EDIT_BASE_PRICES).find(([_, x]) => x.label === base.label && Number(x.amount) === baseAmount)
+    || Object.entries(EDIT_BASE_PRICES).find(([_, x]) => normalizePricingLabel(x.label) === normalized && Number(x.amount) === baseAmount)
+    || Object.entries(EDIT_BASE_PRICES).find(([_, x]) => Number(x.amount) === baseAmount);
   return found ? found[0] : '';
+}
+
+function detectExtraCodesFromPricing(pricing) {
+  const extras = Array.isArray(pricing?.extras) ? pricing.extras : [];
+  const matchedCodes = new Set();
+
+  extras.forEach(extra => {
+    if (!extra) return;
+    if (extra.code && EDIT_EXTRA_PRICES[extra.code]) {
+      matchedCodes.add(extra.code);
+      return;
+    }
+
+    const amount = Number(extra.amount);
+    const normalized = normalizePricingLabel(extra.label);
+    const found = Object.entries(EDIT_EXTRA_PRICES).find(([_, x]) => x.label === extra.label && Number(x.amount) === amount)
+      || Object.entries(EDIT_EXTRA_PRICES).find(([_, x]) => normalizePricingLabel(x.label) === normalized && Number(x.amount) === amount)
+      || Object.entries(EDIT_EXTRA_PRICES).find(([_, x]) => Number(x.amount) === amount && normalizePricingLabel(x.label).includes(normalized));
+    if (found) matchedCodes.add(found[0]);
+  });
+
+  return matchedCodes;
 }
 
 function openEditModal(section) {
@@ -811,7 +846,7 @@ function openEditModal(section) {
 
     const baseCode = detectBaseCodeFromPricing(currentDossier.pricing);
     document.getElementById('editServiceType').value = baseCode;
-    const selectedExtras = new Set((currentDossier.pricing?.extras || []).map(x => x.code));
+    const selectedExtras = detectExtraCodesFromPricing(currentDossier.pricing);
     document.querySelectorAll('#editExtrasWrap input[type="checkbox"]').forEach(cb => {
       cb.checked = selectedExtras.has(cb.value);
     });
