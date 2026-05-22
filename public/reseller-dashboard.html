@@ -287,7 +287,36 @@
                     </select>
                 </div>
 
-                <div class="pricing-extras-title">Eventuele toeslagen</div>
+                <div class="form-field" style="margin-bottom:10px;">
+                    <label>Hoeveel aandeelhouders zijn er?</label>
+                    <select id="shareholderCount" onchange="updatePricingPreview()">
+                        <option value="1">1 aandeelhouder</option>
+                        <option value="2">2 aandeelhouders</option>
+                        <option value="3">3 aandeelhouders</option>
+                        <option value="4">4 aandeelhouders</option>
+                        <option value="5">5 aandeelhouders</option>
+                        <option value="6">6 aandeelhouders</option>
+                        <option value="7">7 aandeelhouders</option>
+                        <option value="8">8 aandeelhouders</option>
+                        <option value="9">9 aandeelhouders</option>
+                        <option value="10">10 aandeelhouders</option>
+                    </select>
+                    <div style="font-size:0.76rem;color:#718096;margin-top:5px;">Voor elke extra aandeelhouder wordt automatisch een toeslag berekend.</div>
+                </div>
+
+                <div class="form-field" style="margin-bottom:14px;">
+                    <label>Is het bedrijfsadres afwijkend van de aandeelhouder?</label>
+                    <div style="display:flex;gap:16px;align-items:center;margin-top:6px;">
+                        <label style="display:flex;gap:6px;align-items:center;font-size:0.86rem;color:#0F1D3A;cursor:pointer;">
+                            <input type="radio" name="addressDiff" value="nee" checked onchange="updatePricingPreview()"> Nee
+                        </label>
+                        <label style="display:flex;gap:6px;align-items:center;font-size:0.86rem;color:#0F1D3A;cursor:pointer;">
+                            <input type="radio" name="addressDiff" value="ja" onchange="updatePricingPreview()"> Ja
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pricing-extras-title">Overige opties (optioneel)</div>
                 <div id="extrasWrap" class="pricing-extras-grid"></div>
 
                 <div class="pricing-summary-card">
@@ -343,10 +372,7 @@
                     <textarea id="doel" placeholder="Wat is het doel van de BV?" style="min-height:80px;resize:vertical;" required></textarea>
                 </div>
 
-                <div class="form-field">
-                    <label>Aantal aandeelhouders *</label>
-                    <input type="number" id="aandeelhouders" placeholder="1" min="1" required>
-                </div>
+                <input type="hidden" id="aandeelhouders" value="1">
 
                 <div class="form-field">
                     <label>Geplaatst kapitaal (in €) *</label>
@@ -414,9 +440,30 @@ function buildPricingSelection() {
     const baseCode = document.getElementById('serviceType')?.value;
     const base = BASE_PRICES[baseCode];
     if (!base) return null;
+
+    const aandeelhoudersCount = parseInt(document.getElementById('shareholderCount')?.value || '1', 10);
+    const hasAddressDiff = document.querySelector('input[name="addressDiff"]:checked')?.value === 'ja';
+
     const extras = [...document.querySelectorAll('#extrasWrap input[type="checkbox"]:checked')]
         .map(cb => ({ code: cb.value, ...(EXTRA_PRICES[cb.value] || {}) }))
         .filter(x => x.label);
+
+    const extraAandeelhouderPrice = EXTRA_PRICES['extra-aandeelhouder']?.amount || 50;
+    if (aandeelhoudersCount > 1) {
+        extras.unshift({
+            code: 'extra-aandeelhouder-dynamic',
+            label: `Extra aandeelhouders (${aandeelhoudersCount - 1}x)`,
+            amount: (aandeelhoudersCount - 1) * extraAandeelhouderPrice
+        });
+    }
+
+    if (hasAddressDiff) {
+        extras.push({
+            code: 'bedrijfsadres-anders',
+            ...(EXTRA_PRICES['bedrijfsadres-anders'] || { label: 'Bedrijfsadres afwijkend van aandeelhouder', amount: 50 })
+        });
+    }
+
     const baseLine = { code: baseCode, label: base.label, amount: base.amount };
     const total = [baseLine, ...extras].reduce((sum, x) => sum + x.amount, 0);
     return { base: baseLine, extras, total };
@@ -444,6 +491,8 @@ function goToStep2() {
     const mappedType = BASE_PRICES[baseCode]?.oprichtingType;
     const oprSel = document.getElementById('oprichtingType');
     if (mappedType && oprSel) oprSel.value = mappedType;
+    const aandeelhoudersEl = document.getElementById('aandeelhouders');
+    if (aandeelhoudersEl) aandeelhoudersEl.value = document.getElementById('shareholderCount')?.value || '1';
     document.getElementById('resellerFormStep1').style.display = 'none';
     document.getElementById('resellerFormStep2').style.display = '';
     document.getElementById('resellerStepIndicator').textContent = 'Stap 2 van 2 · Klant- en dossiergegevens';
@@ -589,7 +638,9 @@ async function loadUser() {
 function openModal() {
     const extrasWrap = document.getElementById('extrasWrap');
     if (extrasWrap && !extrasWrap.dataset.ready) {
-        extrasWrap.innerHTML = Object.entries(EXTRA_PRICES).map(([code, x]) => `
+        extrasWrap.innerHTML = Object.entries(EXTRA_PRICES)
+            .filter(([code]) => !['extra-aandeelhouder', 'bedrijfsadres-anders'].includes(code))
+            .map(([code, x]) => `
             <label class="pricing-extra-item">
                 <input class="pricing-extra-check" type="checkbox" value="${code}" onchange="updatePricingPreview()">
                 <span class="pricing-extra-item-box">
@@ -602,6 +653,10 @@ function openModal() {
         `).join('');
         extrasWrap.dataset.ready = '1';
     }
+    const shareholderCount = document.getElementById('shareholderCount');
+    if (shareholderCount) shareholderCount.value = '1';
+    const addressNo = document.querySelector('input[name="addressDiff"][value="nee"]');
+    if (addressNo) addressNo.checked = true;
     backToStep1();
     updatePricingPreview();
     document.getElementById('modal').classList.add('active');
@@ -609,6 +664,10 @@ function openModal() {
 function closeModal() {
     document.getElementById('newDossierForm').reset();
     document.querySelectorAll('#extrasWrap input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    const shareholderCount = document.getElementById('shareholderCount');
+    if (shareholderCount) shareholderCount.value = '1';
+    const addressNo = document.querySelector('input[name="addressDiff"][value="nee"]');
+    if (addressNo) addressNo.checked = true;
     backToStep1();
     updatePricingPreview();
     document.getElementById('modal').classList.remove('active');

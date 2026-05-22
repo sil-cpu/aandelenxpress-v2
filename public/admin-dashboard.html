@@ -693,7 +693,36 @@
           </select>
         </div>
 
-        <div class="pricing-extras-title">Eventuele toeslagen</div>
+        <div class="form-field" style="margin-bottom:10px;">
+          <label>Hoeveel aandeelhouders zijn er?</label>
+          <select id="adminShareholderCount" onchange="adminUpdatePricingPreview()" style="width:100%;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;background:white;">
+            <option value="1">1 aandeelhouder</option>
+            <option value="2">2 aandeelhouders</option>
+            <option value="3">3 aandeelhouders</option>
+            <option value="4">4 aandeelhouders</option>
+            <option value="5">5 aandeelhouders</option>
+            <option value="6">6 aandeelhouders</option>
+            <option value="7">7 aandeelhouders</option>
+            <option value="8">8 aandeelhouders</option>
+            <option value="9">9 aandeelhouders</option>
+            <option value="10">10 aandeelhouders</option>
+          </select>
+          <div style="font-size:0.76rem;color:#718096;margin-top:5px;">Voor elke extra aandeelhouder wordt automatisch een toeslag berekend.</div>
+        </div>
+
+        <div class="form-field" style="margin-bottom:14px;">
+          <label>Is het bedrijfsadres afwijkend van de aandeelhouder?</label>
+          <div style="display:flex;gap:16px;align-items:center;margin-top:6px;">
+            <label style="display:flex;gap:6px;align-items:center;font-size:0.86rem;color:#0F1D3A;cursor:pointer;">
+              <input type="radio" name="adminAddressDiff" value="nee" checked onchange="adminUpdatePricingPreview()"> Nee
+            </label>
+            <label style="display:flex;gap:6px;align-items:center;font-size:0.86rem;color:#0F1D3A;cursor:pointer;">
+              <input type="radio" name="adminAddressDiff" value="ja" onchange="adminUpdatePricingPreview()"> Ja
+            </label>
+          </div>
+        </div>
+
+        <div class="pricing-extras-title">Overige opties (optioneel)</div>
         <div id="adminExtrasWrap" class="pricing-extras-grid"></div>
 
         <div class="pricing-summary-card">
@@ -736,7 +765,7 @@
         <div class="form-field" style="margin-top:12px;"><label>Gewenste naam BV *</label><input type="text" id="adminGewenstNaam" placeholder="Voorbeeld B.V." required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
         <div class="form-field" style="margin-top:12px;"><label>Doel van de BV *</label><textarea id="adminDoel" placeholder="Wat is het doel?" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:70px;resize:vertical;"></textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
-          <div class="form-field"><label>Aantal aandeelhouders *</label><input type="number" id="adminAandeelhouders" value="1" min="1" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
+          <input type="hidden" id="adminAandeelhouders" value="1">
           <div class="form-field"><label>Geplaatst kapitaal (€) *</label><input type="number" id="adminKapitaal" value="0.01" min="0.01" step="0.01" required style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;"></div>
         </div>
         <div class="form-field" style="margin-top:12px;"><label>Opmerkingen</label><textarea id="adminOpmerkingen" placeholder="Eventuele bijzonderheden..." style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;font-family:inherit;min-height:60px;resize:vertical;"></textarea></div>
@@ -821,9 +850,30 @@ function adminBuildPricingSelection() {
   const baseCode = document.getElementById('adminServiceType')?.value;
   const base = DOSSIER_BASE_PRICES[baseCode];
   if (!base) return null;
+
+  const aandeelhoudersCount = parseInt(document.getElementById('adminShareholderCount')?.value || '1', 10);
+  const hasAddressDiff = document.querySelector('input[name="adminAddressDiff"]:checked')?.value === 'ja';
+
   const extras = [...document.querySelectorAll('#adminExtrasWrap input[type="checkbox"]:checked')]
     .map(cb => ({ code: cb.value, ...(DOSSIER_EXTRA_PRICES[cb.value] || {}) }))
     .filter(x => x.label);
+
+  const extraAandeelhouderPrice = DOSSIER_EXTRA_PRICES['extra-aandeelhouder']?.amount || 50;
+  if (aandeelhoudersCount > 1) {
+    extras.unshift({
+      code: 'extra-aandeelhouder-dynamic',
+      label: `Extra aandeelhouders (${aandeelhoudersCount - 1}x)`,
+      amount: (aandeelhoudersCount - 1) * extraAandeelhouderPrice
+    });
+  }
+
+  if (hasAddressDiff) {
+    extras.push({
+      code: 'bedrijfsadres-anders',
+      ...(DOSSIER_EXTRA_PRICES['bedrijfsadres-anders'] || { label: 'Bedrijfsadres afwijkend van aandeelhouder', amount: 50 })
+    });
+  }
+
   const baseLine = { code: baseCode, label: base.label, amount: base.amount };
   const total = [baseLine, ...extras].reduce((sum, x) => sum + x.amount, 0);
   return { base: baseLine, extras, total };
@@ -851,6 +901,8 @@ function adminGoToStep2() {
   const mappedType = DOSSIER_BASE_PRICES[baseCode]?.oprichtingType;
   const oprSel = document.getElementById('adminOprichtingType');
   if (mappedType && oprSel) oprSel.value = mappedType;
+  const aandeelhoudersEl = document.getElementById('adminAandeelhouders');
+  if (aandeelhoudersEl) aandeelhoudersEl.value = document.getElementById('adminShareholderCount')?.value || '1';
   document.getElementById('adminFormStep1').style.display = 'none';
   document.getElementById('adminFormStep2').style.display = '';
   document.getElementById('adminStepIndicator').textContent = 'Stap 2 van 2 · Klant- en dossiergegevens';
@@ -2231,7 +2283,9 @@ function openAdminDossierModal() {
   adminBackToStep1();
   const extrasWrap = document.getElementById('adminExtrasWrap');
   if (extrasWrap && !extrasWrap.dataset.ready) {
-    extrasWrap.innerHTML = Object.entries(DOSSIER_EXTRA_PRICES).map(([code, x]) => `
+    extrasWrap.innerHTML = Object.entries(DOSSIER_EXTRA_PRICES)
+      .filter(([code]) => !['extra-aandeelhouder', 'bedrijfsadres-anders'].includes(code))
+      .map(([code, x]) => `
       <label class="pricing-extra-item">
         <input class="pricing-extra-check" type="checkbox" value="${code}" onchange="adminUpdatePricingPreview()">
         <span class="pricing-extra-item-box">
@@ -2244,6 +2298,10 @@ function openAdminDossierModal() {
     `).join('');
     extrasWrap.dataset.ready = '1';
   }
+  const shareholderCount = document.getElementById('adminShareholderCount');
+  if (shareholderCount) shareholderCount.value = '1';
+  const addressNo = document.querySelector('input[name="adminAddressDiff"][value="nee"]');
+  if (addressNo) addressNo.checked = true;
   adminUpdatePricingPreview();
   // Populate reseller dropdown
   const sel = document.getElementById('adminOnBehalfOf');
@@ -2263,6 +2321,10 @@ function closeAdminDossierModal() {
   document.getElementById('adminDossierModal').style.display = 'none';
   document.getElementById('adminNewDossierForm').reset();
   document.querySelectorAll('#adminExtrasWrap input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+  const shareholderCount = document.getElementById('adminShareholderCount');
+  if (shareholderCount) shareholderCount.value = '1';
+  const addressNo = document.querySelector('input[name="adminAddressDiff"][value="nee"]');
+  if (addressNo) addressNo.checked = true;
   adminBackToStep1();
   adminUpdatePricingPreview();
   const errEl = document.getElementById('adminDossierFormError');
