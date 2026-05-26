@@ -74,6 +74,10 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         Blog beheer
       </a>
+      <a href="#" class="dash-nav-item" data-section="forms">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6"/><path d="M9 8h6"/><path d="M9 16h3"/><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>
+        Forms
+      </a>
       <a href="#" class="dash-nav-item" data-section="instellingen">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         Instellingen
@@ -581,6 +585,48 @@
       </div>
 
       <!-- INSTELLINGEN -->
+      <div class="dash-section" id="section-forms">
+        <div class="mb-28">
+          <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:6px;">Forms</h1>
+          <p class="text-muted text-sm">Preview van de drie formulieren. Er is geen wachtwoord nodig en versturen is uitgeschakeld.</p>
+        </div>
+
+        <div class="stats-grid mb-28" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Vragenlijst</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Basis vragenlijst</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">Standaard flow voor een nieuwe BV.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst.html?preview=1" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Vragenlijst</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">BV + Holding</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">Uitgebreide flow voor holdingstructuren.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding.html?preview=1" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Vragenlijst</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Geruisloze inbreng</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">Preview van de geruisloze inbreng flow.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-geruisloos.html?preview=1" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="dash-section" id="section-instellingen">
         <div class="mb-28">
           <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:6px;">Instellingen</h1>
@@ -1174,7 +1220,7 @@ function renderPartners() {
   partnerGrid.innerHTML = partners.map(p => {
     const initials = p.name.split(" ").map(w => w[0]).join("").slice(0,2);
     const pct = Math.round(p.dossiers / maxD * 100);
-    return `<div class="partner-card" style="cursor:pointer;" onclick="location.href='partner-detail.html?email='+encodeURIComponent('${p.email}')">
+    return `<div class="partner-card" style="cursor:pointer;" onclick="location.href='partner-detail.html?v=branding2&email='+encodeURIComponent('${p.email}')">
       <div class="partner-card-header" style="background:${p.color};">${initials}</div>
       <div class="partner-card-body">
         <div class="partner-card-name">${p.name}</div>
@@ -1195,8 +1241,8 @@ function renderPartnersTable(data) {
     return;
   }
   tbody.innerHTML = data.map((p, idx) => `
-    <tr data-idx="${idx}" style="cursor:pointer;" onclick="location.href='partner-detail.html?email='+encodeURIComponent('${p.email}')">
-      <td><a href="partner-detail.html?email=${encodeURIComponent(p.email)}" class="row-link" onclick="event.stopPropagation()">${p.name}</a></td>
+    <tr data-idx="${idx}" style="cursor:pointer;" onclick="location.href='partner-detail.html?v=branding2&email='+encodeURIComponent('${p.email}')">
+      <td><a href="partner-detail.html?v=branding2&email=${encodeURIComponent(p.email)}" class="row-link" onclick="event.stopPropagation()">${p.name}</a></td>
       <td class="td-muted">${p.city}</td>
       <td class="td-muted">${p.contact || '–'}</td>
       <td class="td-muted" style="font-weight:500;">${p.dossiers}</td>
@@ -1308,7 +1354,7 @@ document.querySelectorAll(".dash-nav-item").forEach(item => {
 function showSection(s) {
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   document.getElementById("section-" + s).classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", forms:"Forms", instellingen:"Instellingen" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
@@ -1332,7 +1378,7 @@ function showSectionSilent(s) {
   
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   section.classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", forms:"Forms", instellingen:"Instellingen" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
