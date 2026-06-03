@@ -1918,6 +1918,13 @@ ul { list-style: none; }
     .nav-hamburger {
         display: flex;
     }
+    .nav-content {
+        width: 100%;
+        gap: 0;
+    }
+    .nav-content .logo {
+        flex: 1;
+    }
 
     /* On mobile: drop the floating pill, use full-width glass bar */
     .navbar {

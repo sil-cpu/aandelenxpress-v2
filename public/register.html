@@ -92,6 +92,10 @@
                         <label for="password2">Wachtwoord bevestigen <span style="color:#c33">*</span></label>
                         <input type="password" id="password2" name="password2" placeholder="Herhaal wachtwoord" autocomplete="new-password" required>
                     </div>
+                    <div class="login-field" style="flex-direction:row;align-items:flex-start;gap:10px;margin-bottom:16px;">
+                        <input type="checkbox" id="termsAkkoord" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;cursor:pointer;">
+                        <label for="termsAkkoord" style="font-weight:400;font-size:0.875rem;color:#64748b;cursor:pointer;line-height:1.5;">Ik ga akkoord met de <a href="/algemene-voorwaarden" target="_blank" style="color:#1A3B70;font-weight:600;">algemene voorwaarden</a> en het <a href="/privacybeleid" target="_blank" style="color:#1A3B70;font-weight:600;">privacybeleid</a></label>
+                    </div>
                     <div id="registerError" style="color:#c33; font-size:0.9rem; margin-bottom:12px; display:none;"></div>
                     <button type="submit" class="login-submit">Aanmelding versturen</button>
                 </form>
@@ -114,6 +118,11 @@
             e.preventDefault();
             const errorDiv = document.getElementById('registerError');
             errorDiv.style.display = 'none';
+            if (!document.getElementById('termsAkkoord').checked) {
+                errorDiv.textContent = 'Ga akkoord met de algemene voorwaarden en het privacybeleid om verder te gaan.';
+                errorDiv.style.display = 'block';
+                return;
+            }
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = 'Bezig...';
