@@ -562,7 +562,7 @@
             <div style="display:flex;flex-direction:column;gap:10px;">
               <button class="btn-primary" style="width:100%;padding:10px;font-size:0.9rem;" onclick="openResetPasswordDrawer()">Wachtwoord resetten</button>
               <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;" id="euToggleStatusBtn" onclick="">Status wijzigen</button>
-              <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;color:#c53030;border-color:#c53030;" onclick="deleteUser()" id="euDeleteBtn">Verwijderen</button>
+              <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;color:#c53030;border-color:#c53030;" onclick="deleteUserConfirmDrawer()" id="euDeleteBtn">Verwijderen</button>
             </div>
           </div>
         </div>
@@ -1836,6 +1836,11 @@ function deleteUserConfirm(email, event) {
   event.stopPropagation();
   if (!confirm('Weet u zeker dat u deze gebruiker wilt verwijderen?')) return;
   deleteUser(email);
+}
+
+function deleteUserConfirmDrawer() {
+  if (!confirm('Weet u zeker dat u deze gebruiker wilt verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  deleteUser();
 }
 
 async function deleteUser(email = editingUserEmail) {

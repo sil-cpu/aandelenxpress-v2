@@ -3,6 +3,7 @@ const express = require('express');
 const cookieSession = require('cookie-session');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
@@ -482,6 +483,8 @@ app.use(express.static(publicPath, {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
+app.get('/reset-password.html', (req, res) => res.redirect(301, '/reset-password'));
 
 // ── Diagnostic ─────────────────────────────────────────────────────────────
 app.get('/_debug/info', (req, res) => {
@@ -514,6 +517,58 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/logout', (req, res) => {
     req.session = null;
     res.redirect('/login');
+});
+
+// ── Password-reset helpers ─────────────────────────────────────────────────
+const RESET_TOKEN_SECRET = process.env.RESET_TOKEN_SECRET || 'aandelenxpress-reset-2026';
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function generateResetToken(email) {
+    const payload = Buffer.from(JSON.stringify({ email, exp: Date.now() + RESET_TOKEN_TTL_MS })).toString('base64url');
+    const sig = crypto.createHmac('sha256', RESET_TOKEN_SECRET).update(payload).digest('base64url');
+    return `${payload}.${sig}`;
+}
+
+function verifyResetToken(token) {
+    try {
+        const dot = token.lastIndexOf('.');
+        if (dot < 1) return null;
+        const payload = token.slice(0, dot);
+        const sig     = token.slice(dot + 1);
+        const expected = crypto.createHmac('sha256', RESET_TOKEN_SECRET).update(payload).digest('base64url');
+        if (sig !== expected) return null;
+        const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+        if (!data.email || !data.exp || Date.now() > data.exp) return null;
+        return data.email;
+    } catch { return null; }
+}
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'E-mailadres vereist' });
+
+    const { data: user } = await supabase.from('users').select('email,name').eq('email', email).maybeSingle();
+    if (user) {
+        const token    = generateResetToken(user.email);
+        const base     = String(process.env.PUBLIC_BASE_URL || process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app').replace(/\/$/, '');
+        const resetUrl = `${base}/reset-password?token=${encodeURIComponent(token)}`;
+        await emails.sendPasswordResetEmail(user.email, user.name || user.email, resetUrl);
+    }
+    // Always success — prevent email enumeration
+    res.json({ success: true });
+});
+
+app.post('/api/auth/reset-password-token', async (req, res) => {
+    const { token, newPassword } = req.body || {};
+    if (!token || !newPassword) return res.status(400).json({ error: 'Token en wachtwoord vereist' });
+    if (String(newPassword).length < 8) return res.status(400).json({ error: 'Wachtwoord min. 8 tekens' });
+
+    const email = verifyResetToken(String(token));
+    if (!email) return res.status(400).json({ error: 'Link is ongeldig of verlopen. Vraag een nieuwe aan.' });
+
+    const { error } = await supabase.from('users').update({ password: newPassword }).eq('email', email);
+    if (error) return res.status(500).json({ error: 'Fout bij opslaan. Probeer het opnieuw.' });
+    res.json({ success: true });
 });
 
 app.get('/api/user', (req, res) => {

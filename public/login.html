@@ -62,7 +62,7 @@
                     <div class="login-field">
                         <div class="login-field-row">
                             <label for="password">Wachtwoord</label>
-                            <a href="#" class="login-forgot" onclick="alert('Neem contact op met support'); return false;">Vergeten?</a>
+                            <a href="#" class="login-forgot" onclick="showForgotPanel(); return false;">Vergeten?</a>
                         </div>
                         <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
                     </div>
@@ -100,7 +100,70 @@
 
     </div>
 
+    <!-- Forgot password overlay -->
+    <div id="forgotOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,29,58,0.45);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:36px 32px;width:100%;max-width:420px;margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.18);">
+        <h2 style="margin:0 0 8px;font-size:1.3rem;color:#0F1D3A;">Wachtwoord vergeten</h2>
+        <p style="color:#718096;font-size:0.9rem;margin:0 0 22px;line-height:1.5;">Vul uw e-mailadres in. Als er een account bestaat, sturen we u een herstellink.</p>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:0.82rem;font-weight:600;color:#4A5568;margin-bottom:6px;">E-mailadres</label>
+          <input type="email" id="forgotEmail" placeholder="naam@kantoor.nl" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1.5px solid #CBD5E0;border-radius:8px;font-size:0.95rem;outline:none;">
+        </div>
+        <div id="forgotMsg" style="font-size:0.88rem;margin-bottom:14px;display:none;"></div>
+        <div style="display:flex;gap:10px;">
+          <button id="forgotSubmitBtn" onclick="submitForgotPassword()" style="flex:1;background:#1A3B70;color:#fff;border:none;border-radius:8px;padding:12px;font-size:0.95rem;font-weight:600;cursor:pointer;">Versturen</button>
+          <button onclick="hideForgotPanel()" style="flex:1;background:none;border:1.5px solid #CBD5E0;border-radius:8px;padding:12px;font-size:0.95rem;color:#4A5568;cursor:pointer;">Annuleren</button>
+        </div>
+      </div>
+    </div>
+
     <script>
+        function showForgotPanel() {
+            const overlay = document.getElementById('forgotOverlay');
+            overlay.style.display = 'flex';
+            document.getElementById('forgotEmail').value = document.getElementById('email').value || '';
+            document.getElementById('forgotMsg').style.display = 'none';
+            document.getElementById('forgotSubmitBtn').disabled = false;
+            document.getElementById('forgotSubmitBtn').textContent = 'Versturen';
+            setTimeout(() => document.getElementById('forgotEmail').focus(), 50);
+        }
+        function hideForgotPanel() {
+            document.getElementById('forgotOverlay').style.display = 'none';
+        }
+        document.getElementById('forgotOverlay').addEventListener('click', function(e) {
+            if (e.target === this) hideForgotPanel();
+        });
+        async function submitForgotPassword() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            const msg = document.getElementById('forgotMsg');
+            const btn = document.getElementById('forgotSubmitBtn');
+            if (!email) {
+                msg.textContent = 'Vul een e-mailadres in.';
+                msg.style.color = '#c53030';
+                msg.style.display = 'block';
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = 'Versturen...';
+            try {
+                await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                msg.textContent = 'Als dit e-mailadres bij ons bekend is, ontvangt u een herstellink in uw inbox.';
+                msg.style.color = '#276749';
+                msg.style.display = 'block';
+                btn.textContent = 'Verzonden ✓';
+            } catch {
+                msg.textContent = 'Versturen mislukt. Probeer het opnieuw.';
+                msg.style.color = '#c53030';
+                msg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Versturen';
+            }
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             

@@ -506,6 +506,33 @@ async function emailClientResendToken({ request }) {
     return sendEmail({ to: request.clientEmail, subject: `Uw toegangscode — ${name}`, html });
 }
 
+async function sendPasswordResetEmail(to, name, resetUrl) {
+    const html = `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #E8EDF5;">
+      <div style="background:#1A3B70;padding:28px 32px;">
+        <div style="color:#fff;font-size:1.15rem;font-weight:700;letter-spacing:-0.3px;">${escHtml(BRAND)}</div>
+      </div>
+      <div style="padding:32px;">
+        <h2 style="margin:0 0 10px;font-size:1.25rem;color:#0F1D3A;">Wachtwoord resetten</h2>
+        <p style="color:#4A5568;font-size:0.95rem;line-height:1.6;margin:0 0 24px;">
+          Hallo ${escHtml(name)},<br><br>
+          We hebben een aanvraag ontvangen om het wachtwoord van uw account te resetten. 
+          Klik op de knop hieronder om een nieuw wachtwoord in te stellen. 
+          De link is <strong>1 uur geldig</strong>.
+        </p>
+        <div style="text-align:center;margin-bottom:28px;">
+          <a href="${resetUrl}" style="display:inline-block;background:#1A3B70;color:#fff;text-decoration:none;padding:13px 32px;border-radius:7px;font-weight:600;font-size:0.95rem;">Wachtwoord resetten →</a>
+        </div>
+        <p style="color:#718096;font-size:0.82rem;line-height:1.6;margin:0;border-top:1px solid #E8EDF5;padding-top:16px;">
+          Heeft u geen wachtwoordreset aangevraagd? Dan kunt u deze e-mail negeren. Uw wachtwoord blijft ongewijzigd.<br><br>
+          Of kopieer deze link in uw browser:<br>
+          <a href="${resetUrl}" style="color:#1A3B70;word-break:break-all;">${resetUrl}</a>
+        </p>
+      </div>
+    </div>`;
+    return sendEmail({ to, subject: `Wachtwoord resetten – ${BRAND}`, html });
+}
+
 module.exports = {
     emailCustom,
     emailClientResendToken,
@@ -525,4 +552,5 @@ module.exports = {
     emailAdminVragenlijstSubmitted,
     emailClientVragenlijstSubmitted,
     emailClientVragenlijstRejected,
+    sendPasswordResetEmail,
 };
