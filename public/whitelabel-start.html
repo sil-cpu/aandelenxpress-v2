@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Start jouw BV</title>
+  <style>
+    :root {
+      --primary: #1A3B70;
+      --secondary: #F2F6FB;
+      --accent: #0F1D3A;
+      --text: #10213E;
+      --muted: #60728F;
+      --surface: #ffffff;
+      --ok: #1f8f61;
+      --shadow: 0 24px 60px rgba(15, 29, 58, 0.14);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 38%),
+        radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 42%),
+        linear-gradient(180deg, color-mix(in srgb, var(--secondary) 65%, #fff), #f8fbff 48%, #eef3fb);
+      min-height: 100vh;
+    }
+
+    .hero {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 34px 20px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      font-family: inherit;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+    }
+
+    .brand img {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+      display: none;
+    }
+
+    .layout {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 8px 20px 40px;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+    }
+
+    .form-shell {
+      overflow: hidden;
+    }
+
+    .form-header {
+      padding: 26px 26px 20px;
+      border-bottom: 1px solid #edf2fb;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--secondary) 85%, #fff), #fff);
+    }
+
+    .form-header h1 {
+      margin: 0 0 10px;
+      font-family: inherit;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 1.05;
+      color: var(--accent);
+    }
+
+    .form-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 680px;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .step {
+      flex: 1;
+      border-radius: 999px;
+      padding: 8px 12px;
+      border: 1px solid #d8e1f0;
+      font-size: 12px;
+      color: #798ca9;
+      font-weight: 700;
+      text-align: center;
+      transition: all .2s ease;
+    }
+
+    .step.active {
+      border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+      background: color-mix(in srgb, var(--primary) 12%, #fff);
+      color: var(--accent);
+    }
+
+    form {
+      padding: 22px 26px 28px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field.full { grid-column: span 2; }
+
+    label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #425a7f;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #d6e0ef;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      padding: 12px 13px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    textarea { min-height: 96px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-secondary {
+      background: #eef3fb;
+      color: #365177;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--accent) 76%, #001));
+      color: #fff;
+      box-shadow: 0 12px 28px color-mix(in srgb, var(--primary) 24%, transparent);
+    }
+
+    .summary {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: sticky;
+      top: 18px;
+      height: fit-content;
+    }
+
+    .summary h2 {
+      margin: 0;
+      font-family: inherit;
+      font-size: 24px;
+      color: var(--accent);
+    }
+
+    .summary .muted {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .price {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 14px;
+      color: #3f5578;
+    }
+
+    .price strong {
+      color: #10213f;
+      font-size: 16px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e6edf8;
+      margin: 4px 0;
+    }
+
+    .total {
+      border-radius: 14px;
+      padding: 14px;
+      background: color-mix(in srgb, var(--secondary) 72%, #fff);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total .value {
+      font-size: 24px;
+      font-family: inherit;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .notice {
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 13px;
+      border: 1px solid #d7e4f7;
+      background: #f9fbff;
+      color: #4e6588;
+    }
+
+    .notice.success {
+      border-color: color-mix(in srgb, var(--ok) 42%, transparent);
+      background: color-mix(in srgb, var(--ok) 10%, #fff);
+      color: #0a613f;
+    }
+
+    .thankyou {
+      display: none;
+      padding: 28px 26px 30px;
+      text-align: center;
+    }
+
+    .thankyou.active {
+      display: block;
+    }
+
+    .thankyou-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      background: color-mix(in srgb, var(--ok) 14%, #fff);
+      color: #0a613f;
+      border: 1px solid color-mix(in srgb, var(--ok) 36%, transparent);
+    }
+
+    .thankyou h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      color: var(--accent);
+    }
+
+    .thankyou p {
+      margin: 0 auto;
+      max-width: 640px;
+      color: #4f6486;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .thankyou-dossier {
+      margin: 18px auto 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--secondary) 66%, #fff);
+      border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
+      color: #233b62;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: .02em;
+    }
+
+    .thankyou-actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding: 24px 14px 10px; }
+      .layout { padding: 10px 14px 24px; }
+      .form-header, form, .summary { padding-left: 16px; padding-right: 16px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .actions { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="brand">
+      <img id="brandLogo" alt="Partner logo" />
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel form-shell">
+      <div class="form-header">
+        <h1>Start je aanvraag</h1>
+        <p>Vul je basisgegevens in. Daarna sturen we je direct een bevestiging en nemen we je dossier in behandeling.</p>
+        <div class="stepper">
+          <div class="step active" id="stepA">Stap 1: Oprichtingskeuzes</div>
+          <div class="step" id="stepB">Stap 2: Contactgegevens</div>
+        </div>
+      </div>
+
+      <form id="requestForm">
+        <div id="pageOne">
+          <div class="field-grid">
+            <div class="field full">
+              <label for="oprichtingType">Type traject</label>
+              <select id="oprichtingType" required>
+                <option value="nieuwe-bv" data-base="350">Nieuwe BV (€350)</option>
+                <option value="bv-holding" data-base="850">BV + Holding (€850)</option>
+                <option value="eenmanszaak-omzetten" data-base="600">Eenmanszaak omzetten (€600)</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="gewenstNaam">Gewenste bedrijfsnaam</label>
+              <input id="gewenstNaam" required placeholder="Bijv. StartJouwBV B.V." />
+            </div>
+            <div class="field full">
+              <label for="doel">Doel van de BV</label>
+              <textarea id="doel" required placeholder="Korte omschrijving van de activiteiten"></textarea>
+            </div>
+            <div class="field">
+              <label for="aandeelhouders">Aantal aandeelhouders</label>
+              <select id="aandeelhouders">
+                <option value="1" data-extra="0">1 aandeelhouder (+€0)</option>
+                <option value="2" data-extra="79">2 aandeelhouders (+€79)</option>
+                <option value="3" data-extra="158">3 aandeelhouders (+€158)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="holding">Holdingstructuur</label>
+              <select id="holding">
+                <option value="nee" data-extra="0">Nee (+€0)</option>
+                <option value="ja" data-extra="149">Ja (+€149)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="kapitaal">Startkapitaal (EUR)</label>
+              <input id="kapitaal" type="number" min="0.01" step="0.01" value="0.01" />
+            </div>
+            <div class="field">
+              <label for="startSaldo">Startsaldo (EUR)</label>
+              <input id="startSaldo" type="number" min="0" step="0.01" value="0" />
+            </div>
+          </div>
+          <div class="actions">
+            <span></span>
+            <button class="btn btn-primary" type="button" id="toStepTwo">Verder naar contactgegevens</button>
+          </div>
+        </div>
+
+        <div id="pageTwo" style="display:none;">
+          <div class="field-grid">
+            <div class="field full">
+              <label for="clientName">Voor- en achternaam</label>
+              <input id="clientName" required />
+            </div>
+            <div class="field">
+              <label for="clientEmail">E-mailadres</label>
+              <input id="clientEmail" type="email" required />
+            </div>
+            <div class="field">
+              <label for="clientPhone">Telefoonnummer</label>
+              <input id="clientPhone" />
+            </div>
+            <div class="field full">
+              <label for="opmerkingen">Opmerkingen (optioneel)</label>
+              <textarea id="opmerkingen" placeholder="Bijzonderheden die we moeten weten"></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary" type="button" id="toStepOne">Terug</button>
+            <button class="btn btn-primary" type="submit" id="submitBtn">Aanvraag versturen</button>
+          </div>
+        </div>
+      </form>
+
+      <section id="thankYouScreen" class="thankyou" aria-live="polite">
+        <div class="thankyou-icon">✓</div>
+        <h2>Dank u, uw aanvraag is ontvangen</h2>
+        <p>
+          We hebben uw gegevens goed ontvangen. Het dossier wordt nu door ons team beoordeeld.
+          Zodra de beoordeling is afgerond, ontvangt u per e-mail de volgende stap.
+        </p>
+        <div class="thankyou-dossier">Dossiernummer: <span id="thankYouDossierNr">-</span></div>
+        <p>
+          Heeft u in de tussentijd nog aanvullende informatie? Reageer dan op de bevestigingsmail,
+          dan voegen wij dit toe aan uw dossier.
+        </p>
+        <div class="thankyou-actions">
+          <button type="button" class="btn btn-secondary" id="newRequestBtn">Nieuwe aanvraag starten</button>
+        </div>
+      </section>
+    </section>
+
+    <aside class="panel summary">
+      <h2>Prijsopbouw</h2>
+      <p class="muted">Je ziet direct wat je aanvraag kost voordat je verzendt.</p>
+
+      <div class="price"><span>Basispakket</span><strong id="lineBase">€ 350</strong></div>
+      <div class="price"><span>Extra aandeelhouders</span><span id="lineShareholders">€ 0</span></div>
+      <div class="price"><span>Holdingstructuur</span><span id="lineHolding">€ 0</span></div>
+      <div class="divider"></div>
+      <div class="total">
+        <span>Totaal</span>
+        <span class="value" id="lineTotal">€ 350</span>
+      </div>
+
+      <div class="notice" id="statusMsg">Controleer je keuzes, daarna kun je direct indienen.</div>
+    </aside>
+  </main>
+
+  <script>
+    const state = {
+      slug: location.pathname.replace(/^\/+/, '').split('/')[0],
+      branding: null,
+      reseller: null,
+      step: 1
+    };
+
+    function euro(v) {
+      return 'EUR ' + Number(v || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function updateTotals() {
+      const typeOpt = document.querySelector('#oprichtingType option:checked');
+      const shareOpt = document.querySelector('#aandeelhouders option:checked');
+      const holdOpt = document.querySelector('#holding option:checked');
+      const base = Number(typeOpt?.dataset.base || 0);
+      const shareholders = Number(shareOpt?.dataset.extra || 0);
+      const holding = Number(holdOpt?.dataset.extra || 0);
+      const total = base + shareholders + holding;
+
+      document.getElementById('lineBase').textContent = euro(base);
+      document.getElementById('lineShareholders').textContent = euro(shareholders);
+      document.getElementById('lineHolding').textContent = euro(holding);
+      document.getElementById('lineTotal').textContent = euro(total);
+      return { base, shareholders, holding, total };
+    }
+
+    function setStep(nr) {
+      state.step = nr;
+      document.getElementById('pageOne').style.display = nr === 1 ? '' : 'none';
+      document.getElementById('pageTwo').style.display = nr === 2 ? '' : 'none';
+      document.getElementById('stepA').classList.toggle('active', nr === 1);
+      document.getElementById('stepB').classList.toggle('active', nr === 2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showThankYou(dossierNr) {
+      const form = document.getElementById('requestForm');
+      const thankYou = document.getElementById('thankYouScreen');
+      const dossierEl = document.getElementById('thankYouDossierNr');
+      if (dossierEl) dossierEl.textContent = dossierNr || '-';
+      if (form) form.style.display = 'none';
+      if (thankYou) thankYou.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForNewRequest() {
+      const form = document.getElementById('requestForm');
+      const thankYou = document.getElementById('thankYouScreen');
+      const statusMsg = document.getElementById('statusMsg');
+      if (thankYou) thankYou.classList.remove('active');
+      if (form) form.style.display = '';
+      if (statusMsg) {
+        statusMsg.className = 'notice';
+        statusMsg.textContent = 'Controleer je keuzes, daarna kun je direct indienen.';
+      }
+      setStep(1);
+      updateTotals();
+    }
+
+    function applyBranding(branding, reseller) {
+      state.branding = branding;
+      state.reseller = reseller;
+      document.documentElement.style.setProperty('--primary', branding.primaryColor || '#1A3B70');
+      document.documentElement.style.setProperty('--secondary', branding.secondaryColor || '#F2F6FB');
+      document.documentElement.style.setProperty('--accent', branding.accentColor || '#0F1D3A');
+      document.title = 'Start jouw BV';
+
+      const logo = document.getElementById('brandLogo');
+      if (branding.logoUrl) {
+        const stamp = encodeURIComponent(branding.updatedAt || Date.now());
+        logo.src = `${branding.logoUrl}${branding.logoUrl.includes('?') ? '&' : '?'}v=${stamp}`;
+        logo.style.display = 'block';
+      }
+    }
+
+    async function loadBranding() {
+      const r = await fetch(`/api/whitelabel/${encodeURIComponent(state.slug)}?t=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('Deze whitelabel pagina bestaat niet meer.');
+      const data = await r.json();
+      applyBranding(data.branding || {}, data.reseller || {});
+    }
+
+    function validateStepOne() {
+      const fields = ['oprichtingType', 'gewenstNaam', 'doel'];
+      return fields.every(id => {
+        const el = document.getElementById(id);
+        if (!el.value || !String(el.value).trim()) {
+          el.focus();
+          return false;
+        }
+        return true;
+      });
+    }
+
+    async function submitForm(ev) {
+      ev.preventDefault();
+      const msg = document.getElementById('statusMsg');
+      msg.className = 'notice';
+      msg.textContent = 'Bezig met versturen...';
+
+      const pricing = updateTotals();
+      const payload = {
+        clientName: document.getElementById('clientName').value.trim(),
+        clientEmail: document.getElementById('clientEmail').value.trim(),
+        clientPhone: document.getElementById('clientPhone').value.trim(),
+        oprichtingType: document.getElementById('oprichtingType').value,
+        gewenstNaam: document.getElementById('gewenstNaam').value.trim(),
+        doel: document.getElementById('doel').value.trim(),
+        aandeelhouders: Number(document.getElementById('aandeelhouders').value || 1),
+        kapitaal: Number(document.getElementById('kapitaal').value || 0.01),
+        startSaldo: Number(document.getElementById('startSaldo').value || 0),
+        opmerkingen: document.getElementById('opmerkingen').value.trim(),
+        pricing
+      };
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      try {
+        const r = await fetch(`/api/whitelabel/${encodeURIComponent(state.slug)}/request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Opslaan mislukt');
+
+        msg.className = 'notice success';
+        msg.textContent = `Aanvraag verzonden. Dossiernummer: ${out.dossierNr}`;
+        document.getElementById('requestForm').reset();
+        showThankYou(out.dossierNr || 'Onbekend');
+      } catch (e) {
+        msg.className = 'notice';
+        msg.textContent = e.message || 'Versturen is mislukt.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('toStepTwo').addEventListener('click', () => {
+      if (!validateStepOne()) {
+        const msg = document.getElementById('statusMsg');
+        msg.className = 'notice';
+        msg.textContent = 'Vul eerst alle verplichte velden in bij stap 1.';
+        return;
+      }
+      setStep(2);
+    });
+
+    document.getElementById('toStepOne').addEventListener('click', () => setStep(1));
+    document.getElementById('newRequestBtn').addEventListener('click', resetForNewRequest);
+    ['oprichtingType', 'aandeelhouders', 'holding'].forEach(id => {
+      document.getElementById(id).addEventListener('change', updateTotals);
+    });
+    document.getElementById('requestForm').addEventListener('submit', submitForm);
+
+    (async () => {
+      try {
+        await loadBranding();
+        updateTotals();
+      } catch (e) {
+        document.body.innerHTML = `<main style="max-width:760px;margin:90px auto;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          <h1 style="margin-bottom:8px;">Deze pagina is niet beschikbaar</h1>
+          <p style="color:#5b6f8f;">${e.message || 'Controleer de URL of neem contact op met de partner.'}</p>
+        </main>`;
+      }
+    })();
+  </script>
+</body>
+</html>
