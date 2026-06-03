@@ -418,13 +418,6 @@
               </select>
             </div>
             <div class="field">
-              <label for="holding">Holdingstructuur</label>
-              <select id="holding">
-                <option value="nee" data-extra="0">Nee (+€0)</option>
-                <option value="ja" data-extra="149">Ja (+€149)</option>
-              </select>
-            </div>
-            <div class="field">
               <label for="kapitaal">Startkapitaal (EUR)</label>
               <input id="kapitaal" type="number" min="0.01" step="0.01" value="0.01" />
             </div>
@@ -489,7 +482,6 @@
 
       <div class="price"><span>Basispakket</span><strong id="lineBase">€ 350</strong></div>
       <div class="price"><span>Extra aandeelhouders</span><span id="lineShareholders">€ 0</span></div>
-      <div class="price"><span>Holdingstructuur</span><span id="lineHolding">€ 0</span></div>
       <div class="divider"></div>
       <div class="total">
         <span>Totaal</span>
@@ -515,17 +507,14 @@
     function updateTotals() {
       const typeOpt = document.querySelector('#oprichtingType option:checked');
       const shareOpt = document.querySelector('#aandeelhouders option:checked');
-      const holdOpt = document.querySelector('#holding option:checked');
       const base = Number(typeOpt?.dataset.base || 0);
       const shareholders = Number(shareOpt?.dataset.extra || 0);
-      const holding = Number(holdOpt?.dataset.extra || 0);
-      const total = base + shareholders + holding;
+      const total = base + shareholders;
 
       document.getElementById('lineBase').textContent = euro(base);
       document.getElementById('lineShareholders').textContent = euro(shareholders);
-      document.getElementById('lineHolding').textContent = euro(holding);
       document.getElementById('lineTotal').textContent = euro(total);
-      return { base, shareholders, holding, total };
+      return { base, shareholders, total };
     }
 
     function setStep(nr) {
