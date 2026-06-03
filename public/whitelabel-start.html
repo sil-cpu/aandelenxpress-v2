@@ -450,6 +450,14 @@
               <label for="opmerkingen">Opmerkingen (optioneel)</label>
               <textarea id="opmerkingen" placeholder="Bijzonderheden die we moeten weten"></textarea>
             </div>
+            <div class="field full" style="margin-top:4px;">
+              <div style="padding:14px;background:#F7F9FC;border:1px solid #E2E8F0;border-radius:8px;">
+                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:0.85rem;color:#4A5568;line-height:1.5;">
+                  <input type="checkbox" id="termsAkkoord" style="margin-top:3px;flex-shrink:0;" required>
+                  <span>Ik bevestig dat alle ingevoerde gegevens correct en volledig zijn. Ik ga akkoord met de <a href="/algemene-voorwaarden" target="_blank" style="color:#1A3B70;">algemene voorwaarden</a> van AandelenXpress en begrijp dat ik als partner verantwoordelijk ben voor de juistheid van de verstrekte informatie.</span>
+                </label>
+              </div>
+            </div>
           </div>
           <div class="actions">
             <button class="btn btn-secondary" type="button" id="toStepOne">Terug</button>
@@ -587,6 +595,10 @@
 
     async function submitForm(ev) {
       ev.preventDefault();
+      if (!document.getElementById('termsAkkoord').checked) {
+        alert('Bevestig de algemene voorwaarden en de juistheid van de gegevens om door te gaan.');
+        return;
+      }
       const msg = document.getElementById('statusMsg');
       msg.className = 'notice';
       msg.textContent = 'Bezig met versturen...';
