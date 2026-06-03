@@ -360,19 +360,7 @@
 
                 <div style="margin-top:24px;font-weight:600;margin-bottom:16px;font-size:0.95rem;">Oprichtingsgegevens</div>
 
-                <div class="form-field">
-                    <label>Wat wil je oprichten? *</label>
-                    <select id="oprichtingType" required>
-                        <option value="">-- Kies een optie --</option>
-                        <option value="bv">BV oprichten</option>
-                        <option value="bv-holding">BV + Holding oprichten</option>
-                        <option value="holding">Holding oprichten</option>
-                        <option value="eenmanszaak-omzetten">Eenmanszaak naar BV oprichten</option>
-                        <option value="vof-naar-bv">VOF naar BV oprichten</option>
-                        <option value="eenmanszaak-omzetten-bv-holding">Eenmanszaak naar BV + Holding</option>
-                        <option value="vof-naar-bv-holding">VOF naar BV + Holding</option>
-                    </select>
-                </div>
+                <input type="hidden" id="oprichtingType">
 
                 <div class="form-field">
                     <label>Gewenste naam BV *</label>
