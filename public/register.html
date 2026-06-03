@@ -7,6 +7,92 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .login-form-side { overflow-y: auto; align-items: flex-start; padding: 60px 48px; }
+        .login-form-box { max-width: 540px; }
+        .intake-section {
+            margin: 28px 0 4px;
+            padding: 10px 14px;
+            background: #EEF2FF;
+            border-radius: 8px;
+            border-left: 3px solid #1A3B70;
+        }
+        .intake-section h3 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #1A3B70;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 0;
+        }
+        .intake-section-note {
+            font-size: 0.79rem;
+            color: #475569;
+            line-height: 1.5;
+            margin: 4px 0 0;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 0.88rem;
+            color: #334155;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        .radio-option input[type="radio"] {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            accent-color: #1A3B70;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .login-field select {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: var(--font);
+            color: var(--dark);
+            background: #fff;
+            transition: border-color 0.2s;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+        }
+        .login-field select:focus { border-color: var(--brand); }
+        .login-field textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-family: var(--font);
+            color: var(--dark);
+            background: #fff;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .login-field textarea:focus { border-color: var(--brand); }
+        .conditional-field { display: none; }
+        .req { color: #c33; }
+        @media (max-width: 768px) {
+            .login-form-side { padding: 40px 24px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -24,7 +110,7 @@
                     <div class="login-brand-feat-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
-                    Meer dan 150 actieve partnerkantoren
+                    Meer dan 150 actieve partners
                 </div>
                 <div class="login-brand-feat">
                     <div class="login-brand-feat-icon">
@@ -52,46 +138,234 @@
             <div class="login-form-box">
 
                 <h1>Aanmelden als partner</h1>
-                <p class="login-subtitle">Vul uw kantoorgegevens in. Na beoordeling door ons team ontvangt u toegang.</p>
+                <p class="login-subtitle">Vul het intakeformulier volledig in. Ons team beoordeelt uw aanvraag en neemt contact op.</p>
 
                 <div id="registerSuccess" style="display:none; text-align:center; padding: 24px 0;">
                     <div style="width:56px;height:56px;background:#D1FAE5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
                     <h2 style="font-size:1.3rem; margin-bottom:8px;">Aanmelding ontvangen!</h2>
-                    <p style="color:#64748b; line-height:1.6; margin-bottom:20px;">Bedankt voor uw aanmelding. Ons team beoordeelt uw aanvraag en u ontvangt een bevestiging per email.</p>
+                    <p style="color:#64748b; line-height:1.6; margin-bottom:20px;">Bedankt voor uw aanmelding. Ons team beoordeelt uw aanvraag en u ontvangt een bevestiging per e-mail.</p>
                     <a href="/login" class="login-submit" style="display:block; text-align:center; text-decoration:none;">Terug naar inloggen</a>
                 </div>
 
                 <form id="registerForm" novalidate>
+
+                    <!-- ── Kantoorgegevens ── -->
+                    <div class="intake-section" style="margin-top:0;">
+                        <h3>Kantoorgegevens</h3>
+                    </div>
+
                     <div class="login-field">
-                        <label for="naam">Contactpersoon <span style="color:#c33">*</span></label>
+                        <label for="naam">Contactpersoon <span class="req">*</span></label>
                         <input type="text" id="naam" name="naam" placeholder="Voor- en achternaam" autocomplete="name" required>
                     </div>
                     <div class="login-field">
-                        <label for="kantoor">Naam kantoor <span style="color:#c33">*</span></label>
+                        <label for="kantoor">Handelsnaam kantoor <span class="req">*</span></label>
                         <input type="text" id="kantoor" name="kantoor" placeholder="Bijv. Bakker Accountants B.V." required>
                     </div>
                     <div class="login-field">
-                        <label for="kvk">KvK-nummer <span style="color:#c33">*</span></label>
+                        <label for="kvk">KvK-nummer <span class="req">*</span></label>
                         <input type="text" id="kvk" name="kvk" placeholder="8 cijfers" maxlength="8" required>
                     </div>
                     <div class="login-field">
-                        <label for="email">E-mailadres <span style="color:#c33">*</span></label>
+                        <label for="rechtsvorm">Rechtsvorm <span class="req">*</span></label>
+                        <select id="rechtsvorm" name="rechtsvorm" required>
+                            <option value="">— Selecteer rechtsvorm —</option>
+                            <option value="BV">B.V.</option>
+                            <option value="Maatschap">Maatschap</option>
+                            <option value="VOF">V.O.F.</option>
+                            <option value="Eenmanszaak">Eenmanszaak</option>
+                            <option value="Anders">Anders</option>
+                        </select>
+                    </div>
+                    <div class="login-field">
+                        <label for="email">E-mailadres <span class="req">*</span></label>
                         <input type="email" id="email" name="email" placeholder="naam@kantoor.nl" autocomplete="email" required>
                     </div>
                     <div class="login-field">
-                        <label for="telefoon">Telefoonnummer <span style="color:#c33">*</span></label>
+                        <label for="telefoon">Telefoonnummer <span class="req">*</span></label>
                         <input type="tel" id="telefoon" name="telefoon" placeholder="+31 6 12345678" autocomplete="tel" required>
                     </div>
                     <div class="login-field">
-                        <label for="password">Wachtwoord <span style="color:#c33">*</span></label>
+                        <label for="password">Wachtwoord <span class="req">*</span></label>
                         <input type="password" id="password" name="password" placeholder="Minimaal 8 tekens" autocomplete="new-password" required>
                     </div>
                     <div class="login-field">
-                        <label for="password2">Wachtwoord bevestigen <span style="color:#c33">*</span></label>
+                        <label for="password2">Wachtwoord bevestigen <span class="req">*</span></label>
                         <input type="password" id="password2" name="password2" placeholder="Herhaal wachtwoord" autocomplete="new-password" required>
                     </div>
+
+                    <!-- ── A. Juridische structuur & bevoegdheid ── -->
+                    <div class="intake-section">
+                        <h3>A. Juridische structuur &amp; bevoegdheid</h3>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Moedermaatschappij of groepsstructuur? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-groepsstructuur">
+                            <label class="radio-option"><input type="radio" name="groepsstructuur" value="Ja"> Ja</label>
+                            <label class="radio-option"><input type="radio" name="groepsstructuur" value="Nee"> Nee</label>
+                        </div>
+                    </div>
+                    <div class="login-field conditional-field" id="field-groepsstructuur-toelichting">
+                        <label for="groepsstructuur_toelichting">Toelichting groepsstructuur</label>
+                        <textarea id="groepsstructuur_toelichting" name="groepsstructuur_toelichting" placeholder="Beschrijf de groepsstructuur..."></textarea>
+                    </div>
+
+                    <div class="login-field">
+                        <label for="bestuurder">Naam statutair bestuurder(s) <span class="req">*</span></label>
+                        <input type="text" id="bestuurder" name="bestuurder" placeholder="Volledige naam, meerdere namen indien van toepassing" required>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Bevoegdheid bestuurder(s) <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-bevoegdheid">
+                            <label class="radio-option"><input type="radio" name="bevoegdheid" value="Alleen / zelfstandig"> Alleen / zelfstandig</label>
+                            <label class="radio-option"><input type="radio" name="bevoegdheid" value="Gezamenlijk (allen)"> Gezamenlijk (allen)</label>
+                            <label class="radio-option"><input type="radio" name="bevoegdheid" value="Gezamenlijk (twee van meerdere)"> Gezamenlijk (twee van meerdere)</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Werkt het kantoor met volmachten voor medewerkers? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-volmacht">
+                            <label class="radio-option"><input type="radio" name="volmacht" value="Ja — vaste volmacht"> Ja &mdash; vaste volmacht</label>
+                            <label class="radio-option"><input type="radio" name="volmacht" value="Ja — per dossier"> Ja &mdash; per dossier</label>
+                            <label class="radio-option"><input type="radio" name="volmacht" value="Nee"> Nee</label>
+                        </div>
+                    </div>
+                    <div class="login-field conditional-field" id="field-gemachtigde">
+                        <label for="gemachtigde">Naam gemachtigde medewerker(s)</label>
+                        <input type="text" id="gemachtigde" name="gemachtigde" placeholder="Naam en rol in het dossier">
+                    </div>
+
+                    <div class="login-field">
+                        <label>Hoe treedt het kantoor op richting AandelenXpress? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-optreden">
+                            <label class="radio-option"><input type="radio" name="optreden" value="Als opdrachtgever namens eindcliënt"> Als opdrachtgever namens eindcliënt</label>
+                            <label class="radio-option"><input type="radio" name="optreden" value="Als gevolmachtigde van eindcliënt"> Als gevolmachtigde van eindcliënt</label>
+                            <label class="radio-option"><input type="radio" name="optreden" value="Op eigen naam — eindcliënt apart bekend"> Op eigen naam &mdash; eindcliënt apart bekend</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Dossierbeheer <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-dossierbeheer">
+                            <label class="radio-option"><input type="radio" name="dossierbeheer" value="Vaste contactpersoon per dossier"> Vaste contactpersoon per dossier</label>
+                            <label class="radio-option"><input type="radio" name="dossierbeheer" value="Wisselend — per dossier doorgegeven"> Wisselend &mdash; per dossier doorgegeven</label>
+                            <label class="radio-option"><input type="radio" name="dossierbeheer" value="Teamaccount"> Teamaccount</label>
+                        </div>
+                    </div>
+
+                    <!-- ── B. Compliance — Wwft ── -->
+                    <div class="intake-section">
+                        <h3>B. Compliance &amp; Wwft</h3>
+                        <p class="intake-section-note">AandelenXpress voert als notariskantoor altijd een volledige en zelfstandige CDD-check uit (Wwft/AMLR). Een verklaring van uw kantoor kan dienen als steunbewijs.</p>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Is het kantoor zelf Wwft-plichtig? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-wwft">
+                            <label class="radio-option"><input type="radio" name="wwft_plichtig" value="Ja"> Ja</label>
+                            <label class="radio-option"><input type="radio" name="wwft_plichtig" value="Nee"> Nee</label>
+                            <label class="radio-option"><input type="radio" name="wwft_plichtig" value="Onbekend"> Onbekend</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label for="compliance_officer">Naam compliance officer / MLRO</label>
+                        <input type="text" id="compliance_officer" name="compliance_officer" placeholder="Naam en functie">
+                    </div>
+
+                    <div class="login-field">
+                        <label>Beschikt het kantoor over een schriftelijk Wwft-beleid?</label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" name="wwft_beleid" value="Ja — schriftelijk vastgelegd"> Ja &mdash; schriftelijk vastgelegd</label>
+                            <label class="radio-option"><input type="radio" name="wwft_beleid" value="Ja — informeel"> Ja &mdash; informeel</label>
+                            <label class="radio-option"><input type="radio" name="wwft_beleid" value="Nee"> Nee</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Wordt het Wwft-beleid periodiek getoetst / geaudit?</label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" name="wwft_audit" value="Ja — intern"> Ja &mdash; intern</label>
+                            <label class="radio-option"><input type="radio" name="wwft_audit" value="Ja — extern"> Ja &mdash; extern</label>
+                            <label class="radio-option"><input type="radio" name="wwft_audit" value="Nee"> Nee</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label for="audit_door">Door wie wordt geaudit?</label>
+                        <input type="text" id="audit_door" name="audit_door" placeholder="Bijv. SRA, NBA, externe accountant">
+                    </div>
+
+                    <div class="login-field">
+                        <label>Is het kantoor bereid een schriftelijke verklaring te verstrekken per dossier? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-verklaring">
+                            <label class="radio-option"><input type="radio" name="verklaring_bereid" value="Ja"> Ja</label>
+                            <label class="radio-option"><input type="radio" name="verklaring_bereid" value="Nee"> Nee</label>
+                            <label class="radio-option"><input type="radio" name="verklaring_bereid" value="Nader te bespreken"> Nader te bespreken</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Wie ondertekent de verklaring namens het kantoor?</label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" name="verklaring_ondertekenaar" value="Compliance officer / MLRO"> Compliance officer / MLRO</label>
+                            <label class="radio-option"><input type="radio" name="verklaring_ondertekenaar" value="Statutair bestuurder"> Statutair bestuurder</label>
+                            <label class="radio-option"><input type="radio" name="verklaring_ondertekenaar" value="Behandelend medewerker"> Behandelend medewerker</label>
+                            <label class="radio-option"><input type="radio" name="verklaring_ondertekenaar" value="Nader te bepalen"> Nader te bepalen</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Gebruikt het kantoor een screeningtool voor PEP / sanctielijsten? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-pep">
+                            <label class="radio-option"><input type="radio" name="pep_tool" value="Ja — geautomatiseerd"> Ja &mdash; geautomatiseerd</label>
+                            <label class="radio-option"><input type="radio" name="pep_tool" value="Ja — handmatig"> Ja &mdash; handmatig</label>
+                            <label class="radio-option"><input type="radio" name="pep_tool" value="Nee"> Nee</label>
+                        </div>
+                    </div>
+                    <div class="login-field conditional-field" id="field-pep-tool-naam">
+                        <label for="pep_tool_naam">Welke tool / aanbieder?</label>
+                        <input type="text" id="pep_tool_naam" name="pep_tool_naam" placeholder="Bijv. Compli, Nuvias, World-Check">
+                    </div>
+
+                    <div class="login-field">
+                        <label>Hoe frequent wordt gescreend?</label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" name="pep_frequentie" value="Bij instroom"> Bij instroom</label>
+                            <label class="radio-option"><input type="radio" name="pep_frequentie" value="Periodiek / continu"> Periodiek / continu</label>
+                            <label class="radio-option"><input type="radio" name="pep_frequentie" value="Ad hoc / risicogericht"> Ad hoc / risicogericht</label>
+                        </div>
+                    </div>
+
+                    <!-- ── C. Portaalgebruik ── -->
+                    <div class="intake-section">
+                        <h3>C. Portaalgebruik</h3>
+                    </div>
+
+                    <div class="login-field">
+                        <label>Wie beheert de toegang tot het AandelenXpress-portaal? <span class="req">*</span></label>
+                        <div class="radio-group" id="grp-toegang">
+                            <label class="radio-option"><input type="radio" name="portaal_toegang" value="Één centrale beheerder"> Één centrale beheerder</label>
+                            <label class="radio-option"><input type="radio" name="portaal_toegang" value="Meerdere beheerders"> Meerdere beheerders</label>
+                            <label class="radio-option"><input type="radio" name="portaal_toegang" value="Per medewerker / dossier"> Per medewerker / dossier</label>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label for="gebruikers_aantal">Geschat aantal actieve gebruikers bij aanvang <span class="req">*</span></label>
+                        <input type="number" id="gebruikers_aantal" name="gebruikers_aantal" placeholder="Bijv. 3" min="1" max="999" required>
+                    </div>
+
+                    <!-- ── Akkoord & verzenden ── -->
+                    <div class="intake-section">
+                        <h3>Akkoord &amp; verzenden</h3>
+                    </div>
+
                     <div class="login-field" style="flex-direction:row;align-items:flex-start;gap:10px;margin-bottom:16px;">
                         <input type="checkbox" id="termsAkkoord" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;cursor:pointer;">
                         <label for="termsAkkoord" style="font-weight:400;font-size:0.875rem;color:#64748b;cursor:pointer;line-height:1.5;">Ik ga akkoord met de <a href="/algemene-voorwaarden" target="_blank" style="color:#1A3B70;font-weight:600;">algemene voorwaarden</a> en het <a href="/privacybeleid" target="_blank" style="color:#1A3B70;font-weight:600;">privacybeleid</a></label>
@@ -114,27 +388,97 @@
     </div>
 
     <script>
+        // Conditional field toggles
+        function toggle(fieldId, show) {
+            const el = document.getElementById(fieldId);
+            if (el) el.style.display = show ? 'block' : 'none';
+        }
+
+        document.querySelectorAll('input[name="groepsstructuur"]').forEach(r =>
+            r.addEventListener('change', () => toggle('field-groepsstructuur-toelichting', r.value === 'Ja' && r.checked))
+        );
+        document.querySelectorAll('input[name="volmacht"]').forEach(r =>
+            r.addEventListener('change', () => toggle('field-gemachtigde', r.value !== 'Nee' && r.checked))
+        );
+        document.querySelectorAll('input[name="pep_tool"]').forEach(r =>
+            r.addEventListener('change', () => toggle('field-pep-tool-naam', r.value !== 'Nee' && r.checked))
+        );
+
+        // Form submit
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const errorDiv = document.getElementById('registerError');
             errorDiv.style.display = 'none';
+
+            // Required radio validation
+            const requiredRadios = [
+                { name: 'groepsstructuur',  label: 'Moedermaatschappij / groepsstructuur' },
+                { name: 'bevoegdheid',      label: 'Bevoegdheid bestuurder(s)' },
+                { name: 'volmacht',         label: 'Volmachten voor medewerkers' },
+                { name: 'optreden',         label: 'Optreden richting AandelenXpress' },
+                { name: 'dossierbeheer',    label: 'Dossierbeheer' },
+                { name: 'wwft_plichtig',    label: 'Wwft-plichtig' },
+                { name: 'verklaring_bereid',label: 'Bereid verklaring te verstrekken' },
+                { name: 'pep_tool',         label: 'Screeningtool PEP / sancties' },
+                { name: 'portaal_toegang',  label: 'Toegangsbeheer portaal' },
+            ];
+            for (const { name, label } of requiredRadios) {
+                if (!document.querySelector(`input[name="${name}"]:checked`)) {
+                    errorDiv.textContent = `Maak een keuze bij: ${label}`;
+                    errorDiv.style.display = 'block';
+                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+            }
+
             if (!document.getElementById('termsAkkoord').checked) {
                 errorDiv.textContent = 'Ga akkoord met de algemene voorwaarden en het privacybeleid om verder te gaan.';
                 errorDiv.style.display = 'block';
                 return;
             }
+
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = 'Bezig...';
 
+            const r = name => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+            const v = id => document.getElementById(id)?.value?.trim() || '';
+
             const payload = {
-                naam:      document.getElementById('naam').value.trim(),
-                kantoor:   document.getElementById('kantoor').value.trim(),
-                kvk:       document.getElementById('kvk').value.trim(),
-                email:     document.getElementById('email').value.trim(),
-                telefoon:  document.getElementById('telefoon').value.trim(),
+                naam:      v('naam'),
+                kantoor:   v('kantoor'),
+                kvk:       v('kvk'),
+                email:     v('email'),
+                telefoon:  v('telefoon'),
                 password:  document.getElementById('password').value,
                 password2: document.getElementById('password2').value,
+                intake_data: {
+                    // Kantoorgegevens
+                    rechtsvorm:                     v('rechtsvorm'),
+                    // A. Juridisch
+                    groepsstructuur:                r('groepsstructuur'),
+                    groepsstructuur_toelichting:    v('groepsstructuur_toelichting'),
+                    bestuurder:                     v('bestuurder'),
+                    bevoegdheid:                    r('bevoegdheid'),
+                    volmacht:                       r('volmacht'),
+                    gemachtigde:                    v('gemachtigde'),
+                    optreden:                       r('optreden'),
+                    dossierbeheer:                  r('dossierbeheer'),
+                    // B. Compliance
+                    wwft_plichtig:                  r('wwft_plichtig'),
+                    compliance_officer:             v('compliance_officer'),
+                    wwft_beleid:                    r('wwft_beleid'),
+                    wwft_audit:                     r('wwft_audit'),
+                    audit_door:                     v('audit_door'),
+                    verklaring_bereid:              r('verklaring_bereid'),
+                    verklaring_ondertekenaar:       r('verklaring_ondertekenaar'),
+                    pep_tool:                       r('pep_tool'),
+                    pep_tool_naam:                  v('pep_tool_naam'),
+                    pep_frequentie:                 r('pep_frequentie'),
+                    // C. Portaal
+                    portaal_toegang:                r('portaal_toegang'),
+                    gebruikers_aantal:              v('gebruikers_aantal'),
+                }
             };
 
             try {

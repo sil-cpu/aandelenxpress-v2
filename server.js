@@ -581,7 +581,7 @@ app.get('/api/user', (req, res) => {
 
 // ── Registration ───────────────────────────────────────────────────────────
 app.post('/api/register', async (req, res) => {
-    const { kantoor, kvk, naam, email, telefoon, password, password2 } = req.body;
+    const { kantoor, kvk, naam, email, telefoon, password, password2, intake_data } = req.body;
 
     if (!kantoor || !kvk || !naam || !email || !telefoon || !password || !password2)
         return res.status(400).json({ error: 'Alle velden zijn verplicht' });
@@ -598,7 +598,10 @@ app.post('/api/register', async (req, res) => {
     const { data: existingPending } = await supabase.from('pending_resellers').select('email').eq('email', email).single();
     if (existingPending) return res.status(409).json({ error: 'Er staat al een aanmelding open voor dit e-mailadres' });
 
-    await supabase.from('pending_resellers').insert({ email, kantoor, kvk, naam, telefoon, password, aangemeld: new Date().toISOString() });
+    const row = { email, kantoor, kvk, naam, telefoon, password, aangemeld: new Date().toISOString() };
+    if (intake_data && typeof intake_data === 'object') row.intake_data = intake_data;
+
+    await supabase.from('pending_resellers').insert(row);
     emails.emailAdminNewRegistration({ name: naam, email, company: kantoor, phone: telefoon });
     emails.emailApplicantRegistrationReceived({ name: naam, email });
     res.json({ success: true });
@@ -606,7 +609,7 @@ app.post('/api/register', async (req, res) => {
 
 // ── Admin: pending registrations ───────────────────────────────────────────
 app.get('/api/admin/pending', requireAdmin, async (req, res) => {
-    const { data } = await supabase.from('pending_resellers').select('email, kantoor, kvk, naam, telefoon, aangemeld').order('aangemeld', { ascending: false });
+    const { data } = await supabase.from('pending_resellers').select('email, kantoor, kvk, naam, telefoon, aangemeld, intake_data').order('aangemeld', { ascending: false });
     res.json(data || []);
 });
 
