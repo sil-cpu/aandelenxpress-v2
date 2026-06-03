@@ -429,15 +429,13 @@ let currentEditSection = null;
 let vlRejectMode = false;
 
 const EDIT_BASE_PRICES = {
-  'bv': { label: 'Oprichting van een B.V.', amount: 540.00 },
-  'geruisloze-inbreng': { label: 'Geruisloze inbreng', amount: 1095.00 },
-  'holding-aanbod': { label: 'Gelimiteerd aanbod: Holding + Werkmaatschappij', amount: 724.00 },
-  'geruisloze-ez-bv': { label: 'Geruisloze inbreng Eenmanszaak -> BV', amount: 1095.00 },
-  'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00 },
-  'spoed-holding': { label: 'SPOED Holding + Werkmaatschappij', amount: 2850.00 },
-  'spoed-bv': { label: 'Spoed - Oprichting van een B.V.', amount: 1449.00 },
-  'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00 },
-  'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00 }
+  'bv':                              { label: 'BV oprichten',                    amount: 540.00 },
+  'bv-holding':                      { label: 'BV + Holding oprichten',          amount: 724.00 },
+  'holding':                         { label: 'Holding oprichten',               amount: 540.00 },
+  'eenmanszaak-omzetten':            { label: 'Eenmanszaak naar BV oprichten',   amount: 1095.00 },
+  'vof-naar-bv':                     { label: 'VOF naar BV oprichten',           amount: 1745.00 },
+  'eenmanszaak-omzetten-bv-holding': { label: 'Eenmanszaak naar BV + Holding',  amount: 1995.00 },
+  'vof-naar-bv-holding':             { label: 'VOF naar BV + Holding',           amount: 3245.00 }
 };
 
 const EDIT_EXTRA_PRICES = {

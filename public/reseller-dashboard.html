@@ -279,15 +279,13 @@
                     <label>Type dossier *</label>
                     <select id="serviceType" required onchange="updatePricingPreview()">
                         <option value="">-- Kies dossier type --</option>
-                        <option value="bv">Oprichting van een B.V. (€ 540,00)</option>
-                        <option value="geruisloze-inbreng">Geruisloze inbreng (€ 1.095,00)</option>
-                        <option value="holding-aanbod">Gelimiteerd aanbod: Holding + Werkmaatschappij (€ 724,00)</option>
-                        <option value="geruisloze-ez-bv">Geruisloze inbreng Eenmanszaak -> BV (€ 1.095,00)</option>
-                        <option value="geruisloze-vof-bv">Geruisloze inbreng VOF -> BV (€ 1.745,00)</option>
-                        <option value="spoed-holding">SPOED Holding + Werkmaatschappij (€ 2.850,00)</option>
-                        <option value="spoed-bv">Spoed - Oprichting van een B.V. (€ 1.449,00)</option>
-                        <option value="geruisloze-ez-holding-bv">Geruisloze inbreng Eenmanszaak -> Holding + BV (€ 1.995,00)</option>
-                        <option value="geruisloze-vof-2h-1bv">Geruisloze inbreng VOF -> 2 holdings + 1 BV (€ 3.245,00)</option>
+                        <option value="bv">BV oprichten (€ 540,00)</option>
+                        <option value="bv-holding">BV + Holding oprichten (€ 724,00)</option>
+                        <option value="holding">Holding oprichten (€ 540,00)</option>
+                        <option value="eenmanszaak-omzetten">Eenmanszaak naar BV oprichten (€ 1.095,00)</option>
+                        <option value="vof-naar-bv">VOF naar BV oprichten (€ 1.745,00)</option>
+                        <option value="eenmanszaak-omzetten-bv-holding">Eenmanszaak naar BV + Holding (€ 1.995,00)</option>
+                        <option value="vof-naar-bv-holding">VOF naar BV + Holding (€ 3.245,00)</option>
                     </select>
                 </div>
 
@@ -366,11 +364,13 @@
                     <label>Wat wil je oprichten? *</label>
                     <select id="oprichtingType" required>
                         <option value="">-- Kies een optie --</option>
-                        <option value="bv">Gewone BV</option>
-                        <option value="bv-holding">BV + Holding structuur</option>
-                        <option value="bv-spoed">BV met spoed (24-48 uur)</option>
-                        <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
-                        <option value="advies">Wil graag advies (geen oprichting)</option>
+                        <option value="bv">BV oprichten</option>
+                        <option value="bv-holding">BV + Holding oprichten</option>
+                        <option value="holding">Holding oprichten</option>
+                        <option value="eenmanszaak-omzetten">Eenmanszaak naar BV oprichten</option>
+                        <option value="vof-naar-bv">VOF naar BV oprichten</option>
+                        <option value="eenmanszaak-omzetten-bv-holding">Eenmanszaak naar BV + Holding</option>
+                        <option value="vof-naar-bv-holding">VOF naar BV + Holding</option>
                     </select>
                 </div>
 
@@ -415,18 +415,17 @@ let dossiers = [];
 let showAll = false;
 
 const BASE_PRICES = {
-    'bv': { label: 'Oprichting van een B.V.', amount: 540.00, oprichtingType: 'bv' },
-    'geruisloze-inbreng': { label: 'Geruisloze inbreng', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
-    'holding-aanbod': { label: 'Gelimiteerd aanbod: Holding + Werkmaatschappij', amount: 724.00, oprichtingType: 'bv-holding' },
-    'geruisloze-ez-bv': { label: 'Geruisloze inbreng Eenmanszaak -> BV', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
-    'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00, oprichtingType: 'eenmanszaak-omzetten' },
-    'spoed-holding': { label: 'SPOED Holding + Werkmaatschappij', amount: 2850.00, oprichtingType: 'bv-holding' },
-    'spoed-bv': { label: 'Spoed - Oprichting van een B.V.', amount: 1449.00, oprichtingType: 'bv-spoed' },
-    'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00, oprichtingType: 'bv-holding' },
-    'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00, oprichtingType: 'bv-holding' }
+    'bv':                              { label: 'BV oprichten',                    amount: 540.00 },
+    'bv-holding':                      { label: 'BV + Holding oprichten',          amount: 724.00 },
+    'holding':                         { label: 'Holding oprichten',               amount: 540.00 },
+    'eenmanszaak-omzetten':            { label: 'Eenmanszaak naar BV oprichten',   amount: 1095.00 },
+    'vof-naar-bv':                     { label: 'VOF naar BV oprichten',           amount: 1745.00 },
+    'eenmanszaak-omzetten-bv-holding': { label: 'Eenmanszaak naar BV + Holding',  amount: 1995.00 },
+    'vof-naar-bv-holding':             { label: 'VOF naar BV + Holding',           amount: 3245.00 }
 };
 
 const EXTRA_PRICES = {
+    'spoed': { label: 'Spoedbehandeling (24-48 uur)', amount: 909.00 },
     'aandeelhoudersregister': { label: 'Nieuw aandeelhoudersregister', amount: 325.00 },
     'ah-buiten-eu': { label: 'Aandeelhouder woonachtig buiten de EU', amount: 500.00 },
     'persoon-buiten-nl-met-nl-bank': { label: 'Natuurlijk persoon buiten NL met NL-bankrekening', amount: 50.00 },
@@ -445,6 +444,7 @@ const EXTRA_PRICES = {
 };
 
 const EXTRA_TOOLTIPS = {
+    'spoed': 'Spoedbehandeling zorgt voor afhandeling binnen 24-48 uur. De toeslag is afhankelijk van het product.',
     'aandeelhoudersregister': 'Selecteer Ja als je direct een nieuw aandeelhoudersregister wilt laten opstellen.',
     'ah-buiten-eu': 'Kies Ja wanneer een aandeelhouder buiten de EU woont, vanwege extra compliance checks.',
     'persoon-buiten-nl-met-nl-bank': 'Voor natuurlijke personen buiten NL met een Nederlandse bankrekening.',
@@ -528,9 +528,8 @@ function goToStep2() {
     const selection = buildPricingSelection();
     if (!selection) return alert('Kies eerst een dossier type om verder te gaan.');
     const baseCode = document.getElementById('serviceType').value;
-    const mappedType = BASE_PRICES[baseCode]?.oprichtingType;
     const oprSel = document.getElementById('oprichtingType');
-    if (mappedType && oprSel) oprSel.value = mappedType;
+    if (oprSel) oprSel.value = baseCode;
     const aandeelhoudersEl = document.getElementById('aandeelhouders');
     if (aandeelhoudersEl) aandeelhoudersEl.value = document.getElementById('shareholderCount')?.value || '1';
     document.getElementById('resellerFormStep1').style.display = 'none';
