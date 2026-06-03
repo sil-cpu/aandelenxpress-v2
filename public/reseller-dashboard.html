@@ -389,6 +389,13 @@
                     <textarea id="opmerkingen" placeholder="Eventuele speciale wensen..." style="min-height:80px;resize:vertical;"></textarea>
                 </div>
 
+                <div style="margin:16px 0 8px;padding:14px;background:#F7F9FC;border:1px solid #E2E8F0;border-radius:8px;">
+                    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:0.85rem;color:#4A5568;line-height:1.5;">
+                        <input type="checkbox" id="termsAkkoord" style="margin-top:3px;flex-shrink:0;" required>
+                        <span>Ik bevestig dat alle ingevoerde gegevens correct en volledig zijn. Ik ga akkoord met de <a href="/algemene-voorwaarden" target="_blank" style="color:#1A3B70;">algemene voorwaarden</a> van AandelenXpress en begrijp dat ik als partner verantwoordelijk ben voor de juistheid van de verstrekte informatie.</span>
+                    </label>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn-ghost" onclick="backToStep1()">← Terug</button>
                     <button type="submit" class="btn-primary">Opdracht indienen</button>
@@ -752,6 +759,10 @@ document.getElementById('modal').addEventListener('click', e => { if(e.target.id
 
 document.getElementById('newDossierForm').addEventListener('submit', async e => {
     e.preventDefault();
+    if (!document.getElementById('termsAkkoord').checked) {
+        alert('Bevestig de algemene voorwaarden en de juistheid van de gegevens om door te gaan.');
+        return;
+    }
     const pricing = buildPricingSelection();
     if (!pricing) {
         alert('Kies in stap 1 eerst een dossier type.');
