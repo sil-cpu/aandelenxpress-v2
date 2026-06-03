@@ -39,6 +39,10 @@
   <aside class="dash-sidebar">
     <div class="dash-logo">
       <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+      <button class="dash-mobile-menu-btn" type="button" aria-label="Menu openen" aria-expanded="false">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Menu
+      </button>
     </div>
 
     <nav class="dash-nav">
@@ -250,7 +254,14 @@
             <select id="dossierFilterType" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
               <option value="">Alle</option>
               <option value="B.V.">B.V.</option>
-              <option value="Holdings B.V.">Holdings B.V.</option>
+              <option value="B.V. + Holding">B.V. + Holding</option>
+              <option value="Holding">Holding</option>
+              <option value="B.V. (spoed)">B.V. (spoed)</option>
+              <option value="Eenmanszaak -> B.V.">Eenmanszaak -> B.V.</option>
+              <option value="VOF -> B.V.">VOF -> B.V.</option>
+              <option value="Eenmanszaak -> B.V. + Holding">Eenmanszaak -> B.V. + Holding</option>
+              <option value="VOF -> B.V. + Holding">VOF -> B.V. + Holding</option>
+              <option value="Advies">Advies</option>
             </select>
           </div>
         </div>
@@ -588,40 +599,84 @@
       <div class="dash-section" id="section-forms">
         <div class="mb-28">
           <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:6px;">Forms</h1>
-          <p class="text-muted text-sm">Preview van de drie formulieren. Er is geen wachtwoord nodig en versturen is uitgeschakeld.</p>
+          <p class="text-muted text-sm">Preview van alle productformulieren. Er is geen wachtwoord nodig en versturen is uitgeschakeld.</p>
         </div>
 
         <div class="stats-grid mb-28" style="grid-template-columns:repeat(3,minmax(0,1fr));">
           <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
             <div>
-              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Vragenlijst</div>
-              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Basis vragenlijst</div>
-              <div class="text-muted text-sm" style="margin-top:6px;">Standaard flow voor een nieuwe BV.</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">BV oprichten</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">Unieke vragenlijst voor standaard BV-oprichting.</div>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst.html?preview=1" target="_blank" rel="noopener">Preview openen</a>
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=bv" target="_blank" rel="noopener">Preview openen</a>
             </div>
           </div>
 
           <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
             <div>
-              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Vragenlijst</div>
-              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">BV + Holding</div>
-              <div class="text-muted text-sm" style="margin-top:6px;">Uitgebreide flow voor holdingstructuren.</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">BV + Holding oprichten</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">Uitgebreide flow voor holding + werkmaatschappij.</div>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding.html?preview=1" target="_blank" rel="noopener">Preview openen</a>
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=bv-holding" target="_blank" rel="noopener">Preview openen</a>
             </div>
           </div>
 
           <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
             <div>
-              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Vragenlijst</div>
-              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Geruisloze inbreng</div>
-              <div class="text-muted text-sm" style="margin-top:6px;">Preview van de geruisloze inbreng flow.</div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Holding oprichten</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">Unieke vragenlijst voor losse holding-oprichting.</div>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-geruisloos.html?preview=1" target="_blank" rel="noopener">Preview openen</a>
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=holding" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Eenmanszaak naar BV oprichten</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">EMZ-route met specifieke documenten en regels.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=eenmanszaak-omzetten" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">VOF naar BV oprichten</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">VOF-route met eigen vragen en documentupload.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=vof-naar-bv" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">Eenmanszaak naar BV + Holding</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">EMZ-route met BV + Holding flow en omzettingsdocumenten.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=eenmanszaak-omzetten-bv-holding" target="_blank" rel="noopener">Preview openen</a>
+            </div>
+          </div>
+
+          <div class="dash-card" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:0.05em;">Product</div>
+              <div style="font-size:1.05rem;font-weight:600;color:#0F1D3A;margin-top:6px;">VOF naar BV + Holding</div>
+              <div class="text-muted text-sm" style="margin-top:6px;">VOF-route met BV + Holding flow en omzettingsdocumenten.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn-primary" style="text-decoration:none;padding:10px 14px;font-size:0.85rem;display:inline-flex;align-items:center;justify-content:center;" href="/vragenlijst-bv-holding?preview=1&product=vof-naar-bv-holding" target="_blank" rel="noopener">Preview openen</a>
             </div>
           </div>
         </div>
@@ -811,8 +866,12 @@
             <option value="">— Kies —</option>
             <option value="bv">Gewone BV</option>
             <option value="bv-holding">BV + Holding structuur</option>
+            <option value="holding">Alleen Holding</option>
             <option value="bv-spoed">BV met spoed (24-48 uur)</option>
             <option value="eenmanszaak-omzetten">Eenmanszaak → BV omzetten</option>
+            <option value="vof-naar-bv">VOF → BV omzetten</option>
+            <option value="eenmanszaak-omzetten-bv-holding">Eenmanszaak → BV + Holding omzetten</option>
+            <option value="vof-naar-bv-holding">VOF → BV + Holding omzetten</option>
             <option value="advies">Wil graag advies</option>
           </select>
         </div>
@@ -845,11 +904,11 @@ const DOSSIER_BASE_PRICES = {
   'geruisloze-inbreng': { label: 'Geruisloze inbreng', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
   'holding-aanbod': { label: 'Gelimiteerd aanbod: Holding + Werkmaatschappij', amount: 724.00, oprichtingType: 'bv-holding' },
   'geruisloze-ez-bv': { label: 'Geruisloze inbreng Eenmanszaak -> BV', amount: 1095.00, oprichtingType: 'eenmanszaak-omzetten' },
-  'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00, oprichtingType: 'eenmanszaak-omzetten' },
+  'geruisloze-vof-bv': { label: 'Geruisloze inbreng VOF -> BV', amount: 1745.00, oprichtingType: 'vof-naar-bv' },
   'spoed-holding': { label: 'SPOED Holding + Werkmaatschappij', amount: 2850.00, oprichtingType: 'bv-holding' },
   'spoed-bv': { label: 'Spoed - Oprichting van een B.V.', amount: 1449.00, oprichtingType: 'bv-spoed' },
-  'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00, oprichtingType: 'bv-holding' },
-  'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00, oprichtingType: 'bv-holding' }
+  'geruisloze-ez-holding-bv': { label: 'Geruisloze inbreng Eenmanszaak -> Holding + BV', amount: 1995.00, oprichtingType: 'eenmanszaak-omzetten-bv-holding' },
+  'geruisloze-vof-2h-1bv': { label: 'Geruisloze inbreng VOF -> 2 holdings + 1 BV', amount: 3245.00, oprichtingType: 'vof-naar-bv-holding' }
 };
 
 const DOSSIER_EXTRA_PRICES = {
@@ -991,7 +1050,17 @@ function adminBackToStep1() {
 }
 
 function mapRequestToDossier(req) {
-  const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
+  const typeMap = {
+    'bv':'B.V.',
+    'bv-holding':'B.V. + Holding',
+    'holding':'Holding',
+    'bv-spoed':'B.V. (spoed)',
+    'eenmanszaak-omzetten':'Eenmanszaak -> B.V.',
+    'vof-naar-bv':'VOF -> B.V.',
+    'eenmanszaak-omzetten-bv-holding':'Eenmanszaak -> B.V. + Holding',
+    'vof-naar-bv-holding':'VOF -> B.V. + Holding',
+    'advies':'Advies'
+  };
   const statusMap = {
     'pending':     { key:'pending',     text:'Aanvraag ingediend' },
     'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
@@ -1350,6 +1419,43 @@ document.querySelectorAll(".dash-nav-item").forEach(item => {
     showSection(item.dataset.section);
   });
 });
+
+function setMobileMenuOpen(open) {
+  const sidebar = document.querySelector('.dash-sidebar');
+  const button = document.querySelector('.dash-mobile-menu-btn');
+  if (!sidebar || !button) return;
+  sidebar.classList.toggle('menu-open', open);
+  button.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function initMobileMenu() {
+  const sidebar = document.querySelector('.dash-sidebar');
+  const button = document.querySelector('.dash-mobile-menu-btn');
+  if (!sidebar || !button) return;
+
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = sidebar.classList.contains('menu-open');
+    setMobileMenuOpen(!isOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 1024) return;
+    if (!sidebar.classList.contains('menu-open')) return;
+    if (sidebar.contains(e.target)) return;
+    setMobileMenuOpen(false);
+  });
+
+  document.querySelectorAll('.dash-nav-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) setMobileMenuOpen(false);
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1024) setMobileMenuOpen(false);
+  });
+}
 
 function showSection(s) {
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
@@ -2219,8 +2325,12 @@ async function openRequestDrawer(requestId) {
     const typeMap = {
       'bv': 'Gewone BV',
       'bv-holding': 'BV + Holding structuur',
+      'holding': 'Alleen Holding',
       'bv-spoed': 'BV met spoed (24-48 uur)',
       'eenmanszaak-omzetten': 'Eenmanszaak → BV omzetten',
+      'vof-naar-bv': 'VOF → BV omzetten',
+      'eenmanszaak-omzetten-bv-holding': 'Eenmanszaak → BV + Holding omzetten',
+      'vof-naar-bv-holding': 'VOF → BV + Holding omzetten',
       'advies': 'Wil graag advies (geen oprichting)'
     };
     document.getElementById('rfType').textContent = typeMap[request.oprichtingType] || request.oprichtingType || '–';
@@ -2329,6 +2439,8 @@ async function rejectResellerRequest() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initMobileMenu();
+
   // Initialize hash-based routing
   const section = window.location.hash.slice(1) || "overzicht";
   showSectionSilent(section);

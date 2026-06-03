@@ -3,6 +3,7 @@ const express = require('express');
 const cookieSession = require('cookie-session');
 const path = require('path');
 const fs = require('fs');
+const PDFDocument = require('pdfkit');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -10,6 +11,8 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 const DOSSIER_AUTO_TRASH_MS = 14 * 24 * 60 * 60 * 1000;
 const PRICING_MARKER = '[AX_PRICING]';
+const BRANDING_BUCKET = 'branding-assets';
+const LEGACY_BRANDING_PREFIX = '__BRANDING__:';
 
 // ── Supabase client (service role bypasses RLS) ────────────────────────────
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -167,6 +170,222 @@ function generateSmartToken(request) {
     return (firstName + bvName).slice(0, 20) || generateToken();
 }
 
+function tokenMatches(storedToken, providedToken) {
+    const a = String(storedToken || '').trim().toLowerCase();
+    const b = String(providedToken || '').trim().toLowerCase();
+    return !!a && !!b && a === b;
+}
+
+function sanitizeSlug(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 48);
+}
+
+function buildVragenlijstUrl(request) {
+    const base = process.env.SITE_URL || 'https://aandelenxpress.vercel.app';
+    const id = request?.id || '';
+    const product = String(request?.oprichtingType || 'bv').trim();
+    return `${base}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}`;
+}
+
+function defaultBrandingForUser(user) {
+    return {
+        resellerEmail: user?.email || '',
+        company: user?.company || user?.name || 'Partner',
+        logoUrl: '',
+        primaryColor: '#1A3B70',
+        secondaryColor: '#F2F6FB',
+        accentColor: '#0F1D3A',
+        slug: sanitizeSlug((user?.company || user?.name || '').replace(/\s+/g, '')) || ''
+    };
+}
+
+function normalizeBrandingPayload(input, fallback = {}) {
+    return {
+        resellerEmail: String(input?.resellerEmail || fallback?.resellerEmail || '').trim().toLowerCase(),
+        company: String(input?.company || fallback?.company || '').trim(),
+        logoUrl: String(input?.logoUrl || '').trim(),
+        primaryColor: String(input?.primaryColor || '#1A3B70').trim() || '#1A3B70',
+        secondaryColor: String(input?.secondaryColor || '#F2F6FB').trim() || '#F2F6FB',
+        accentColor: String(input?.accentColor || '#0F1D3A').trim() || '#0F1D3A',
+        slug: sanitizeSlug(input?.slug || fallback?.slug || ''),
+        updatedAt: new Date().toISOString()
+    };
+}
+
+async function ensureBrandingBucket() {
+    try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const exists = (buckets || []).some(b => b.name === BRANDING_BUCKET);
+        if (!exists) {
+            await supabase.storage.createBucket(BRANDING_BUCKET, { public: true, fileSizeLimit: 5 * 1024 * 1024 });
+        }
+    } catch (_) {}
+}
+
+async function getLegacyBrandingByEmail(email) {
+    const key = `${LEGACY_BRANDING_PREFIX}${String(email || '').trim().toLowerCase()}`;
+    const { data: row } = await supabase
+        .from('email_templates')
+        .select('name, body')
+        .eq('name', key)
+        .single();
+    if (!row) return null;
+
+    let parsed = {};
+    try { parsed = JSON.parse(row.body || '{}'); } catch (_) { parsed = {}; }
+    return normalizeBrandingPayload(parsed, { resellerEmail: email });
+}
+
+async function getBrandingByEmail(email, fallbackUser) {
+    const target = String(email || '').trim().toLowerCase();
+    const { data: row } = await supabase
+        .from('reseller_branding')
+        .select('*')
+        .eq('reseller_email', target)
+        .single();
+
+    if (row) {
+        return {
+            rowId: row.reseller_email,
+            email: target,
+            branding: normalizeBrandingPayload({
+                resellerEmail: row.reseller_email,
+                company: row.company,
+                logoUrl: row.logo_url,
+                primaryColor: row.primary_color,
+                secondaryColor: row.secondary_color,
+                accentColor: row.accent_color,
+                slug: row.slug,
+                updatedAt: row.updated_at
+            }, { resellerEmail: target })
+        };
+    }
+
+    const legacy = await getLegacyBrandingByEmail(target);
+    if (legacy) {
+        await supabase.from('reseller_branding').upsert({
+            reseller_email: target,
+            company: legacy.company,
+            logo_url: legacy.logoUrl,
+            primary_color: legacy.primaryColor,
+            secondary_color: legacy.secondaryColor,
+            accent_color: legacy.accentColor,
+            slug: legacy.slug || sanitizeSlug((fallbackUser?.company || fallbackUser?.name || '').replace(/\s+/g, '')),
+            updated_at: new Date().toISOString()
+        });
+        return {
+            rowId: target,
+            email: target,
+            branding: normalizeBrandingPayload(legacy, { resellerEmail: target })
+        };
+    }
+
+    return {
+        rowId: null,
+        email: target,
+        branding: normalizeBrandingPayload({}, defaultBrandingForUser(fallbackUser || { email: target }))
+    };
+}
+
+async function saveBrandingByEmail(email, brandingInput, fallbackUser) {
+    const target = String(email || '').trim().toLowerCase();
+    const existing = await getBrandingByEmail(target, fallbackUser);
+    const branding = normalizeBrandingPayload(brandingInput, existing.branding);
+
+    await supabase.from('reseller_branding').upsert({
+        reseller_email: target,
+        company: branding.company,
+        logo_url: branding.logoUrl,
+        primary_color: branding.primaryColor,
+        secondary_color: branding.secondaryColor,
+        accent_color: branding.accentColor,
+        slug: branding.slug,
+        updated_at: new Date().toISOString()
+    });
+
+    return branding;
+}
+
+async function getBrandingBySlug(slug) {
+    const target = sanitizeSlug(slug);
+    if (!target) return null;
+    const { data: row } = await supabase
+        .from('reseller_branding')
+        .select('*')
+        .eq('slug', target)
+        .single();
+    if (!row) return null;
+    return {
+        rowId: row.reseller_email,
+        email: row.reseller_email,
+        branding: normalizeBrandingPayload({
+            resellerEmail: row.reseller_email,
+            company: row.company,
+            logoUrl: row.logo_url,
+            primaryColor: row.primary_color,
+            secondaryColor: row.secondary_color,
+            accentColor: row.accent_color,
+            slug: row.slug,
+            updatedAt: row.updated_at
+        }, { resellerEmail: row.reseller_email })
+    };
+}
+
+async function getBrandingBySlugWithFallback(slug) {
+    const target = sanitizeSlug(slug);
+    if (!target) return null;
+
+    const fromTable = await getBrandingBySlug(target);
+    if (fromTable) return fromTable;
+
+    const { data: users } = await supabase
+        .from('users')
+        .select('email,name,company,type,status')
+        .eq('type', 'reseller')
+        .eq('status', 'active');
+
+    const candidate = (users || []).find(u => {
+        const base = String(u.company || u.name || '');
+        const slugDash = sanitizeSlug(base);
+        const slugCompact = sanitizeSlug(base.replace(/\s+/g, ''));
+        return slugDash === target || slugCompact === target;
+    });
+    if (!candidate) return null;
+
+    const defaultBrand = normalizeBrandingPayload({}, defaultBrandingForUser(candidate));
+    const aliases = [
+        sanitizeSlug(String(candidate.company || candidate.name || '')),
+        sanitizeSlug(String(candidate.company || candidate.name || '').replace(/\s+/g, ''))
+    ].filter(Boolean);
+    const preferredSlug = aliases.includes(target) ? target : (aliases[0] || target);
+
+    await supabase.from('reseller_branding').upsert({
+        reseller_email: candidate.email,
+        company: defaultBrand.company,
+        logo_url: defaultBrand.logoUrl,
+        primary_color: defaultBrand.primaryColor,
+        secondary_color: defaultBrand.secondaryColor,
+        accent_color: defaultBrand.accentColor,
+        slug: preferredSlug,
+        updated_at: new Date().toISOString()
+    });
+
+    return {
+        rowId: candidate.email,
+        email: candidate.email,
+        branding: {
+            ...defaultBrand,
+            resellerEmail: candidate.email,
+            slug: preferredSlug
+        }
+    };
+}
+
 // ── Auth middleware ────────────────────────────────────────────────────────
 function requireLogin(req, res, next) {
     if (req.session && req.session.user) return next();
@@ -193,9 +412,52 @@ app.use(cookieSession({
 const protectedPages = ['admin-dashboard', 'reseller-dashboard', 'blog-admin', 'dossier-detail', 'ticket-detail', 'partner-detail', 'dossier-status'];
 app.get('/:page.html', (req, res, next) => {
     const page = req.params.page;
+    if (page === 'vragenlijst-bv-holding-preview') {
+        return res.redirect(302, '/vragenlijst-bv-holding?preview=1');
+    }
     if (protectedPages.includes(page)) return next();
     if (page === 'index') return res.redirect(301, '/');
     return res.redirect(301, `/${page}`);
+});
+
+app.get('/vragenlijst-bv-holding-preview', (req, res) => {
+    return res.redirect(302, '/vragenlijst-bv-holding?preview=1');
+});
+
+app.get('/vragenlijst-bv-oprichten', (req, res) => {
+    const q = new URLSearchParams(req.query || {});
+    if (!q.get('product')) q.set('product', 'bv');
+    return res.redirect(302, '/vragenlijst-bv-holding?' + q.toString());
+});
+
+app.get('/vragenlijst-holding-oprichten', (req, res) => {
+    const q = new URLSearchParams(req.query || {});
+    if (!q.get('product')) q.set('product', 'holding');
+    return res.redirect(302, '/vragenlijst-bv-holding?' + q.toString());
+});
+
+app.get('/vragenlijst-eenmanszaak-naar-bv', (req, res) => {
+    const q = new URLSearchParams(req.query || {});
+    if (!q.get('product')) q.set('product', 'eenmanszaak-omzetten');
+    return res.redirect(302, '/vragenlijst-bv-holding?' + q.toString());
+});
+
+app.get('/vragenlijst-vof-naar-bv', (req, res) => {
+    const q = new URLSearchParams(req.query || {});
+    if (!q.get('product')) q.set('product', 'vof-naar-bv');
+    return res.redirect(302, '/vragenlijst-bv-holding?' + q.toString());
+});
+
+app.get('/vragenlijst-eenmanszaak-naar-bv-holding', (req, res) => {
+    const q = new URLSearchParams(req.query || {});
+    if (!q.get('product')) q.set('product', 'eenmanszaak-omzetten-bv-holding');
+    return res.redirect(302, '/vragenlijst-bv-holding?' + q.toString());
+});
+
+app.get('/vragenlijst-vof-naar-bv-holding', (req, res) => {
+    const q = new URLSearchParams(req.query || {});
+    if (!q.get('product')) q.set('product', 'vof-naar-bv-holding');
+    return res.redirect(302, '/vragenlijst-bv-holding?' + q.toString());
 });
 
 // Static files
@@ -361,6 +623,175 @@ app.post('/api/admin/users/delete', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
+app.get('/api/reseller-branding/:email', requireLogin, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const email = String(req.params.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email ontbreekt' });
+    if (req.session.user.type !== 'admin' && req.session.user.email !== email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
+
+    const { data: user } = await supabase.from('users').select('email,name,company,type').eq('email', email).single();
+    if (!user || user.type !== 'reseller') return res.status(404).json({ error: 'Reseller niet gevonden' });
+
+    const record = await getBrandingByEmail(email, user);
+    res.json(record.branding);
+});
+
+app.put('/api/reseller-branding/:email', requireLogin, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const email = String(req.params.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email ontbreekt' });
+    if (req.session.user.type !== 'admin' && req.session.user.email !== email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
+
+    const { data: user } = await supabase.from('users').select('email,name,company,type').eq('email', email).single();
+    if (!user || user.type !== 'reseller') return res.status(404).json({ error: 'Reseller niet gevonden' });
+
+    const incoming = req.body || {};
+    const slug = sanitizeSlug(incoming.slug || '');
+    if (!slug) return res.status(400).json({ error: 'Slug is verplicht' });
+
+    const { data: duplicateRow } = await supabase
+        .from('reseller_branding')
+        .select('reseller_email, slug')
+        .eq('slug', slug)
+        .neq('reseller_email', email)
+        .single();
+    const duplicate = !!duplicateRow;
+    if (duplicate) return res.status(409).json({ error: 'Deze URL-slug is al in gebruik' });
+
+    const saved = await saveBrandingByEmail(email, incoming, user);
+    res.json(saved);
+});
+
+app.post('/api/reseller-branding/:email/logo', requireLogin, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const email = String(req.params.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email ontbreekt' });
+    if (req.session.user.type !== 'admin' && req.session.user.email !== email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
+
+    const { data: user } = await supabase.from('users').select('email,name,company,type').eq('email', email).single();
+    if (!user || user.type !== 'reseller') return res.status(404).json({ error: 'Reseller niet gevonden' });
+
+    const body = req.body || {};
+    const fileNameRaw = String(body.fileName || body.filename || 'logo.png');
+    const mimeType = String(body.mimeType || body.contentType || 'image/png').toLowerCase();
+    const dataRaw = String(body.base64Data || body.data || '');
+    const matches = /^data:([^;]+);base64,(.*)$/i.exec(dataRaw);
+    const base64Part = matches ? matches[2] : dataRaw;
+
+    if (!base64Part) return res.status(400).json({ error: 'Bestand ontbreekt' });
+    if (!/^image\//.test(mimeType)) return res.status(400).json({ error: 'Alleen afbeelding-bestanden zijn toegestaan' });
+
+    let fileBuffer;
+    try {
+        fileBuffer = Buffer.from(base64Part, 'base64');
+    } catch (_) {
+        return res.status(400).json({ error: 'Bestand kon niet worden verwerkt' });
+    }
+
+    if (!fileBuffer.length) return res.status(400).json({ error: 'Leeg bestand' });
+    if (fileBuffer.length > 5 * 1024 * 1024) return res.status(400).json({ error: 'Bestand is te groot (max 5MB)' });
+
+    const ext = mimeType.includes('jpeg') ? 'jpg'
+        : mimeType.includes('svg') ? 'svg'
+        : mimeType.includes('webp') ? 'webp'
+        : mimeType.includes('gif') ? 'gif'
+        : 'png';
+    const safeBase = fileNameRaw.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 80) || 'logo';
+    const objectPath = `logos/${email}/${Date.now()}-${safeBase}.${ext}`;
+
+    await ensureBrandingBucket();
+    const { error: uploadError } = await supabase.storage
+        .from(BRANDING_BUCKET)
+        .upload(objectPath, fileBuffer, { contentType: mimeType, upsert: true });
+    if (uploadError) return res.status(500).json({ error: uploadError.message });
+
+    const { data: publicData } = supabase.storage.from(BRANDING_BUCKET).getPublicUrl(objectPath);
+    const logoUrl = publicData?.publicUrl || '';
+
+    const current = await getBrandingByEmail(email, user);
+    const saved = await saveBrandingByEmail(email, {
+        ...current.branding,
+        logoUrl,
+        slug: current.branding.slug || sanitizeSlug((user.company || user.name || '').replace(/\s+/g, ''))
+    }, user);
+
+    res.json({ success: true, logoUrl: saved.logoUrl, branding: saved });
+});
+
+app.get('/api/whitelabel/:slug', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const slug = sanitizeSlug(req.params.slug);
+    const brandRecord = await getBrandingBySlugWithFallback(slug);
+    if (!brandRecord) return res.status(404).json({ error: 'Pagina niet gevonden' });
+
+    const { data: user } = await supabase.from('users').select('email,name,company,type,status').eq('email', brandRecord.email).single();
+    if (!user || user.type !== 'reseller' || user.status === 'inactive') return res.status(404).json({ error: 'Pagina niet beschikbaar' });
+
+    res.json({
+        reseller: {
+            email: user.email,
+            name: user.name,
+            company: user.company
+        },
+        branding: brandRecord.branding
+    });
+});
+
+app.post('/api/whitelabel/:slug/request', async (req, res) => {
+    const slug = sanitizeSlug(req.params.slug);
+    const brandRecord = await getBrandingBySlugWithFallback(slug);
+    if (!brandRecord) return res.status(404).json({ error: 'Pagina niet gevonden' });
+
+    const { data: reseller } = await supabase.from('users').select('*').eq('email', brandRecord.email).single();
+    if (!reseller || reseller.type !== 'reseller' || reseller.status === 'inactive') {
+        return res.status(404).json({ error: 'Partner niet beschikbaar' });
+    }
+
+    const { clientName, clientEmail, clientPhone, oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen, pricing } = req.body || {};
+    if (!clientName || !clientEmail || !oprichtingType || !gewenstNaam || !doel) {
+        return res.status(400).json({ error: 'Verplichte velden ontbreken' });
+    }
+
+    const request = {
+        id:              generateDossierNr(),
+        resellerId:      reseller.email,
+        resellerName:    reseller.name,
+        resellerCompany: reseller.company || 'Partner',
+        accessToken:     null,
+        clientName,
+        clientEmail,
+        clientPhone:     clientPhone || '',
+        oprichtingType,
+        gewenstNaam,
+        doel,
+        aandeelhouders:  aandeelhouders || 1,
+        kapitaal:        kapitaal || 0.01,
+        startSaldo:      startSaldo || 0,
+        opmerkingen:     opmerkingen || '',
+        pricing:         pricing || null,
+        status:          'pending',
+        createdAt:       new Date().toISOString(),
+        approvedAt: null, approvedBy: null, rejectionReason: null,
+        statusUpdatedAt: null, activities: []
+    };
+
+    request.accessToken = generateSmartToken(request);
+    addActivity(request, 'system', `Aanvraag ingediend via whitelabel pagina /${slug}`, null);
+
+    const { error } = await supabase.from('reseller_requests').insert(reqToRow(request));
+    if (error) return res.status(500).json({ error: error.message });
+
+    emails.emailAdminNewRequest({ request });
+    emails.emailClientNewRequest({ request });
+    res.status(201).json({ success: true, dossierNr: request.id });
+});
+
 app.get('/api/admin/admins', requireAdmin, async (req, res) => {
     const { data } = await supabase.from('users').select('email, name').eq('type', 'admin');
     res.json(data || []);
@@ -464,8 +895,18 @@ app.get('/api/dossier-status/:id', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet gevonden' });
     const { token } = req.query;
-    if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
-    const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak naar B.V.', 'advies':'Advies' };
+    if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldig wachtwoord' });
+    const typeMap = {
+        'bv':'B.V.',
+        'bv-holding':'B.V. + Holding',
+        'holding':'Holding',
+        'bv-spoed':'B.V. (spoed)',
+        'eenmanszaak-omzetten':'Eenmanszaak naar B.V.',
+        'vof-naar-bv':'VOF naar B.V.',
+        'eenmanszaak-omzetten-bv-holding':'Eenmanszaak naar B.V. + Holding',
+        'vof-naar-bv-holding':'VOF naar B.V. + Holding',
+        'advies':'Advies'
+    };
     const statusMap = {
         'pending':     { key:'pending',     text:'Aanvraag ingediend' },
         'approved':    { key:'vragenlijst', text:'Vragenlijst' },
@@ -477,7 +918,17 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         'rejected':    { key:'rejected',    text:'Afgewezen' },
     };
     const s = statusMap[row.status] || { key: 'pending', text: 'In behandeling' };
-    res.json({ id: row.id, name: row.gewenst_naam || row.client_name, type: typeMap[row.oprichting_type] || row.oprichting_type || '-', partner: row.reseller_company || '-', statusKey: s.key, statusText: s.text, date: row.created_at });
+    const brandRecord = await getBrandingByEmail(row.reseller_id, { email: row.reseller_id, company: row.reseller_company || '' });
+    res.json({
+        id: row.id,
+        name: row.gewenst_naam || row.client_name,
+        type: typeMap[row.oprichting_type] || row.oprichting_type || '-',
+        partner: row.reseller_company || '-',
+        statusKey: s.key,
+        statusText: s.text,
+        date: row.created_at,
+        branding: brandRecord.branding
+    });
 });
 
 app.post('/api/dossier-status/:id/resend-token', async (req, res) => {
@@ -870,6 +1321,7 @@ function normalizeVragenlijstForAdmin(row) {
     const baseData = { ...(row?.data || {}) };
     const datacard = extractVragenlijstFileMeta(baseData, 'datacardBestand');
     const pep = extractVragenlijstFileMeta(baseData, 'pepBestand');
+    const generatedPdf = extractVragenlijstFileMeta(baseData, 'oprichtingsDocument');
 
     // Never expose raw base64 blobs in admin list/detail payloads.
     delete baseData.datacardBestandData;
@@ -882,6 +1334,10 @@ function normalizeVragenlijstForAdmin(row) {
         const { data, content, ...safe } = baseData.pepBestand;
         baseData.pepBestand = safe;
     }
+    if (baseData.oprichtingsDocument && typeof baseData.oprichtingsDocument === 'object') {
+        const { data, content, ...safe } = baseData.oprichtingsDocument;
+        baseData.oprichtingsDocument = safe;
+    }
 
     if (!baseData.gewenstNaam) baseData.gewenstNaam = baseData.bvNaam || '';
     if (!baseData.contactEmail) baseData.contactEmail = baseData.bvEmail || baseData.clientEmail || '';
@@ -893,22 +1349,40 @@ function normalizeVragenlijstForAdmin(row) {
         ...baseData,
         datacardBestandNaam: datacard.name || baseData.datacardBestandNaam || '',
         pepBestandNaam: pep.name || baseData.pepBestandNaam || '',
+        oprichtingsDocumentNaam: generatedPdf.name || baseData.oprichtingsDocumentNaam || '',
         datacardIngediend: !!(datacard.name || datacard.hasData),
-        pepIngediend: !!(pep.name || pep.hasData)
+        pepIngediend: !!(pep.name || pep.hasData),
+        oprichtingsDocumentIngediend: !!(generatedPdf.name || generatedPdf.hasData)
     };
 }
 
-function getStoredVragenlijstFile(formData, keyBase) {
-    const legacyName = formData?.[`${keyBase}Naam`] || '';
-    const legacyData = formData?.[`${keyBase}Data`] || '';
-    const value = formData?.[keyBase];
+function getStoredVragenlijstFile(formData, keyBase, index = 0) {
+    const key = String(keyBase || '');
+    const pluralFallback = key.endsWith('en') ? key.slice(0, -2) : key;
+    const candidates = [key, pluralFallback].filter(Boolean);
+
+    let value = null;
+    for (const candidate of candidates) {
+        if (formData?.[candidate] !== undefined) {
+            value = formData[candidate];
+            break;
+        }
+    }
+
+    const idx = Number.isFinite(Number(index)) ? Math.max(0, Number(index)) : 0;
+    const selected = Array.isArray(value) ? (value[idx] || value[0] || null) : value;
+
+    const legacyName = candidates.map(candidate => formData?.[`${candidate}Naam`]).find(Boolean) || '';
+    const legacyData = candidates.map(candidate => formData?.[`${candidate}Data`]).find(Boolean) || '';
 
     let name = legacyName;
     let rawData = legacyData;
 
-    if (value && typeof value === 'object') {
-        name = name || value.naam || value.filename || value.name || '';
-        rawData = rawData || value.data || value.content || '';
+    if (selected && typeof selected === 'object') {
+        name = name || selected.naam || selected.filename || selected.name || '';
+        rawData = rawData || selected.data || selected.content || selected.base64 || '';
+    } else if (typeof selected === 'string') {
+        rawData = rawData || selected;
     }
 
     if (!rawData) return null;
@@ -920,6 +1394,49 @@ function getStoredVragenlijstFile(formData, keyBase) {
     }
 
     return { name, mime: 'application/octet-stream', base64: str };
+}
+
+function listStoredVragenlijstFiles(formData, caseId) {
+    const keys = [
+        { kind: 'datacard', key: 'datacardBestanden' },
+        { kind: 'pep', key: 'pepBestanden' },
+        { kind: 'personeelsplan', key: 'personeelsplannen' },
+        { kind: 'holding-huurovereenkomst', key: 'holdingHuurovereenkomst' },
+        { kind: 'werkmij-huurovereenkomst', key: 'werkmijHuurovereenkomst' },
+        { kind: 'kvk-uittreksel', key: 'omzettingKvkUittreksel' },
+        { kind: 'verzendbewijs-intentie', key: 'omzettingVerzendbewijsIntentie' },
+        { kind: 'ontvangst-intentie', key: 'omzettingOntvangstbewijsIntentie' },
+        { kind: 'intentverklaring', key: 'omzettingIntentieverklaring' },
+        { kind: 'geleideformulier', key: 'omzettingGeleideformulier' },
+        { kind: 'inbrengbeschrijving', key: 'omzettingInbrengbeschrijving' },
+        { kind: 'inbrengbeschrijving-holding', key: 'omzettingInbrengbeschrijvingHolding' },
+        { kind: 'inbrengbeschrijving-werkmij', key: 'omzettingInbrengbeschrijvingWerkmij' },
+        { kind: 'ubo-uittreksel', key: 'omzettingVofUboUittreksel' },
+        { kind: 'oprichtingsdocument', key: 'oprichtingsDocument' }
+    ];
+
+    const entries = [];
+    keys.forEach(({ kind, key }) => {
+        const value = formData?.[key];
+        const total = Array.isArray(value) ? value.length : (value ? 1 : 0);
+        for (let i = 0; i < total; i += 1) {
+            const file = getStoredVragenlijstFile(formData, key, i);
+            if (!file || !file.base64) continue;
+            const safeCaseId = encodeURIComponent(String(caseId || ''));
+            const safeKind = encodeURIComponent(kind);
+            const idx = Array.isArray(value) ? i : 0;
+            entries.push({
+                kind,
+                key,
+                index: idx,
+                name: file.name || `${kind}-${idx + 1}.${extFromMime(file.mime)}`,
+                mime: file.mime || 'application/octet-stream',
+                openUrl: `/api/vragenlijsten/${safeCaseId}/files/${safeKind}?index=${idx}`,
+                downloadUrl: `/api/vragenlijsten/${safeCaseId}/files/${safeKind}?index=${idx}&download=1`
+            });
+        }
+    });
+    return entries;
 }
 
 function extFromMime(mime) {
@@ -934,14 +1451,605 @@ function extFromMime(mime) {
     return map[String(mime || '').toLowerCase()] || 'bin';
 }
 
+function pdfLabelForKey(key) {
+    const map = {
+        clientName: 'Naam contactpersoon',
+        clientEmail: 'E-mailadres',
+        clientPhone: 'Telefoonnummer',
+        gewenstNaam: 'Gewenste bedrijfsnaam',
+        oprichtingType: 'Type oprichting',
+        doel: 'Doel van de vennootschap',
+        aandeelhouders: 'Aantal aandeelhouders',
+        kapitaal: 'Startkapitaal',
+        startSaldo: 'Startsaldo',
+        resellerCompany: 'Partner',
+        spoed: 'Spoedaanvraag',
+        nederlandsTaal: 'Nederlandse documenten',
+        engelsTaal: 'Engelse documenten'
+    };
+    if (map[key]) return map[key];
+    return String(key || '')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/^./, s => s.toUpperCase());
+}
+
+function pdfSectionTitleFromKey(key) {
+        const map = {
+                requestType: 'Tab 1 · Aanvraagtype',
+                holding: 'Tab 2 · Oprichting document (Holding)',
+                werkmij: 'Tab 3 · Oprichting document (Werkmij)',
+                naturalPersons: 'Tab 4 · Natuurlijke personen',
+                rechtspersonen: 'Tab 5 · Rechtspersonen',
+                omzetting: 'Tab 6 · Omzettingsdocumenten',
+                uploads: 'Tab 7 · Uploads',
+                submit: 'Tab 8 · Indienen'
+        };
+        return map[key] || pdfLabelForKey(key);
+}
+
+function pdfTableValue(value) {
+        const text = pdfValueToText(value);
+        return text || '—';
+}
+
+function drawSectionHeading(doc, title, subtitle = '') {
+    ensurePageSpace(doc, subtitle ? 40 : 30);
+    doc.moveDown(0.4);
+    doc.fillColor('#1A3B70').font('Helvetica-Bold').fontSize(12).text(
+        title,
+        doc.page.margins.left,
+        doc.y,
+        { width: doc.page.width - doc.page.margins.left - doc.page.margins.right }
+    );
+        if (subtitle) {
+            doc.moveDown(0.12);
+        doc.fillColor('#5E6C84').font('Helvetica').fontSize(9).text(
+            subtitle,
+            doc.page.margins.left,
+            doc.y,
+            { width: doc.page.width - doc.page.margins.left - doc.page.margins.right }
+        );
+        }
+        doc.moveDown(0.28);
+}
+
+function ensurePageSpace(doc, neededHeight) {
+        const bottomLimit = doc.page.height - doc.page.margins.bottom;
+        if (doc.y + neededHeight > bottomLimit) {
+                doc.addPage();
+                doc.y = doc.page.margins.top;
+        }
+}
+
+function estimateTableFirstRowHeight(doc, columns, row, minRowHeight = 18) {
+    if (!row || !Array.isArray(columns) || !columns.length) return 24;
+    const tableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const totalColWidth = columns.reduce((sum, col) => sum + (col.width || 0), 0) || 1;
+    const normalizedColumns = columns.map(col => ({ ...col, width: tableWidth * ((col.width || 0) / totalColWidth) }));
+    const cells = normalizedColumns.map(col => pdfTableValue(typeof col.value === 'function' ? col.value(row) : row[col.key]));
+    const heights = cells.map((cell, idx) => doc.heightOfString(cell, { width: normalizedColumns[idx].width - 12 }));
+    return Math.max(minRowHeight, ...heights.map(h => h + 8));
+}
+
+function estimateSectionStartHeight(doc, section) {
+    const tables = Array.isArray(section?.tables) ? section.tables : [];
+    let needed = section?.subtitle ? 56 : 44;
+    tables.slice(0, 2).forEach(table => {
+        if (table?.type === 'table') {
+            const firstRowHeight = estimateTableFirstRowHeight(doc, table.columns || [], (table.rows || [])[0], 18);
+            needed += (table?.title ? 34 : 0) + 22 + firstRowHeight + 16;
+            return;
+        }
+        const col1Width = 185;
+        const totalWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        const valueWidth = totalWidth - col1Width - 14;
+        const firstKvRow = (table?.rows || []).find(row => String(row?.label || '').trim() && pdfTableValue(row?.value));
+        const kvRowHeight = firstKvRow
+            ? Math.max(
+                doc.heightOfString(String(firstKvRow.label || ''), { width: col1Width, align: 'left' }),
+                doc.heightOfString(pdfTableValue(firstKvRow.value), { width: valueWidth, align: 'left' })
+              ) + 8
+            : 24;
+        needed += (table?.title ? 34 : 0) + kvRowHeight + 16;
+    });
+    return needed;
+}
+
+function drawKeyValueTable(doc, rows, options = {}) {
+        const title = options.title || '';
+        const subtitle = options.subtitle || '';
+        const col1Width = options.col1Width || 185;
+        const rowGap = options.rowGap || 10;
+        const lineColor = options.lineColor || '#E6ECF5';
+        const totalWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        const valueWidth = totalWidth - col1Width - 14;
+        const firstRow = (rows || []).find(row => String(row?.label || '').trim() && pdfTableValue(row?.value));
+        const firstRowHeight = firstRow
+            ? Math.max(
+                doc.heightOfString(String(firstRow.label || ''), { width: col1Width, align: 'left' }),
+                                doc.heightOfString(pdfTableValue(firstRow.value), { width: valueWidth, align: 'left' }) + (firstRow?.link ? 12 : 0)
+              ) + 8
+            : 24;
+
+        ensurePageSpace(doc, (title ? 34 : 0) + firstRowHeight + rowGap + 8);
+
+        if (title) drawSectionHeading(doc, title, subtitle);
+        rows.forEach(row => {
+                const label = String(row.label || '').trim();
+                const value = pdfTableValue(row.value);
+                if (!label || !value) return;
+
+                const labelHeight = doc.heightOfString(label, { width: col1Width, align: 'left' });
+                const valueHeight = doc.heightOfString(value, { width: valueWidth, align: 'left' });
+                const linkHeight = row?.link ? 12 : 0;
+                const rowHeight = Math.max(labelHeight, valueHeight + linkHeight) + 8;
+                ensurePageSpace(doc, rowHeight + rowGap + 8);
+
+                const startY = doc.y;
+                doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#1F2E4A').text(label, doc.page.margins.left, startY, { width: col1Width });
+                doc.font('Helvetica').fontSize(9.5).fillColor('#0F1D3A').text(value, doc.page.margins.left + col1Width + 14, startY, { width: valueWidth });
+                if (row?.link) {
+                    doc.font('Helvetica').fontSize(8.8).fillColor('#1D4ED8').text(
+                        'Open bestand',
+                        doc.page.margins.left + col1Width + 14,
+                        startY + valueHeight + 1,
+                        { width: valueWidth, link: String(row.link), underline: true }
+                    );
+                }
+                const endY = Math.max(doc.y, startY + rowHeight);
+                doc.moveTo(doc.page.margins.left, endY + 2).lineTo(doc.page.width - doc.page.margins.right, endY + 2).strokeColor(lineColor).lineWidth(0.7).stroke();
+                doc.y = endY + rowGap;
+        });
+}
+
+function drawSimpleTable(doc, columns, rows, options = {}) {
+        const title = options.title || '';
+        const subtitle = options.subtitle || '';
+        const headerFill = options.headerFill || '#F5F8FF';
+        const borderColor = options.borderColor || '#DCE6F4';
+        const textColor = options.textColor || '#0F1D3A';
+        const headerColor = options.headerColor || '#1A3B70';
+        const minRowHeight = options.minRowHeight || 18;
+        const tableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        const totalColWidth = columns.reduce((sum, col) => sum + (col.width || 0), 0) || 1;
+        const normalizedColumns = columns.map(col => ({ ...col, width: tableWidth * ((col.width || 0) / totalColWidth) }));
+
+        if (title) drawSectionHeading(doc, title, subtitle);
+
+        const previewRowHeight = rows.length
+            ? estimateTableFirstRowHeight(doc, columns, rows[0], minRowHeight)
+            : 24;
+        ensurePageSpace(doc, 22 + previewRowHeight + 4);
+
+        const drawHeader = () => {
+            ensurePageSpace(doc, 26);
+            const y = doc.y;
+            doc.save();
+            doc.rect(doc.page.margins.left, y, tableWidth, 22).fillAndStroke(headerFill, borderColor);
+            doc.restore();
+            let x = doc.page.margins.left;
+            normalizedColumns.forEach(col => {
+                doc.font('Helvetica-Bold').fontSize(9).fillColor(headerColor).text(col.label, x + 6, y + 5, { width: col.width - 12, ellipsis: true });
+                x += col.width;
+            });
+            doc.y = y + 22;
+        };
+
+        drawHeader();
+        if (!rows.length) {
+            ensurePageSpace(doc, 24);
+            doc.font('Helvetica').fontSize(9.5).fillColor('#5E6C84').text('Geen gegevens beschikbaar.', doc.page.margins.left, doc.y, { width: tableWidth });
+            doc.y += 16;
+            return;
+        }
+
+        rows.forEach(row => {
+            const cells = normalizedColumns.map(col => pdfTableValue(typeof col.value === 'function' ? col.value(row) : row[col.key]));
+            const heights = cells.map((cell, idx) => doc.heightOfString(cell, { width: normalizedColumns[idx].width - 12 }));
+            const rowHeight = Math.max(minRowHeight, ...heights.map(h => h + 8));
+            ensurePageSpace(doc, rowHeight + 4);
+
+            const y = doc.y;
+            doc.rect(doc.page.margins.left, y, tableWidth, rowHeight).stroke(borderColor);
+            let x = doc.page.margins.left;
+            normalizedColumns.forEach((col, idx) => {
+                if (idx > 0) {
+                    doc.moveTo(x, y).lineTo(x, y + rowHeight).strokeColor(borderColor).stroke();
+                }
+                doc.font('Helvetica').fontSize(9.2).fillColor(textColor).text(cells[idx], x + 6, y + 5, { width: col.width - 12 });
+                x += col.width;
+            });
+            doc.y = y + rowHeight;
+        });
+        doc.moveDown(0.2);
+    }
+
+function normalizeShareholderRows(rows) {
+    return (Array.isArray(rows) ? rows : []).map((row, index) => ({
+        nr: index + 1,
+        type: row?.type || 'np',
+        naam: row?.naam || '',
+        percentage: row?.percentage || '',
+        sameAsShareholder: row?.sameAsShareholder ? 'Ja' : 'Nee',
+        sameAsShareholderIndex: row?.sameAsShareholderIndex || '',
+        entityType: row?.entityType || 'np',
+        kvkNummer: row?.kvkNummer || '',
+        telefoon: row?.telefoon || '',
+        mailadres: row?.mailadres || '',
+        adresStraat: row?.adresStraat || '',
+        adresHuisnummer: row?.adresHuisnummer || '',
+        adresPostcode: row?.adresPostcode || '',
+        adresPlaats: row?.adresPlaats || ''
+    }));
+}
+
+function normalizeNaturalPersonRows(rows) {
+    return (Array.isArray(rows) ? rows : []).map((row, index) => ({
+        nr: index + 1,
+        role: row?.roleKey || '',
+        name: [row?.voornamen, row?.achternaam].filter(Boolean).join(' ').trim(),
+        hasBsn: row?.heeftBsn || '',
+        bsn: row?.bsn || '',
+        nlAddress: row?.nlAdresGeregistreerd || '',
+        nationality: row?.nationaliteit || '',
+        birthDate: row?.geboortedatum || '',
+        country: row?.woonland || row?.geboorteland || '',
+        address: [row?.adresStraat, row?.adresHuisnummer, row?.adresPostcode, row?.adresPlaats].filter(Boolean).join(' '),
+        phone: row?.telefoon || '',
+        email: row?.email || '',
+        roleLabel: row?.roleTitle || row?.title || ''
+    }));
+}
+
+function normalizeRpRows(rows) {
+    return (Array.isArray(rows) ? rows : []).map((row, index) => ({
+        nr: index + 1,
+        role: row?.roleKey || '',
+        kvkNummer: row?.kvkNummer || '',
+        ubo: Array.isArray(row?.ubos) && row.ubos.length ? row.ubos.map(ubo => `${ubo.naam || ''} (${ubo.percentage || '0'}%)`).join('; ') : (row?.uboNaam ? `${row.uboNaam} (${row.uboPercentage || '0'}%)` : ''),
+        bestuurderType: row?.bestuurderType || '',
+        bestuurderNaam: row?.bestuurderNaam || '',
+        roleLabel: row?.roleTitle || row?.title || ''
+    }));
+}
+
+function extractFileDisplayName(value) {
+    if (!value) return '';
+    if (typeof value === 'object') {
+        return String(value.naam || value.filename || value.name || '').trim();
+    }
+    const str = String(value || '').trim();
+    if (!str) return '';
+    if (/^data:/i.test(str)) return 'Bestand';
+    return str;
+}
+
+function buildFileOpenUrl(caseId, kind, index = 0) {
+    if (!caseId || !kind) return '';
+    const base = String(process.env.PUBLIC_BASE_URL || process.env.APP_URL || 'https://aandelenxpress-v2.vercel.app').replace(/\/$/, '');
+    const safeCaseId = encodeURIComponent(String(caseId));
+    const safeKind = encodeURIComponent(String(kind));
+    const safeIndex = Number.isFinite(Number(index)) ? Math.max(0, Number(index)) : 0;
+    return `${base}/api/vragenlijsten/${safeCaseId}/files/${safeKind}?index=${safeIndex}`;
+}
+
+function normalizeFileRows(formData, keys, caseId) {
+    return keys.flatMap(({ label, key, kind }) => {
+        const value = formData?.[key];
+        if (Array.isArray(value)) {
+            return value.map((entry, index) => ({
+                label: `${label} ${index + 1}`,
+                value: extractFileDisplayName(entry) || pdfValueToText(entry) || '—',
+                link: buildFileOpenUrl(caseId, kind || key, index)
+            }));
+        }
+        if (!value) return [];
+        return [{
+            label,
+            value: extractFileDisplayName(value) || pdfValueToText(value) || '—',
+            link: buildFileOpenUrl(caseId, kind || key, 0)
+        }];
+    });
+}
+
+function getPdfSections({ caseId, request, formData }) {
+    const product = String(formData?.oprichtingType || request?.oprichtingType || '').toLowerCase();
+    const holdingEntities = Array.isArray(formData?.holdingEntities) ? formData.holdingEntities : [];
+    const holdingAandeelhouders = normalizeShareholderRows(formData?.holdingAandeelhouders || []);
+    const holdingBestuurders = normalizeShareholderRows(formData?.holdingBestuurders || []);
+    const werkmijAandeelhouders = normalizeShareholderRows(formData?.werkmijAandeelhouders || []);
+    const werkmijBestuurders = normalizeShareholderRows(formData?.werkmijBestuurders || []);
+    const bestaandHoldingBestuurders = normalizeShareholderRows(formData?.bestaandHoldingBestuurders || []);
+    const naturalPersons = normalizeNaturalPersonRows(formData?.naturalPersons || []);
+    const rechtspersonen = normalizeRpRows(formData?.rechtspersonen || []);
+
+    const requestTypeRows = [
+        { label: 'Product', value: pdfLabelForKey(product || formData?.product || request?.oprichtingType || '') },
+        { label: 'Type oprichting', value: formData?.typeOprichting || request?.oprichtingType || '' },
+        { label: 'Gewenste naam', value: request?.gewenstNaam || formData?.gewenstNaam || '' },
+        { label: 'Partner', value: request?.resellerCompany || formData?.resellerCompany || '' },
+        { label: 'Contact', value: request?.clientName || formData?.clientName || '' },
+        { label: 'E-mail', value: request?.clientEmail || formData?.clientEmail || '' },
+        { label: 'Aantal aandeelhouders', value: formData?.aandeelhouders || '' },
+        { label: 'Status', value: formData?.reviewStatus || request?.status || '' }
+    ].filter(row => row.value);
+
+    const holdingSummaryRows = [
+        { label: 'Naam bedrijf', value: formData?.holdingNaamBedrijf || '' },
+        { label: 'Telefoon', value: formData?.holdingTelefoon || '' },
+        { label: 'Mailadres', value: formData?.holdingMailadres || '' },
+        { label: 'Adres bron', value: formData?.holdingAdresBron || '' },
+        { label: 'Adres afwijkend', value: formData?.holdingAdresAfwijkendAandeelhouder ? 'Ja' : 'Nee' },
+        { label: 'Zelfde als aandeelhouder', value: formData?.holdingAdresZelfdeAandeelhouderIndex || '' }
+    ].filter(row => row.value);
+
+    const werkmijSummaryRows = [
+        { label: 'Naam bedrijf', value: formData?.werkmijNaamBedrijf || '' },
+        { label: 'Telefoon', value: formData?.werkmijTelefoon || '' },
+        { label: 'Mailadres', value: formData?.werkmijMailadres || '' },
+        { label: 'Adres afwijkend', value: formData?.werkmijAdresAfwijkendAandeelhouder ? 'Ja' : 'Nee' },
+        { label: 'Zelfde als aandeelhouder', value: formData?.werkmijAdresZelfdeAandeelhouderIndex || '' },
+        { label: 'Activiteiten', value: formData?.werkmijActiviteiten || '' }
+    ].filter(row => row.value);
+
+    const holdingEntityRows = holdingEntities.map((entity, index) => ({
+        nr: index + 1,
+        naam: entity.naamBedrijf || '',
+        telefoon: entity.telefoon || '',
+        mailadres: entity.mailadres || '',
+        adres: [entity.adresStraat, entity.adresHuisnummer, entity.adresPostcode, entity.adresPlaats].filter(Boolean).join(' '),
+        percentage: entity.percentage || ''
+    }));
+
+    const fileRows = normalizeFileRows(formData, [
+        { label: 'Datacard', key: 'datacardBestanden', kind: 'datacard' },
+        { label: 'PEP-verklaring', key: 'pepBestanden', kind: 'pep' },
+        { label: 'Personeelsplan', key: 'personeelsplannen', kind: 'personeelsplan' },
+        { label: 'Huurovereenkomst holding', key: 'holdingHuurovereenkomst', kind: 'holding-huurovereenkomst' },
+        { label: 'Huurovereenkomst werkmij', key: 'werkmijHuurovereenkomst', kind: 'werkmij-huurovereenkomst' },
+        { label: 'Kvk uittreksel omzetting', key: 'omzettingKvkUittreksel', kind: 'kvk-uittreksel' },
+        { label: 'Verzendbewijs intentie', key: 'omzettingVerzendbewijsIntentie', kind: 'verzendbewijs-intentie' },
+        { label: 'Ontvangstbewijs intentie', key: 'omzettingOntvangstbewijsIntentie', kind: 'ontvangst-intent' },
+        { label: 'Intentieverklaring', key: 'omzettingIntentieverklaring', kind: 'intentverklaring' },
+        { label: 'Geleideformulier', key: 'omzettingGeleideformulier', kind: 'geleideformulier' },
+        { label: 'Inbrengbeschrijving', key: 'omzettingInbrengbeschrijving', kind: 'inbrengbeschrijving' },
+        { label: 'Inbrengbeschrijving holding', key: 'omzettingInbrengbeschrijvingHolding', kind: 'inbrengbeschrijving-holding' },
+        { label: 'Inbrengbeschrijving werkmij', key: 'omzettingInbrengbeschrijvingWerkmij', kind: 'inbrengbeschrijving-werkmij' },
+        { label: 'UBO-uittreksel', key: 'omzettingVofUboUittreksel', kind: 'ubo-uittreksel' }
+    ], caseId);
+
+    return [
+        {
+            key: 'requestType',
+            title: pdfSectionTitleFromKey('requestType'),
+            subtitle: 'Kerngegevens van het dossier en gekozen product.',
+            tables: [{ type: 'kv', title: '', rows: requestTypeRows }]
+        },
+        {
+            key: 'holding',
+            title: pdfSectionTitleFromKey('holding'),
+            subtitle: 'Alle gegevens van de holding in tab-vorm.',
+            tables: [
+                { type: 'kv', title: 'Samenvatting', rows: holdingSummaryRows },
+                { type: 'kv', title: 'Type-indeling', rows: [
+                    { label: 'Legenda', value: 'NP = Natuurlijk persoon, RP = Rechtspersoon' }
+                ] },
+                { type: 'table', title: 'Holding tabellen', columns: [
+                    { label: '#', key: 'nr', width: 0.08 },
+                    { label: 'Naam bedrijf', key: 'naam', width: 0.28 },
+                    { label: 'Telefoon', key: 'telefoon', width: 0.16 },
+                    { label: 'Mailadres', key: 'mailadres', width: 0.22 },
+                    { label: 'Adres', key: 'adres', width: 0.26 }
+                ], rows: holdingEntityRows },
+                { type: 'table', title: 'Holding aandeelhouders', columns: [
+                    { label: '#', key: 'nr', width: 0.06 },
+                    { label: 'Naam', key: 'naam', width: 0.34 },
+                    { label: 'Percentage', key: 'percentage', width: 0.14 },
+                    { label: 'Vorm', key: 'entityType', width: 0.20, value: row => row.entityType === 'rp' ? 'Rechtspersoon' : 'Natuurlijk persoon' },
+                    { label: 'Adres', key: 'adres', width: 0.26, value: row => [row.adresStraat, row.adresHuisnummer, row.adresPostcode, row.adresPlaats].filter(Boolean).join(' ') }
+                ], rows: holdingAandeelhouders },
+                { type: 'table', title: 'Holding bestuurders', columns: [
+                    { label: '#', key: 'nr', width: 0.06 },
+                    { label: 'Naam', key: 'naam', width: 0.36 },
+                    { label: 'KvK', key: 'kvkNummer', width: 0.16 },
+                    { label: 'Mail', key: 'mailadres', width: 0.18 },
+                    { label: 'Adres', key: 'adres', width: 0.24, value: row => [row.adresStraat, row.adresHuisnummer, row.adresPostcode, row.adresPlaats].filter(Boolean).join(' ') }
+                ], rows: holdingBestuurders }
+            ]
+        },
+        {
+            key: 'werkmij',
+            title: pdfSectionTitleFromKey('werkmij'),
+            subtitle: 'Opzet van de werkmaatschappij en aandeelhoudersstructuur.',
+            tables: [
+                { type: 'kv', title: 'Samenvatting', rows: werkmijSummaryRows },
+                { type: 'kv', title: 'Type-indeling', rows: [
+                    { label: 'Legenda', value: 'NP = Natuurlijk persoon, RP = Rechtspersoon' }
+                ] },
+                { type: 'table', title: 'Werkmij aandeelhouders', columns: [
+                    { label: '#', key: 'nr', width: 0.06 },
+                    { label: 'Naam', key: 'naam', width: 0.34 },
+                    { label: 'Percentage', key: 'percentage', width: 0.14 },
+                    { label: 'Vorm', key: 'entityType', width: 0.22, value: row => row.entityType === 'rp' ? 'Rechtspersoon' : 'Natuurlijk persoon' },
+                    { label: 'Adres', key: 'adres', width: 0.24, value: row => [row.adresStraat, row.adresHuisnummer, row.adresPostcode, row.adresPlaats].filter(Boolean).join(' ') }
+                ], rows: werkmijAandeelhouders },
+                { type: 'table', title: 'Werkmij bestuurders', columns: [
+                    { label: '#', key: 'nr', width: 0.06 },
+                    { label: 'Naam', key: 'naam', width: 0.36 },
+                    { label: 'KvK', key: 'kvkNummer', width: 0.16 },
+                    { label: 'Mail', key: 'mailadres', width: 0.18 },
+                    { label: 'Adres', key: 'adres', width: 0.24, value: row => [row.adresStraat, row.adresHuisnummer, row.adresPostcode, row.adresPlaats].filter(Boolean).join(' ') }
+                ], rows: werkmijBestuurders }
+            ]
+        },
+        {
+            key: 'naturalPersons',
+            title: pdfSectionTitleFromKey('naturalPersons'),
+            subtitle: 'Alle natuurlijke personen uit de dossieropbouw.',
+            tables: [{ type: 'table', title: 'Personenoverzicht', columns: [
+                { label: '#', key: 'nr', width: 0.05 },
+                { label: 'Rol', key: 'roleLabel', width: 0.16 },
+                { label: 'Naam', key: 'name', width: 0.22 },
+                { label: 'BSN', key: 'bsn', width: 0.12 },
+                { label: 'NL adres', key: 'nlAddress', width: 0.10 },
+                { label: 'Nationaliteit', key: 'nationality', width: 0.14 },
+                { label: 'Adres', key: 'address', width: 0.21 }
+            ], rows: naturalPersons }]
+        },
+        {
+            key: 'rechtspersonen',
+            title: pdfSectionTitleFromKey('rechtspersonen'),
+            subtitle: 'Alle rechtspersonen met KvK, UBO en bestuurderstype.',
+            tables: [{ type: 'table', title: 'Rechtspersonenoverzicht', columns: [
+                { label: '#', key: 'nr', width: 0.05 },
+                { label: 'Rol', key: 'roleLabel', width: 0.18 },
+                { label: 'KvK', key: 'kvkNummer', width: 0.12 },
+                { label: 'UBO(s)', key: 'ubo', width: 0.38 },
+                { label: 'Bestuurder', key: 'bestuurderNaam', width: 0.27, value: row => {
+                    const bestuurderType = row.bestuurderType === 'rp' ? 'Rechtspersoon' : (row.bestuurderType ? 'Natuurlijk persoon' : '');
+                    if (!bestuurderType) return row.bestuurderNaam || '';
+                    if (!row.bestuurderNaam) return bestuurderType;
+                    return `${bestuurderType} - ${row.bestuurderNaam}`;
+                } }
+            ], rows: rechtspersonen.concat(normalizeShareholderRows(bestaandHoldingBestuurders)) }]
+        },
+        {
+            key: 'omzetting',
+            title: pdfSectionTitleFromKey('omzetting'),
+            subtitle: 'Documenten voor omzetting en inbrengbeschrijvingen.',
+            tables: [{ type: 'kv', title: 'Documentstatus', rows: [
+                { label: 'Kvk uittreksel ontvangen', value: formData?.omzettingKvkUittreksel ? 'Ja' : 'Nee' },
+                { label: 'Verzendbewijs intentie', value: formData?.omzettingVerzendbewijsIntentie ? 'Ja' : 'Nee' },
+                { label: 'Ontvangstbewijs intentie', value: formData?.omzettingOntvangstbewijsIntentie ? 'Ja' : 'Nee' },
+                { label: 'Intentieverklaring', value: formData?.omzettingIntentieverklaring ? 'Ja' : 'Nee' },
+                { label: 'Geleideformulier', value: formData?.omzettingGeleideformulier ? 'Ja' : 'Nee' },
+                { label: 'Inbrengbeschrijving holding', value: Array.isArray(formData?.omzettingInbrengbeschrijvingHolding) ? `${formData.omzettingInbrengbeschrijvingHolding.length} bestand(en)` : (formData?.omzettingInbrengbeschrijvingHolding ? '1 bestand' : 'Nee') },
+                { label: 'Inbrengbeschrijving werkmij', value: formData?.omzettingInbrengbeschrijvingWerkmij ? 'Ja' : 'Nee' },
+                { label: 'UBO-uittreksel', value: Array.isArray(formData?.omzettingVofUboUittreksel) ? `${formData.omzettingVofUboUittreksel.length} bestand(en)` : (formData?.omzettingVofUboUittreksel ? '1 bestand' : 'Nee') }
+            ] }, { type: 'kv', title: 'Bestanden', rows: fileRows }]
+        },
+        {
+            key: 'uploads',
+            title: pdfSectionTitleFromKey('uploads'),
+            subtitle: 'Samenvatting van alle geüploade bestanden per categorie.',
+            tables: [{ type: 'kv', title: 'Uploadoverzicht', rows: fileRows }]
+        },
+        {
+            key: 'submit',
+            title: pdfSectionTitleFromKey('submit'),
+            subtitle: 'Laatste status van review en verzending.',
+            tables: [{ type: 'kv', title: 'Indieningsgegevens', rows: [
+                { label: 'Review status', value: formData?.reviewStatus || 'pending' },
+                { label: 'Reviewed by', value: formData?.reviewedBy || '' },
+                { label: 'Reviewed at', value: formData?.reviewedAt || '' },
+                { label: 'Ingediend op', value: formData?.submittedAt || '' },
+                { label: 'Opmerkingen', value: formData?.opmerkingen || '' }
+            ] }]
+        }
+    ];
+}
+
+function pdfValueToText(value) {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'boolean') return value ? 'Ja' : 'Nee';
+    if (typeof value === 'number') return String(value);
+    if (Array.isArray(value)) return value.map(v => pdfValueToText(v)).filter(Boolean).join(', ');
+    if (typeof value === 'object') {
+        if (value.naam || value.filename || value.name) return `Bestand: ${value.naam || value.filename || value.name}`;
+        return '';
+    }
+    return String(value).trim();
+}
+
+function collectPdfRows(formData) {
+    const skip = new Set([
+        'token', 'reviewStatus', 'reviewFeedback', 'reviewedBy', 'reviewedAt',
+        'submittedAt', 'submitted_at', 'draftSavedAt', 'isDraft', 'caseId',
+        'datacardBestandData', 'pepBestandData', 'oprichtingsDocument'
+    ]);
+    return Object.keys(formData || {})
+        .filter(k => !skip.has(k))
+        .map(k => ({ label: pdfLabelForKey(k), value: pdfValueToText(formData[k]) }))
+        .filter(row => row.value)
+        .sort((a, b) => a.label.localeCompare(b.label, 'nl'));
+}
+
+function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
+    return new Promise((resolve, reject) => {
+        try {
+            const doc = new PDFDocument({ size: 'A4', margin: 46 });
+            const chunks = [];
+            doc.on('data', chunk => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+
+            const titleColor = '#1A3B70';
+            const muted = '#5E6C84';
+
+            doc.fillColor(titleColor).font('Helvetica-Bold').fontSize(20).text('Oprichtingsdocument');
+            doc.moveDown(0.2);
+            doc.fillColor('#0F1D3A').font('Helvetica-Bold').fontSize(13).text(request?.gewenstNaam || formData?.gewenstNaam || 'Onbekende bedrijfsnaam');
+            doc.moveDown(0.4);
+            doc.fillColor(muted).font('Helvetica').fontSize(10)
+                .text(`Dossiernummer: ${caseId}`)
+                .text(`Datum gegenereerd: ${new Date().toLocaleString('nl-NL')}`)
+                .text(`Partner: ${request?.resellerCompany || formData?.resellerCompany || '-'}`)
+                .text(`Contact: ${request?.clientName || formData?.clientName || '-'} (${request?.clientEmail || formData?.clientEmail || '-'})`);
+
+            doc.moveDown(0.8);
+            const sections = getPdfSections({ caseId, request, formData });
+            sections.forEach((section, idx) => {
+                if (idx > 0) {
+                    const extraGap = idx >= 2 ? 44 : 34;
+                    ensurePageSpace(doc, extraGap);
+                    doc.moveDown(idx >= 2 ? 0.9 : 0.7);
+                }
+
+                const minSectionSpace = 140;
+                const requiredSpace = Math.max(estimateSectionStartHeight(doc, section), minSectionSpace);
+                ensurePageSpace(doc, requiredSpace);
+                
+                drawSectionHeading(doc, section.title, section.subtitle);
+                section.tables.forEach(table => {
+                    if (table.type === 'table') {
+                        drawSimpleTable(doc, table.columns, table.rows || [], { title: table.title });
+                    } else {
+                        drawKeyValueTable(doc, table.rows || [], { title: table.title });
+                    }
+                    doc.moveDown(0.45);
+                });
+            });
+
+            doc.moveDown(1.3);
+            doc.fillColor(muted).font('Helvetica').fontSize(9).text('Automatisch gegenereerd door AandelenXpress op basis van de ingevulde vragenlijst.');
+            doc.end();
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
 app.get('/api/request-info/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
     if (!row || !['approved','vragenlijst','betaling','ident','notary','kvk','complete'].includes(row.status))
         return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet gevonden of niet beschikbaar' });
     const { token } = req.query;
-    if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
-    res.json({ id: row.id, clientName: row.client_name, clientEmail: row.client_email, oprichtingType: row.oprichting_type, gewenstNaam: row.gewenst_naam, resellerName: row.reseller_name, resellerCompany: row.reseller_company });
+    if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    const brandRecord = await getBrandingByEmail(row.reseller_id, { email: row.reseller_id, company: row.reseller_company || '' });
+    res.json({
+        id: row.id,
+        clientName: row.client_name,
+        clientEmail: row.client_email,
+        oprichtingType: row.oprichting_type,
+        gewenstNaam: row.gewenst_naam,
+        resellerName: row.reseller_name,
+        resellerCompany: row.reseller_company,
+        branding: brandRecord.branding
+    });
 });
 
 app.get('/api/vragenlijst/:caseId', async (req, res) => {
@@ -953,7 +2061,7 @@ app.get('/api/vragenlijst/:caseId', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
     if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet beschikbaar' });
-    if (row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldige toegangscode' });
 
     const { data: saved } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
     if (!saved) return res.status(404).json({ error: 'Geen opgeslagen vragenlijst' });
@@ -972,7 +2080,7 @@ app.post('/api/vragenlijst/save', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
     if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet beschikbaar' });
-    if (row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldige toegangscode' });
 
     const { data: existing } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
     const base = existing?.data || {};
@@ -1006,7 +2114,7 @@ app.post('/api/vragenlijst', async (req, res) => {
     if (!row || !['approved','vragenlijst','betaling','notary','kvk','complete'].includes(row.status))
         return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Opdracht niet beschikbaar' });
-    if (!token || row.access_token !== token) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldige toegangscode' });
 
     const { token: _tok, ...formData } = req.body;
     const submission = {
@@ -1043,20 +2151,29 @@ app.get('/api/vragenlijsten/:caseId', requireAdmin, async (req, res) => {
 app.get('/api/vragenlijsten/:caseId/files/:kind', requireLogin, async (req, res) => {
     const { caseId, kind } = req.params;
     const kindMap = {
-        datacard: 'datacardBestand',
-        pep: 'pepBestand',
-        huurovereenkomst: 'huurovereenkomst',
-        'kvk-uittreksel': 'kvkUittreksel',
+        datacard: 'datacardBestanden',
+        pep: 'pepBestanden',
+        oprichtingsdocument: 'oprichtingsDocument',
+        huurovereenkomst: 'holdingHuurovereenkomst',
+        'holding-huurovereenkomst': 'holdingHuurovereenkomst',
+        'werkmij-huurovereenkomst': 'werkmijHuurovereenkomst',
+        'kvk-uittreksel': 'omzettingKvkUittreksel',
         verzekering: 'verzekering',
-        'ontvangst-intent': 'ontvangstIntent',
-        intentverklaring: 'intentverklaring',
-        'bijlage-intent': 'bijlageIntent',
+        'ontvangst-intent': 'omzettingOntvangstbewijsIntentie',
+        'verzendbewijs-intentie': 'omzettingVerzendbewijsIntentie',
+        intentverklaring: 'omzettingIntentieverklaring',
+        geleideformulier: 'omzettingGeleideformulier',
+        'bijlage-intent': 'omzettingGeleideformulier',
         interim: 'interim',
-        'ubo-uittreksel': 'uboUittreksel',
-        personeelsplan: 'personeelsplan'
+        'ubo-uittreksel': 'omzettingVofUboUittreksel',
+        personeelsplan: 'personeelsplannen',
+        inbrengbeschrijving: 'omzettingInbrengbeschrijving',
+        'inbrengbeschrijving-holding': 'omzettingInbrengbeschrijvingHolding',
+        'inbrengbeschrijving-werkmij': 'omzettingInbrengbeschrijvingWerkmij'
     };
     const keyBase = kindMap[kind] || null;
     if (!keyBase) return res.status(400).json({ error: 'Ongeldig bestandstype' });
+    const index = Number.isFinite(Number(req.query.index)) ? Number(req.query.index) : 0;
 
     const { data: reqRow } = await supabase.from('reseller_requests').select('id, reseller_id').eq('id', caseId).single();
     if (!reqRow) return res.status(404).json({ error: 'Dossier niet gevonden' });
@@ -1067,7 +2184,7 @@ app.get('/api/vragenlijsten/:caseId/files/:kind', requireLogin, async (req, res)
     const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
     if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
 
-    const file = getStoredVragenlijstFile(row.data || {}, keyBase);
+    const file = getStoredVragenlijstFile(row.data || {}, keyBase, index);
     if (!file || !file.base64) return res.status(404).json({ error: 'Bestand niet gevonden' });
 
     let buffer;
@@ -1084,6 +2201,22 @@ app.get('/api/vragenlijsten/:caseId/files/:kind', requireLogin, async (req, res)
     res.setHeader('Content-Type', file.mime || 'application/octet-stream');
     res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
     res.send(buffer);
+});
+
+app.get('/api/vragenlijsten/:caseId/files', requireLogin, async (req, res) => {
+    const { caseId } = req.params;
+
+    const { data: reqRow } = await supabase.from('reseller_requests').select('id, reseller_id').eq('id', caseId).single();
+    if (!reqRow) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (req.session.user.type !== 'admin' && reqRow.reseller_id !== req.session.user.email) {
+        return res.status(403).json({ error: 'Geen toegang' });
+    }
+
+    const { data: row } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
+    if (!row) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
+
+    const files = listStoredVragenlijstFiles(row.data || {}, caseId);
+    res.json({ files });
 });
 
 app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) => {
@@ -1113,6 +2246,21 @@ app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) =>
         reviewedBy: actor
     };
 
+    if (action === 'approve') {
+        try {
+            const pdfBuffer = await buildVragenlijstPdfBuffer({ caseId, request, formData: reviewedData });
+            reviewedData.oprichtingsDocument = {
+                naam: `oprichtingsdocument-${caseId}.pdf`,
+                mime: 'application/pdf',
+                data: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`,
+                generatedAt: new Date().toISOString(),
+                generatedBy: actor
+            };
+        } catch (err) {
+            return res.status(500).json({ error: 'PDF kon niet worden gegenereerd: ' + err.message });
+        }
+    }
+
     await supabase.from('vragenlijsten').update({ data: reviewedData }).eq('case_id', caseId);
 
     if (action === 'approve') {
@@ -1129,14 +2277,17 @@ app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) =>
         addActivity(request, 'system', `Vragenlijst afgekeurd door ${actor}. Feedback teruggestuurd naar klant.`, actor);
         await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', caseId);
 
-        const formSlug = request.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos'
-            : request.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding'
-            : 'vragenlijst';
-        const formUrl = `${process.env.SITE_URL || 'https://aandelenxpress.vercel.app'}/${formSlug}?nr=${request.id}`;
+        const formUrl = buildVragenlijstUrl(request);
         emails.emailClientVragenlijstRejected({ request, feedback: String(feedback).trim(), formUrl });
     }
 
-    res.json({ success: true, reviewStatus: reviewedData.reviewStatus, dossierStatus: action === 'approve' ? 'betaling' : request.status });
+    res.json({
+        success: true,
+        reviewStatus: reviewedData.reviewStatus,
+        dossierStatus: action === 'approve' ? 'betaling' : request.status,
+        generatedPdfDownloadUrl: action === 'approve' ? `/api/vragenlijsten/${encodeURIComponent(caseId)}/files/oprichtingsdocument?download=1` : null,
+        generatedPdfName: action === 'approve' ? (reviewedData.oprichtingsDocument?.naam || '') : null
+    });
 });
 
 // ── Blog ───────────────────────────────────────────────────────────────────
@@ -1189,6 +2340,22 @@ app.delete('/api/blog/posts/:id', requireAdmin, async (req, res) => {
 // ── Admin dashboard redirect ───────────────────────────────────────────────
 app.get('/admin-dashboard.html', requireAdmin, (req, res) => {
     res.redirect(301, '/admin-dashboard');
+});
+
+app.get('/:slug', async (req, res, next) => {
+    const slug = sanitizeSlug(req.params.slug);
+    const reserved = new Set([
+        'api', 'login', 'register', 'admin-dashboard', 'reseller-dashboard', 'blog-admin',
+        'dossier-detail', 'partner-detail', 'dossier-status', 'vragenlijst',
+        'vragenlijst-bv-holding', 'vragenlijst-geruisloos', 'vragenlijst-bv-oprichten',
+        'vragenlijst-holding-oprichten', 'vragenlijst-eenmanszaak-naar-bv', 'vragenlijst-vof-naar-bv',
+        'vragenlijst-eenmanszaak-naar-bv-holding', 'vragenlijst-vof-naar-bv-holding',
+        'privacy', 'algemene-voorwaarden'
+    ]);
+    if (!slug || reserved.has(slug)) return next();
+    const brand = await getBrandingBySlugWithFallback(slug);
+    if (!brand) return next();
+    res.sendFile(path.join(__dirname, 'public', 'whitelabel-start.html'));
 });
 
 // ── Fallback static ────────────────────────────────────────────────────────

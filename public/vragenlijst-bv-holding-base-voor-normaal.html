@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oprichtingsformulier - AandelenXpress</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap');
+
+    :root {
+      --bg-1: #f3f7ff;
+      --bg-2: #e8f0fd;
+      --ink: #132949;
+      --muted: #5f7396;
+      --line: #d7e3f7;
+      --line-strong: #c8d8f2;
+      --brand: #1f5db8;
+      --brand-dark: #124487;
+      --card-shadow: 0 12px 28px rgba(25, 55, 105, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at 12% 8%, #ffffff 0%, #f5f9ff 33%, #ecf3ff 100%);
+      color: var(--ink);
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 44px; }
+
+    .state { display: none; }
+    .state.active { display: block; }
+
+    .gate {
+      max-width: 430px;
+      margin: 70px auto;
+      background: #fff;
+      border: 1px solid #dce6f6;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 36px rgba(20, 40, 80, 0.12);
+    }
+    .gate h2 { margin: 0 0 8px; font-size: 1.25rem; }
+    .gate p { margin: 0 0 14px; color: #63789c; font-size: 0.93rem; }
+
+    .hero {
+      background: linear-gradient(130deg, #0f3266 0%, #1a56b4 64%, #2c74d7 100%);
+      border-radius: 18px;
+      color: #fff;
+      padding: 24px 24px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 16px 34px rgba(20, 66, 136, 0.25);
+    }
+    .hero h1 { margin: 0 0 6px; font-size: 1.52rem; font-weight: 800; }
+    .hero p { margin: 0; opacity: 0.95; font-size: 0.93rem; }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .card-h {
+      background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      color: #1a437e;
+      font-size: 0.98rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .card-h::after {
+      content: '▾';
+      font-size: 0.9rem;
+      color: #46679e;
+      transition: transform .18s ease;
+    }
+    .card.collapsed .card-h::after { transform: rotate(-90deg); }
+    .card.collapsed .card-b { display: none; }
+    .card-b { padding: 20px 18px; }
+
+    .tab-inline-nav {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid #dbe7f8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .tab-inline-info {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #3f5f93;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 840px) {
+      .tab-inline-nav {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .tab-inline-actions {
+        width: 100%;
+      }
+      .tab-inline-actions button {
+        flex: 1;
+      }
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .row-shareholder { grid-template-columns: minmax(190px, 1fr) minmax(260px, 1.25fr) minmax(150px, 0.75fr); }
+    .row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .address-grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 2.1fr) minmax(90px, 0.8fr) minmax(110px, 1fr) minmax(160px, 1.6fr);
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 840px) {
+      .row, .row-4, .address-grid, .row-shareholder { grid-template-columns: 1fr; }
+      .wrap { padding: 14px 10px 28px; }
+      .hero { padding: 18px; }
+      .card-b { padding: 14px 12px; }
+    }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #274675;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 11px;
+      padding: 11px 12px;
+      font: inherit;
+      font-size: 0.92rem;
+      color: var(--ink);
+      background: #fdfefe;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(31, 93, 184, 0.14);
+    }
+
+    .group-title {
+      margin: 30px 0 16px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      color: #5b739d;
+      font-weight: 800;
+    }
+
+    .repeat-wrap { display: flex; flex-direction: column; gap: 14px; }
+    .repeat-item {
+      border: 1px solid #d8e5f8;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fcfdff 0%, #f7fbff 100%);
+      padding: 14px;
+    }
+    .repeat-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .repeat-title { font-size: 0.86rem; font-weight: 700; color: #213f73; }
+    .icon-btn {
+      border: 1px solid #c8d9f4;
+      background: #fff;
+      color: #1e57ad;
+      font-weight: 800;
+      border-radius: 10px;
+      cursor: pointer;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 12px;
+      transition: all .16s ease;
+    }
+    .icon-btn:hover { background: #eaf2ff; transform: translateY(-1px); }
+    .icon-btn.remove { color: #b42318; }
+    .icon-btn.remove:hover { background: #fff1ef; border-color: #f5c0bb; }
+
+    .repeat-actions {
+      margin-top: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .same-link-row {
+      margin: 12px 0 16px;
+      display: grid;
+      grid-template-columns: minmax(230px, 1.4fr) minmax(190px, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+    .same-link-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #2a4778;
+      margin: 18px 0;
+    }
+    .same-check-field {
+      margin-top: 24px;
+      margin-bottom: 24px;
+    }
+    .same-link-check input[type="checkbox"] {
+      margin: 0;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brand);
+      flex: 0 0 auto;
+    }
+
+    .check-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 14px;
+      margin: 14px 0 8px;
+    }
+    .check-row label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #223c66;
+      background: #f7fbff;
+      border: 1px solid #d8e4f7;
+      border-radius: 11px;
+      padding: 10px 12px;
+      line-height: 1.28;
+    }
+    .check-row input[type="checkbox"] {
+      margin-top: 2px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brand);
+      flex: 0 0 auto;
+    }
+
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 840px) {
+      .file-grid { grid-template-columns: 1fr; }
+      .same-link-row { grid-template-columns: 1fr; }
+    }
+    .file-box {
+      border: 1.5px dashed #bfd0ef;
+      border-radius: 10px;
+      padding: 12px;
+      background: #fafcff;
+      position: relative;
+    }
+    .file-box.has-file {
+      border-style: solid;
+      border-color: #5bb97a;
+      background: #f3fcf6;
+    }
+    .file-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2a467a;
+    }
+    .file-meta {
+      font-size: 0.78rem;
+      color: #6982ad;
+      margin-top: 4px;
+    }
+    .file-picked {
+      font-size: 0.8rem;
+      color: #1c7d43;
+      margin-top: 6px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .btns {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 14px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(180deg, #2b6ecf 0%, #1b58b2 100%);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(26, 79, 160, 0.25);
+    }
+    .btn-primary:disabled { background: #90acd8; cursor: not-allowed; }
+    .btn-soft {
+      background: #eff5ff;
+      color: #1b58b2;
+      border: 1px solid #c8d8f5;
+    }
+    .btn-primary:hover, .btn-soft:hover { transform: translateY(-1px); }
+
+    .hint { color: #60789f; font-size: 0.8rem; }
+    .err {
+      display: none;
+      margin-top: 8px;
+      color: #b42318;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .ok {
+      display: none;
+      margin-top: 10px;
+      background: #ecfdf3;
+      border: 1px solid #b7ebc9;
+      color: #13733d;
+      padding: 11px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="stateGate" class="state active">
+      <div class="gate">
+        <h2>Toegangscode</h2>
+        <p>Vul de code uit de e-mail in om het formulier te openen.</p>
+        <input id="gateInput" type="password" placeholder="Toegangscode">
+        <div class="btns">
+          <button id="gateBtn" class="btn-primary" type="button">Open formulier</button>
+        </div>
+        <div id="gateErr" class="err">Ongeldige code of dossier niet gevonden.</div>
+      </div>
+    </div>
+
+    <div id="stateForm" class="state">
+      <div class="hero">
+        <h1>Oprichtingsformulier</h1>
+        <p>Vul hieronder uw dossiergegevens in. De vragen passen zich automatisch aan op basis van het gekozen product.</p>
+      </div>
+
+      <form id="cleanForm" novalidate>
+        <div class="card" id="requestTypeCard">
+          <div class="card-h">Aanvraagtype</div>
+          <div class="card-b">
+            <div class="row">
+              <div class="field">
+                <label>Wordt er een werkmaatschappij aangevraagd?</label>
+                <select id="hasWorkmaatschappij" name="hasWorkmaatschappij">
+                  <option value="ja">Ja</option>
+                  <option value="nee">Nee</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Behandeling</label>
+                <select name="behandelingType">
+                  <option value="">Maak keuze</option>
+                  <option value="standaard">Standaard</option>
+                  <option value="spoed">Spoed</option>
+                </select>
+              </div>
+              <div class="field" id="existingHoldingQuestionWrap">
+                <label>Wordt een bestaande holding eigenaar van de werkmaatschappij?</label>
+                <select id="existingHoldingOwner" name="existingHoldingOwner">
+                  <option value="">Maak keuze</option>
+                  <option value="ja">Ja</option>
+                  <option value="nee">Nee</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="holdingCard">
+          <div class="card-h">Oprichting document (Holding)</div>
+          <div class="card-b">
+            <div class="row">
+              <div class="field"><label>Naam bedrijf</label><input name="holdingNaamBedrijf" required></div>
+              <div class="field"><label>Telefoonnummer</label><input name="holdingTelefoon"></div>
+            </div>
+            <div class="field"><label>Mailadres</label><input name="holdingMailadres" type="email"></div>
+
+            <div class="group-title">Adres</div>
+            <div class="address-grid">
+              <div class="field"><label>Straat</label><input name="holdingAdresStraat"></div>
+              <div class="field"><label>Huisnummer</label><input name="holdingAdresHuisnummer"></div>
+              <div class="field"><label>Postcode</label><input name="holdingAdresPostcode"></div>
+              <div class="field"><label>Plaatsnaam</label><input name="holdingAdresPlaats"></div>
+            </div>
+            <div class="field">
+              <label class="same-link-check">
+                <input type="checkbox" id="holdingAdresAfwijkendAandeelhouder" name="holdingAdresAfwijkendAandeelhouder">
+                Adres van de holding is anders dan het woonadres van de aandeelhouder(s)
+              </label>
+            </div>
+            <div id="holdingRentalUploadWrap" style="display:none;">
+              <div class="file-box" id="holdingRentalZone">
+                <label class="file-label">Upload huurovereenkomst holding</label>
+                <input id="holdingRentalFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="holdingRentalSelected" style="display:none;"></div>
+              </div>
+            </div>
+
+            <div class="group-title">Boekkeeper/Accountant</div>
+            <div class="row">
+              <div class="field"><label>Naam accountantskantoor</label><input name="holdingAccountantNaam"></div>
+              <div class="field"><label>Contactpersoon</label><input name="holdingAccountantContact"></div>
+              <div class="field"><label>Telefoonnummer</label><input name="holdingAccountantTelefoon"></div>
+              <div class="field"><label>Mailadres</label><input name="holdingAccountantMail" type="email"></div>
+            </div>
+
+            <div class="group-title">Aandeelhouder(s)</div>
+            <div id="holdingShareholders" class="repeat-wrap"></div>
+            <div class="repeat-actions" style="margin-top:18px; margin-bottom:28px;"><button type="button" class="icon-btn" id="addHoldingShareholder">+ Aandeelhouder</button></div>
+
+            <div class="field same-check-field">
+              <label class="same-link-check">
+                <input type="checkbox" id="holdingDirectorsSameAsShareholders" name="holdingDirectorsSameAsShareholders" checked>
+                Bestuurders zijn dezelfde personen als de aandeelhouders
+              </label>
+            </div>
+
+            <div id="holdingDirectorsSection">
+              <div class="group-title">Bestuurder(s)</div>
+              <div id="holdingDirectors" class="repeat-wrap"></div>
+              <div class="repeat-actions"><button type="button" class="icon-btn" id="addHoldingDirector">+ Bestuurder</button></div>
+            </div>
+
+            <div class="field">
+              <label>Wordt de holding eigenaar van nog op te richten BV's?</label>
+              <select name="holdingEigendomNieuweBvs">
+                <option value="">Maak keuze</option>
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+              </select>
+            </div>
+
+            <div class="group-title">Personeel (Holding)</div>
+            <div class="row">
+              <div class="field"><label>Meer dan 15 uur per week</label><input type="number" name="holdingPersoneelMeer15" min="0"></div>
+              <div class="field"><label>Minder dan 15 uur per week</label><input type="number" name="holdingPersoneelMinder15" min="0"></div>
+            </div>
+
+            <div class="group-title">Overige</div>
+            <div class="check-row">
+              <label><input type="checkbox" name="holdingEngelseAktes"> Zijn Engelse aktes nodig?</label>
+            </div>
+            <div class="field" style="margin-top: 9px;"><label>Overige</label><textarea name="holdingOverige"></textarea></div>
+          </div>
+        </div>
+
+        <div class="card" id="werkmijCard">
+          <div class="card-h">Oprichting document (Werkmij)</div>
+          <div class="card-b">
+            <div class="row">
+              <div class="field"><label>Naam bedrijf</label><input name="werkmijNaamBedrijf"></div>
+              <div class="field"><label>Telefoonnummer</label><input name="werkmijTelefoon"></div>
+            </div>
+            <div class="field"><label>Mailadres</label><input name="werkmijMailadres" type="email"></div>
+
+            <div class="group-title">Adres</div>
+            <div class="address-grid">
+              <div class="field"><label>Straat</label><input name="werkmijAdresStraat"></div>
+              <div class="field"><label>Huisnummer</label><input name="werkmijAdresHuisnummer"></div>
+              <div class="field"><label>Postcode</label><input name="werkmijAdresPostcode"></div>
+              <div class="field"><label>Plaatsnaam</label><input name="werkmijAdresPlaats"></div>
+            </div>
+            <div class="field">
+              <label class="same-link-check">
+                <input type="checkbox" id="werkmijAdresAfwijkendAandeelhouder" name="werkmijAdresAfwijkendAandeelhouder">
+                Adres van de werkmaatschappij is anders dan het woonadres van de aandeelhouder(s)
+              </label>
+            </div>
+            <div id="werkmijRentalUploadWrap" style="display:none;">
+              <div class="file-box" id="werkmijRentalZone">
+                <label class="file-label">Upload huurovereenkomst werkmaatschappij</label>
+                <input id="werkmijRentalFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="werkmijRentalSelected" style="display:none;"></div>
+              </div>
+            </div>
+
+            <div class="group-title">Boekkeeper/Accountant</div>
+            <div class="row">
+              <div class="field"><label>Naam accountantskantoor</label><input name="werkmijAccountantNaam"></div>
+              <div class="field"><label>Contactpersoon</label><input name="werkmijAccountantContact"></div>
+              <div class="field"><label>Telefoonnummer</label><input name="werkmijAccountantTelefoon"></div>
+              <div class="field"><label>Mailadres</label><input name="werkmijAccountantMail" type="email"></div>
+            </div>
+
+            <div id="werkmijShareholderReminder" class="repeat-item">
+              <div class="repeat-title">Aandeelhouder werkmaatschappij</div>
+              <div class="hint" id="werkmijShareholderReminderText" style="margin-top:6px;">
+                De aandeelhouder van de nieuw op te richten B.V. is de nieuw op te richten holding (100%).
+              </div>
+            </div>
+
+            <div id="werkmijShareholdersSection" style="display:none;">
+              <div class="group-title">Aandeelhouder(s)</div>
+              <div id="werkmijShareholders" class="repeat-wrap"></div>
+              <div class="repeat-actions" style="margin-top:18px; margin-bottom:28px;"><button type="button" class="icon-btn" id="addWerkmijShareholder">+ Aandeelhouder</button></div>
+            </div>
+
+            <div class="field same-check-field">
+              <label class="same-link-check">
+                <input type="checkbox" id="werkmijDirectorsSameAsShareholders" name="werkmijDirectorsSameAsShareholders" checked>
+                Bestuurders zijn dezelfde personen als de aandeelhouders
+              </label>
+            </div>
+
+            <div id="werkmijDirectorsSection">
+              <div class="group-title">Bestuurder(s)</div>
+              <div id="werkmijDirectors" class="repeat-wrap"></div>
+              <div class="repeat-actions"><button type="button" class="icon-btn" id="addWerkmijDirector">+ Bestuurder</button></div>
+            </div>
+
+            <div class="field"><label>Activiteiten</label><textarea name="werkmijActiviteiten"></textarea></div>
+
+            <div class="group-title">KVK inschrijving</div>
+            <div class="check-row">
+              <label><input type="checkbox" name="werkmijImport"> Gaat u producten importeren?</label>
+              <label><input type="checkbox" name="werkmijExport"> Gaat u producten exporteren?</label>
+            </div>
+
+            <div class="group-title">Detailhandel</div>
+            <div class="check-row">
+              <label><input type="checkbox" name="detailWinkel"> In winkel of kiosk</label>
+              <label><input type="checkbox" name="detailMarkt"> Op de markt</label>
+              <label><input type="checkbox" name="detailStraat"> Via straathandel</label>
+              <label><input type="checkbox" name="detailInternet"> Via internet</label>
+              <label><input type="checkbox" name="detailHuis"> Vanuit huis</label>
+              <label><input type="checkbox" name="detailPostorder"> Per postorder</label>
+              <label><input type="checkbox" name="detailOthers"> Others</label>
+            </div>
+
+            <div class="field" style="margin-top: 9px;"><label>Groothandel: verkoopt u aan andere ondernemingen?</label><select name="werkmijGroothandel"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
+
+            <div class="group-title">Personeel</div>
+            <div class="row">
+              <div class="field"><label>Meer dan 15 uur per week</label><input type="number" name="werkmijPersoneelMeer15" min="0"></div>
+              <div class="field"><label>Minder dan 15 uur per week</label><input type="number" name="werkmijPersoneelMinder15" min="0"></div>
+            </div>
+
+            <div class="group-title">Overige</div>
+            <div class="field" style="margin-top: 9px;"><label>Overige</label><textarea name="werkmijOverige"></textarea></div>
+          </div>
+        </div>
+
+        <div class="card" id="existingHoldingCard" style="display:none;">
+          <div class="card-h">Bestaande Holding B.V.</div>
+          <div class="card-b">
+            <div class="row">
+              <div class="field"><label>Naam bedrijf</label><input name="bestaandHoldingNaam"></div>
+              <div class="field"><label>KvK nummer</label><input name="bestaandHoldingKvk"></div>
+              <div class="field"><label>Telefoonnummer</label><input name="bestaandHoldingTelefoon"></div>
+              <div class="field"><label>Mailadres</label><input name="bestaandHoldingMail" type="email"></div>
+            </div>
+            <div class="group-title">Adres</div>
+            <div class="address-grid">
+              <div class="field"><label>Straat</label><input name="bestaandHoldingAdresStraat"></div>
+              <div class="field"><label>Huisnummer</label><input name="bestaandHoldingAdresHuisnummer"></div>
+              <div class="field"><label>Postcode</label><input name="bestaandHoldingAdresPostcode"></div>
+              <div class="field"><label>Plaatsnaam</label><input name="bestaandHoldingAdresPlaats"></div>
+            </div>
+
+            <div class="group-title">Naam van Bestuurder(s)</div>
+            <div id="bestaandHoldingDirectors" class="repeat-wrap"></div>
+            <div class="repeat-actions"><button type="button" class="icon-btn" id="addBestaandHoldingDirector">+ Bestuurder</button></div>
+
+            <div class="field"><label>Is the director solely authorized to represent the company individually?</label><select name="bestaandHoldingSolelyAuthorized"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
+            <div class="field"><label>UBO</label><textarea name="bestaandHoldingUbo"></textarea></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Natuurlijke Personen (afhankelijk van aandeelhouders/bestuurders)</div>
+          <div class="card-b">
+            <div class="hint">Deze sectie bouwt automatisch blokken op basis van rollen die als natuurlijk persoon zijn gemarkeerd.</div>
+            <div id="npContainer" class="repeat-wrap" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Uploads</div>
+          <div class="card-b">
+            <div class="file-grid">
+              <div class="file-box" id="datacardZone">
+                <label class="file-label">Datacard / PDC bestand(en)</label>
+                <input id="datacardFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="datacardSelected" style="display:none;"></div>
+              </div>
+
+              <div class="file-box" id="pepZone">
+                <label class="file-label">PEP verklaring(en)</label>
+                <input id="pepFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="pepSelected" style="display:none;"></div>
+              </div>
+
+              <div class="file-box" id="personeelsplanZone">
+                <label class="file-label">Personeelsplan / bedrijfsplan(nen)</label>
+                <input id="personeelsplanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="personeelsplanSelected" style="display:none;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">Indienen</div>
+          <div class="card-b">
+            <div class="hint">Concept opslaan bewaart je voortgang. Indienen verstuurt de complete vragenlijst.</div>
+            <div class="btns">
+              <button class="btn-soft" type="button" id="btnSave">Concept opslaan</button>
+              <button class="btn-primary" type="submit" id="btnSubmit">Vragenlijst indienen</button>
+            </div>
+            <div id="formErr" class="err"></div>
+            <div id="formOk" class="ok">Formulier succesvol ingediend.</div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const MAX_MB = 10;
+    const params = new URLSearchParams(window.location.search);
+    const caseId = params.get('nr');
+    const preview = params.get('preview') === '1';
+    let token = null;
+    let existingData = null;
+    let currentTabIndex = 0;
+    let dossierContactEmail = '';
+
+    function sanitize(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    class RepeatManager {
+      constructor(containerId, baseKey, label, withPercentage, options = {}) {
+        this.container = document.getElementById(containerId);
+        this.baseKey = baseKey;
+        this.label = label;
+        this.withPercentage = withPercentage;
+        this.allowSameAsShareholder = !!options.allowSameAsShareholder;
+        this.getLinkedShareholders = options.getLinkedShareholders || (() => []);
+        this.data = [];
+      }
+
+      defaultRow() {
+        return {
+          type: 'np',
+          naam: '',
+          percentage: '',
+          sameAsShareholder: false,
+          sameAsShareholderIndex: ''
+        };
+      }
+
+      setData(rows) {
+        this.data = Array.isArray(rows) && rows.length ? rows.map(r => ({
+          type: r.type || 'np',
+          naam: r.naam || '',
+          percentage: r.percentage ?? '',
+          sameAsShareholder: !!r.sameAsShareholder,
+          sameAsShareholderIndex: r.sameAsShareholderIndex ? String(r.sameAsShareholderIndex) : ''
+        })) : [this.defaultRow()];
+        this.render();
+      }
+
+      addRow() {
+        this.data.push(this.defaultRow());
+        this.render();
+        updateNaturalPersons();
+      }
+
+      removeRow(index) {
+        this.data.splice(index, 1);
+        if (!this.data.length) this.data.push(this.defaultRow());
+        this.render();
+        updateNaturalPersons();
+      }
+
+      readFromDom() {
+        this.data = Array.from(this.container.querySelectorAll('[data-repeat-item]')).map(row => {
+          const sameAs = this.allowSameAsShareholder ? !!row.querySelector('[data-field="sameAsShareholder"]')?.checked : false;
+          const sameAsIndex = this.allowSameAsShareholder ? (row.querySelector('[data-field="sameAsShareholderIndex"]')?.value || '') : '';
+          const computedName = sameAs && sameAsIndex
+            ? `Zelfde als aandeelhouder ${sameAsIndex}`
+            : row.querySelector('[data-field="naam"]').value.trim();
+
+          return {
+            type: sameAs ? 'np' : row.querySelector('[data-field="type"]').value,
+            naam: computedName,
+            percentage: this.withPercentage ? row.querySelector('[data-field="percentage"]').value : '',
+            sameAsShareholder: sameAs,
+            sameAsShareholderIndex: sameAs ? sameAsIndex : ''
+          };
+        });
+        return this.data;
+      }
+
+      getData() {
+        return this.readFromDom();
+      }
+
+      render() {
+        this.container.innerHTML = this.data.map((row, idx) => {
+          const linkedShareholders = this.allowSameAsShareholder ? this.getLinkedShareholders() : [];
+          const hasLinkedShareholders = linkedShareholders.length > 0;
+          const activeSameAs = this.allowSameAsShareholder && row.sameAsShareholder && hasLinkedShareholders;
+          const activeLinkIndex = activeSameAs ? (row.sameAsShareholderIndex || '1') : (row.sameAsShareholderIndex || '');
+          const computedName = activeSameAs && activeLinkIndex
+            ? `Zelfde als aandeelhouder ${activeLinkIndex}`
+            : row.naam;
+
+          const linkedOptions = linkedShareholders.map((shareholder, shareIdx) => {
+            const val = String(shareIdx + 1);
+            const labelName = shareholder.naam ? ` - ${sanitize(shareholder.naam)}` : '';
+            const selected = activeLinkIndex === val ? 'selected' : '';
+            return `<option value="${val}" ${selected}>Aandeelhouder ${val}${labelName}</option>`;
+          }).join('');
+
+          return `
+            <div class="repeat-item" data-repeat-item>
+              <div class="repeat-head">
+                <div class="repeat-title">${sanitize(this.label)} ${idx + 1}</div>
+                <button type="button" class="icon-btn remove" data-remove-index="${idx}">x</button>
+              </div>
+              ${this.allowSameAsShareholder ? `
+                <div class="same-link-row">
+                  <label class="same-link-check">
+                    <input type="checkbox" data-field="sameAsShareholder" ${activeSameAs ? 'checked' : ''} ${hasLinkedShareholders ? '' : 'disabled'}>
+                    Bestuurder is hetzelfde als aandeelhouder
+                  </label>
+                  <div class="field" style="margin:0;">
+                    <label>Aandeelhouder</label>
+                    <select data-field="sameAsShareholderIndex" ${activeSameAs ? '' : 'disabled'}>
+                      ${linkedOptions || '<option value="">Geen aandeelhouders beschikbaar</option>'}
+                    </select>
+                  </div>
+                </div>
+              ` : ''}
+              <div class="row ${this.withPercentage ? 'row-shareholder' : ''}">
+                <div class="field">
+                  <label>Type</label>
+                  <select data-field="type" ${activeSameAs ? 'disabled' : ''}>
+                    <option value="np" ${row.type === 'np' ? 'selected' : ''}>Natuurlijk persoon</option>
+                    <option value="rp" ${row.type === 'rp' ? 'selected' : ''}>Rechtspersoon</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Naam</label>
+                  <input data-field="naam" value="${sanitize(computedName)}" ${activeSameAs ? 'readonly' : ''}>
+                </div>
+                ${this.withPercentage ? `<div class="field"><label>Percentage</label><input data-field="percentage" type="number" min="0" max="100" step="0.01" value="${sanitize(row.percentage)}"></div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        this.container.querySelectorAll('[data-remove-index]').forEach(btn => {
+          btn.addEventListener('click', () => this.removeRow(Number(btn.getAttribute('data-remove-index'))));
+        });
+        this.container.querySelectorAll('input,select').forEach(el => {
+          el.addEventListener('input', () => updateNaturalPersons());
+          el.addEventListener('change', () => {
+            if (this.allowSameAsShareholder) {
+              this.readFromDom();
+              this.render();
+            }
+            if (this.baseKey.toLowerCase().includes('aandeelhouder')) {
+              refreshLinkedDirectorRows();
+            }
+            updateNaturalPersons();
+          });
+        });
+      }
+    }
+
+    const managers = {
+      holdingShareholders: new RepeatManager('holdingShareholders', 'holdingAandeelhouder', 'Aandeelhouder', true),
+      holdingDirectors: new RepeatManager('holdingDirectors', 'holdingBestuurder', 'Bestuurder', false),
+      werkmijShareholders: new RepeatManager('werkmijShareholders', 'werkmijAandeelhouder', 'Aandeelhouder', true),
+      werkmijDirectors: new RepeatManager('werkmijDirectors', 'werkmijBestuurder', 'Bestuurder', false),
+      bestaandHoldingDirectors: new RepeatManager('bestaandHoldingDirectors', 'bestaandHoldingBestuurder', 'Bestuurder', false)
+    };
+
+    function refreshLinkedDirectorRows() {
+      ['holdingDirectors', 'werkmijDirectors'].forEach(key => {
+        const manager = managers[key];
+        manager.readFromDom();
+        manager.render();
+      });
+    }
+
+    function areHoldingDirectorsSameAsShareholders() {
+      return !!document.getElementById('holdingDirectorsSameAsShareholders').checked;
+    }
+
+    function areWerkmijDirectorsSameAsShareholders() {
+      return !!document.getElementById('werkmijDirectorsSameAsShareholders').checked;
+    }
+
+    function shouldAskWerkmijShareholders() {
+      const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
+      const existingOwnerAnswer = document.getElementById('existingHoldingOwner').value;
+      return withWerkmij && existingOwnerAnswer === 'nee';
+    }
+
+    function updateDirectorsVisibility() {
+      const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
+      const existingOwner = document.getElementById('existingHoldingOwner').value === 'ja';
+      const showHolding = !(withWerkmij && existingOwner);
+
+      const showHoldingDirectors = showHolding && !areHoldingDirectorsSameAsShareholders();
+      const showWerkmijDirectors = withWerkmij && !areWerkmijDirectorsSameAsShareholders();
+
+      document.getElementById('holdingDirectorsSection').style.display = showHoldingDirectors ? '' : 'none';
+      document.getElementById('werkmijDirectorsSection').style.display = showWerkmijDirectors ? '' : 'none';
+    }
+
+    function updateRentalAgreementVisibility() {
+      const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
+      const showHolding = !(withWerkmij && document.getElementById('existingHoldingOwner').value === 'ja');
+      const holdingDiff = !!document.getElementById('holdingAdresAfwijkendAandeelhouder').checked;
+      const werkmijDiff = !!document.getElementById('werkmijAdresAfwijkendAandeelhouder').checked;
+
+      document.getElementById('holdingRentalUploadWrap').style.display = (showHolding && holdingDiff) ? '' : 'none';
+      document.getElementById('werkmijRentalUploadWrap').style.display = (withWerkmij && werkmijDiff) ? '' : 'none';
+    }
+
+    function snapshotNaturalPersonData() {
+      const out = {};
+      document.querySelectorAll('[data-np-role]').forEach(card => {
+        const role = card.getAttribute('data-np-role');
+        out[role] = {
+          voornamen: card.querySelector('[data-np="voornamen"]').value.trim(),
+          achternaam: card.querySelector('[data-np="achternaam"]').value.trim(),
+          geboortedatum: card.querySelector('[data-np="geboortedatum"]').value.trim(),
+          geboorteland: card.querySelector('[data-np="geboorteland"]').value.trim(),
+          bsn: card.querySelector('[data-np="bsn"]').value.trim(),
+          nationaliteit: card.querySelector('[data-np="nationaliteit"]').value.trim(),
+          burgerlijkeStaat: card.querySelector('[data-np="burgerlijkeStaat"]').value.trim(),
+          iban: card.querySelector('[data-np="iban"]').value.trim(),
+          telefoon: card.querySelector('[data-np="telefoon"]').value.trim(),
+          email: card.querySelector('[data-np="email"]').value.trim(),
+          adresStraat: card.querySelector('[data-np="adresStraat"]').value.trim(),
+          adresHuisnummer: card.querySelector('[data-np="adresHuisnummer"]').value.trim(),
+          adresPostcode: card.querySelector('[data-np="adresPostcode"]').value.trim(),
+          adresPlaats: card.querySelector('[data-np="adresPlaats"]').value.trim(),
+          woonland: card.querySelector('[data-np="woonland"]').value.trim(),
+          taalNiveau: card.querySelector('[data-np="taalNiveau"]').value,
+          engelsNiveau: card.querySelector('[data-np="engelsNiveau"]').value,
+          moedertalen: card.querySelector('[data-np="moedertalen"]').value.trim(),
+          c2Talen: card.querySelector('[data-np="c2Talen"]').value.trim(),
+          eenmanszaak: card.querySelector('[data-np="eenmanszaak"]').value,
+          eenmanszaakActie: card.querySelector('[data-np="eenmanszaakActie"]').value
+        };
+      });
+      return out;
+    }
+
+    function gatherNaturalPersonRoles() {
+      const roles = [];
+      const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
+      const withExistingHolding = withWerkmij && document.getElementById('existingHoldingOwner').value === 'ja';
+      const showHolding = !(withWerkmij && withExistingHolding);
+
+      const pushRoles = (list, prefix, title) => {
+        list.forEach((item, idx) => {
+          if (item.sameAsShareholder) return;
+          if (item.type !== 'np') return;
+          const name = item.naam || `${title} ${idx + 1}`;
+          roles.push({ roleKey: `${prefix}_${idx + 1}`, title: `${title} ${idx + 1}`, name });
+        });
+      };
+
+      if (showHolding) {
+        pushRoles(managers.holdingShareholders.getData(), 'holding_shareholder', 'Holding aandeelhouder');
+        if (!areHoldingDirectorsSameAsShareholders()) {
+          pushRoles(managers.holdingDirectors.getData(), 'holding_director', 'Holding bestuurder');
+        }
+      }
+
+      if (withWerkmij) {
+        if (shouldAskWerkmijShareholders()) {
+          pushRoles(managers.werkmijShareholders.getData(), 'werkmij_shareholder', 'Werkmij aandeelhouder');
+        }
+        if (!areWerkmijDirectorsSameAsShareholders()) {
+          pushRoles(managers.werkmijDirectors.getData(), 'werkmij_director', 'Werkmij bestuurder');
+        }
+      }
+      if (withExistingHolding) {
+        pushRoles(managers.bestaandHoldingDirectors.getData(), 'existing_holding_director', 'Bestaande holding bestuurder');
+      }
+      return roles;
+    }
+
+    function renderNaturalPersons(seedData) {
+      const container = document.getElementById('npContainer');
+      const roles = gatherNaturalPersonRoles();
+      if (!roles.length) {
+        container.innerHTML = '<div class="hint">Geen natuurlijke personen nodig op basis van de huidige aandeelhouder-/bestuurderkeuzes.</div>';
+        return;
+      }
+
+      container.innerHTML = roles.map((role, idx) => {
+        const v = (seedData && seedData[role.roleKey]) || {};
+        return `
+          <div class="repeat-item" data-np-role="${sanitize(role.roleKey)}">
+            <div class="repeat-head">
+              <div class="repeat-title">Natuurlijk Persoon ${idx + 1} - ${sanitize(role.name)}</div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Voornamen</label><input data-np="voornamen" value="${sanitize(v.voornamen)}"></div>
+              <div class="field"><label>Achternaam</label><input data-np="achternaam" value="${sanitize(v.achternaam)}"></div>
+              <div class="field"><label>Geboortedatum</label><input data-np="geboortedatum" value="${sanitize(v.geboortedatum)}"></div>
+              <div class="field"><label>Geboorteland</label><input data-np="geboorteland" value="${sanitize(v.geboorteland)}"></div>
+              <div class="field"><label>Nederlands BSN</label><input data-np="bsn" value="${sanitize(v.bsn)}"></div>
+              <div class="field"><label>Nationaliteit</label><input data-np="nationaliteit" value="${sanitize(v.nationaliteit)}"></div>
+              <div class="field"><label>Burgerlijke staat</label><input data-np="burgerlijkeStaat" value="${sanitize(v.burgerlijkeStaat)}"></div>
+              <div class="field"><label>Persoonlijk IBAN</label><input data-np="iban" value="${sanitize(v.iban)}"></div>
+              <div class="field"><label>Persoonlijk telefoonnummer</label><input data-np="telefoon" value="${sanitize(v.telefoon)}"></div>
+              <div class="field"><label>Persoonlijk emailadres</label><input data-np="email" type="email" value="${sanitize(v.email)}"></div>
+              <div class="field">
+                <label>Nederlands taalniveau</label>
+                <select data-np="taalNiveau">
+                  <option value="">Maak keuze</option>
+                  <option value="c1" ${v.taalNiveau === 'c1' ? 'selected' : ''}>C1 of hoger</option>
+                  <option value="lager-dan-c1" ${v.taalNiveau === 'lager-dan-c1' ? 'selected' : ''}>Lager dan C1</option>
+                </select>
+              </div>
+              <div class="field" data-np-engels-wrap style="display:${v.taalNiveau === 'lager-dan-c1' ? '' : 'none'};">
+                <label>Is het Engels taalniveau minimaal C1?</label>
+                <select data-np="engelsNiveau">
+                  <option value="">Maak keuze</option>
+                  <option value="c1" ${v.engelsNiveau === 'c1' ? 'selected' : ''}>Ja, C1 of hoger</option>
+                  <option value="lager-dan-c1" ${v.engelsNiveau === 'lager-dan-c1' ? 'selected' : ''}>Nee, lager dan C1</option>
+                </select>
+              </div>
+              <div class="field" data-np-moedertalen-wrap style="display:${v.taalNiveau === 'lager-dan-c1' && v.engelsNiveau === 'lager-dan-c1' ? '' : 'none'};">
+                <label>Wat zijn je moedertalen?</label>
+                <input data-np="moedertalen" value="${sanitize(v.moedertalen)}" placeholder="Bijv. Turks, Arabisch">
+              </div>
+              <div class="field" data-np-c2-wrap style="display:${v.taalNiveau === 'lager-dan-c1' && v.engelsNiveau === 'lager-dan-c1' ? '' : 'none'};">
+                <label>Wat zijn jouw C2-niveau talen?</label>
+                <input data-np="c2Talen" value="${sanitize(v.c2Talen)}" placeholder="Bijv. Engels, Duits">
+              </div>
+              <div class="field">
+                <label>Heeft deze persoon een eenmanszaak?</label>
+                <select data-np="eenmanszaak">
+                  <option value="">Maak keuze</option>
+                  <option value="ja" ${v.eenmanszaak === 'ja' ? 'selected' : ''}>Ja</option>
+                  <option value="nee" ${v.eenmanszaak === 'nee' ? 'selected' : ''}>Nee</option>
+                </select>
+              </div>
+            </div>
+            <div class="field" data-np-eenmanszaak-actie-wrap style="display:${v.eenmanszaak === 'ja' ? '' : 'none'};">
+              <label>Wat gaat er gebeuren met de eenmanszaak?</label>
+              <select data-np="eenmanszaakActie">
+                <option value="">Maak keuze</option>
+                <option value="blijft-bestaan" ${v.eenmanszaakActie === 'blijft-bestaan' ? 'selected' : ''}>Blijft bestaan (De eenmanszaak kan naast de nieuwe B.V. blijven bestaan.)</option>
+                <option value="stopt" ${v.eenmanszaakActie === 'stopt' ? 'selected' : ''}>Stopt (Bij uitschrijving bij de KvK is dit geen inbreng en geen voortzetting.)</option>
+              </select>
+            </div>
+            <div class="group-title">Woonadres</div>
+            <div class="address-grid">
+              <div class="field"><label>Straat</label><input data-np="adresStraat" value="${sanitize(v.adresStraat)}"></div>
+              <div class="field"><label>Huisnummer</label><input data-np="adresHuisnummer" value="${sanitize(v.adresHuisnummer)}"></div>
+              <div class="field"><label>Postcode</label><input data-np="adresPostcode" value="${sanitize(v.adresPostcode)}"></div>
+              <div class="field"><label>Plaatsnaam</label><input data-np="adresPlaats" value="${sanitize(v.adresPlaats)}"></div>
+            </div>
+            <div class="field"><label>Woonland</label><input data-np="woonland" value="${sanitize(v.woonland)}"></div>
+          </div>
+        `;
+      }).join('');
+
+      const syncLanguageFollowups = (card) => {
+        const dutchSelect = card.querySelector('[data-np="taalNiveau"]');
+        const englishWrap = card.querySelector('[data-np-engels-wrap]');
+        const englishSelect = card.querySelector('[data-np="engelsNiveau"]');
+        const motherWrap = card.querySelector('[data-np-moedertalen-wrap]');
+        const c2Wrap = card.querySelector('[data-np-c2-wrap]');
+        const motherInput = card.querySelector('[data-np="moedertalen"]');
+        const c2Input = card.querySelector('[data-np="c2Talen"]');
+
+        const dutchLow = dutchSelect.value === 'lager-dan-c1';
+        englishWrap.style.display = dutchLow ? '' : 'none';
+        if (!dutchLow) {
+          englishSelect.value = '';
+          motherInput.value = '';
+          c2Input.value = '';
+        }
+
+        const englishLow = dutchLow && englishSelect.value === 'lager-dan-c1';
+        motherWrap.style.display = englishLow ? '' : 'none';
+        c2Wrap.style.display = englishLow ? '' : 'none';
+        if (!englishLow) {
+          motherInput.value = '';
+          c2Input.value = '';
+        }
+      };
+
+      container.querySelectorAll('[data-np-role]').forEach(card => {
+        const dutchSelect = card.querySelector('[data-np="taalNiveau"]');
+        const englishSelect = card.querySelector('[data-np="engelsNiveau"]');
+        dutchSelect.addEventListener('change', () => syncLanguageFollowups(card));
+        englishSelect.addEventListener('change', () => syncLanguageFollowups(card));
+        syncLanguageFollowups(card);
+      });
+
+      container.querySelectorAll('[data-np="eenmanszaak"]').forEach(select => {
+        select.addEventListener('change', () => {
+          const card = select.closest('[data-np-role]');
+          const wrap = card.querySelector('[data-np-eenmanszaak-actie-wrap]');
+          const actionSelect = card.querySelector('[data-np="eenmanszaakActie"]');
+          const showAction = select.value === 'ja';
+          wrap.style.display = showAction ? '' : 'none';
+          if (!showAction) actionSelect.value = '';
+        });
+      });
+    }
+
+    function initCollapsibleCards() {
+      const cards = Array.from(document.querySelectorAll('#cleanForm .card'));
+      cards.forEach((card, idx) => {
+        const head = card.querySelector('.card-h');
+        if (!head) return;
+        head.setAttribute('role', 'button');
+        head.setAttribute('tabindex', '0');
+        card.classList.toggle('collapsed', idx !== 0);
+        const openFromHeader = () => {
+          if (card.style.display === 'none') return;
+          const visibleCards = getVisibleCards();
+          const index = visibleCards.indexOf(card);
+          if (index === -1) return;
+          if (index === currentTabIndex && !card.classList.contains('collapsed')) {
+            card.classList.add('collapsed');
+            syncTabNavigation();
+            return;
+          }
+          openTab(index, true);
+        };
+        head.addEventListener('click', openFromHeader);
+        head.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openFromHeader();
+          }
+        });
+      });
+      syncTabNavigation();
+    }
+
+    function ensureInlineTabNavs() {
+      document.querySelectorAll('#cleanForm .card').forEach(card => {
+        const body = card.querySelector('.card-b');
+        if (!body) return;
+        if (body.querySelector('.tab-inline-nav')) return;
+        const nav = document.createElement('div');
+        nav.className = 'tab-inline-nav';
+        nav.innerHTML = `
+          <div class="tab-inline-info"></div>
+          <div class="tab-inline-actions">
+            <button type="button" class="btn-soft" data-tab-nav="prev">Vorige</button>
+            <button type="button" class="btn-primary" data-tab-nav="next">Volgende</button>
+          </div>
+        `;
+        body.appendChild(nav);
+      });
+    }
+
+    function getVisibleCards() {
+      return Array.from(document.querySelectorAll('#cleanForm .card')).filter(card => card.style.display !== 'none');
+    }
+
+    function updateTabNavigationInfo() {
+      const cards = getVisibleCards();
+      if (!cards.length) {
+        document.querySelectorAll('.tab-inline-nav').forEach(nav => {
+          const info = nav.querySelector('.tab-inline-info');
+          const prevBtn = nav.querySelector('[data-tab-nav="prev"]');
+          const nextBtn = nav.querySelector('[data-tab-nav="next"]');
+          info.textContent = 'Geen tabbladen zichtbaar';
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+        });
+        return;
+      }
+      const openIndex = cards.findIndex(card => !card.classList.contains('collapsed'));
+      if (openIndex === -1) {
+        document.querySelectorAll('.tab-inline-nav').forEach(nav => {
+          const info = nav.querySelector('.tab-inline-info');
+          const prevBtn = nav.querySelector('[data-tab-nav="prev"]');
+          const nextBtn = nav.querySelector('[data-tab-nav="next"]');
+          info.textContent = 'Geen tab geopend';
+          prevBtn.disabled = false;
+          nextBtn.disabled = false;
+        });
+        return;
+      }
+
+      currentTabIndex = openIndex;
+      cards.forEach((card, idx) => {
+        const nav = card.querySelector('.tab-inline-nav');
+        if (!nav) return;
+        const info = nav.querySelector('.tab-inline-info');
+        const prevBtn = nav.querySelector('[data-tab-nav="prev"]');
+        const nextBtn = nav.querySelector('[data-tab-nav="next"]');
+        const title = card.querySelector('.card-h')?.textContent?.trim() || 'Onbekende tab';
+
+        info.textContent = (idx + 1) + ' / ' + cards.length + ': ' + title;
+        prevBtn.disabled = idx <= 0;
+        nextBtn.disabled = idx >= cards.length - 1;
+        prevBtn.onclick = () => openTab(idx - 1, true);
+        nextBtn.onclick = () => openTab(idx + 1, true);
+      });
+    }
+
+    function openTab(index, shouldScroll) {
+      const cards = getVisibleCards();
+      if (!cards.length) return;
+      const target = Math.max(0, Math.min(index, cards.length - 1));
+      cards.forEach((card, idx) => card.classList.toggle('collapsed', idx !== target));
+      currentTabIndex = target;
+      updateTabNavigationInfo();
+      if (shouldScroll) cards[target].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function syncTabNavigation() {
+      const cards = getVisibleCards();
+      if (!cards.length) {
+        updateTabNavigationInfo();
+        return;
+      }
+      const openIndex = cards.findIndex(card => !card.classList.contains('collapsed'));
+      if (openIndex !== -1) {
+        currentTabIndex = openIndex;
+        updateTabNavigationInfo();
+        return;
+      }
+      const fallback = Math.max(0, Math.min(currentTabIndex, cards.length - 1));
+      openTab(fallback, false);
+    }
+
+    function updateNaturalPersons() {
+      const snapshot = snapshotNaturalPersonData();
+      renderNaturalPersons(snapshot);
+    }
+
+    function collectNaturalPersons() {
+      return Array.from(document.querySelectorAll('[data-np-role]')).map(card => {
+        return {
+          roleKey: card.getAttribute('data-np-role'),
+          voornamen: card.querySelector('[data-np="voornamen"]').value.trim(),
+          achternaam: card.querySelector('[data-np="achternaam"]').value.trim(),
+          geboortedatum: card.querySelector('[data-np="geboortedatum"]').value.trim(),
+          geboorteland: card.querySelector('[data-np="geboorteland"]').value.trim(),
+          bsn: card.querySelector('[data-np="bsn"]').value.trim(),
+          nationaliteit: card.querySelector('[data-np="nationaliteit"]').value.trim(),
+          burgerlijkeStaat: card.querySelector('[data-np="burgerlijkeStaat"]').value.trim(),
+          iban: card.querySelector('[data-np="iban"]').value.trim(),
+          telefoon: card.querySelector('[data-np="telefoon"]').value.trim(),
+          email: card.querySelector('[data-np="email"]').value.trim(),
+          adresStraat: card.querySelector('[data-np="adresStraat"]').value.trim(),
+          adresHuisnummer: card.querySelector('[data-np="adresHuisnummer"]').value.trim(),
+          adresPostcode: card.querySelector('[data-np="adresPostcode"]').value.trim(),
+          adresPlaats: card.querySelector('[data-np="adresPlaats"]').value.trim(),
+          woonland: card.querySelector('[data-np="woonland"]').value.trim(),
+          taalNiveau: card.querySelector('[data-np="taalNiveau"]').value,
+          engelsNiveau: card.querySelector('[data-np="engelsNiveau"]').value,
+          moedertalen: card.querySelector('[data-np="moedertalen"]').value.trim(),
+          c2Talen: card.querySelector('[data-np="c2Talen"]').value.trim(),
+          eenmanszaak: card.querySelector('[data-np="eenmanszaak"]').value,
+          eenmanszaakActie: card.querySelector('[data-np="eenmanszaakActie"]').value
+        };
+      });
+    }
+
+    function updateConditionalSections() {
+      const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
+      const existingOwner = document.getElementById('existingHoldingOwner').value === 'ja';
+      const showHolding = !(withWerkmij && existingOwner);
+      document.getElementById('holdingCard').style.display = showHolding ? '' : 'none';
+      if (!showHolding) document.getElementById('holdingCard').classList.add('collapsed');
+      document.getElementById('werkmijCard').style.display = withWerkmij ? '' : 'none';
+      if (!withWerkmij) document.getElementById('werkmijCard').classList.add('collapsed');
+      document.getElementById('existingHoldingQuestionWrap').style.display = withWerkmij ? '' : 'none';
+      document.getElementById('existingHoldingCard').style.display = (withWerkmij && existingOwner) ? '' : 'none';
+      if (!(withWerkmij && existingOwner)) document.getElementById('existingHoldingCard').classList.add('collapsed');
+
+      const askWerkmijShareholders = shouldAskWerkmijShareholders();
+      const reminder = document.getElementById('werkmijShareholderReminder');
+      const reminderText = document.getElementById('werkmijShareholderReminderText');
+      const shareholdersSection = document.getElementById('werkmijShareholdersSection');
+      const existingOwnerAnswer = document.getElementById('existingHoldingOwner').value;
+
+      reminder.style.display = (withWerkmij && !askWerkmijShareholders) ? '' : 'none';
+      shareholdersSection.style.display = askWerkmijShareholders ? '' : 'none';
+
+      if (existingOwnerAnswer === 'ja') {
+        reminderText.textContent = 'De aandeelhouder van de werkmaatschappij is de bestaande holding (100%).';
+      } else if (existingOwnerAnswer === 'nee') {
+        reminderText.textContent = 'Vul de aandeelhouder(s) van de werkmaatschappij hieronder in.';
+      } else {
+        reminderText.textContent = 'Kies eerst of een bestaande holding eigenaar wordt van de werkmaatschappij.';
+      }
+
+      updateDirectorsVisibility();
+      updateRentalAgreementVisibility();
+      syncTabNavigation();
+      updateNaturalPersons();
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function buildFilePayload(inputId, key) {
+      const file = document.getElementById(inputId).files[0];
+      if (file) {
+        return { naam: file.name, data: await fileToBase64(file) };
+      }
+      const saved = existingData?.[key];
+      if (Array.isArray(saved)) return saved[0] || null;
+      return saved || null;
+    }
+
+    async function buildFilesPayload(inputId, key) {
+      const files = Array.from(document.getElementById(inputId).files || []);
+      if (files.length) {
+        const rows = [];
+        for (const file of files) {
+          rows.push({ naam: file.name, data: await fileToBase64(file) });
+        }
+        return rows;
+      }
+      const saved = existingData?.[key];
+      if (Array.isArray(saved)) return saved;
+      return saved ? [saved] : [];
+    }
+
+    function bindFileInput(inputId, zoneId, selectedId) {
+      const input = document.getElementById(inputId);
+      const zone = document.getElementById(zoneId);
+      const selected = document.getElementById(selectedId);
+
+      input.addEventListener('change', () => {
+        const files = Array.from(input.files || []);
+        if (!files.length) return;
+        const tooLarge = files.find(file => file.size > MAX_MB * 1024 * 1024);
+        if (tooLarge) {
+          alert('Bestand te groot (max ' + MAX_MB + ' MB): ' + tooLarge.name);
+          input.value = '';
+          zone.classList.remove('has-file');
+          selected.textContent = '';
+          selected.style.display = 'none';
+          return;
+        }
+        zone.classList.add('has-file');
+        selected.textContent = files.length === 1
+          ? 'Geselecteerd: ' + files[0].name
+          : 'Geselecteerd (' + files.length + '): ' + files.map(f => f.name).join(', ');
+        selected.style.display = 'block';
+      });
+    }
+
+    function collectBasicFields() {
+      const out = {};
+      document.querySelectorAll('#cleanForm input[name], #cleanForm textarea[name], #cleanForm select[name]').forEach(el => {
+        if (el.type === 'checkbox') out[el.name] = el.checked;
+        else out[el.name] = el.value;
+      });
+      return out;
+    }
+
+    function fillBasicFields(data) {
+      document.querySelectorAll('#cleanForm input[name], #cleanForm textarea[name], #cleanForm select[name]').forEach(el => {
+        if (data[el.name] === undefined || data[el.name] === null) return;
+        if (el.type === 'checkbox') el.checked = !!data[el.name];
+        else el.value = String(data[el.name]);
+      });
+    }
+
+    function validateShareholderPercentages(rows, label) {
+      if (!rows.length) return null;
+      const total = rows.reduce((sum, row) => sum + (parseFloat(row.percentage || '0') || 0), 0);
+      if (Math.abs(total - 100) > 0.01) return label + ': percentages moeten samen 100% zijn.';
+      return null;
+    }
+
+    function validateNaturalPersons(naturalPersons) {
+      for (const person of naturalPersons) {
+        if (!person.voornamen || !person.achternaam) {
+          return 'Vul bij alle natuurlijke personen minimaal voornamen en achternaam in.';
+        }
+        if (person.taalNiveau === 'lager-dan-c1' && !person.engelsNiveau) {
+          return 'Vul bij Nederlands lager dan C1 ook het Engelse taalniveau in.';
+        }
+        if (person.taalNiveau === 'lager-dan-c1' && person.engelsNiveau === 'lager-dan-c1') {
+          if (!person.moedertalen || !person.c2Talen) {
+            return 'Vul bij Nederlands en Engels lager dan C1 zowel moedertalen als C2-niveau talen in.';
+          }
+        }
+        if (person.eenmanszaak === 'ja' && !person.eenmanszaakActie) {
+          return 'Kies bij eenmanszaak (Ja) ook wat er met de eenmanszaak gaat gebeuren.';
+        }
+      }
+      return null;
+    }
+
+    async function loadSaved() {
+      if (!caseId || !token) return;
+      const r = await fetch('/api/vragenlijst/' + encodeURIComponent(caseId) + '?token=' + encodeURIComponent(token));
+      if (!r.ok) return;
+      const payload = await r.json();
+      existingData = payload.data || {};
+
+      fillBasicFields(existingData);
+
+      managers.holdingShareholders.setData(existingData.holdingAandeelhouders || []);
+      managers.holdingDirectors.setData(existingData.holdingBestuurders || []);
+      managers.werkmijShareholders.setData(existingData.werkmijAandeelhouders || []);
+      managers.werkmijDirectors.setData(existingData.werkmijBestuurders || []);
+      managers.bestaandHoldingDirectors.setData(existingData.bestaandHoldingBestuurders || []);
+
+      updateConditionalSections();
+
+      const npSeed = {};
+      const npArray = Array.isArray(existingData.naturalPersons) ? existingData.naturalPersons : [];
+      npArray.forEach(item => { if (item.roleKey) npSeed[item.roleKey] = item; });
+      renderNaturalPersons(npSeed);
+
+      [
+        ['datacardBestanden', 'datacardZone', 'datacardSelected', 'datacardBestand'],
+        ['pepBestanden', 'pepZone', 'pepSelected', 'pepBestand'],
+        ['personeelsplannen', 'personeelsplanZone', 'personeelsplanSelected', 'personeelsplan'],
+        ['holdingHuurovereenkomst', 'holdingRentalZone', 'holdingRentalSelected', 'holdingHuurovereenkomst'],
+        ['werkmijHuurovereenkomst', 'werkmijRentalZone', 'werkmijRentalSelected', 'werkmijHuurovereenkomst']
+      ].forEach(([key, zoneId, selectedId, legacyKey]) => {
+        const saved = existingData[key] || existingData[legacyKey] || null;
+        const files = Array.isArray(saved) ? saved : (saved ? [saved] : []);
+        if (!files.length || !files[0]?.naam) return;
+        const zone = document.getElementById(zoneId);
+        const selected = document.getElementById(selectedId);
+        if (!zone || !selected) return;
+        zone.classList.add('has-file');
+        selected.textContent = files.length === 1
+          ? 'Geselecteerd: ' + files[0].naam
+          : 'Geselecteerd (' + files.length + '): ' + files.map(f => f.naam).join(', ');
+        selected.style.display = 'block';
+      });
+    }
+
+    async function openWithToken() {
+      const input = document.getElementById('gateInput');
+      const err = document.getElementById('gateErr');
+      const t = input.value.trim();
+      err.style.display = 'none';
+      if (!t) return;
+
+      const r = await fetch('/api/request-info/' + encodeURIComponent(caseId) + '?token=' + encodeURIComponent(t));
+      if (!r.ok) {
+        err.style.display = 'block';
+        return;
+      }
+
+      const data = await r.json();
+      token = t;
+      dossierContactEmail = data.clientEmail || '';
+      sessionStorage.setItem('ax_form_' + caseId, t);
+      document.getElementById('stateGate').classList.remove('active');
+      document.getElementById('stateForm').classList.add('active');
+      await loadSaved();
+    }
+
+    function buildPayload() {
+      const basic = collectBasicFields();
+      const withWerkmij = basic.hasWorkmaatschappij === 'ja';
+      const withExistingHolding = withWerkmij && basic.existingHoldingOwner === 'ja';
+      const askWerkmijShareholders = withWerkmij && basic.existingHoldingOwner === 'nee';
+      const showHolding = !(withWerkmij && withExistingHolding);
+      const holdingSameDirectors = basic.holdingDirectorsSameAsShareholders === true || basic.holdingDirectorsSameAsShareholders === 'ja';
+      const werkmijSameDirectors = basic.werkmijDirectorsSameAsShareholders === true || basic.werkmijDirectorsSameAsShareholders === 'ja';
+      const holdingAandeelhouders = managers.holdingShareholders.getData();
+      const holdingBestuurders = managers.holdingDirectors.getData();
+      const werkmijAandeelhouders = askWerkmijShareholders
+        ? managers.werkmijShareholders.getData()
+        : (withWerkmij && withExistingHolding
+          ? [{ type: 'rp', naam: 'Bestaande holding', percentage: '100' }]
+          : []);
+      const werkmijBestuurders = managers.werkmijDirectors.getData();
+      const bestaandHoldingBestuurders = managers.bestaandHoldingDirectors.getData();
+      const naturalPersons = collectNaturalPersons();
+
+      return {
+        ...basic,
+        contactEmail: (dossierContactEmail || basic.contactEmail || existingData?.contactEmail || '').trim(),
+        holdingAandeelhouders: showHolding ? holdingAandeelhouders : [],
+        holdingBestuurders: (showHolding && !holdingSameDirectors) ? holdingBestuurders : [],
+        werkmijAandeelhouders,
+        werkmijBestuurders: (withWerkmij && !werkmijSameDirectors) ? werkmijBestuurders : [],
+        bestaandHoldingBestuurders,
+        naturalPersons,
+        aandeelhouders: String(showHolding ? holdingAandeelhouders.length : 0),
+        aandeelhoudersLijst: (showHolding ? holdingAandeelhouders : []).map((row, idx) => ({
+          nummer: idx + 1,
+          naam: row.naam,
+          percentage: parseFloat(row.percentage || '0') || 0,
+          type: row.type
+        }))
+      };
+    }
+
+    async function saveDraft() {
+      const err = document.getElementById('formErr');
+      err.style.display = 'none';
+
+      try {
+        if (preview) {
+          err.textContent = 'Previewmodus: concept opslaan staat uit.';
+          err.style.display = 'block';
+          return;
+        }
+        if (!caseId || !token) {
+          err.textContent = 'Geen geldig dossier of token.';
+          err.style.display = 'block';
+          return;
+        }
+
+        const draftData = buildPayload();
+        draftData.datacardBestanden = await buildFilesPayload('datacardFile', 'datacardBestanden');
+        draftData.pepBestanden = await buildFilesPayload('pepFile', 'pepBestanden');
+        draftData.personeelsplannen = await buildFilesPayload('personeelsplanFile', 'personeelsplannen');
+        draftData.holdingHuurovereenkomst = await buildFilePayload('holdingRentalFile', 'holdingHuurovereenkomst');
+        draftData.werkmijHuurovereenkomst = await buildFilePayload('werkmijRentalFile', 'werkmijHuurovereenkomst');
+
+        draftData.datacardBestand = draftData.datacardBestanden[0] || null;
+        draftData.pepBestand = draftData.pepBestanden[0] || null;
+        draftData.personeelsplan = draftData.personeelsplannen[0] || null;
+
+        const r = await fetch('/api/vragenlijst/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caseId, token, draftData })
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Opslaan mislukt');
+
+        existingData = { ...(existingData || {}), ...draftData };
+        alert('Concept opgeslagen.');
+      } catch (e) {
+        err.textContent = e.message || 'Opslaan mislukt.';
+        err.style.display = 'block';
+      }
+    }
+
+    async function submitForm(ev) {
+      ev.preventDefault();
+      const err = document.getElementById('formErr');
+      const ok = document.getElementById('formOk');
+      err.style.display = 'none';
+      ok.style.display = 'none';
+
+      try {
+        if (preview) {
+          err.textContent = 'Previewmodus: indienen staat uit.';
+          err.style.display = 'block';
+          return;
+        }
+        if (!caseId || !token) {
+          err.textContent = 'Geen geldig dossier of token.';
+          err.style.display = 'block';
+          return;
+        }
+
+        const payload = buildPayload();
+        const showHolding = !(payload.hasWorkmaatschappij === 'ja' && payload.existingHoldingOwner === 'ja');
+
+        if (!payload.contactEmail || !/^\S+@\S+\.\S+$/.test(payload.contactEmail)) {
+          throw new Error('Contact e-mailadres uit dossier ontbreekt of is ongeldig.');
+        }
+        if (showHolding && !payload.holdingNaamBedrijf) {
+          throw new Error('Vul minimaal de naam van de holding in.');
+        }
+        if (payload.hasWorkmaatschappij === 'ja' && !payload.werkmijNaamBedrijf) {
+          throw new Error('Vul de naam van de werkmaatschappij in.');
+        }
+
+        if (showHolding) {
+          const holdPctError = validateShareholderPercentages(payload.holdingAandeelhouders, 'Holding aandeelhouders');
+          if (holdPctError) throw new Error(holdPctError);
+        }
+
+        if (payload.hasWorkmaatschappij === 'ja' && payload.werkmijAandeelhouders.length) {
+          const workPctError = validateShareholderPercentages(payload.werkmijAandeelhouders, 'Werkmij aandeelhouders');
+          if (workPctError) throw new Error(workPctError);
+        }
+
+        const npError = validateNaturalPersons(payload.naturalPersons);
+        if (npError) throw new Error(npError);
+
+        payload.datacardBestanden = await buildFilesPayload('datacardFile', 'datacardBestanden');
+        payload.pepBestanden = await buildFilesPayload('pepFile', 'pepBestanden');
+        payload.personeelsplannen = await buildFilesPayload('personeelsplanFile', 'personeelsplannen');
+        payload.holdingHuurovereenkomst = await buildFilePayload('holdingRentalFile', 'holdingHuurovereenkomst');
+        payload.werkmijHuurovereenkomst = await buildFilePayload('werkmijRentalFile', 'werkmijHuurovereenkomst');
+
+        payload.datacardBestand = payload.datacardBestanden[0] || null;
+        payload.pepBestand = payload.pepBestanden[0] || null;
+        payload.personeelsplan = payload.personeelsplannen[0] || null;
+
+        const requestPayload = {
+          caseId,
+          token,
+          contactEmail: payload.contactEmail,
+          formulierType: 'bv-holding',
+          ...payload
+        };
+
+        const r = await fetch('/api/vragenlijst', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload)
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Indienen mislukt');
+
+        ok.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        err.textContent = e.message || 'Indienen mislukt.';
+        err.style.display = 'block';
+      }
+    }
+
+    function init() {
+      managers.holdingShareholders.setData([]);
+      managers.holdingDirectors.setData([]);
+      managers.werkmijShareholders.setData([]);
+      managers.werkmijDirectors.setData([]);
+      managers.bestaandHoldingDirectors.setData([]);
+
+      ensureInlineTabNavs();
+      initCollapsibleCards();
+
+      document.getElementById('addHoldingShareholder').addEventListener('click', () => managers.holdingShareholders.addRow());
+      document.getElementById('addHoldingDirector').addEventListener('click', () => managers.holdingDirectors.addRow());
+      document.getElementById('addWerkmijShareholder').addEventListener('click', () => managers.werkmijShareholders.addRow());
+      document.getElementById('addWerkmijDirector').addEventListener('click', () => managers.werkmijDirectors.addRow());
+      document.getElementById('addBestaandHoldingDirector').addEventListener('click', () => managers.bestaandHoldingDirectors.addRow());
+
+      document.getElementById('hasWorkmaatschappij').addEventListener('change', updateConditionalSections);
+      document.getElementById('existingHoldingOwner').addEventListener('change', updateConditionalSections);
+      document.getElementById('holdingDirectorsSameAsShareholders').addEventListener('change', updateConditionalSections);
+      document.getElementById('werkmijDirectorsSameAsShareholders').addEventListener('change', updateConditionalSections);
+      document.getElementById('holdingAdresAfwijkendAandeelhouder').addEventListener('change', updateConditionalSections);
+      document.getElementById('werkmijAdresAfwijkendAandeelhouder').addEventListener('change', updateConditionalSections);
+
+      bindFileInput('datacardFile', 'datacardZone', 'datacardSelected');
+      bindFileInput('pepFile', 'pepZone', 'pepSelected');
+      bindFileInput('personeelsplanFile', 'personeelsplanZone', 'personeelsplanSelected');
+      bindFileInput('holdingRentalFile', 'holdingRentalZone', 'holdingRentalSelected');
+      bindFileInput('werkmijRentalFile', 'werkmijRentalZone', 'werkmijRentalSelected');
+
+      document.getElementById('btnSave').addEventListener('click', saveDraft);
+      document.getElementById('cleanForm').addEventListener('submit', submitForm);
+
+      updateConditionalSections();
+      renderNaturalPersons({});
+      syncTabNavigation();
+
+      if (preview) {
+        document.getElementById('stateGate').classList.remove('active');
+        document.getElementById('stateForm').classList.add('active');
+        document.getElementById('btnSave').disabled = true;
+        document.getElementById('btnSubmit').disabled = true;
+        return;
+      }
+
+      if (!caseId) {
+        const err = document.getElementById('gateErr');
+        err.textContent = 'Dossiernummer ontbreekt in de URL.';
+        err.style.display = 'block';
+        return;
+      }
+
+      const cached = sessionStorage.getItem('ax_form_' + caseId);
+      document.getElementById('gateBtn').addEventListener('click', openWithToken);
+      document.getElementById('gateInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') openWithToken();
+      });
+
+      if (cached) {
+        document.getElementById('gateInput').value = cached;
+        openWithToken();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -95,12 +95,6 @@
 
             <!-- Regular grid -->
             <div class="blog-page-grid" id="blogGrid"></div>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-            </div><!-- /blog-page-grid -->
         </div>
     </section>
 
@@ -169,16 +163,154 @@
 
         // Blog system
         let allPosts = [];
+        const staticPosts = [
+            {
+                id: 'static-bv-oprichting-2025',
+                title: 'Wat verandert er in 2025 bij BV-oprichting?',
+                excerpt: 'De wetgeving rondom BV-oprichting verandert. Ontdek wat de nieuwe regels betekenen voor uw klanten en uw kantoor.',
+                categories: ['BV-oprichting', 'Wetgeving'],
+                author: 'AandelenXpress',
+                createdAt: '2025-01-14T09:00:00.000Z',
+                featured: true,
+                url: '/artikel-bv-oprichting-2025',
+                image: '/assets/blog-featured.jpg',
+                content: ''
+            },
+            {
+                id: 'static-holdingstructuur',
+                title: 'Holdingstructuur: wanneer is het slim?',
+                excerpt: 'Een holding biedt fiscale voordelen, maar is niet voor iedereen geschikt. Wij zetten de voor- en nadelen op een rij.',
+                categories: ['Holding', 'Fiscaal'],
+                author: 'AandelenXpress',
+                createdAt: '2025-01-21T09:00:00.000Z',
+                url: '/artikel-holdingstructuur',
+                image: '/assets/blog-holding.jpg',
+                content: ''
+            },
+            {
+                id: 'static-idin',
+                title: 'iDIN-verificatie: hoe werkt het voor uw klant?',
+                excerpt: 'Met iDIN identificeren klanten zich volledig digitaal bij de notaris. Zo werkt het proces stap voor stap uitgelegd.',
+                categories: ['Digitalisering', 'BV-oprichting'],
+                author: 'AandelenXpress',
+                createdAt: '2025-02-04T09:00:00.000Z',
+                url: '/artikel-idin-verificatie',
+                image: '/assets/blog-idin.jpg',
+                content: ''
+            },
+            {
+                id: 'static-dga-2025',
+                title: 'DGA-salaris in 2025: wat is het gebruikelijk loon?',
+                excerpt: 'Als DGA bent u verplicht uzelf een gebruikelijk loon uit te keren. Dit zijn de spelregels voor 2025.',
+                categories: ['Fiscaal', 'BV-oprichting'],
+                author: 'AandelenXpress',
+                createdAt: '2025-02-18T09:00:00.000Z',
+                url: '/artikel-dga-salaris-2025',
+                image: '/assets/blog-dga.jpg',
+                content: ''
+            },
+            {
+                id: 'static-digitale-oprichting',
+                title: 'Volledig digitale oprichting: van aanvraag tot KvK',
+                excerpt: 'Hoe loopt een volledig digitale BV-oprichting via AandelenXpress? Een overzicht van alle stappen.',
+                categories: ['Digitalisering', 'BV-oprichting'],
+                author: 'AandelenXpress',
+                createdAt: '2025-03-05T09:00:00.000Z',
+                url: '/artikel-digitale-oprichting',
+                image: '/assets/blog-digital.jpg',
+                content: ''
+            },
+            {
+                id: 'static-deelnemingsvrijstelling',
+                title: 'Deelnemingsvrijstelling: belastingvrij dividend ontvangen',
+                excerpt: 'Via een holdingstructuur ontvangt u dividenden en verkoopwinsten belastingvrij. Zo werkt de deelnemingsvrijstelling.',
+                categories: ['Holding', 'Fiscaal'],
+                author: 'AandelenXpress',
+                createdAt: '2025-03-19T09:00:00.000Z',
+                url: '/artikel-deelnemingsvrijstelling',
+                image: '/assets/blog-finance.jpg',
+                content: ''
+            },
+            {
+                id: 'static-ubo-register',
+                title: 'UBO-register: wat moet u weten als accountant?',
+                excerpt: 'Iedere BV is verplicht de uiteindelijk belanghebbenden te registreren in het UBO-register.',
+                categories: ['Wetgeving', 'BV-oprichting'],
+                author: 'AandelenXpress',
+                createdAt: '2025-04-02T09:00:00.000Z',
+                url: '/artikel-ubo-register',
+                image: '/assets/blog-finance.jpg',
+                content: ''
+            },
+            {
+                id: 'static-box2-2025',
+                title: 'Box 2-tarieven 2025: hogere belasting op aanmerkelijk belang',
+                excerpt: 'Het box 2-tarief is gewijzigd. Wat betekent dit voor uw klanten met een aanmerkelijk belang?',
+                categories: ['Fiscaal', 'Wetgeving'],
+                author: 'AandelenXpress',
+                createdAt: '2025-04-30T09:00:00.000Z',
+                url: '/artikel-box2-tarieven-2025',
+                image: '/assets/blog-finance.jpg',
+                content: ''
+            },
+            {
+                id: 'static-api-koppeling',
+                title: 'API-koppeling met uw kantoorsoftware: zo werkt het',
+                excerpt: 'Koppel AandelenXpress met uw kantoorsoftware en automatiseer intake, statusupdates en documentuitwisseling.',
+                categories: ['Digitalisering'],
+                author: 'AandelenXpress',
+                createdAt: '2025-05-08T09:00:00.000Z',
+                url: '/artikel-api-koppeling',
+                image: '/assets/blog-digital.jpg',
+                content: ''
+            },
+            {
+                id: 'static-zzper-naar-bv',
+                title: 'Van zzp naar BV: wanneer overstappen?',
+                excerpt: 'Wanneer is overstappen van eenmanszaak naar BV slim? We zetten de belangrijkste criteria overzichtelijk op een rij.',
+                categories: ['BV-oprichting', 'Fiscaal'],
+                author: 'AandelenXpress',
+                createdAt: '2025-05-20T09:00:00.000Z',
+                url: '/artikel-zzper-naar-bv',
+                image: '/assets/blog-zzp.jpg',
+                content: ''
+            }
+        ];
+
+        function resolvePostUrl(post) {
+            if (post.url) return post.url;
+            if (post.id !== undefined && post.id !== null) return '/artikel?id=' + encodeURIComponent(post.id);
+            return '/blog';
+        }
+
+        function resolveReadTime(post) {
+            const content = String(post.content || '');
+            if (!content.trim()) return 4;
+            return Math.max(1, Math.round(content.split(/\s+/).length / 200));
+        }
+
+        function mergePosts(dynamicPosts) {
+            const merged = [...staticPosts];
+            const seen = new Set(staticPosts.map(p => (p.title || '').toLowerCase()));
+            (dynamicPosts || []).forEach(post => {
+                const key = (post.title || '').toLowerCase();
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                merged.push(post);
+            });
+            return merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        }
         
         async function loadBlogPosts() {
             try {
                 const r = await fetch('/api/blog/posts');
-                if (!r.ok) return;
-                const posts = await r.json();
-                allPosts = posts;
+                const posts = r.ok ? await r.json() : [];
+                allPosts = mergePosts(posts);
                 renderBlogPosts();
             } catch(e) {
                 console.error('Error loading blog posts:', e);
+                allPosts = mergePosts([]);
+                renderBlogPosts();
             }
         }
         
@@ -193,9 +325,15 @@
                 const excerpt = featured.excerpt || featured.content.substring(0, 150).replace(/<[^>]*>/g, '');
                 const date = new Date(featured.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
                 const initials = featured.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const readTime = resolveReadTime(featured);
+                const href = resolvePostUrl(featured);
+                const image = featured.image || '/assets/blog-featured.jpg';
                 
                 const featured_html = `
                     <article class="blog-card blog-card-featured" data-cats="${catsData}">
+                        <a href="${href}" class="blog-card-featured-image-wrap" aria-label="${featured.title}">
+                            <img class="blog-card-featured-image" src="${image}" alt="${featured.title}" loading="eager">
+                        </a>
                         <div class="blog-card-inner">
                             <div class="blog-card-tags">${catsList}</div>
                             <div class="blog-card-body">
@@ -205,9 +343,9 @@
                                     <div class="blog-author-avatar">${initials}</div>
                                     <div class="blog-card-meta-text">
                                         <strong>${featured.author}</strong>
-                                        <span>${date} &middot; ${Math.max(1, Math.round(featured.content.split(/\s+/).length / 200))} min lezen</span>
+                                        <span>${date} &middot; ${readTime} min lezen</span>
                                     </div>
-                                    <a href="/artikel?id=${featured.id}" class="blog-readmore">Lees meer &rarr;</a>
+                                    <a href="${href}" class="blog-readmore">Lees meer &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -224,8 +362,14 @@
                 const excerpt = post.excerpt || post.content.substring(0, 150).replace(/<[^>]*>/g, '');
                 const date = new Date(post.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
                 const initials = post.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const readTime = resolveReadTime(post);
+                const href = resolvePostUrl(post);
+                const image = post.image || '/assets/blog-holding.jpg';
                 return `
                     <article class="blog-card" data-cats="${catsData}">
+                        <a href="${href}" class="blog-card-media-wrap" aria-label="${post.title}">
+                            <img class="blog-card-media" src="${image}" alt="${post.title}" loading="lazy">
+                        </a>
                         <div class="blog-card-inner">
                             <div class="blog-card-tags">${catsList}</div>
                             <div class="blog-card-body">
@@ -235,9 +379,9 @@
                                     <div class="blog-author-avatar">${initials}</div>
                                     <div class="blog-card-meta-text">
                                         <strong>${post.author}</strong>
-                                        <span>${date} &middot; ${Math.max(1, Math.round(post.content.split(/\s+/).length / 200))} min</span>
+                                        <span>${date} &middot; ${readTime} min</span>
                                     </div>
-                                    <a href="/artikel?id=${post.id}" class="blog-readmore">Lees meer &rarr;</a>
+                                    <a href="${href}" class="blog-readmore">Lees meer &rarr;</a>
                                 </div>
                             </div>
                         </div>

@@ -106,6 +106,30 @@
         "geruisloze supporting documents",
         "same NP/RP/language rules as other forms"
       ]
+    },
+    "vragenlijst_bv_oprichten": {
+      "file": "public/vragenlijst-bv-oprichten.html",
+      "routeType": "working_only"
+    },
+    "vragenlijst_holding_oprichten": {
+      "file": "public/vragenlijst-holding-oprichten.html",
+      "routeType": "holding_only"
+    },
+    "vragenlijst_eenmanszaak_naar_bv": {
+      "file": "public/vragenlijst-eenmanszaak-naar-bv.html",
+      "routeType": "geruisloze_inbreng"
+    },
+    "vragenlijst_vof_naar_bv": {
+      "file": "public/vragenlijst-vof-naar-bv.html",
+      "routeType": "geruisloze_inbreng"
+    },
+    "vragenlijst_eenmanszaak_naar_bv_holding": {
+      "file": "public/vragenlijst-bv-holding.html",
+      "routeType": "holding_plus_working"
+    },
+    "vragenlijst_vof_naar_bv_holding": {
+      "file": "public/vragenlijst-bv-holding.html",
+      "routeType": "holding_plus_working"
     }
   },
   "sharedConditionalRules": [

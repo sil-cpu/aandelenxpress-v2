@@ -16,6 +16,10 @@
     <aside class="dash-sidebar">
         <div class="dash-logo">
             <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+            <button class="dash-mobile-menu-btn" type="button" aria-label="Menu openen" aria-expanded="false">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                Menu
+            </button>
         </div>
 
         <nav class="dash-nav">
@@ -128,7 +132,7 @@
                     </select>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="rapport-grid">
                     <div class="rapport-card">
                         <div class="rapport-icon">
                             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z"/></svg>
@@ -651,6 +655,43 @@ document.querySelectorAll('.dash-nav-item').forEach(item => {
     });
 });
 
+function setMobileMenuOpen(open) {
+    const sidebar = document.querySelector('.dash-sidebar');
+    const button = document.querySelector('.dash-mobile-menu-btn');
+    if (!sidebar || !button) return;
+    sidebar.classList.toggle('menu-open', open);
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function initMobileMenu() {
+    const sidebar = document.querySelector('.dash-sidebar');
+    const button = document.querySelector('.dash-mobile-menu-btn');
+    if (!sidebar || !button) return;
+
+    button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = sidebar.classList.contains('menu-open');
+        setMobileMenuOpen(!isOpen);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth > 1024) return;
+        if (!sidebar.classList.contains('menu-open')) return;
+        if (sidebar.contains(e.target)) return;
+        setMobileMenuOpen(false);
+    });
+
+    document.querySelectorAll('.dash-nav-item').forEach((item) => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) setMobileMenuOpen(false);
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 1024) setMobileMenuOpen(false);
+    });
+}
+
 async function loadUser() {
     try {
         const r = await fetch('/api/user');
@@ -787,6 +828,7 @@ function saveToast(msg) {
     setTimeout(() => t.remove(), 3000);
 }
 
+initMobileMenu();
 loadUser();
 
 </script>

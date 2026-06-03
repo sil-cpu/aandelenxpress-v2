@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geruisloze Inbreng BV & Holding – Vragenlijst</title>
+    <title>Eenmanszaak naar BV – Vragenlijst</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #F5F7FA 0%, #E8EDF5 100%); color: #0F1D3A; min-height: 100vh; }
@@ -325,7 +325,7 @@
             <div class="header-logo" id="headerLogo">AX</div>
             <div class="header-info">
                 <div class="header-partner" id="headerPartner"></div>
-                <div class="header-title">Geruisloze Inbreng BV &amp; Holding</div>
+                <div class="header-title">Eenmanszaak naar BV</div>
                 <div class="header-sub" id="headerSub"></div>
                 <div class="ref-badge" id="headerRef"></div>
             </div>
@@ -338,7 +338,7 @@
 
         <div class="alert alert-info">
             Dit formulier is bestemd voor de omzetting van uw <strong>eenmanszaak of VOF</strong> naar een
-            <strong>BV met holding structuur</strong> via geruisloze inbreng.
+            <strong>nieuwe BV</strong>. Een bestaande holding is hierbij niet van toepassing.
         </div>
 
         <form id="vragenlijstForm" novalidate>
@@ -447,6 +447,9 @@
                         <label class="field-label">Doel van de BV — wat gaat de BV doen?<span class="req">*</span></label>
                         <textarea name="bvDoel" placeholder="Omschrijf de bedrijfsactiviteiten van de BV…" rows="3"></textarea>
                     </div>
+                    <div class="card-note" style="margin-bottom:0;">
+                        Adres van de nieuwe BV is altijd hetzelfde als het adres van de eenmanszaak/VOF.
+                    </div>
                 </div>
             </div>
 
@@ -477,19 +480,8 @@
                             <li class="option-item" onclick="selectOption(this,'aandeelhoudersBestuurders','nee')"><input type="radio" name="aandeelhoudersBestuurders" value="nee"><div class="option-content"><div class="option-label">Nee</div><div class="option-desc">Er zijn aparte bestuurders naast de aandeelhouders.</div></div></li>
                         </ul>
                     </div>
-                    <div class="field" id="fieldHoldingAdres">
-                        <label class="field-label">Wat is het adres van de Holding?<span class="req">*</span></label>
-                        <ul class="options-list">
-                            <li class="option-item" onclick="selectOption(this,'holdingAdres','zelfde-aannemerszaak')"><input type="radio" name="holdingAdres" value="zelfde-aannemerszaak"><div class="option-content"><div class="option-label">Hetzelfde als het adres van de aannemerszaak/onderneming</div></div></li>
-                            <li class="option-item" onclick="selectOption(this,'holdingAdres','zelfde-aandeelhouder')"><input type="radio" name="holdingAdres" value="zelfde-aandeelhouder"><div class="option-content"><div class="option-label">Hetzelfde als het adres van de aandeelhouder</div></div></li>
-                            <li class="option-item" onclick="selectOption(this,'holdingAdres','anders');toggleReveal('revealHoldingAdresAnders',true)"><input type="radio" name="holdingAdres" value="anders"><div class="option-content"><div class="option-label">Anders</div></div></li>
-                        </ul>
-                    </div>
-                    <div class="reveal" id="revealHoldingAdresAnders">
-                        <div class="field">
-                            <label class="field-label">Adres van de Holding<span class="req">*</span></label>
-                            <input type="text" name="holdingAdresAnders" placeholder="Straat, huisnummer, postcode, plaats">
-                        </div>
+                    <div class="card-note" style="margin-bottom:0;">
+                        Voor deze route wordt geen bestaande holding gebruikt.
                     </div>
                 </div>
             </div>
@@ -499,20 +491,8 @@
                 <div class="card-header"><div class="card-icon">6</div><div class="card-title">Documenten</div></div>
                 <div class="card-body">
 
-                    <div class="field" id="fieldHuurovereenkomst">
-                        <label class="field-label">Huurovereenkomst voor het adres van de Holding BV<span class="req">*</span></label>
-                        <div class="field-hint" style="margin-bottom:8px;">Upload de huurovereenkomst van het vestigingsadres van de holding.</div>
-                        <div class="file-zone" id="huurovereenkomstZone">
-                            <input type="file" id="huurovereenkomstFile" accept=".pdf,.jpg,.jpeg,.png">
-                            <div class="file-icon">📄</div>
-                            <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
-                            <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
-                            <div class="file-selected" id="huurovereenkomstSelected" style="display:none"></div>
-                        </div>
-                    </div>
-
                     <div class="field" id="fieldKvkUittreksel">
-                        <label class="field-label">KVK-uittreksel van de eenmanszaak of VOF<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het KVK-uittreksel van de eenmanszaak of vof<span class="req">*</span></label>
                         <div class="file-zone" id="kvkUittrekselZone">
                             <input type="file" id="kvkUittrekselFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">🏢</div>
@@ -522,19 +502,19 @@
                         </div>
                     </div>
 
-                    <div class="field" id="fieldVerzekering">
-                        <label class="field-label">Verzekeringsbewijs aansprakelijkheidsverzekering aan de Belastingdienst<span class="req">*</span></label>
-                        <div class="file-zone" id="verzekeringZone">
-                            <input type="file" id="verzekeringFile" accept=".pdf,.jpg,.jpeg,.png">
-                            <div class="file-icon">🛡</div>
+                    <div class="field" id="fieldVerzendbewijsIntent">
+                        <label class="field-label">Upload hier het verzendbewijs van de intentieverklaring aan de Belastingdienst<span class="req">*</span></label>
+                        <div class="file-zone" id="verzendbewijsIntentZone">
+                            <input type="file" id="verzendbewijsIntentFile" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="file-icon">📤</div>
                             <div class="file-zone-label">Klik om te kiezen of sleep hiernaartoe</div>
                             <div class="file-zone-sub">PDF, JPG of PNG — max. 10 MB</div>
-                            <div class="file-selected" id="verzekeringSelected" style="display:none"></div>
+                            <div class="file-selected" id="verzendbewijsIntentSelected" style="display:none"></div>
                         </div>
                     </div>
 
                     <div class="field" id="fieldOntvangstIntent">
-                        <label class="field-label">Bewijs van ontvangst van de intentverklaring<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het bewijs van ontvangst van de intentieverklaring<span class="req">*</span></label>
                         <div class="file-zone" id="ontvangstIntentZone">
                             <input type="file" id="ontvangstIntentFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📬</div>
@@ -545,7 +525,7 @@
                     </div>
 
                     <div class="field" id="fieldIntentverklaring">
-                        <label class="field-label">De intentverklaring<span class="req">*</span></label>
+                        <label class="field-label">Upload hier de intentieverklaring<span class="req">*</span></label>
                         <div class="file-zone" id="intentverklaringZone">
                             <input type="file" id="intentverklaringFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📝</div>
@@ -556,7 +536,7 @@
                     </div>
 
                     <div class="field" id="fieldBijlageIntent">
-                        <label class="field-label">Het getekende/ingevulde bijlage bij de intentverklaring<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het geleideformulier bij de intentieverklaring<span class="req">*</span></label>
                         <div class="file-zone" id="bijlageIntentZone">
                             <input type="file" id="bijlageIntentFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📎</div>
@@ -567,8 +547,7 @@
                     </div>
 
                     <div class="field" id="fieldInterim">
-                        <label class="field-label">De interimpbeschrijving<span class="req">*</span></label>
-                        <div class="field-hint" style="margin-bottom:8px;">Voor alle oprichtingsprocessen en aftrekposten. Opgesteld door uw accountant.</div>
+                        <label class="field-label">Upload de inbrengbeschrijving (voor elke oprichtingspersoon afzonderlijk)<span class="req">*</span></label>
                         <div class="file-zone" id="interimZone">
                             <input type="file" id="interimFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📊</div>
@@ -579,8 +558,8 @@
                     </div>
 
                     <div class="field file-optional">
-                        <label class="field-label">VOF UBO-uittreksel <span style="font-weight:400;color:#718096;">(alleen indien sprake is van een VOF)</span></label>
-                        <div class="field-hint" style="margin-bottom:8px;">Niet ouder dan 6 maanden. Op te vragen via de website van de KVK.</div>
+                        <label class="field-label">Indien sprake is van een vof, upload hier het UBO-uittreksel<span style="font-weight:400;color:#718096;"> (niet ouder dan 6 maanden)</span></label>
+                        <div class="field-hint" style="margin-bottom:8px;">Het UBO-uittreksel van de vof kan opgevraagd worden op de website van de KVK.</div>
                         <div class="file-zone" id="uboZone">
                             <input type="file" id="uboFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">👥</div>
@@ -814,7 +793,8 @@ function enablePreviewMode() {
     document.getElementById('stateLoading').style.display = 'none';
     document.getElementById('stateError').style.display = 'none';
     showState('stateForm');
-    document.getElementById('contactSidebar').style.display = 'block';
+    const previewSidebar = document.getElementById('contactSidebar');
+    if (previewSidebar) previewSidebar.style.display = 'block';
 
     const submitBtn = document.getElementById('btnSubmit');
     if (submitBtn) {
@@ -832,7 +812,7 @@ function enablePreviewMode() {
 if (previewMode) {
     enablePreviewMode();
 } else if (!caseId) {
-    showError('Ongeldige of onvolledige link', 'Deze vragenlijst vereist een dossiernummer in de URL. Gebruik de persoonlijke link uit uw e-mail.');
+    enablePreviewMode();
 } else {
     const cached = sessionStorage.getItem('ax_form_' + caseId);
     if (cached) {
@@ -943,7 +923,8 @@ function populateForm(data) {
     }
     document.getElementById('contactEmail').value = data.clientEmail || '';
     showState('stateForm');
-    document.getElementById('contactSidebar').style.display = 'block';
+    const formSidebar = document.getElementById('contactSidebar');
+    if (formSidebar) formSidebar.style.display = 'block';
     updateOnlineStatus();
     loadSavedForm();
 }
@@ -1143,9 +1124,8 @@ function applySavedFormValues(saved) {
     });
 
     const fileMap = {
-        huurovereenkomst: ['huurovereenkomstZone', 'huurovereenkomstSelected'],
         kvkUittreksel: ['kvkUittrekselZone', 'kvkUittrekselSelected'],
-        verzekering: ['verzekeringZone', 'verzekeringSelected'],
+        verzendbewijsIntent: ['verzendbewijsIntentZone', 'verzendbewijsIntentSelected'],
         ontvangstIntent: ['ontvangstIntentZone', 'ontvangstIntentSelected'],
         intentverklaring: ['intentverklaringZone', 'intentverklaringSelected'],
         bijlageIntent: ['bijlageIntentZone', 'bijlageIntentSelected'],
@@ -1224,9 +1204,8 @@ async function saveDraft() {
     try {
         const draftData = collectDraftData();
         const fileSpecs = [
-            ['huurovereenkomstFile','huurovereenkomst'],
             ['kvkUittrekselFile','kvkUittreksel'],
-            ['verzekeringFile','verzekering'],
+            ['verzendbewijsIntentFile','verzendbewijsIntent'],
             ['ontvangstIntentFile','ontvangstIntent'],
             ['intentverklaringFile','intentverklaring'],
             ['bijlageIntentFile','bijlageIntent'],
@@ -1296,9 +1275,8 @@ function checkTaal() {
 // ── File upload ───────────────────────────────
 const MAX_MB = 10;
 const fileZones = [
-    ['huurovereenkomstFile','huurovereenkomstZone','huurovereenkomstSelected'],
     ['kvkUittrekselFile','kvkUittrekselZone','kvkUittrekselSelected'],
-    ['verzekeringFile','verzekeringZone','verzekeringSelected'],
+    ['verzendbewijsIntentFile','verzendbewijsIntentZone','verzendbewijsIntentSelected'],
     ['ontvangstIntentFile','ontvangstIntentZone','ontvangstIntentSelected'],
     ['intentverklaringFile','intentverklaringZone','intentverklaringSelected'],
     ['bijlageIntentFile','bijlageIntentZone','bijlageIntentSelected'],
@@ -1406,7 +1384,7 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
     [
         ['nederlandsTaal','fieldNlTaal'],['engelsTaal','fieldEnTaal'],
         ['sector','fieldSector'],['aandeelhoudersBestuurders','fieldAandeelhoudersBestuurders'],
-        ['holdingAdres','fieldHoldingAdres'],['fiscalist','fieldFiscalist'],
+        ['fiscalist','fieldFiscalist'],
         ['importeert','fieldImport'],['exporteert','fieldExport'],
         ['groothandel','fieldGroothandel'],['personeelOvergang','fieldPersoneelAnders'],
     ].forEach(([name, fieldId]) => {
@@ -1444,9 +1422,8 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
 
     // Required file uploads
     const requiredFiles = [
-        ['huurovereenkomstFile','fieldHuurovereenkomst'],
         ['kvkUittrekselFile','fieldKvkUittreksel'],
-        ['verzekeringFile','fieldVerzekering'],
+        ['verzendbewijsIntentFile','fieldVerzendbewijsIntent'],
         ['ontvangstIntentFile','fieldOntvangstIntent'],
         ['intentverklaringFile','fieldIntentverklaring'],
         ['bijlageIntentFile','fieldBijlageIntent'],
@@ -1456,9 +1433,8 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
     ];
     requiredFiles.forEach(([inputId, fieldId]) => {
         const keyMap = {
-            huurovereenkomstFile: 'huurovereenkomst',
             kvkUittrekselFile: 'kvkUittreksel',
-            verzekeringFile: 'verzekering',
+            verzendbewijsIntentFile: 'verzendbewijsIntent',
             ontvangstIntentFile: 'ontvangstIntent',
             intentverklaringFile: 'intentverklaring',
             bijlageIntentFile: 'bijlageIntent',
@@ -1489,10 +1465,9 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
     btn.textContent = 'Bezig met indienen…';
 
     try {
-        const [huurPayload, kvkPayload, verzPayload, ontvangstPayload, intentPayload, bijlagePayload, interimPayload, datacardPayload, pepPayload, uboPayload, planPayload] = await Promise.all([
-            buildFilePayload('huurovereenkomstFile', 'huurovereenkomst'),
+        const [kvkPayload, verzendbewijsPayload, ontvangstPayload, intentPayload, bijlagePayload, interimPayload, datacardPayload, pepPayload, uboPayload, planPayload] = await Promise.all([
             buildFilePayload('kvkUittrekselFile', 'kvkUittreksel'),
-            buildFilePayload('verzekeringFile', 'verzekering'),
+            buildFilePayload('verzendbewijsIntentFile', 'verzendbewijsIntent'),
             buildFilePayload('ontvangstIntentFile', 'ontvangstIntent'),
             buildFilePayload('intentverklaringFile', 'intentverklaring'),
             buildFilePayload('bijlageIntentFile', 'bijlageIntent'),
@@ -1526,8 +1501,8 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
             aandeelhoudersLijst:    shareholderValidation.rows,
             aandeelhoudersPercentageTotaal: Number(shareholderValidation.total.toFixed(2)),
             aandeelhoudersBestuurders: f.querySelector('[name="aandeelhoudersBestuurders"]:checked').value,
-            holdingAdres:           f.querySelector('[name="holdingAdres"]:checked').value,
-            holdingAdresAnders:     f.querySelector('[name="holdingAdresAnders"]')?.value.trim() || '',
+            holdingAdres:           'zelfde-aannemerszaak',
+            holdingAdresAnders:     '',
             fiscalist:              f.querySelector('[name="fiscalist"]:checked').value,
             fiscalistNaam:          f.querySelector('[name="fiscalistNaam"]')?.value.trim() || '',
             importeert:             f.querySelector('[name="importeert"]:checked').value,
@@ -1539,9 +1514,8 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
             personeelFulltime:      f.querySelector('[name="personeelFulltime"]').value || '0',
             personeelParttime:      f.querySelector('[name="personeelParttime"]').value || '0',
             opmerkingen:            f.querySelector('[name="opmerkingen"]').value.trim(),
-            huurovereenkomst:       huurPayload,
             kvkUittreksel:          kvkPayload,
-            verzekering:            verzPayload,
+            verzendbewijsIntent:    verzendbewijsPayload,
             ontvangstIntent:        ontvangstPayload,
             intentverklaring:       intentPayload,
             bijlageIntent:          bijlagePayload,

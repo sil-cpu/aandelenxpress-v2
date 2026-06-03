@@ -20,6 +20,12 @@ function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function buildVragenlijstUrl(request) {
+    const id = request?.id || '';
+    const product = String(request?.oprichtingType || 'bv').trim();
+    return `${SITE_URL}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}`;
+}
+
 /**
  * Stuur een email. Als TEST_EMAIL in .env staat, wordt het echte 'to'-adres
  * vervangen zodat alle mails naar één testadres gaan.
@@ -236,10 +242,7 @@ async function emailResellerRequestApproved({ request }) {
 /** Klant: opdracht goedgekeurd — link naar vragenlijst + statuspagina met wachtwoord */
 async function emailClientCaseApproved({ request }) {
     const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
-    const formSlug = oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos'
-                   : oprichtingType === 'bv-holding'           ? 'vragenlijst-bv-holding'
-                   : 'vragenlijst';
-    const vragenlijstUrl = `${SITE_URL}/${formSlug}?nr=${id}`;
+    const vragenlijstUrl = buildVragenlijstUrl(request);
     const statusUrl      = `${SITE_URL}/dossier-status?nr=${id}`;
     const wachtwoord     = accessToken || '—';
 

@@ -26,6 +26,26 @@
     .dossier-row-mini:last-child { border-bottom: none; }
     .dossier-row-mini a { font-size: 0.82rem; color: #2B6CB5; text-decoration: none; white-space: nowrap; }
     .dossier-row-mini a:hover { text-decoration: underline; }
+    .branding-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .branding-field { display: flex; flex-direction: column; gap: 6px; }
+    .branding-field.full { grid-column: 1 / -1; }
+    .branding-field label { font-size: 0.76rem; font-weight: 600; color: #8A9BB5; text-transform: uppercase; letter-spacing: .05em; }
+    .branding-field input { height: 40px; border: 1px solid #D9E1ED; border-radius: 10px; padding: 0 12px; font-size: 0.88rem; color: #0F1D3A; }
+    .branding-field input:focus { outline: none; border-color: #2B6CB5; box-shadow: 0 0 0 3px rgba(43,108,181,0.1); }
+    .branding-actions { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+    .branding-upload { margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .branding-upload input[type=file] { font-size: 0.8rem; color: #3f5578; }
+    .branding-url { font-size: 0.82rem; color: #6E7E99; }
+    .branding-msg { margin-top: 10px; font-size: 0.82rem; color: #2D4F7B; }
+    .branding-preview { margin-top: 12px; border: 1px solid #E5ECF7; border-radius: 10px; background: #FAFCFF; padding: 12px; }
+    .preview-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #D8E4F5; border-radius: 999px; padding: 6px 10px; font-size: 0.76rem; font-weight: 600; color: #173A66; background: #fff; }
+    .preview-color { width: 12px; height: 12px; border-radius: 999px; border: 1px solid rgba(0,0,0,.08); }
+    @media (max-width: 1100px) {
+      .detail-page-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .branding-form { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -71,6 +91,8 @@
 
 <script>
 const PARTNER_COLORS = ["#1A3B70","#2A5BA0","#17518A","#1D4477","#0D3060","#2048A8","#153580","#0A2850"];
+let currentUser = null;
+let selectedPartner = null;
 const STATUS_MAP = {
   'pending':     { key:'pending',     text:'Aanvraag ingediend' },
   'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
@@ -91,6 +113,8 @@ function renderPage(p, dossiers) {
   const initials   = p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   const completed  = dossiers.filter(d => d.status === 'complete').length;
   const inProgress = dossiers.filter(d => d.status !== 'complete' && d.status !== 'rejected').length;
+  const isAdmin = currentUser?.type === 'admin';
+  const backHref = isAdmin ? 'admin-dashboard.html#partners' : 'reseller-dashboard.html';
 
   // Monthly chart data – last 6 months
   const now = new Date();
@@ -113,9 +137,9 @@ function renderPage(p, dossiers) {
   document.title = p.name + " – AandelenXpress";
 
   document.getElementById("pageContent").innerHTML = `
-    <a href="admin-dashboard.html#partners" class="back-btn">
+    <a href="${backHref}" class="back-btn">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      Terug naar dashboard
+      Terug
     </a>
 
     <div class="page-title-row">
@@ -168,6 +192,48 @@ function renderPage(p, dossiers) {
               <div class="detail-field"><label>Naam</label><div class="val">${p.contact||"—"}</div></div>
               <div class="detail-field"><label>E-mailadres</label><div class="val"><a href="mailto:${p.email}" style="color:#1A3B70;text-decoration:none;">${p.email||"—"}</a></div></div>
             </div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-head"><div class="detail-card-title">Whitelabel branding</div></div>
+          <div class="detail-card-body">
+            <div class="branding-form">
+              <div class="branding-field full">
+                <label>Slug URL</label>
+                <input id="brandSlug" placeholder="startjouwbv" />
+              </div>
+              <div class="branding-field full">
+                <label>Logo URL</label>
+                <input id="brandLogoUrl" placeholder="https://.../logo.png" />
+              </div>
+              <div class="branding-field">
+                <label>Primaire kleur</label>
+                <input id="brandPrimary" placeholder="#1A3B70" />
+              </div>
+              <div class="branding-field">
+                <label>Secundaire kleur</label>
+                <input id="brandSecondary" placeholder="#F2F6FB" />
+              </div>
+              <div class="branding-field full">
+                <label>Accentkleur</label>
+                <input id="brandAccent" placeholder="#0F1D3A" />
+              </div>
+            </div>
+            <div class="branding-url">Publieke URL: <a id="brandPublicUrl" href="#" target="_blank" rel="noopener">-</a></div>
+              <div class="branding-upload">
+                <input id="brandLogoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" />
+                <button class="btn-ghost" style="height:38px;padding:0 14px;border-radius:9px;font-size:0.82rem;" onclick="uploadBrandLogo();return false;">Logo bestand uploaden</button>
+              </div>
+            <div class="branding-actions">
+              <button class="btn-primary" style="height:38px;padding:0 14px;border-radius:9px;font-size:0.82rem;" onclick="saveBranding()">Branding opslaan</button>
+              <a id="brandOpenLink" class="btn-ghost" style="height:38px;padding:0 14px;border-radius:9px;font-size:0.82rem;display:inline-flex;align-items:center;" href="#" target="_blank" rel="noopener">Open whitelabel pagina</a>
+            </div>
+            <div class="branding-preview">
+              <span class="preview-chip"><span class="preview-color" id="previewPrimary"></span>Primair</span>
+              <span class="preview-chip"><span class="preview-color" id="previewSecondary"></span>Secundair</span>
+              <span class="preview-chip"><span class="preview-color" id="previewAccent"></span>Accent</span>
+            </div>
+            <div id="brandingMsg" class="branding-msg">Nog niet opgeslagen.</div>
           </div>
         </div>
       </div>
@@ -226,6 +292,177 @@ function renderPage(p, dossiers) {
       }
     });
   }
+
+  loadBranding();
+}
+
+function getBrandingPayload() {
+  return {
+    slug: document.getElementById('brandSlug')?.value.trim() || '',
+    logoUrl: document.getElementById('brandLogoUrl')?.value.trim() || '',
+    primaryColor: document.getElementById('brandPrimary')?.value.trim() || '#1A3B70',
+    secondaryColor: document.getElementById('brandSecondary')?.value.trim() || '#F2F6FB',
+    accentColor: document.getElementById('brandAccent')?.value.trim() || '#0F1D3A',
+    company: selectedPartner?.name || ''
+  };
+}
+
+function updateBrandingPreview() {
+  const payload = getBrandingPayload();
+  const slug = (payload.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const origin = location.origin.replace(/\/$/, '');
+  const url = slug ? `${origin}/${slug}` : origin;
+  const anchor = document.getElementById('brandPublicUrl');
+  const openLink = document.getElementById('brandOpenLink');
+  if (anchor) {
+    anchor.textContent = url;
+    anchor.href = url;
+  }
+  if (openLink) openLink.href = url;
+  const p = document.getElementById('previewPrimary');
+  const s = document.getElementById('previewSecondary');
+  const a = document.getElementById('previewAccent');
+  if (p) p.style.background = payload.primaryColor;
+  if (s) s.style.background = payload.secondaryColor;
+  if (a) a.style.background = payload.accentColor;
+}
+
+function bindBrandingInputs() {
+  ['brandSlug', 'brandLogoUrl', 'brandPrimary', 'brandSecondary', 'brandAccent'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateBrandingPreview);
+  });
+}
+
+async function loadBranding() {
+  if (!selectedPartner?.email) return;
+  try {
+    const r = await fetch(`/api/reseller-branding/${encodeURIComponent(selectedPartner.email)}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error('Branding kon niet worden geladen');
+    const b = await r.json();
+    const map = {
+      brandSlug: b.slug || '',
+      brandLogoUrl: b.logoUrl || '',
+      brandPrimary: b.primaryColor || '#1A3B70',
+      brandSecondary: b.secondaryColor || '#F2F6FB',
+      brandAccent: b.accentColor || '#0F1D3A'
+    };
+    Object.keys(map).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = map[id];
+    });
+    updateBrandingPreview();
+    bindBrandingInputs();
+    const msg = document.getElementById('brandingMsg');
+    if (msg) msg.textContent = 'Branding geladen.';
+  } catch (e) {
+    const msg = document.getElementById('brandingMsg');
+    if (msg) msg.textContent = e.message || 'Branding laden mislukt.';
+  }
+}
+
+async function saveBranding() {
+  if (!selectedPartner?.email) return;
+  const msg = document.getElementById('brandingMsg');
+  if (msg) msg.textContent = 'Opslaan...';
+  try {
+    const fileInput = document.getElementById('brandLogoFile');
+    const logoFile = fileInput?.files?.[0];
+    if (logoFile) {
+      const base64Data = await readFileAsDataUrl(logoFile);
+      const uploadRes = await fetch(`/api/reseller-branding/${encodeURIComponent(selectedPartner.email)}/logo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: logoFile.name,
+          mimeType: logoFile.type,
+          base64Data
+        })
+      });
+      const uploadOut = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok) throw new Error(uploadOut.error || 'Logo upload mislukt');
+
+      const logoInput = document.getElementById('brandLogoUrl');
+      if (logoInput) logoInput.value = uploadOut.logoUrl || logoInput.value;
+      if (fileInput) fileInput.value = '';
+    }
+
+    const payload = getBrandingPayload();
+    const r = await fetch(`/api/reseller-branding/${encodeURIComponent(selectedPartner.email)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(out.error || 'Opslaan mislukt');
+
+    const map = {
+      brandSlug: out.slug || '',
+      brandLogoUrl: out.logoUrl || '',
+      brandPrimary: out.primaryColor || '#1A3B70',
+      brandSecondary: out.secondaryColor || '#F2F6FB',
+      brandAccent: out.accentColor || '#0F1D3A'
+    };
+    Object.keys(map).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = map[id];
+    });
+    updateBrandingPreview();
+    if (msg) msg.textContent = 'Branding opgeslagen.';
+  } catch (e) {
+    if (msg) msg.textContent = e.message || 'Opslaan mislukt.';
+  }
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Bestand lezen mislukt'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadBrandLogo() {
+  if (!selectedPartner?.email) return;
+  const fileInput = document.getElementById('brandLogoFile');
+  const file = fileInput?.files?.[0];
+  const msg = document.getElementById('brandingMsg');
+  if (!file) {
+    if (msg) msg.textContent = 'Kies eerst een logo-bestand.';
+    return;
+  }
+  if (!/^image\//.test(file.type || '')) {
+    if (msg) msg.textContent = 'Alleen afbeelding-bestanden zijn toegestaan.';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    if (msg) msg.textContent = 'Bestand is te groot (max 5MB).';
+    return;
+  }
+
+  if (msg) msg.textContent = 'Logo uploaden...';
+  try {
+    const base64Data = await readFileAsDataUrl(file);
+    const r = await fetch(`/api/reseller-branding/${encodeURIComponent(selectedPartner.email)}/logo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        mimeType: file.type,
+        base64Data
+      })
+    });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(out.error || 'Upload mislukt');
+
+    const logoInput = document.getElementById('brandLogoUrl');
+    if (logoInput) logoInput.value = out.logoUrl || '';
+    updateBrandingPreview();
+    if (msg) msg.textContent = 'Logo geupload. Klik nu op "Branding opslaan".';
+  } catch (e) {
+    if (msg) msg.textContent = e.message || 'Upload mislukt.';
+  }
 }
 
 function buildSidebar(role) {
@@ -264,13 +501,22 @@ async function init() {
     const r = await fetch("/api/user");
     if (!r.ok) { location.href = "/login.html"; return; }
     const u = await r.json();
-    if (u.type !== "admin") { location.href = "/reseller-dashboard.html"; return; }
+    if (u.type !== 'admin' && u.type !== 'reseller') { location.href = '/login.html'; return; }
+    currentUser = u;
     document.getElementById("userName").textContent = u.name;
     document.getElementById("userEmail").textContent = u.email;
     document.getElementById("userInitials").textContent = u.name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
-    buildSidebar(u.type);
+    if (u.type === 'admin') {
+      buildSidebar(u.type);
+    } else {
+      document.getElementById('sidebarNav').innerHTML = '<a href="reseller-dashboard.html" class="dash-nav-item">Dashboard</a>';
+      document.getElementById('topbarTitle').textContent = 'Mijn partnerprofiel';
+      const back = document.querySelector('.dash-topbar .btn-ghost');
+      if (back) back.href = 'reseller-dashboard.html';
+      document.getElementById('sidebar').classList.add('sidebar-collapsed');
+    }
 
-    if (!emailParam) {
+    if (u.type === 'admin' && !emailParam) {
       document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Partner niet gevonden.</p><a href="admin-dashboard.html" class="btn-primary" style="margin-top:16px;">Terug naar dashboard</a></div>`;
       return;
     }
@@ -283,11 +529,17 @@ async function init() {
     const allRequests = reqRes.ok   ? await reqRes.json()   : [];
 
     // Match by email (new links) or company/name (old ?name= links)
-    let user = users.find(x => x.email === emailParam);
-    if (!user) user = users.find(x => (x.company || x.name) === emailParam);
+    let user;
+    if (u.type === 'admin') {
+      user = users.find(x => x.email === emailParam);
+      if (!user) user = users.find(x => (x.company || x.name) === emailParam);
+    } else {
+      user = users.find(x => x.email === u.email);
+    }
 
     if (!user) {
-      document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Partner niet gevonden.</p><a href="admin-dashboard.html" class="btn-primary" style="margin-top:16px;">Terug naar dashboard</a></div>`;
+      const backHref = u.type === 'admin' ? 'admin-dashboard.html' : 'reseller-dashboard.html';
+      document.getElementById("pageContent").innerHTML = `<div class="empty-state" style="padding:80px 32px;"><p>Partner niet gevonden.</p><a href="${backHref}" class="btn-primary" style="margin-top:16px;">Terug</a></div>`;
       return;
     }
 
@@ -301,6 +553,7 @@ async function init() {
       dossiers: dossiers.length,
       color:    PARTNER_COLORS[idx % PARTNER_COLORS.length]
     };
+    selectedPartner = p;
 
     renderPage(p, dossiers);
   } catch(e) { location.href = "/login.html"; }

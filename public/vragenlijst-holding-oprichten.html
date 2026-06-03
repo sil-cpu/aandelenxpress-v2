@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vragenlijst BV Oprichting – AandelenXpress</title>
+    <title>Holding Oprichten – Vragenlijst</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -488,7 +488,7 @@
             <div class="header-logo" id="headerLogo">AX</div>
             <div class="header-info">
                 <div class="header-partner" id="headerPartner"></div>
-                <div class="header-title" id="headerTitle">BV Oprichting — Vragenlijst</div>
+                <div class="header-title" id="headerTitle">Holding Oprichten — Vragenlijst</div>
                 <div class="header-sub" id="headerSub"></div>
                 <div class="ref-badge" id="headerRef"></div>
             </div>
@@ -498,6 +498,9 @@
         <div class="alert">
             Vul alle verplichte velden in (gemarkeerd met <span style="color:#E03D3D; font-weight:700">*</span>). 
             Duurt gemiddeld <strong>10–15 minuten</strong>. Uw gegevens worden veilig verwerkt.
+        </div>
+        <div class="alert" style="background:#EAF3FF;border-color:#9EC5FF;border-left-color:#1A3B70;color:#1A3B70;">
+            Productflow: <strong>Holding oprichten</strong>. Deze vragenlijst is alleen voor een losse holding en niet voor een werkmaatschappij.
         </div>
 
         <form id="vragenlijstForm" novalidate>
@@ -817,7 +820,8 @@ function enablePreviewMode() {
     document.getElementById('stateLoading').style.display = 'none';
     document.getElementById('stateError').style.display = 'none';
     showState('stateForm');
-    document.getElementById('contactSidebar').style.display = 'block';
+    const previewSidebar = document.getElementById('contactSidebar');
+    if (previewSidebar) previewSidebar.style.display = 'block';
 
     const submitBtn = document.getElementById('btnSubmit');
     if (submitBtn) {
@@ -835,7 +839,7 @@ function enablePreviewMode() {
 if (previewMode) {
     enablePreviewMode();
 } else if (!caseId) {
-    showError('Ongeldige of onvolledige link', 'Deze vragenlijst vereist een dossiernummer in de URL. Gebruik de persoonlijke link uit uw e-mail.');
+    enablePreviewMode();
 } else {
     const cached = sessionStorage.getItem('ax_form_' + caseId);
     if (cached) {
@@ -957,7 +961,8 @@ function populateForm(data) {
     }
     document.getElementById('contactEmail').value = data.clientEmail || '';
     showState('stateForm');
-    document.getElementById('contactSidebar').style.display = 'block';
+    const formSidebar = document.getElementById('contactSidebar');
+    if (formSidebar) formSidebar.style.display = 'block';
     updateOnlineStatus();
     loadSavedForm();
 }

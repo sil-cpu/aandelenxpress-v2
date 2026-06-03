@@ -886,6 +886,51 @@ const todoItems = {
 const params = new URLSearchParams(window.location.search);
 const dossierNr = params.get('nr');
 const tokenFromUrl = params.get('token');
+let activeBranding = null;
+
+function applyBranding(branding) {
+    activeBranding = branding || null;
+    const primary = branding?.primaryColor || '#1A3B70';
+    const secondary = branding?.secondaryColor || '#F0F9F7';
+    const accent = branding?.accentColor || '#0F1D3A';
+
+    document.querySelectorAll('.submit-btn').forEach(btn => {
+        btn.style.background = primary;
+    });
+    const gateBtn = document.querySelector('#passwordGate button[onclick="submitPassword()"]');
+    if (gateBtn) gateBtn.style.background = primary;
+
+    const resendBtn = document.getElementById('resendBtn');
+    if (resendBtn) resendBtn.style.color = primary;
+
+    const logo = document.getElementById('partnerLogo');
+    if (logo) {
+        if (branding?.logoUrl) {
+            logo.innerHTML = `<img src="${branding.logoUrl}" alt="Partner logo" style="width:100%;height:100%;object-fit:cover;border-radius:12px;"/>`;
+            logo.style.background = '#fff';
+            logo.style.padding = '4px';
+        } else {
+            logo.style.background = primary;
+            logo.style.padding = '0';
+        }
+    }
+
+    const badge = document.getElementById('statusBadge');
+    if (badge) badge.style.background = primary;
+    const currentStatus = document.querySelector('.current-status');
+    if (currentStatus) {
+        currentStatus.style.background = `linear-gradient(135deg, ${secondary} 0%, #ffffff 100%)`;
+        currentStatus.style.borderColor = primary + '44';
+    }
+    document.querySelectorAll('.todo-icon').forEach(el => {
+        el.style.background = primary;
+    });
+    document.querySelectorAll('a').forEach(a => {
+        if (!a.closest('.ticket-modal')) a.style.color = primary;
+    });
+    const aax = document.querySelector('.aaxp-logo');
+    if (aax) aax.style.color = accent;
+}
 
 function getStoredToken() {
     try { return localStorage.getItem('ax_token_' + dossierNr); } catch(e) { return null; }
@@ -931,14 +976,16 @@ function showDossier(dossier) {
     });
 
     document.title = `${dossier.name} \u2013 Dossier Status`;
+    applyBranding(dossier.branding || null);
 
     // Partner logo (initials from partner name or dossier name)
     const logoDiv = document.getElementById('partnerLogo');
     const initials = dossier.partner !== '\u2013' ? dossier.partner.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : dossier.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    logoDiv.textContent = initials;
-    logoDiv.style.background = '#1A3B70';
+    if (!activeBranding?.logoUrl) {
+        logoDiv.textContent = initials;
+    }
 
-    document.getElementById('partnerName').textContent = dossier.partner !== '\u2013' ? dossier.partner : 'AandelenXpress';
+    document.getElementById('partnerName').textContent = activeBranding?.company || (dossier.partner !== '\u2013' ? dossier.partner : 'AandelenXpress');
     document.getElementById('dossierTitle').textContent = dossier.name;
     document.getElementById('dossierNumber').textContent = 'Dossier nummer: ' + dossier.id;
 
@@ -970,7 +1017,7 @@ async function loadWithToken(token) {
 }
 
 function submitPassword() {
-    const val = document.getElementById('tokenInput').value.trim().toUpperCase();
+    const val = document.getElementById('tokenInput').value.trim();
     if (!val) return;
     loadWithToken(val);
 }
@@ -1013,7 +1060,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
     // Check for token in URL (auto-login from email link)
-    if (tokenFromUrl) { loadWithToken(tokenFromUrl.toUpperCase()); return; }
+    if (tokenFromUrl) { loadWithToken(tokenFromUrl); return; }
     // Check cached token
     const cached = getStoredToken();
     if (cached) { loadWithToken(cached); return; }

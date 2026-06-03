@@ -18,3 +18,5 @@ build/
 
 # Klantdata (lokale persistentie)
 data/
+.vercel
+.env*.local

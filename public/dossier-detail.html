@@ -118,6 +118,85 @@
     .edit-close { border:none; background:none; cursor:pointer; color:#94A3B8; font-size:1.1rem; }
     .edit-close:hover { color:#0F1D3A; }
     .edit-actions { display:flex; justify-content:flex-end; gap:10px; padding:14px 20px; border-top:1px solid #EEF1F7; }
+
+    @media (max-width: 1180px) {
+      .detail-2col { grid-template-columns: 1fr; min-width: 0; }
+      .detail-2col > * { min-width: 0; }
+      .detail-left-col,
+      .activity-panel { min-width: 0; }
+      .activity-panel { position: static; top: auto; }
+      .act-feed { max-height: 320px; }
+    }
+
+    @media (max-width: 900px) {
+      .detail-page-grid,
+      .detail-field-grid { grid-template-columns: 1fr; gap: 12px; }
+
+      .dash-content { padding-left: 12px; padding-right: 12px; }
+      .detail-card-head,
+      .detail-card-body { padding-left: 16px; padding-right: 16px; }
+
+      .page-title-row { flex-direction: column; gap: 10px; margin-bottom: 18px; }
+      .page-title { font-size: 1.15rem; }
+      .page-subtitle { font-size: 0.8rem; line-height: 1.4; }
+
+      .action-bar { padding: 10px 12px; gap: 10px; }
+      .ab-group { width: 100%; flex-wrap: wrap; }
+      .ab-label { min-width: 90px; }
+      .ab-select { flex: 1; min-width: 0; width: 100%; }
+      .ab-divider { display: none; }
+      .action-bar > div[style*="margin-left:auto"] { margin-left: 0 !important; width: 100%; }
+      .action-bar > div[style*="margin-left:auto"] .btn-acties { width: 100%; justify-content: center; }
+      .acties-wrap { width: 100%; }
+      .acties-dropdown { left: 0; right: 0; min-width: 0; }
+
+      .detail-card .process-timeline {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+      }
+      .detail-card .process-timeline > div { min-width: 104px; }
+
+      .doc-item {
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .doc-meta { width: 100%; }
+      .doc-item > span[style*="min-width:190px"] {
+        min-width: 0 !important;
+        width: 100%;
+        text-align: left !important;
+      }
+      .doc-item .btn-ghost { margin-left: 0 !important; }
+
+      .em-tpl-bar,
+      .em-header,
+      .em-body,
+      .em-footer,
+      .edit-head,
+      .edit-body,
+      .edit-actions { padding-left: 14px; padding-right: 14px; }
+
+      .em-footer,
+      .edit-actions {
+        flex-direction: column;
+      }
+      .em-footer button,
+      .edit-actions button { width: 100%; }
+    }
+
+    @media (max-width: 560px) {
+      .back-btn { margin-bottom: 14px; }
+      .detail-card-head.with-action { flex-direction: column; align-items: flex-start; }
+      .compact-access-label { min-width: 70px; }
+      .compact-access-val { font-size: 0.72rem; }
+      .act-compose { flex-direction: column; align-items: stretch; }
+      .act-send-btn { width: 100%; justify-content: center; }
+      .act-feed { max-height: 260px; }
+    }
   </style>
 </head>
 <body>
@@ -127,6 +206,10 @@
   <aside class="dash-sidebar" id="sidebar">
     <div class="dash-logo">
       <img src="AandelenXpress logo.avif" alt="AandelenXpress" class="dash-logo-img">
+      <button class="dash-mobile-menu-btn" type="button" aria-label="Menu openen" aria-expanded="false">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Menu
+      </button>
     </div>
     <nav class="dash-nav" id="sidebarNav"></nav>
     <div class="dash-sidebar-foot">
@@ -451,7 +534,7 @@ function renderPricingCard(d) {
 
 function renderCompactAccessSection(d, role) {
   const statusUrl = `${window.location.origin}/dossier-status?nr=${d.dossierNr}`;
-  const vragenlijstUrl = `${window.location.origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}`;
+  const vragenlijstUrl = `${window.location.origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}`;
   return `
     <div class="detail-card">
       <div class="detail-card-head"><div class="detail-card-title">Klant toegang</div></div>
@@ -533,6 +616,7 @@ function renderDocumentsCard(d) {
   const q = currentVragenlijstData || {};
   const caseId = encodeURIComponent(d.dossierNr || '');
   const vraagFileDefs = [
+    ['oprichtingsDocument', 'oprichtingsdocument', 'Oprichtingsdocument (gegenereerd PDF)'],
     ['datacardBestand', 'datacard', 'Datacard (vragenlijst)'],
     ['pepBestand', 'pep', 'PEP-verklaring (vragenlijst)'],
     ['huurovereenkomst', 'huurovereenkomst', 'Huurovereenkomst'],
@@ -1034,6 +1118,43 @@ function buildSidebar(role) {
   document.getElementById("sidebarNav").innerHTML = html;
 }
 
+function setMobileMenuOpen(open) {
+  const sidebar = document.getElementById('sidebar');
+  const button = document.querySelector('.dash-mobile-menu-btn');
+  if (!sidebar || !button) return;
+  sidebar.classList.toggle('menu-open', open);
+  button.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function initMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const button = document.querySelector('.dash-mobile-menu-btn');
+  const nav = document.getElementById('sidebarNav');
+  if (!sidebar || !button || !nav) return;
+
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setMobileMenuOpen(!sidebar.classList.contains('menu-open'));
+  });
+
+  nav.addEventListener('click', (e) => {
+    const link = e.target.closest('.dash-nav-item');
+    if (!link) return;
+    if (window.innerWidth <= 1024) setMobileMenuOpen(false);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 1024) return;
+    if (!sidebar.classList.contains('menu-open')) return;
+    if (sidebar.contains(e.target)) return;
+    setMobileMenuOpen(false);
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1024) setMobileMenuOpen(false);
+  });
+}
+
 async function submitTicket(dossierNr) {
   const subject = document.getElementById("ticketSubject")?.value?.trim();
   const message = document.getElementById("ticketMessage")?.value?.trim();
@@ -1121,7 +1242,7 @@ function getStatusEmailTemplate(status, d) {
   const naam = escHtml(d.name);
   const origin = window.location.origin;
   const statusUrl = `${origin}/dossier-status?nr=${d.dossierNr}`;
-  const vragenlijstUrl = `${origin}/${d.oprichtingType === 'eenmanszaak-omzetten' ? 'vragenlijst-geruisloos' : d.oprichtingType === 'bv-holding' ? 'vragenlijst-bv-holding' : 'vragenlijst'}?nr=${d.dossierNr}`;
+  const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}`;
   const code = d.accessToken || '—';
   const t = {
     vragenlijst: {
@@ -1479,7 +1600,17 @@ async function reviewVragenlijst(action) {
     feedback = String(fb?.value || '').trim();
     if (!feedback) return alert('Voer feedback in om de vragenlijst af te keuren.');
   }
+  const approveBtn = document.getElementById('vlApproveBtn');
+  const rejectBtn = document.getElementById('vlRejectBtn');
+  const originalApproveText = approveBtn ? approveBtn.textContent : '';
+  const originalRejectText = rejectBtn ? rejectBtn.textContent : '';
   try {
+    if (approveBtn) {
+      approveBtn.disabled = true;
+      approveBtn.textContent = action === 'approve' ? 'PDF genereren...' : 'Bezig...';
+    }
+    if (rejectBtn) rejectBtn.disabled = true;
+
     const r = await fetch(`/api/vragenlijsten/${encodeURIComponent(currentDossier.dossierNr)}/review`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -1494,13 +1625,39 @@ async function reviewVragenlijst(action) {
       currentDossier.statusText = 'Betaling';
     }
     vlRejectMode = false;
-    currentVragenlijstData = { ...(currentVragenlijstData || {}), reviewStatus: action === 'approve' ? 'approved' : 'rejected', reviewFeedback: feedback };
+    currentVragenlijstData = {
+      ...(currentVragenlijstData || {}),
+      reviewStatus: action === 'approve' ? 'approved' : 'rejected',
+      reviewFeedback: feedback,
+      ...(action === 'approve' ? {
+        oprichtingsDocument: { naam: data.generatedPdfName || 'oprichtingsdocument.pdf' },
+        oprichtingsDocumentNaam: data.generatedPdfName || 'oprichtingsdocument.pdf',
+        oprichtingsDocumentIngediend: true
+      } : {})
+    };
     renderPage(currentDossier, currentRole);
     if (currentRole === 'admin') renderActionBar(currentDossier);
     closeVragenlijstModal();
+    if (action === 'approve' && data.generatedPdfDownloadUrl) {
+      const link = document.createElement('a');
+      link.href = data.generatedPdfDownloadUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
     showToast(action === 'approve' ? 'Vragenlijst goedgekeurd' : 'Vragenlijst afgekeurd en teruggestuurd');
   } catch (e) {
     alert('Fout: ' + e.message);
+  } finally {
+    if (approveBtn) {
+      approveBtn.disabled = false;
+      approveBtn.textContent = originalApproveText || 'Goedkeuren';
+    }
+    if (rejectBtn) {
+      rejectBtn.disabled = false;
+      rejectBtn.textContent = originalRejectText || 'Afkeuren';
+    }
   }
 }
 
@@ -1688,6 +1845,7 @@ function logout() {
 }
 
 initEmailEditor();
+initMobileMenu();
 init();
 </script>
 </body>
