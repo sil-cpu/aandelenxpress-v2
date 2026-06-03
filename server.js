@@ -485,6 +485,9 @@ app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.ht
 app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
 app.get('/reset-password.html', (req, res) => res.redirect(301, '/reset-password'));
+app.get('/privacybeleid', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacybeleid.html')));
+app.get('/algemene-voorwaarden', (req, res) => res.sendFile(path.join(__dirname, 'public', 'algemene-voorwaarden.html')));
+app.get('/klachtenprocedure', (req, res) => res.sendFile(path.join(__dirname, 'public', 'klachtenprocedure.html')));
 
 // ── Diagnostic ─────────────────────────────────────────────────────────────
 app.get('/_debug/info', (req, res) => {
