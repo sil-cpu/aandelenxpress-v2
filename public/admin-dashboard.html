@@ -1203,13 +1203,47 @@ async function quickChangeStatus(nr, status) {
       body: JSON.stringify({ status })
     });
     if (r.ok) {
-      const statusTextMap = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst verzonden', 'vl-ontvangen':'Vragenlijst ontvangen', 'vl-controle':'Documentcontrole', betaling:'Betaling', 'notary-prep':'Voorbereiding notaris', notary:'Notariële Akte', kvk:'KvK inschrijving', bank:'Bankrekening', complete:'Voltooid', rejected:'Afgewezen' };
       const d = allDossiersData.find(x => x.dossierNr === nr);
-      if (d) { d.statusKey = status; d.statusText = statusTextMap[status] || status; }
+      if (d) { d.statusKey = status; d.statusText = STATUS_BADGE_MAP[status]?.label || status; }
       applyAllFilters();
     } else { alert('Status wijzigen mislukt.'); applyAllFilters(); }
   } catch(e) { console.error('quickChangeStatus error:', e); applyAllFilters(); }
 }
+
+const STATUS_BADGE_MAP = {
+  'pending':      { css: 'badge-pending',      label: 'Aanvraag ingediend' },
+  'vragenlijst':  { css: 'badge-vragenlijst',  label: 'Vragenlijst verzonden' },
+  'vl-ontvangen': { css: 'badge-vl-ontvangen', label: 'Vragenlijst ontvangen' },
+  'vl-controle':  { css: 'badge-vl-controle',  label: 'Documentcontrole' },
+  'betaling':     { css: 'badge-betaling',      label: 'Betaling' },
+  'notary-prep':  { css: 'badge-notary-prep',   label: 'Voorbereiding notaris' },
+  'notary':       { css: 'badge-notary',        label: 'Notariële Akte' },
+  'kvk':          { css: 'badge-kvk',           label: 'KvK inschrijving' },
+  'bank':         { css: 'badge-bank',          label: 'Bankrekening' },
+  'complete':     { css: 'badge-complete',      label: 'Voltooid' },
+  'rejected':     { css: 'badge-rejected',      label: 'Afgewezen' },
+};
+
+function toggleStatusDropdown(nr, e) {
+  e.stopPropagation();
+  const menu = document.getElementById('status-dd-' + nr);
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  closeAllStatusDropdowns();
+  if (!isOpen) menu.style.display = 'block';
+}
+
+function closeAllStatusDropdowns() {
+  document.querySelectorAll('.status-dd-menu').forEach(m => m.style.display = 'none');
+}
+
+async function selectStatusFromDropdown(nr, status, e) {
+  e.stopPropagation();
+  closeAllStatusDropdowns();
+  await quickChangeStatus(nr, status);
+}
+
+document.addEventListener('click', closeAllStatusDropdowns);
 
 let partners = [];
 const PARTNER_COLORS = ["#1A3B70","#2A5BA0","#17518A","#1D4477","#0D3060","#2048A8","#153580","#0A2850"];
@@ -1289,25 +1323,25 @@ function renderTable(id, rows, withActions = false) {
         </div>
       </td>` : '';
     const priceHint = d.pricingTotal ? `<div style="font-size:0.78rem;color:#2B6CB5;font-weight:600;margin-top:2px;">${fmtCurrency(d.pricingTotal)}</div>` : '';
+    const statusBadgeClass = STATUS_BADGE_MAP[d.statusKey]?.css || 'badge-pending';
+    const statusBadgeLabel = STATUS_BADGE_MAP[d.statusKey]?.label || d.statusText || d.statusKey;
+    const statusOptions = Object.entries(STATUS_BADGE_MAP).map(([key, cfg]) =>
+      `<div class="status-dd-opt" data-key="${key}" onclick="selectStatusFromDropdown('${d.dossierNr}','${key}',event)">
+        <span class="badge ${cfg.css}" style="cursor:pointer;width:100%;justify-content:flex-start;">${cfg.label}</span>
+      </div>`
+    ).join('');
     return `
     <tr class="dossier-row${isArchived ? ' row-archived' : ''}" data-idx="${idx}">
       <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a>${priceHint}</td>
       <td class="td-muted">${d.type}</td>
       <td class="td-muted">${d.partner}</td>
-      <td onclick="event.stopPropagation()">
-        <select class="assign-select" style="font-size:0.8rem;" onchange="quickChangeStatus('${d.dossierNr}', this.value)">
-          <option value="pending" ${d.statusKey==='pending'?'selected':''}>Aanvraag ingediend</option>
-          <option value="vragenlijst" ${d.statusKey==='vragenlijst'?'selected':''}>Vragenlijst verzonden</option>
-          <option value="vl-ontvangen" ${d.statusKey==='vl-ontvangen'?'selected':''}>Vragenlijst ontvangen</option>
-          <option value="vl-controle" ${d.statusKey==='vl-controle'?'selected':''}>Documentcontrole</option>
-          <option value="betaling" ${d.statusKey==='betaling'?'selected':''}>Betaling</option>
-          <option value="notary-prep" ${d.statusKey==='notary-prep'?'selected':''}>Voorbereiding notaris</option>
-          <option value="notary" ${d.statusKey==='notary'?'selected':''}>Notariële Akte</option>
-          <option value="kvk" ${d.statusKey==='kvk'?'selected':''}>KvK inschrijving</option>
-          <option value="bank" ${d.statusKey==='bank'?'selected':''}>Bankrekening</option>
-          <option value="complete" ${d.statusKey==='complete'?'selected':''}>Voltooid</option>
-          <option value="rejected" ${d.statusKey==='rejected'?'selected':''}>Afgewezen</option>
-        </select>
+      <td onclick="event.stopPropagation()" style="position:relative;">
+        <span class="badge ${statusBadgeClass}" style="cursor:pointer;user-select:none;padding-right:8px;" onclick="toggleStatusDropdown('${d.dossierNr}',event)">
+          ${statusBadgeLabel} <span style="font-size:0.65rem;opacity:0.7;margin-left:2px;">▾</span>
+        </span>
+        <div class="status-dd-menu" id="status-dd-${d.dossierNr}" style="display:none;">
+          ${statusOptions}
+        </div>
       </td>
       <td class="td-muted" style="white-space:nowrap;">${fmtDate(d.date)}</td>
       <td class="td-muted">${d.kvk || '–'}</td>

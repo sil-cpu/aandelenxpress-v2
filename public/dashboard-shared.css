@@ -503,6 +503,38 @@ body {
     max-width: 160px;
 }
 
+/* Status badge click-dropdown */
+.status-dd-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    background: #fff;
+    border: 1px solid #d0dced;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(20,40,80,.18);
+    z-index: 400;
+    min-width: 210px;
+    overflow: hidden;
+    padding: 4px 0;
+}
+
+.status-dd-opt {
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.status-dd-opt:hover {
+    background: #f5f8ff;
+}
+
+.status-dd-opt .badge {
+    pointer-events: none;
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 6px;
+}
+
 /* Wrap card content for horizontal scroll on small screens */
 .table-scroll-wrap { overflow-x: auto; }
 
@@ -601,6 +633,26 @@ body {
 .badge-rejected {
     background: #FFF5F5;
     color: #C92A2A;
+}
+
+.badge-vl-ontvangen {
+    background: #E8F4FD;
+    color: #1565C0;
+}
+
+.badge-vl-controle {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+.badge-notary-prep {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.badge-bank {
+    background: #E0F2F1;
+    color: #00695C;
 }
 
 /* ===== PROGRESS BAR ===== */
