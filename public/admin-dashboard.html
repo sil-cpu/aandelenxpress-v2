@@ -31,6 +31,32 @@
       .btn-trash-empty { background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030; }
       .btn-trash-empty:hover { background:#FED7D7; }
       .trash-header-icon { width:18px;height:18px;color:#C53030; }
+      /* Email modal */
+      .em-overlay { display:none;position:fixed;inset:0;background:rgba(10,20,50,.45);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center; }
+      .em-overlay.open { display:flex; }
+      .em-modal { background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.2);width:580px;max-width:calc(100vw - 32px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden; }
+      .em-header { display:flex;align-items:center;padding:18px 24px 14px;border-bottom:1px solid #EEF2FF; }
+      .em-header h3 { margin:0;font-size:1rem;color:#0F1D3A;flex:1;font-weight:600; }
+      .em-close { background:none;border:none;font-size:1.1rem;cursor:pointer;color:#94A3B8;padding:4px 7px;border-radius:6px;line-height:1; }
+      .em-close:hover { background:#F0F4FF;color:#0F1D3A; }
+      .em-body { padding:20px 24px;flex:1;overflow-y:auto; }
+      .em-field { margin-bottom:15px; }
+      .em-field label { display:block;font-size:.73rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px; }
+      .em-field input { width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #DDE5F4;border-radius:8px;font-size:.9rem;font-family:inherit;color:#0F1D3A; }
+      .em-field input:focus { outline:none;border-color:#2B6CB5;box-shadow:0 0 0 3px rgba(43,108,181,.12); }
+      .em-editor-wrap { border:1px solid #DDE5F4;border-radius:8px;overflow:hidden; }
+      .em-editor-wrap:focus-within { border-color:#2B6CB5;box-shadow:0 0 0 3px rgba(43,108,181,.12); }
+      .em-toolbar { display:flex;align-items:center;gap:2px;padding:6px 8px;background:#F8FAFD;border-bottom:1px solid #EEF2FF; }
+      .em-tb-btn { width:30px;height:28px;border:none;background:none;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#0F1D3A;padding:0; }
+      .em-tb-btn:hover { background:#EBF2FF; }
+      .em-tb-sep { width:1px;height:18px;background:#DDE5F4;margin:0 3px; }
+      .em-editor { padding:10px 12px;min-height:130px;font-size:.9rem;font-family:inherit;color:#0F1D3A;outline:none;line-height:1.75; }
+      .em-editor:empty:before { content:attr(placeholder);color:#94A3B8;pointer-events:none; }
+      .em-footer { display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #EEF2FF; }
+      .em-footer button { padding:10px 22px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;border:none; }
+      .em-cancel { background:#F0F4FF;color:#0F1D3A;border:1px solid #DDE5F4 !important; }
+      .em-send { background:#1A3B70;color:#fff; }
+      .em-send:hover { background:#0F2658; }
     </style>
 </head>
 <body>
@@ -1235,12 +1261,6 @@ function toggleStatusDropdown(nr, e) {
 
 function closeAllStatusDropdowns() {
   document.querySelectorAll('.status-dd-menu').forEach(m => m.style.display = 'none');
-}
-
-async function selectStatusFromDropdown(nr, status, e) {
-  e.stopPropagation();
-  closeAllStatusDropdowns();
-  await quickChangeStatus(nr, status);
 }
 
 document.addEventListener('click', closeAllStatusDropdowns);
@@ -2704,6 +2724,117 @@ loadPartners();
 loadPendingBadge();
 loadResellerRequests();
 document.addEventListener('click', closeAllDossierMenus);
+
+// ── Email modal (status change) ─────────────────────────────
+let adminPendingStatus = null; // { nr, newStatus, clientEmail, name }
+
+function adminGetStatusEmailTemplate(status, d) {
+  const naam = (d.name || d.bedrijfsnaam || d.dossierNr || '');
+  const origin = window.location.origin;
+  const statusUrl = `${origin}/dossier-status?nr=${d.dossierNr}`;
+  const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=bv-holding`;
+  const code = d.accessToken || '—';
+  const t = {
+    vragenlijst: { subject: `Uw BV-aanvraag is geaccepteerd — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
+    'vl-ontvangen': { subject: `Vragenlijst ontvangen — ${naam}`, body: `Beste klant,\n\nWij hebben uw vragenlijst ontvangen en nemen deze in behandeling.\n\nStatuspagina: ${statusUrl}` },
+    'vl-controle': { subject: `Documentcontrole gestart — ${naam}`, body: `Beste klant,\n\nWij controleren momenteel de ingediende documenten voor de oprichting van ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    betaling: { subject: `Betalingsverzoek — BV-oprichting ${naam}`, body: `Beste klant,\n\nUw vragenlijst is verwerkt. De volgende stap is de betaling voor de oprichting van ${naam}.\n\nU ontvangt binnenkort een factuur. Na ontvangst van de betaling gaan wij direct door met de verdere afhandeling.\n\nStatuspagina: ${statusUrl}` },
+    'notary-prep': { subject: `Voorbereiding notaris gestart — ${naam}`, body: `Beste klant,\n\nDe betaling is ontvangen. Wij bereiden de notariële akte voor de oprichting van ${naam} voor.\n\nStatuspagina: ${statusUrl}` },
+    notary: { subject: `Notariële akte ter ondertekening — ${naam}`, body: `Beste klant,\n\nBijgevoegd vindt u de conceptakte voor de oprichting van ${naam}.\n\nWij verzoeken u de akte te controleren en te ondertekenen.\n\nStatuspagina: ${statusUrl}` },
+    kvk: { subject: `KvK inschrijving gestart — ${naam}`, body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
+    bank: { subject: `Bankrekening aanvraag — ${naam}`, body: `Beste klant,\n\nDe KvK inschrijving is verwerkt. Wij starten nu met de aanvraag van de zakelijke bankrekening.\n\nStatuspagina: ${statusUrl}` },
+    complete: { subject: `Uw BV is succesvol opgericht — ${naam}`, body: `Gefeliciteerd!\n\nDe oprichting van ${naam} is volledig afgerond. Uw BV is nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
+    rejected: { subject: `Update over uw dossier — ${naam}`, body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.` }
+  };
+  return t[status] || { subject: `Status update — ${naam}`, body: `Uw dossier heeft een nieuwe status.` };
+}
+
+async function selectStatusFromDropdown(nr, status, e) {
+  e.stopPropagation();
+  closeAllStatusDropdowns();
+  const d = allDossiersData.find(x => x.dossierNr === nr);
+  if (!d) { await quickChangeStatus(nr, status); return; }
+  adminPendingStatus = { nr, newStatus: status, clientEmail: d.clientEmail || '', name: d.name || d.bedrijfsnaam || nr, accessToken: d.accessToken || '' };
+  const tpl = adminGetStatusEmailTemplate(status, adminPendingStatus);
+  document.getElementById('adminEmTo').value = adminPendingStatus.clientEmail;
+  document.getElementById('adminEmSubject').value = tpl.subject;
+  document.getElementById('adminEmBodyEditor').innerHTML = tpl.body.replace(/\n/g, '<br>');
+  document.getElementById('adminEmailModal').classList.add('open');
+  setTimeout(() => document.getElementById('adminEmTo').focus(), 50);
+}
+
+function adminCloseEmailModal() {
+  document.getElementById('adminEmailModal').classList.remove('open');
+  adminPendingStatus = null;
+}
+
+async function adminSaveStatusOnly() {
+  if (!adminPendingStatus) return;
+  await quickChangeStatus(adminPendingStatus.nr, adminPendingStatus.newStatus);
+  adminCloseEmailModal();
+}
+
+async function adminSaveStatusAndSendEmail() {
+  if (!adminPendingStatus) return;
+  const to = document.getElementById('adminEmTo').value.trim();
+  const subject = document.getElementById('adminEmSubject').value.trim();
+  const bodyHtml = document.getElementById('adminEmBodyEditor').innerHTML;
+  const bodyText = document.getElementById('adminEmBodyEditor').textContent.trim();
+  if (!to || !subject || !bodyText) { alert('Vul alle velden in.'); return; }
+  const btn = document.getElementById('adminEmSendBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Opslaan...'; }
+  try {
+    await quickChangeStatus(adminPendingStatus.nr, adminPendingStatus.newStatus);
+    const r = await fetch('/api/email-send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, bodyHtml })
+    });
+    if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Email fout'); }
+    adminCloseEmailModal();
+  } catch(e) { alert('Fout: ' + e.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Opslaan & versturen →'; } }
+}
 </script>
+
+<!-- Email modal voor status wijzigen -->
+<div id="adminEmailModal" class="em-overlay" onclick="if(event.target===this)adminCloseEmailModal()">
+  <div class="em-modal">
+    <div class="em-header">
+      <h3>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Status wijzigen &#8212; e-mail versturen
+      </h3>
+      <button class="em-close" onclick="adminCloseEmailModal()">✕</button>
+    </div>
+    <div class="em-body">
+      <div class="em-field">
+        <label>Aan</label>
+        <input type="email" id="adminEmTo" placeholder="E-mailadres ontvanger">
+      </div>
+      <div class="em-field">
+        <label>Onderwerp</label>
+        <input type="text" id="adminEmSubject" placeholder="Onderwerp van de e-mail">
+      </div>
+      <div class="em-field">
+        <label>Bericht</label>
+        <div class="em-editor-wrap">
+          <div class="em-toolbar">
+            <button type="button" class="em-tb-btn" onclick="document.execCommand('bold')" title="Vet"><b>B</b></button>
+            <button type="button" class="em-tb-btn" onclick="document.execCommand('italic')" title="Cursief"><i>I</i></button>
+            <button type="button" class="em-tb-btn" onclick="document.execCommand('underline')" title="Onderstrepen"><u>U</u></button>
+            <span class="em-tb-sep"></span>
+            <button type="button" class="em-tb-btn" onclick="document.execCommand('removeFormat')" title="Opmaak verwijderen" style="font-size:.75rem;">✕A</button>
+          </div>
+          <div id="adminEmBodyEditor" class="em-editor" contenteditable="true" placeholder="Typ hier uw bericht..."></div>
+        </div>
+      </div>
+    </div>
+    <div class="em-footer">
+      <button class="em-cancel" onclick="adminCloseEmailModal()">Annuleren</button>
+      <button class="em-send" style="background:#F0F4FF;color:#1A3B70;border:1px solid #C3DAFE;" onclick="adminSaveStatusOnly()">Opslaan zonder mail</button>
+      <button class="em-send" id="adminEmSendBtn" onclick="adminSaveStatusAndSendEmail()">Opslaan &amp; versturen →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
