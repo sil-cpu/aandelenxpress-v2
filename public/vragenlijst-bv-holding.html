@@ -1562,7 +1562,7 @@
       return rounded.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
     }
 
-    const MAX_SHAREHOLDERS_PER_ENTITY = 5;
+    const MAX_SHAREHOLDERS_PER_ENTITY = 4;
     const MIN_VOF_HOLDINGS = 2;
     const MAX_VOF_HOLDINGS = 5;
 
@@ -1632,6 +1632,15 @@
       removeRow(index) {
         this.data.splice(index, 1);
         if (!this.data.length) this.data.push(this.defaultRow());
+        this.render();
+        updateNaturalPersons();
+      }
+
+      moveRow(fromIndex, toIndex) {
+        if (toIndex < 0 || toIndex >= this.data.length) return;
+        this.readFromDom();
+        const [item] = this.data.splice(fromIndex, 1);
+        this.data.splice(toIndex, 0, item);
         this.render();
         updateNaturalPersons();
       }
@@ -1720,7 +1729,11 @@
             <div class="repeat-item" data-repeat-item>
               <div class="repeat-head">
                 <div class="repeat-title">${sanitize(this.label)} ${idx + 1}</div>
-                <button type="button" class="icon-btn remove" data-remove-index="${idx}">x</button>
+                <div style="display:flex;gap:4px;align-items:center;">
+                  ${idx > 0 ? `<button type="button" class="icon-btn" data-move-up="${idx}" title="Omhoog" style="min-width:28px;padding:0;">↑</button>` : ''}
+                  ${idx < this.data.length - 1 ? `<button type="button" class="icon-btn" data-move-down="${idx}" title="Omlaag" style="min-width:28px;padding:0;">↓</button>` : ''}
+                  <button type="button" class="icon-btn remove" data-remove-index="${idx}">x</button>
+                </div>
               </div>
               ${this.allowSameAsShareholder ? `
                 <div class="same-link-row">
@@ -1778,6 +1791,12 @@
 
         this.container.querySelectorAll('[data-remove-index]').forEach(btn => {
           btn.addEventListener('click', () => this.removeRow(Number(btn.getAttribute('data-remove-index'))));
+        });
+        this.container.querySelectorAll('[data-move-up]').forEach(btn => {
+          btn.addEventListener('click', () => { const i = Number(btn.getAttribute('data-move-up')); this.moveRow(i, i - 1); });
+        });
+        this.container.querySelectorAll('[data-move-down]').forEach(btn => {
+          btn.addEventListener('click', () => { const i = Number(btn.getAttribute('data-move-down')); this.moveRow(i, i + 1); });
         });
         this.container.querySelectorAll('input,select').forEach(el => {
           el.addEventListener('input', () => updateNaturalPersons());
@@ -2833,7 +2852,7 @@
               <label>Wat gaat er gebeuren met de eenmanszaak/VOF?</label>
               <select data-np="eenmanszaakActie">
                 <option value="">Maak keuze</option>
-                <option value="blijft-bestaan" ${v.eenmanszaakActie === 'blijft-bestaan' ? 'selected' : ''}>Blijft bestaan (De eenmanszaak kan naast de nieuwe B.V. blijven bestaan.)</option>
+                <option value="blijft-bestaan" ${v.eenmanszaakActie === 'blijft-bestaan' ? 'selected' : ''}>Blijft bestaan (De eenmanszaak/VOF kan naast de nieuwe B.V. blijven bestaan.)</option>
                 <option value="stopt" ${v.eenmanszaakActie === 'stopt' ? 'selected' : ''}>Stopt (Bij uitschrijving bij de KvK is dit geen inbreng en geen voortzetting.)</option>
               </select>
               <div class="hint" style="margin-top:8px;">Let op: uw nieuw op te richten B.V. mag niet dezelfde naam hebben als uw bestaande eenmanszaak. Indien beide ondernemingen dezelfde naam hebben, adviseren wij u om de naam van uw eenmanszaak via het online formulier van de Kamer van Koophandel (KVK) te wijzigen, zodat de B.V. zonder problemen kan worden ingeschreven.</div>
@@ -2908,8 +2927,8 @@
                   <option selected>Natuurlijk persoon</option>
                 </select>
               </div>
-              <div class="field"><label>Naam</label><input data-rp="uboNaam" value="${sanitize(ubo.naam)}"></div>
-              <div class="field"><label>Percentage</label><input data-rp="uboPercentage" type="number" min="0" max="100" step="0.01" value="${sanitize(ubo.percentage)}"></div>
+              <div class="field"><label class="required">Naam</label><input data-rp="uboNaam" value="${sanitize(ubo.naam)}"></div>
+              <div class="field"><label class="required">Percentage</label><input data-rp="uboPercentage" type="number" min="0" max="100" step="0.01" value="${sanitize(ubo.percentage)}"></div>
             </div>
           </div>
         `;
@@ -2928,7 +2947,7 @@
                   <option value="rp" ${normalizeRpDirectorType(bestuurder.type) === 'rp' ? 'selected' : ''}>Rechtspersoon</option>
                 </select>
               </div>
-              <div class="field"><label>Naam</label><input data-rp="bestuurderNaam" value="${sanitize(bestuurder.naam)}"></div>
+              <div class="field"><label class="required">Naam</label><input data-rp="bestuurderNaam" value="${sanitize(bestuurder.naam)}"></div>
             </div>
           </div>
         `;
@@ -2939,7 +2958,7 @@
               <div class="repeat-title">${sanitize(role.title)} - ${sanitize(role.name)}</div>
             </div>
             <div class="row">
-              <div class="field"><label>KvK nummer</label><input data-rp="kvkNummer" value="${sanitize(v.kvkNummer)}"></div>
+              <div class="field"><label class="required">KvK nummer</label><input data-rp="kvkNummer" value="${sanitize(v.kvkNummer)}"></div>
             </div>
             <div class="group-title" style="margin-top:14px;">UBO('s)</div>
             <div data-rp-ubo-wrap class="repeat-wrap">${ubos.map(renderUboRow).join('')}</div>
@@ -3684,8 +3703,9 @@
       }
 
       const ownershipHint = document.getElementById('ownershipNaturalPersonHint');
-      if (ownershipHint) ownershipHint.style.display = (dossierOprichtingType === 'bv-holding') ? '' : 'none';
-
+      const ownershipModeForHint = normalizeOwnershipMode(ownershipField.value);
+      const showOwnershipHint = ownershipModeForHint === 'existing-only' || ownershipModeForHint === 'existing-and-new' || document.getElementById('singleBvExistingHoldings')?.value === 'ja';
+      if (ownershipHint) ownershipHint.style.display = showOwnershipHint ? '' : 'none';
       const holdingOwnerHint = document.getElementById('holdingShareholderOwnerHint');
       if (holdingOwnerHint) {
         holdingOwnerHint.style.display = dossierOprichtingType === 'eenmanszaak-omzetten-bv-holding' ? '' : 'none';
@@ -4259,6 +4279,12 @@
           return;
         }
 
+        const legalConsentEl = document.getElementById('legalConsent');
+        if (legalConsentEl && !legalConsentEl.checked) {
+          legalConsentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return showFormError('Vink het akkoord-vakje aan (Privacyverklaring, Algemene Voorwaarden en AI-verklaring) voordat u indient.');
+        }
+
         const languageError = validateAnswerLanguage();
         if (languageError) {
           const fieldId = languageError.field.id;
@@ -4325,6 +4351,9 @@
           const hasDetailhandel = !!payload.detailWinkel || !!payload.detailMarkt || !!payload.detailStraat || !!payload.detailInternet || !!payload.detailHuis || !!payload.detailPostorder || !!payload.detailOthers;
           if (!hasDetailhandel) {
             return showFormError('Kies minimaal één optie bij Detailhandel.', 'input[name="detailWinkel"]');
+          }
+          if (!payload.werkmijGroothandel) {
+            return showFormError('Kies of u producten verkoopt aan andere ondernemingen (Groothandel).', 'select[name="werkmijGroothandel"]');
           }
         }
 

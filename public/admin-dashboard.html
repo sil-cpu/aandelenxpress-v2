@@ -1203,7 +1203,7 @@ async function quickChangeStatus(nr, status) {
       body: JSON.stringify({ status })
     });
     if (r.ok) {
-      const statusTextMap = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', betaling:'Betaling', notary:'Notariële Akte', kvk:'KvK inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
+      const statusTextMap = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst verzonden', 'vl-ontvangen':'Vragenlijst ontvangen', 'vl-controle':'Documentcontrole', betaling:'Betaling', 'notary-prep':'Voorbereiding notaris', notary:'Notariële Akte', kvk:'KvK inschrijving', bank:'Bankrekening', complete:'Voltooid', rejected:'Afgewezen' };
       const d = allDossiersData.find(x => x.dossierNr === nr);
       if (d) { d.statusKey = status; d.statusText = statusTextMap[status] || status; }
       applyAllFilters();
@@ -1297,10 +1297,14 @@ function renderTable(id, rows, withActions = false) {
       <td onclick="event.stopPropagation()">
         <select class="assign-select" style="font-size:0.8rem;" onchange="quickChangeStatus('${d.dossierNr}', this.value)">
           <option value="pending" ${d.statusKey==='pending'?'selected':''}>Aanvraag ingediend</option>
-          <option value="vragenlijst" ${d.statusKey==='vragenlijst'?'selected':''}>Vragenlijst</option>
+          <option value="vragenlijst" ${d.statusKey==='vragenlijst'?'selected':''}>Vragenlijst verzonden</option>
+          <option value="vl-ontvangen" ${d.statusKey==='vl-ontvangen'?'selected':''}>Vragenlijst ontvangen</option>
+          <option value="vl-controle" ${d.statusKey==='vl-controle'?'selected':''}>Documentcontrole</option>
           <option value="betaling" ${d.statusKey==='betaling'?'selected':''}>Betaling</option>
+          <option value="notary-prep" ${d.statusKey==='notary-prep'?'selected':''}>Voorbereiding notaris</option>
           <option value="notary" ${d.statusKey==='notary'?'selected':''}>Notariële Akte</option>
           <option value="kvk" ${d.statusKey==='kvk'?'selected':''}>KvK inschrijving</option>
+          <option value="bank" ${d.statusKey==='bank'?'selected':''}>Bankrekening</option>
           <option value="complete" ${d.statusKey==='complete'?'selected':''}>Voltooid</option>
           <option value="rejected" ${d.statusKey==='rejected'?'selected':''}>Afgewezen</option>
         </select>

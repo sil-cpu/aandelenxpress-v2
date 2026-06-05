@@ -975,14 +975,18 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         'advies':'Advies'
     };
     const statusMap = {
-        'pending':     { key:'pending',     text:'Aanvraag ingediend' },
-        'approved':    { key:'vragenlijst', text:'Vragenlijst' },
-        'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
-        'betaling':    { key:'betaling',    text:'Betaling' },
-        'notary':      { key:'notary',      text:'Notariele Akte' },
-        'kvk':         { key:'kvk',         text:'KvK inschrijving' },
-        'complete':    { key:'complete',    text:'Voltooid' },
-        'rejected':    { key:'rejected',    text:'Afgewezen' },
+        'pending':       { key:'pending',       text:'Aanvraag ingediend' },
+        'approved':      { key:'vragenlijst',   text:'Vragenlijst verzonden' },
+        'vragenlijst':   { key:'vragenlijst',   text:'Vragenlijst verzonden' },
+        'vl-ontvangen':  { key:'vl-ontvangen',  text:'Vragenlijst ontvangen' },
+        'vl-controle':   { key:'vl-controle',   text:'Documentcontrole' },
+        'betaling':      { key:'betaling',       text:'Betaling' },
+        'notary-prep':   { key:'notary-prep',   text:'Voorbereiding notaris' },
+        'notary':        { key:'notary',         text:'Notariele Akte' },
+        'kvk':           { key:'kvk',            text:'KvK inschrijving' },
+        'bank':          { key:'bank',           text:'Bankrekening' },
+        'complete':      { key:'complete',       text:'Voltooid' },
+        'rejected':      { key:'rejected',       text:'Afgewezen' },
     };
     const s = statusMap[row.status] || { key: 'pending', text: 'In behandeling' };
     const brandRecord = await getBrandingByEmail(row.reseller_id, { email: row.reseller_id, company: row.reseller_company || '' });
@@ -1142,14 +1146,14 @@ app.patch('/api/reseller-requests/:id/token', requireAdmin, async (req, res) => 
 app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    const valid = ['pending', 'vragenlijst', 'betaling', 'notary', 'kvk', 'complete', 'rejected', 'approved'];
+    const valid = ['pending', 'vragenlijst', 'vl-ontvangen', 'vl-controle', 'betaling', 'notary-prep', 'notary', 'kvk', 'bank', 'complete', 'rejected', 'approved'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
 
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
     const request = rowToReq(row);
-    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', betaling:'Betaling', notary:'Notariele Akte', kvk:'KvK inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
+    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst verzonden', approved:'Vragenlijst verzonden', 'vl-ontvangen':'Vragenlijst ontvangen', 'vl-controle':'Documentcontrole', betaling:'Betaling', 'notary-prep':'Voorbereiding notaris', notary:'Notariele Akte', kvk:'KvK inschrijving', bank:'Bankrekening', complete:'Voltooid', rejected:'Afgewezen' };
     const adminName = req.session.user.name || req.session.user.email;
     addActivity(request, 'system', `Status gewijzigd van "${statusLabels[request.status]||request.status}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
 

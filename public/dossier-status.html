@@ -759,49 +759,86 @@
 <script>
 // Status configuration
 const statusSteps = [
-    { key: 'pending',     label: 'Aanvraag ingediend', description: 'Aanvraag ontvangen en geregistreerd' },
-    { key: 'vragenlijst', label: 'Vragenlijst',         description: 'Vragenlijst invullen' },
-    { key: 'betaling',    label: 'Betaling',            description: 'Betaling verwerken' },
-    { key: 'notary',      label: 'Notariële Akte',      description: 'Notariële verwerking' },
-    { key: 'kvk',         label: 'KvK inschrijving',   description: 'Registratie bij KVK' },
-    { key: 'complete',    label: 'Voltooid',            description: 'Dossier afgerond' }
+    { key: 'pending',       label: 'Aanvraag ingediend',      description: 'Aanvraag ontvangen en geregistreerd' },
+    { key: 'vragenlijst',   label: 'Vragenlijst verzonden',   description: 'Vragenlijst per e-mail verstuurd' },
+    { key: 'vl-ontvangen',  label: 'Vragenlijst ontvangen',   description: 'Ingevulde vragenlijst ontvangen' },
+    { key: 'vl-controle',   label: 'Documentcontrole',        description: 'Uw documenten worden gecontroleerd' },
+    { key: 'betaling',      label: 'Betaling',                description: 'Betaling verwerken' },
+    { key: 'notary-prep',   label: 'Voorbereiding notaris',   description: 'Dossier klaarzetten voor notaris' },
+    { key: 'notary',        label: 'Notariële Akte',          description: 'Akte wordt opgesteld en ondertekend' },
+    { key: 'kvk',           label: 'KvK inschrijving',        description: 'Registratie bij KvK' },
+    { key: 'bank',          label: 'Bankrekening openen',     description: 'Zakelijke bankrekening openen' },
+    { key: 'complete',      label: 'Voltooid',                description: 'Dossier volledig afgerond' }
 ];
 
+// Map backend status keys to step keys (backwards compatibility)
+const STATUS_STEP_ALIAS = {
+    approved: 'vragenlijst',
+    'vl-ontvangen': 'vl-ontvangen',
+    'vl-controle': 'vl-controle',
+    'notary-prep': 'notary-prep',
+    bank: 'bank'
+};
+
 const statusDescriptions = {
-    pending:     'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier in behandeling.',
-    vragenlijst: 'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
-    approved:    'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
-    betaling:    'De vragenlijst is ontvangen. Wij verzoeken u de betaling te voldoen om verder te gaan.',
-    notary:      'De notariële akte wordt opgesteld door onze partner notaris.',
-    kvk:         'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel.',
-    complete:    'Uw dossier is volledig afgerond. Gefeliciteerd met uw nieuwe B.V.!'
+    pending:        'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier spoedig in behandeling.',
+    vragenlijst:    'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
+    approved:       'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
+    'vl-ontvangen': 'Uw ingevulde vragenlijst is ontvangen. Wij gaan uw documenten controleren.',
+    'vl-controle':  'Uw documenten worden zorgvuldig gecontroleerd door ons team. U ontvangt bericht wanneer alles in orde is.',
+    betaling:       'De documentcontrole is afgerond. Wij verzoeken u de betaling te voldoen om verder te gaan.',
+    'notary-prep':  'Uw dossier wordt klaargezet voor de notaris. Dit duurt doorgaans 1-2 werkdagen.',
+    notary:         'De notariële akte wordt opgesteld door onze partnernotaris. U wordt uitgenodigd voor ondertekening.',
+    kvk:            'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel. U ontvangt uw KvK-uittreksel per e-mail.',
+    bank:           'Uw bedrijf is ingeschreven bij de KvK. Het is nu tijd om een zakelijke bankrekening te openen.',
+    complete:       'Uw dossier is volledig afgerond. Gefeliciteerd met uw nieuwe B.V.! Alle documenten zijn beschikbaar in uw dossier.'
 };
 
 const todoItems = {
     pending: [
         { title: 'Aanvraag ingediend',       desc: 'Uw aanvraag is ontvangen' },
-        { title: 'Controle documenten',      desc: 'Wij controleren uw gegevens' },
+        { title: 'Controle gegevens',        desc: 'Wij controleren uw aanvraag' },
         { title: 'U ontvangt bericht',       desc: 'Wij sturen u spoedig een bericht' }
     ],
     vragenlijst: [
-        { title: 'E-mail met vragenlijst',   desc: 'Controleer uw e-mail inbox' },
+        { title: 'E-mail ontvangen',         desc: 'Controleer uw inbox (en spam)' },
         { title: 'Vragenlijst invullen',     desc: 'Vul alle vragen volledig in' },
         { title: 'Vragenlijst versturen',    desc: 'Verstuur de ingevulde vragenlijst' }
+    ],
+    'vl-ontvangen': [
+        { title: 'Vragenlijst ontvangen',    desc: 'Uw antwoorden zijn ontvangen' },
+        { title: 'Eerste controle',          desc: 'Wij starten de controle' },
+        { title: 'Eventuele aanvullingen',   desc: 'Wij nemen contact op indien nodig' }
+    ],
+    'vl-controle': [
+        { title: 'Documentcontrole',         desc: 'Uw documenten worden gecontroleerd' },
+        { title: 'Identiteitsverificatie',   desc: 'UBO- en bestuurderscontrole' },
+        { title: 'Goedkeuring',              desc: 'Dossier wordt goedgekeurd voor betaling' }
     ],
     betaling: [
         { title: 'Betaalverzoek ontvangen',  desc: 'U ontvangt een betaalverzoek per e-mail' },
         { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
         { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
     ],
+    'notary-prep': [
+        { title: 'Dossier klaarzetten',      desc: 'Alle gegevens worden gecontroleerd' },
+        { title: 'Notarisplanning',          desc: 'Afspraak wordt ingepland' },
+        { title: 'Uitnodiging verstuurd',    desc: 'U ontvangt een uitnodiging' }
+    ],
     notary: [
-        { title: 'Akte ondertekenen',        desc: 'Onderteken de notariële akte' },
-        { title: 'Handelsregister',          desc: 'Akte wordt geregistreerd' },
-        { title: 'Finalisering',             desc: 'Finalisering van alle procedures' }
+        { title: 'Akte ontvangen',           desc: 'Conceptakte ter beoordeling' },
+        { title: 'Akte ondertekenen',        desc: 'Ondertekening bij de notaris' },
+        { title: 'Akte geregistreerd',       desc: 'Akte wordt ingeschreven' }
     ],
     kvk: [
-        { title: 'KvK inschrijving starten', desc: 'Wij dienen uw aanvraag in' },
-        { title: 'Goedkeuring afwachten',    desc: 'KvK keurt uw registratie goed' },
-        { title: 'Bedrijfsnummer ontvangen', desc: 'U ontvangt uw KvK-nummer' }
+        { title: 'KvK-aanvraag ingediend',   desc: 'Wij dienen uw aanvraag in bij KvK' },
+        { title: 'Goedkeuring KvK',          desc: 'KvK verwerkt uw registratie' },
+        { title: 'KvK-nummer ontvangen',     desc: 'U ontvangt uw KvK-uittreksel' }
+    ],
+    bank: [
+        { title: 'KvK klaar',                desc: 'Uw bedrijf is geregistreerd' },
+        { title: 'Bankrekening aanvragen',   desc: 'Vraag een zakelijke rekening aan' },
+        { title: 'Rekening actief',          desc: 'Uw zakelijke rekening is actief' }
     ],
     complete: [
         { title: 'Alle stappen voltooid',    desc: 'Uw bedrijf is volledig opgericht!' },
@@ -868,7 +905,9 @@ function storeToken(t) {
 
 function renderStatusTimeline(currentStatus, activities) {
     const timelineDiv = document.getElementById('statusTimeline');
-    const currentIndex = statusSteps.findIndex(s => s.key === currentStatus);
+    // Resolve backend alias (e.g. 'approved' → 'vragenlijst')
+    const resolvedStatus = (typeof STATUS_STEP_ALIAS !== 'undefined' && STATUS_STEP_ALIAS[currentStatus]) || currentStatus;
+    const currentIndex = statusSteps.findIndex(s => s.key === resolvedStatus);
 
     // Build timestamp map from activities: status key → earliest matching timestamp
     const tsMap = {};
