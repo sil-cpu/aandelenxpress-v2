@@ -20,6 +20,16 @@ function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function tokenBox(token) {
+    if (!token) return '';
+    return `
+        <div style="background:#1a2e5a;border-radius:8px;padding:16px 20px;margin:20px 0;text-align:center;">
+            <p style="color:rgba(255,255,255,.7);margin:0 0 6px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;">Uw toegangscode voor het dossier</p>
+            <p style="color:#fff;font-family:monospace;font-size:26px;font-weight:700;letter-spacing:6px;margin:0;">${token}</p>
+            <p style="color:rgba(255,255,255,.5);margin:6px 0 0;font-size:11px;">Gebruik deze code om uw dossierstatus te bekijken.</p>
+        </div>`;
+}
+
 function buildVragenlijstUrl(request) {
     const id = request?.id || '';
     const product = String(request?.oprichtingType || 'bv').trim();
@@ -190,7 +200,7 @@ async function emailAdminNewRequest({ request }) {
 
 /** Klant: bevestiging van ontvangst + link naar statuspagina / vragenlijst */
 async function emailClientNewRequest({ request }) {
-    const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany } = request;
+    const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
     const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
 
     return sendEmail({
@@ -205,12 +215,13 @@ async function emailClientNewRequest({ request }) {
                 <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
                 <strong>Referentienummer:</strong> ${id}
             </div>
+            ${tokenBox(accessToken)}
             <p><strong>Wat zijn de volgende stappen?</strong><br>
                Via onderstaande link kunt u de voortgang van uw dossier volgen, 
                de vragenlijst invullen en documenten aanleveren.</p>
             <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${statusUrl}">Mijn dossier bekijken &amp; vragenlijst invullen</a>
             <p style="font-size:13px;color:#888;margin-top:24px;">
-                Bewaar deze email — de link hierboven geeft u toegang tot uw persoonlijke dossier.<br>
+                Bewaar deze email — de link en toegangscode hierboven geven u toegang tot uw persoonlijke dossier.<br>
                 Heeft u vragen? Neem contact op met uw adviseur 
                 of mail naar <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.
             </p>
@@ -344,7 +355,7 @@ async function emailAdminVragenlijstSubmitted({ submission }) {
 
 /** Klant: bevestiging dat vragenlijst is ingediend */
 async function emailClientVragenlijstSubmitted({ submission }) {
-    const { caseId, clientName, clientEmail, gewenstNaam, submittedAt } = submission;
+    const { caseId, clientName, clientEmail, gewenstNaam, submittedAt, accessToken } = submission;
     const datum = new Date(submittedAt).toLocaleString('nl-NL', {
         day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
@@ -360,6 +371,7 @@ async function emailClientVragenlijstSubmitted({ submission }) {
                 <strong>Referentie:</strong> ${caseId}<br>
                 <strong>Ontvangen op:</strong> ${datum}
             </div>
+            ${tokenBox(accessToken)}
             <p>Uw dossier wordt nu beoordeeld door ons team. U ontvangt automatisch bericht zodra de beoordeling is afgerond.</p>
             <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${statusUrl}">Dossierstatus bekijken</a>
         `),
@@ -369,6 +381,7 @@ async function emailClientVragenlijstSubmitted({ submission }) {
 /** Klant: vragenlijst afgekeurd met feedback */
 async function emailClientVragenlijstRejected({ request, feedback, formUrl }) {
     const statusUrl = `${SITE_URL}/dossier-status?nr=${request.id}`;
+    const wachtwoord = request.accessToken || '';
     return sendEmail({
         to:      request.clientEmail,
         subject: `Aanvulling nodig voor uw vragenlijst — ${request.gewenstNaam || request.clientName}`,
@@ -380,6 +393,7 @@ async function emailClientVragenlijstRejected({ request, feedback, formUrl }) {
                 <strong>Feedback van ons team:</strong><br>
                 ${escHtml(feedback).replace(/\n/g, '<br>')}
             </div>
+            ${tokenBox(wachtwoord)}
             <p>U kunt via onderstaande knop verdergaan met uw eerder ingevulde antwoorden en deze aanpassen:</p>
             <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${formUrl}">Vragenlijst opnieuw openen</a>
             <p style="font-size:13px;color:#888;margin-top:20px;">Na opnieuw indienen beoordelen wij uw vragenlijst direct opnieuw.</p>
@@ -390,7 +404,7 @@ async function emailClientVragenlijstRejected({ request, feedback, formUrl }) {
 
 /** Klant: betalingsverzoek — stap na vragenlijst */
 async function emailClientBetaling({ request }) {
-    const { id, clientName, clientEmail, gewenstNaam, resellerName, resellerCompany } = request;
+    const { id, clientName, clientEmail, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
     const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
     return sendEmail({
         to:      clientEmail,
@@ -404,6 +418,7 @@ async function emailClientBetaling({ request }) {
                 <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
                 <strong>Adviseur:</strong> ${resellerName} (${resellerCompany})
             </div>
+            ${tokenBox(accessToken)}
             <p>U ontvangt binnenkort een factuur via uw adviseur of per mail. Na ontvangst van de betaling gaan wij direct door met de verdere afhandeling.</p>
             <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${statusUrl}">Dossier bekijken</a>
             <p style="font-size:13px;color:#888;margin-top:24px;">

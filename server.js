@@ -2131,7 +2131,7 @@ app.post('/api/vragenlijst', async (req, res) => {
     };
     await supabase.from('vragenlijsten').upsert({ case_id: caseId, data: submission, submitted_at: submission.submittedAt });
     emails.emailAdminVragenlijstSubmitted({ submission });
-    emails.emailClientVragenlijstSubmitted({ submission });
+    emails.emailClientVragenlijstSubmitted({ submission: { ...submission, accessToken: row.access_token } });
     res.json({ success: true });
 });
 
