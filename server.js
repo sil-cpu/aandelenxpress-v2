@@ -591,6 +591,10 @@ app.post('/api/register', async (req, res) => {
         return res.status(400).json({ error: 'Wachtwoorden komen niet overeen' });
     if (password.length < 8)
         return res.status(400).json({ error: 'Wachtwoord moet minimaal 8 tekens bevatten' });
+    if (!/[A-Z]/.test(password))
+        return res.status(400).json({ error: 'Wachtwoord moet minimaal één hoofdletter bevatten' });
+    if (!/[0-9]/.test(password))
+        return res.status(400).json({ error: 'Wachtwoord moet minimaal één cijfer bevatten' });
 
     const { data: existing } = await supabase.from('users').select('email').eq('email', email).single();
     if (existing) return res.status(409).json({ error: 'Dit e-mailadres is al geregistreerd' });

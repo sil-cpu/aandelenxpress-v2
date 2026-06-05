@@ -371,6 +371,21 @@
             <div class="drawer-section-title">Aanmeldingsdatum</div>
             <div class="drawer-field"><div class="drawer-field-value" id="dfDatum">–</div></div>
           </div>
+          <!-- Intake data sections — only visible when available -->
+          <div id="dfIntakeSectionsWrap" style="display:none;">
+            <div class="drawer-section">
+              <div class="drawer-section-title">A. Juridische structuur</div>
+              <div class="drawer-field-row" id="dfIntakeLegal"></div>
+            </div>
+            <div class="drawer-section">
+              <div class="drawer-section-title">B. Compliance &amp; Wwft</div>
+              <div class="drawer-field-row" id="dfIntakeCompliance"></div>
+            </div>
+            <div class="drawer-section">
+              <div class="drawer-section-title">C. Portaalgebruik</div>
+              <div class="drawer-field-row" id="dfIntakePortal"></div>
+            </div>
+          </div>
           <div style="display:flex;gap:10px;margin-top:8px;">
             <button class="btn-primary" style="flex:1;padding:12px;" id="aanmApproveBtn" onclick="">Goedkeuren</button>
             <button class="btn-ghost" style="flex:1;padding:12px;color:#c53030;border-color:#c53030;" id="aanmRejectBtn" onclick="">Afwijzen</button>
@@ -1567,6 +1582,42 @@ function openAanmDrawer(jsonStr) {
   document.getElementById('dfTelefoon').textContent = r.telefoon;
   document.getElementById('dfEmail').textContent    = r.email;
   document.getElementById('dfDatum').textContent    = new Date(r.aangemeld).toLocaleString('nl-NL',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  // Intake data
+  const wrap = document.getElementById('dfIntakeSectionsWrap');
+  const id = r.intake_data;
+  if (id && typeof id === 'object') {
+    wrap.style.display = '';
+    function intakeField(label, value) {
+      if (!value) return '';
+      return `<div class="drawer-field" style="grid-column:1/-1"><div class="drawer-field-label">${label}</div><div class="drawer-field-value" style="white-space:pre-wrap;">${value}</div></div>`;
+    }
+    document.getElementById('dfIntakeLegal').innerHTML = [
+      intakeField('Rechtsvorm', id.rechtsvorm),
+      intakeField('Groepsstructuur', id.groepsstructuur + (id.groepsstructuur_toelichting ? ' — ' + id.groepsstructuur_toelichting : '')),
+      intakeField('Statutair bestuurder(s)', id.bestuurder),
+      intakeField('Bevoegdheid bestuurder', id.bevoegdheid),
+      intakeField('Volmachten medewerkers', id.volmacht + (id.gemachtigde ? ' — ' + id.gemachtigde : '')),
+      intakeField('Optreden richting AX', id.optreden),
+      intakeField('Dossierbeheer', id.dossierbeheer),
+    ].join('');
+    document.getElementById('dfIntakeCompliance').innerHTML = [
+      intakeField('Wwft-plichtig', id.wwft_plichtig),
+      intakeField('Compliance officer / MLRO', id.compliance_officer),
+      intakeField('Wwft-beleid', id.wwft_beleid),
+      intakeField('Wwft-audit', id.wwft_audit + (id.audit_door ? ' — ' + id.audit_door : '')),
+      intakeField('Verklaring bereid', id.verklaring_bereid),
+      intakeField('Ondertekenaar verklaring', id.verklaring_ondertekenaar),
+      intakeField('PEP / sanctiescreening', id.pep_tool + (id.pep_tool_naam ? ' — ' + id.pep_tool_naam : '')),
+      intakeField('Screeningfrequentie', id.pep_frequentie),
+    ].join('');
+    document.getElementById('dfIntakePortal').innerHTML = [
+      intakeField('Toegangsbeheer portaal', id.portaal_toegang),
+      intakeField('Geschat aantal gebruikers', id.gebruikers_aantal),
+    ].join('');
+  } else {
+    wrap.style.display = 'none';
+  }
   document.getElementById('aanmApproveBtn').onclick = () => approveReseller(r.email);
   document.getElementById('aanmRejectBtn').onclick  = () => rejectReseller(r.email);
   document.getElementById('aanmDrawer').classList.add('open');

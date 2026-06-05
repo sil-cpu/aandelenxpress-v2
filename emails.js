@@ -14,7 +14,7 @@ const resend = new Resend(process.env.RESEND_API_KEY || 'not_configured');
 const FROM_ADDRESS = 'AandelenXpress <noreply@aandelenxpress.nl>';
 const ADMIN_EMAIL  = 'admin@aandelenxpress.nl';
 const BRAND        = 'AandelenXpress';
-const SITE_URL     = process.env.SITE_URL || 'https://aandelenxpress.vercel.app';
+const SITE_URL     = process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app';
 
 function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -23,7 +23,8 @@ function escHtml(str) {
 function buildVragenlijstUrl(request) {
     const id = request?.id || '';
     const product = String(request?.oprichtingType || 'bv').trim();
-    return `${SITE_URL}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}`;
+    const token = request?.accessToken ? '&token=' + encodeURIComponent(request.accessToken) : '';
+    return `${SITE_URL}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}${token}`;
 }
 
 /**

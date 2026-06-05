@@ -242,7 +242,7 @@
                     </div>
                     <div class="login-field">
                         <label for="password">Wachtwoord <span class="req">*</span></label>
-                        <input type="password" id="password" name="password" placeholder="Minimaal 8 tekens" autocomplete="new-password" required>
+                        <input type="password" id="password" name="password" placeholder="Min. 8 tekens, 1 hoofdletter, 1 cijfer" autocomplete="new-password" required>
                     </div>
                     <div class="login-field">
                         <label for="password2">Wachtwoord bevestigen <span class="req">*</span></label>
@@ -326,7 +326,7 @@
                         </div>
                     </div>
 
-                    <div class="login-field">
+                    <div class="login-field conditional-field" id="field-compliance-officer">
                         <label for="compliance_officer">Naam compliance officer / MLRO</label>
                         <input type="text" id="compliance_officer" name="compliance_officer" placeholder="Naam en functie">
                     </div>
@@ -349,7 +349,7 @@
                         </div>
                     </div>
 
-                    <div class="login-field">
+                    <div class="login-field conditional-field" id="field-audit-door">
                         <label for="audit_door">Door wie wordt geaudit?</label>
                         <input type="text" id="audit_door" name="audit_door" placeholder="Bijv. SRA, NBA, externe accountant">
                     </div>
@@ -386,7 +386,7 @@
                         <input type="text" id="pep_tool_naam" name="pep_tool_naam" placeholder="Bijv. Compli, Nuvias, World-Check">
                     </div>
 
-                    <div class="login-field">
+                    <div class="login-field conditional-field" id="field-pep-frequentie">
                         <label>Hoe frequent wordt gescreend?</label>
                         <div class="radio-group">
                             <label class="radio-option"><input type="radio" name="pep_frequentie" value="Bij instroom"> Bij instroom</label>
@@ -553,8 +553,21 @@
         document.querySelectorAll('input[name="volmacht"]').forEach(r =>
             r.addEventListener('change', () => toggle('field-gemachtigde', r.value !== 'Nee' && r.checked))
         );
+        document.querySelectorAll('input[name="wwft_plichtig"]').forEach(r =>
+            r.addEventListener('change', () => {
+                const applicable = r.checked && r.value === 'Ja';
+                toggle('field-compliance-officer', applicable);
+            })
+        );
+        document.querySelectorAll('input[name="wwft_audit"]').forEach(r =>
+            r.addEventListener('change', () => toggle('field-audit-door', r.checked && r.value !== 'Nee'))
+        );
         document.querySelectorAll('input[name="pep_tool"]').forEach(r =>
-            r.addEventListener('change', () => toggle('field-pep-tool-naam', r.value !== 'Nee' && r.checked))
+            r.addEventListener('change', () => {
+                const hasScreening = r.value !== 'Nee' && r.checked;
+                toggle('field-pep-tool-naam', hasScreening);
+                toggle('field-pep-frequentie', hasScreening);
+            })
         );
 
         // Form submit
@@ -582,6 +595,19 @@
                     errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
+            }
+
+            // Password strength check
+            const pw = document.getElementById('password').value;
+            if (!/[A-Z]/.test(pw)) {
+                errorDiv.textContent = 'Wachtwoord moet minimaal één hoofdletter bevatten.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!/[0-9]/.test(pw)) {
+                errorDiv.textContent = 'Wachtwoord moet minimaal één cijfer bevatten.';
+                errorDiv.style.display = 'block';
+                return;
             }
 
             if (!document.getElementById('termsAkkoord').checked) {

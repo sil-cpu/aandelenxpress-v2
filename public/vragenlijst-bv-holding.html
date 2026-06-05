@@ -4227,7 +4227,7 @@
         }
 
         const payload = buildPayload();
-        const showHolding = !(payload.hasWorkmaatschappij === 'ja' && payload.existingHoldingOwner === 'existing-only');
+        const showHolding = shouldShowNewHoldingCard();
         const conversionFlow = isOmzettingFlow();
 
         refreshRequiredIndicators();
@@ -4509,7 +4509,13 @@
         if (e.key === 'Enter') openWithToken();
       });
 
-      if (cached) {
+      // Auto-open when token is passed in the URL (e.g. from email link)
+      const urlToken = params.get('token');
+      if (urlToken) {
+        sessionStorage.setItem('ax_form_' + caseId, urlToken);
+        document.getElementById('gateInput').value = urlToken;
+        openWithToken();
+      } else if (cached) {
         document.getElementById('gateInput').value = cached;
         openWithToken();
       }
