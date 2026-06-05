@@ -1699,9 +1699,8 @@ function renderVlModal(d) {
   const showRejectedOverlay = reviewStatus === 'rejected';
   vlRejectMode = false;
   const caseRef = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
-  const hasPdf = !!(d.oprichtingsDocument && (d.oprichtingsDocument.naam || d.oprichtingsDocument.hasData || d.reviewStatus === 'approved'));
   const pdfBtn = document.getElementById('vlPdfBtn');
-  if (pdfBtn) pdfBtn.style.display = hasPdf ? '' : 'none';
+  if (pdfBtn) pdfBtn.style.display = '';
 
   const LABELS = {
     gewenstNaam:'Gewenste bedrijfsnaam', bvNaam:'Naam BV', contactEmail:'Contact e-mail',
