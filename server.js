@@ -1110,11 +1110,18 @@ app.patch('/api/reseller-requests/:id/approve', requireAdmin, async (req, res) =
     request.approvedAt = new Date().toISOString();
     request.approvedBy = req.session.user.email;
     const approver = req.session.user.name || req.session.user.email;
+
+    // Ensure access token exists — generate and save if missing
+    if (!request.accessToken) {
+        request.accessToken = generateSmartToken(request);
+    }
+
     addActivity(request, 'system', `Dossier goedgekeurd door ${approver}. Vragenlijst email verstuurd naar ${request.clientEmail}.`, approver);
 
     await supabase.from('reseller_requests').update({
         status: request.status, approved_at: request.approvedAt,
-        approved_by: request.approvedBy, activities: request.activities
+        approved_by: request.approvedBy, activities: request.activities,
+        access_token: request.accessToken
     }).eq('id', req.params.id);
 
     emails.emailResellerRequestApproved({ request });
@@ -2511,6 +2518,11 @@ app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) =>
     await supabase.from('vragenlijsten').update({ data: reviewedData }).eq('case_id', caseId);
 
     if (action === 'approve') {
+        // Ensure access token exists — generate and save if missing
+        if (!request.accessToken) {
+            request.accessToken = generateSmartToken(request);
+            await supabase.from('reseller_requests').update({ access_token: request.accessToken }).eq('id', caseId);
+        }
         request.status = 'betaling';
         request.statusUpdatedAt = new Date().toISOString();
         addActivity(request, 'system', `Vragenlijst goedgekeurd door ${actor}. Status gewijzigd naar betaling.`, actor);
@@ -2521,6 +2533,11 @@ app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) =>
         }).eq('id', caseId);
         emails.emailClientBetaling({ request });
     } else {
+        // Ensure access token exists for rejection email too
+        if (!request.accessToken) {
+            request.accessToken = generateSmartToken(request);
+            await supabase.from('reseller_requests').update({ access_token: request.accessToken }).eq('id', caseId);
+        }
         addActivity(request, 'system', `Vragenlijst afgekeurd door ${actor}. Feedback teruggestuurd naar klant.`, actor);
         await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', caseId);
 
