@@ -251,15 +251,23 @@
         <span class="ab-label">Status</span>
         <select id="statusSelect" class="ab-select" onchange="onStatusSelectChange(this.value)">
           <option value="pending">Aanvraag ingediend</option>
-          <option value="vragenlijst">Vragenlijst verzonden</option>
-          <option value="vl-ontvangen">Vragenlijst ontvangen</option>
-          <option value="vl-controle">Documentcontrole</option>
+          <option value="vragenlijst">Vragenlijst</option>
+          <option value="wwft">WWFT Check</option>
           <option value="betaling">Betaling</option>
-          <option value="notary-prep">Voorbereiding notaris</option>
-          <option value="notary">Notariële Akte</option>
+          <option value="ocr">OCR</option>
+          <option value="ocr-signed">OCR Signed</option>
+          <option value="draft-accountant">Draft to Accountant</option>
+          <option value="accountant-accepted">Accountant accepted</option>
+          <option value="draft-client">Draft to Client</option>
+          <option value="client-signed">Client Signed</option>
+          <option value="invitation-om">Invitation OM</option>
+          <option value="executed-notaris">Executed Notaris</option>
           <option value="kvk">KvK inschrijving</option>
-          <option value="bank">Bankrekening</option>
-          <option value="complete">Voltooid</option>
+          <option value="passed-kvk">Passed by KvK</option>
+          <option value="making-binders">Making Closing Binders</option>
+          <option value="upload-binders">Upload Closing Binders</option>
+          <option value="complete">Case completed</option>
+          <option value="complete-review">Case completed review</option>
           <option value="rejected">Afgewezen</option>
         </select>
       </div>
@@ -801,20 +809,28 @@ function renderPage(d, role) {
 
 function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
   const stages = [
-    { key:'pending',       label:'Aanvraag ingediend' },
-    { key:'vragenlijst',   label:'Vragenlijst verzonden' },
-    { key:'vl-ontvangen',  label:'VL ontvangen' },
-    { key:'vl-controle',   label:'Documentcontrole' },
-    { key:'betaling',      label:'Betaling' },
-    { key:'notary-prep',   label:'Notaris voorbereiding' },
-    { key:'notary',        label:'Notariële Akte' },
-    { key:'kvk',           label:'KvK inschrijving' },
-    { key:'bank',          label:'Bankrekening' },
-    { key:'complete',      label:'Voltooid' },
+    { key:'pending',             label:'Ingediend' },
+    { key:'vragenlijst',         label:'Vragenlijst' },
+    { key:'wwft',                label:'WWFT Check' },
+    { key:'betaling',            label:'Betaling' },
+    { key:'ocr',                 label:'OCR' },
+    { key:'ocr-signed',          label:'OCR Signed' },
+    { key:'draft-accountant',    label:'Draft Accountant' },
+    { key:'accountant-accepted', label:'Accountant OK' },
+    { key:'draft-client',        label:'Draft Client' },
+    { key:'client-signed',       label:'Client Signed' },
+    { key:'invitation-om',       label:'Invitation OM' },
+    { key:'executed-notaris',    label:'Exec. Notaris' },
+    { key:'kvk',                 label:'KvK' },
+    { key:'passed-kvk',          label:'KvK akkoord' },
+    { key:'making-binders',      label:'Closing Binders' },
+    { key:'upload-binders',      label:'Upload Binders' },
+    { key:'complete',            label:'Voltooid' },
+    { key:'complete-review',     label:'Review' },
   ];
-  const order = { pending:0, approved:1, vragenlijst:1, 'vl-ontvangen':2, 'vl-controle':3, betaling:4, 'notary-prep':5, notary:6, kvk:7, bank:8, complete:9 };
+  const order = { pending:0, approved:1, vragenlijst:1, wwft:2, betaling:3, ocr:4, 'ocr-signed':5, 'draft-accountant':6, 'accountant-accepted':7, 'draft-client':8, 'client-signed':9, 'invitation-om':10, 'executed-notaris':11, kvk:12, 'passed-kvk':13, 'making-binders':14, 'upload-binders':15, complete:16, 'complete-review':17 };
   const cur = order[statusKey] ?? 0;
-  const allDone = statusKey === 'complete';
+  const allDone = statusKey === 'complete' || statusKey === 'complete-review';
   return stages.map((s,i) => {
     const done = allDone || i < cur;
     const active = !allDone && i === cur;
@@ -822,13 +838,13 @@ function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
     const vlBtn = (i === 1 && hasVragenlijst && role === 'admin')
       ? `<button onclick="openVragenlijstModal()" style="margin-top:6px;padding:3px 9px;background:#EEF4FF;color:#2B6CB5;border:1px solid #C3DAFE;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#x1F4CB; ${reviewStatus === 'approved' ? 'Vragenlijst beoordeeld' : 'Vragenlijst beoordelen'}</button>`
       : '';
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:72px;">
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:64px;">
       ${i > 0 ? `<div style="position:absolute;top:14px;right:50%;width:100%;height:2px;background:${done||active?'#1A3B70':'#E8EDF5'};z-index:0;"></div>` : ''}
-      <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'#1A3B70':active?'#2B6CB5':'#E8EDF5'};background:${done?'#1A3B70':active?'#EEF4FF':'white'};display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:${done?'white':active?'#2B6CB5':'#CBD5E0'};position:relative;z-index:1;">
+      <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'#1A3B70':active?'#2B6CB5':'#E8EDF5'};background:${done?'#1A3B70':active?'#EEF4FF':'white'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;color:${done?'white':active?'#2B6CB5':'#CBD5E0'};position:relative;z-index:1;">
         ${done?'&#x2713;':i+1}
       </div>
-      <div style="margin-top:8px;font-size:0.72rem;font-weight:${active?'600':'400'};color:${done?'#1A3B70':active?'#1A3B70':'#A0AEC0'};text-align:center;line-height:1.3;">${s.label}</div>
-      <div style="font-size:0.68rem;color:${active?'#2B6CB5':'#CBD5E0'};margin-top:2px;">${active?'Actief':done?'Afgerond':''}</div>
+      <div style="margin-top:6px;font-size:0.68rem;font-weight:${active?'600':'400'};color:${done?'#1A3B70':active?'#1A3B70':'#A0AEC0'};text-align:center;line-height:1.3;">${s.label}</div>
+      <div style="font-size:0.65rem;color:${active?'#2B6CB5':'#CBD5E0'};margin-top:2px;">${active?'Actief':done?'Afgerond':''}</div>
       ${vlBtn}
     </div>`;
   }).join('');
@@ -1220,32 +1236,26 @@ function getStatusEmailTemplate(status, d) {
   const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}`;
   const code = d.accessToken || '—';
   const t = {
-    vragenlijst: {
-      subject: `Uw BV-aanvraag is geaccepteerd — vul de vragenlijst in`,
-      body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${d.name} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}`
-    },
-    betaling: {
-      subject: `Betalingsverzoek — BV-oprichting ${d.name}`,
-      body: `Beste klant,\n\nUw vragenlijst is verwerkt. De volgende stap is de betaling voor de oprichting van ${d.name}.\n\nU ontvangt binnenkort een factuur. Na ontvangst van de betaling gaan wij direct door met de verdere afhandeling.\n\nStatuspagina: ${statusUrl}`
-    },
-    notary: {
-      subject: `Notariële akte ter ondertekening — ${d.name}`,
-      body: `Beste klant,\n\nDe betaling is ontvangen. Bijgevoegd vindt u de conceptakte voor de oprichting van ${d.name}.\n\nWij verzoeken u de akte te controleren en te ondertekenen. U kunt de ondertekende akte als bijlage retourneren, of neem contact op via info@aandelenxpress.nl om een afspraak te maken bij de notaris.\n\nHeeft u vragen over de akte? Wij helpen u graag verder.\n\nStatuspagina: ${statusUrl}`
-    },
-    kvk: {
-      subject: `KvK inschrijving gestart — ${d.name}`,
-      body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel. U ontvangt het KvK-nummer zodra de inschrijving is verwerkt.\n\nStatuspagina: ${statusUrl}`
-    },
-    complete: {
-      subject: `Uw BV is succesvol opgericht — ${d.name}`,
-      body: `Gefeliciteerd!\n\nDe oprichting van ${d.name} is volledig afgerond. Uw BV is nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}`
-    },
-    rejected: {
-      subject: `Update over uw dossier — ${d.name}`,
-      body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.`
-    }
+    vragenlijst:         { subject: `Uw BV-aanvraag — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
+    wwft:                { subject: `WWFT Check — ${naam}`, body: `Beste klant,\n\nWij voeren een WWFT-check uit voor de oprichting van ${naam}. Wij nemen contact met u op indien aanvullende informatie nodig is.\n\nStatuspagina: ${statusUrl}` },
+    betaling:            { subject: `Betalingsverzoek — BV-oprichting ${naam}`, body: `Beste klant,\n\nDe volgende stap is de betaling voor de oprichting van ${naam}. U ontvangt binnenkort een factuur.\n\nStatuspagina: ${statusUrl}` },
+    ocr:                 { subject: `OCR verwerking gestart — ${naam}`, body: `Beste klant,\n\nWij starten de OCR-verwerking van uw documenten voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'ocr-signed':        { subject: `OCR getekend — ${naam}`, body: `Beste klant,\n\nDe OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'draft-accountant':  { subject: `Concept klaar ter beoordeling — ${naam}`, body: `Beste accountant,\n\nEr staat een concept klaar voor uw beoordeling voor het dossier ${naam}. Wij verzoeken u dit te beoordelen.\n\nStatuspagina: ${statusUrl}` },
+    'accountant-accepted': { subject: `Concept goedgekeurd — ${naam}`, body: `Beste klant,\n\nDe accountant heeft het concept goedgekeurd voor ${naam}. Wij gaan verder met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'draft-client':      { subject: `Concept ter ondertekening — ${naam}`, body: `Beste klant,\n\nHet concept voor de oprichting van ${naam} ligt klaar ter beoordeling en ondertekening.\n\nStatuspagina: ${statusUrl}` },
+    'client-signed':     { subject: `Document ondertekend — ${naam}`, body: `Beste klant,\n\nBedankt voor de ondertekening. Wij verwerken uw document voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'invitation-om':     { subject: `Uitnodiging Openbaar Ministerie — ${naam}`, body: `Beste klant,\n\nWij hebben de uitnodiging voor het Openbaar Ministerie verstuurd voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'executed-notaris':  { subject: `Notariële akte gepasseerd — ${naam}`, body: `Beste klant,\n\nDe notariële akte voor ${naam} is gepasseerd. Wij gaan nu door met de KvK-inschrijving.\n\nStatuspagina: ${statusUrl}` },
+    kvk:                 { subject: `KvK inschrijving gestart — ${naam}`, body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
+    'passed-kvk':        { subject: `KvK inschrijving verwerkt — ${naam}`, body: `Beste klant,\n\nUw BV ${naam} is succesvol ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
+    'making-binders':    { subject: `Closing Binders worden opgesteld — ${naam}`, body: `Beste klant,\n\nWij stellen de Closing Binders op voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'upload-binders':    { subject: `Closing Binders beschikbaar — ${naam}`, body: `Beste klant,\n\nDe Closing Binders voor ${naam} zijn beschikbaar en geüpload naar uw dossier.\n\nStatuspagina: ${statusUrl}` },
+    complete:            { subject: `Dossier afgerond — ${naam}`, body: `Gefeliciteerd!\n\nHet dossier voor ${naam} is volledig afgerond.\n\nStatuspagina: ${statusUrl}` },
+    'complete-review':   { subject: `Dossier in eindcontrole — ${naam}`, body: `Beste klant,\n\nHet dossier voor ${naam} wordt momenteel in eindcontrole genomen.\n\nStatuspagina: ${statusUrl}` },
+    rejected:            { subject: `Update over uw dossier — ${naam}`, body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.` }
   };
-  return t[status] || { subject: `Status update — ${d.name}`, body: `Uw dossier heeft een nieuwe status.` };
+  return t[status] || { subject: `Status update — ${naam}`, body: `Uw dossier heeft een nieuwe status.` };
 }
 // ── Action bar ─────────────────────────────────────────────
 async function renderActionBar(d) {
@@ -1270,7 +1280,7 @@ async function renderActionBar(d) {
 
   // Set current status
   const statusSel = document.getElementById('statusSelect');
-  if (d.apiStatus) statusSel.value = ['pending','vragenlijst','vl-ontvangen','vl-controle','betaling','notary-prep','notary','kvk','bank','complete','rejected'].includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
+  if (d.apiStatus) statusSel.value = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected'].includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
 
   document.getElementById('actionBar').style.display = 'flex';
 }
@@ -1290,18 +1300,26 @@ async function doChangeStatus(val) {
   });
   if (!r.ok) throw new Error('API fout bij status update');
   const sMap = {
-    'pending':       { key:'pending',       text:'Aanvraag ingediend' },
-    'vragenlijst':   { key:'vragenlijst',   text:'Vragenlijst verzonden' },
-    'approved':      { key:'vragenlijst',   text:'Vragenlijst verzonden' },
-    'vl-ontvangen':  { key:'vl-ontvangen',  text:'Vragenlijst ontvangen' },
-    'vl-controle':   { key:'vl-controle',   text:'Documentcontrole' },
-    'betaling':      { key:'betaling',       text:'Betaling' },
-    'notary-prep':   { key:'notary-prep',   text:'Voorbereiding notaris' },
-    'notary':        { key:'notary',         text:'Notariële Akte' },
-    'kvk':           { key:'kvk',            text:'KvK inschrijving' },
-    'bank':          { key:'bank',           text:'Bankrekening' },
-    'complete':      { key:'complete',       text:'Voltooid' },
-    'rejected':      { key:'rejected',       text:'Afgewezen' }
+    'pending':             { key:'pending',             text:'Aanvraag ingediend' },
+    'approved':            { key:'vragenlijst',         text:'Vragenlijst' },
+    'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst' },
+    'wwft':                { key:'wwft',                text:'WWFT Check' },
+    'betaling':            { key:'betaling',             text:'Betaling' },
+    'ocr':                 { key:'ocr',                 text:'OCR' },
+    'ocr-signed':          { key:'ocr-signed',          text:'OCR Signed' },
+    'draft-accountant':    { key:'draft-accountant',    text:'Draft to Accountant' },
+    'accountant-accepted': { key:'accountant-accepted', text:'Accountant accepted' },
+    'draft-client':        { key:'draft-client',        text:'Draft to Client' },
+    'client-signed':       { key:'client-signed',       text:'Client Signed' },
+    'invitation-om':       { key:'invitation-om',       text:'Invitation OM' },
+    'executed-notaris':    { key:'executed-notaris',    text:'Executed Notaris' },
+    'kvk':                 { key:'kvk',                 text:'KvK inschrijving' },
+    'passed-kvk':          { key:'passed-kvk',          text:'Passed by KvK' },
+    'making-binders':      { key:'making-binders',      text:'Making Closing Binders' },
+    'upload-binders':      { key:'upload-binders',      text:'Upload Closing Binders' },
+    'complete':            { key:'complete',            text:'Case completed' },
+    'complete-review':     { key:'complete-review',     text:'Case completed review' },
+    'rejected':            { key:'rejected',            text:'Afgewezen' }
   };
   const s = sMap[val] || { key: val, text: val };
   currentDossier.statusKey = s.key;
@@ -1900,7 +1918,7 @@ async function init() {
         if (dr.ok) {
           const req = await dr.json();
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
-    const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst verzonden' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst verzonden' }, 'vl-ontvangen':{ key:'vl-ontvangen', text:'Vragenlijst ontvangen' }, 'vl-controle':{ key:'vl-controle', text:'Documentcontrole' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'notary-prep':{ key:'notary-prep', text:'Voorbereiding notaris' }, 'notary':{ key:'notary', text:'Notariële Akte' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'bank':{ key:'bank', text:'Bankrekening' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
+    const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst' }, 'wwft':{ key:'wwft', text:'WWFT Check' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'ocr':{ key:'ocr', text:'OCR' }, 'ocr-signed':{ key:'ocr-signed', text:'OCR Signed' }, 'draft-accountant':{ key:'draft-accountant', text:'Draft to Accountant' }, 'accountant-accepted':{ key:'accountant-accepted', text:'Accountant accepted' }, 'draft-client':{ key:'draft-client', text:'Draft to Client' }, 'client-signed':{ key:'client-signed', text:'Client Signed' }, 'invitation-om':{ key:'invitation-om', text:'Invitation OM' }, 'executed-notaris':{ key:'executed-notaris', text:'Executed Notaris' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'passed-kvk':{ key:'passed-kvk', text:'Passed by KvK' }, 'making-binders':{ key:'making-binders', text:'Making Closing Binders' }, 'upload-binders':{ key:'upload-binders', text:'Upload Closing Binders' }, 'complete':{ key:'complete', text:'Case completed' }, 'complete-review':{ key:'complete-review', text:'Case completed review' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'pending', text: req.status };
           d = { name: req.gewenstNaam || req.clientName, clientName: req.clientName || req.gewenstNaam || '', partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', pricing: req.pricing || null, hasVragenlijst: false };
         }

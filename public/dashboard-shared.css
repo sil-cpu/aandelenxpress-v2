@@ -655,6 +655,71 @@ body {
     color: #00695C;
 }
 
+.badge-wwft {
+    background: #EEF2FF;
+    color: #3730A3;
+}
+
+.badge-ocr {
+    background: #E0F2FE;
+    color: #0369A1;
+}
+
+.badge-ocr-signed {
+    background: #CCFBF1;
+    color: #0F766E;
+}
+
+.badge-draft-accountant {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+.badge-accountant-accepted {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
+.badge-draft-client {
+    background: #E0E7FF;
+    color: #4338CA;
+}
+
+.badge-client-signed {
+    background: #BBF7D0;
+    color: #166534;
+}
+
+.badge-invitation-om {
+    background: #EDE9FE;
+    color: #6D28D9;
+}
+
+.badge-executed-notaris {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-passed-kvk {
+    background: #ECFDF5;
+    color: #047857;
+}
+
+.badge-making-binders {
+    background: #EFF6FF;
+    color: #1E40AF;
+}
+
+.badge-upload-binders {
+    background: #DBEAFE;
+    color: #1E3A8A;
+}
+
+.badge-complete-review {
+    background: #CFFAFE;
+    color: #0E7490;
+}
+
 /* ===== PROGRESS BAR ===== */
 .progress-wrap {
     display: flex;

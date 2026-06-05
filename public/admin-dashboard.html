@@ -1237,17 +1237,25 @@ async function quickChangeStatus(nr, status) {
 }
 
 const STATUS_BADGE_MAP = {
-  'pending':      { css: 'badge-pending',      label: 'Aanvraag ingediend' },
-  'vragenlijst':  { css: 'badge-vragenlijst',  label: 'Vragenlijst verzonden' },
-  'vl-ontvangen': { css: 'badge-vl-ontvangen', label: 'Vragenlijst ontvangen' },
-  'vl-controle':  { css: 'badge-vl-controle',  label: 'Documentcontrole' },
-  'betaling':     { css: 'badge-betaling',      label: 'Betaling' },
-  'notary-prep':  { css: 'badge-notary-prep',   label: 'Voorbereiding notaris' },
-  'notary':       { css: 'badge-notary',        label: 'Notariële Akte' },
-  'kvk':          { css: 'badge-kvk',           label: 'KvK inschrijving' },
-  'bank':         { css: 'badge-bank',          label: 'Bankrekening' },
-  'complete':     { css: 'badge-complete',      label: 'Voltooid' },
-  'rejected':     { css: 'badge-rejected',      label: 'Afgewezen' },
+  'pending':             { css: 'badge-pending',             label: 'Aanvraag ingediend' },
+  'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst' },
+  'wwft':                { css: 'badge-wwft',                label: 'WWFT Check' },
+  'betaling':            { css: 'badge-betaling',            label: 'Betaling' },
+  'ocr':                 { css: 'badge-ocr',                 label: 'OCR' },
+  'ocr-signed':          { css: 'badge-ocr-signed',          label: 'OCR Signed' },
+  'draft-accountant':    { css: 'badge-draft-accountant',    label: 'Draft to Accountant' },
+  'accountant-accepted': { css: 'badge-accountant-accepted', label: 'Accountant accepted' },
+  'draft-client':        { css: 'badge-draft-client',        label: 'Draft to Client' },
+  'client-signed':       { css: 'badge-client-signed',       label: 'Client Signed' },
+  'invitation-om':       { css: 'badge-invitation-om',       label: 'Invitation OM' },
+  'executed-notaris':    { css: 'badge-executed-notaris',    label: 'Executed Notaris' },
+  'kvk':                 { css: 'badge-kvk',                 label: 'KvK inschrijving' },
+  'passed-kvk':          { css: 'badge-passed-kvk',          label: 'Passed by KvK' },
+  'making-binders':      { css: 'badge-making-binders',      label: 'Making Closing Binders' },
+  'upload-binders':      { css: 'badge-upload-binders',      label: 'Upload Closing Binders' },
+  'complete':            { css: 'badge-complete',            label: 'Case completed' },
+  'complete-review':     { css: 'badge-complete-review',     label: 'Case completed review' },
+  'rejected':            { css: 'badge-rejected',            label: 'Afgewezen' },
 };
 
 function toggleStatusDropdown(nr, e) {
@@ -2746,16 +2754,24 @@ function adminGetStatusEmailTemplate(status, d) {
   const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=bv-holding`;
   const code = d.accessToken || '—';
   const t = {
-    vragenlijst: { subject: `Uw BV-aanvraag is geaccepteerd — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
-    'vl-ontvangen': { subject: `Vragenlijst ontvangen — ${naam}`, body: `Beste klant,\n\nWij hebben uw vragenlijst ontvangen en nemen deze in behandeling.\n\nStatuspagina: ${statusUrl}` },
-    'vl-controle': { subject: `Documentcontrole gestart — ${naam}`, body: `Beste klant,\n\nWij controleren momenteel de ingediende documenten voor de oprichting van ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    betaling: { subject: `Betalingsverzoek — BV-oprichting ${naam}`, body: `Beste klant,\n\nUw vragenlijst is verwerkt. De volgende stap is de betaling voor de oprichting van ${naam}.\n\nU ontvangt binnenkort een factuur. Na ontvangst van de betaling gaan wij direct door met de verdere afhandeling.\n\nStatuspagina: ${statusUrl}` },
-    'notary-prep': { subject: `Voorbereiding notaris gestart — ${naam}`, body: `Beste klant,\n\nDe betaling is ontvangen. Wij bereiden de notariële akte voor de oprichting van ${naam} voor.\n\nStatuspagina: ${statusUrl}` },
-    notary: { subject: `Notariële akte ter ondertekening — ${naam}`, body: `Beste klant,\n\nBijgevoegd vindt u de conceptakte voor de oprichting van ${naam}.\n\nWij verzoeken u de akte te controleren en te ondertekenen.\n\nStatuspagina: ${statusUrl}` },
-    kvk: { subject: `KvK inschrijving gestart — ${naam}`, body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
-    bank: { subject: `Bankrekening aanvraag — ${naam}`, body: `Beste klant,\n\nDe KvK inschrijving is verwerkt. Wij starten nu met de aanvraag van de zakelijke bankrekening.\n\nStatuspagina: ${statusUrl}` },
-    complete: { subject: `Uw BV is succesvol opgericht — ${naam}`, body: `Gefeliciteerd!\n\nDe oprichting van ${naam} is volledig afgerond. Uw BV is nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
-    rejected: { subject: `Update over uw dossier — ${naam}`, body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.` }
+    vragenlijst:         { subject: `Uw BV-aanvraag — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
+    wwft:                { subject: `WWFT Check — ${naam}`, body: `Beste klant,\n\nWij voeren een WWFT-check uit voor de oprichting van ${naam}. Wij nemen contact met u op indien aanvullende informatie nodig is.\n\nStatuspagina: ${statusUrl}` },
+    betaling:            { subject: `Betalingsverzoek — BV-oprichting ${naam}`, body: `Beste klant,\n\nDe volgende stap is de betaling voor de oprichting van ${naam}. U ontvangt binnenkort een factuur.\n\nStatuspagina: ${statusUrl}` },
+    ocr:                 { subject: `OCR verwerking gestart — ${naam}`, body: `Beste klant,\n\nWij starten de OCR-verwerking van uw documenten voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'ocr-signed':        { subject: `OCR getekend — ${naam}`, body: `Beste klant,\n\nDe OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'draft-accountant':  { subject: `Concept klaar ter beoordeling — ${naam}`, body: `Beste accountant,\n\nEr staat een concept klaar voor uw beoordeling voor het dossier ${naam}. Wij verzoeken u dit te beoordelen.\n\nStatuspagina: ${statusUrl}` },
+    'accountant-accepted': { subject: `Concept goedgekeurd — ${naam}`, body: `Beste klant,\n\nDe accountant heeft het concept goedgekeurd voor ${naam}. Wij gaan verder met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'draft-client':      { subject: `Concept ter ondertekening — ${naam}`, body: `Beste klant,\n\nHet concept voor de oprichting van ${naam} ligt klaar ter beoordeling en ondertekening.\n\nStatuspagina: ${statusUrl}` },
+    'client-signed':     { subject: `Document ondertekend — ${naam}`, body: `Beste klant,\n\nBedankt voor de ondertekening. Wij verwerken uw document voor ${naam} en gaan verder met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'invitation-om':     { subject: `Uitnodiging Openbaar Ministerie — ${naam}`, body: `Beste klant,\n\nWij hebben de uitnodiging voor het Openbaar Ministerie verstuurd voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'executed-notaris':  { subject: `Notariële akte gepasseerd — ${naam}`, body: `Beste klant,\n\nDe notariële akte voor ${naam} is gepasseerd. Wij gaan nu door met de KvK-inschrijving.\n\nStatuspagina: ${statusUrl}` },
+    kvk:                 { subject: `KvK inschrijving gestart — ${naam}`, body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
+    'passed-kvk':        { subject: `KvK inschrijving verwerkt — ${naam}`, body: `Beste klant,\n\nUw BV ${naam} is succesvol ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
+    'making-binders':    { subject: `Closing Binders worden opgesteld — ${naam}`, body: `Beste klant,\n\nWij stellen de Closing Binders op voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
+    'upload-binders':    { subject: `Closing Binders beschikbaar — ${naam}`, body: `Beste klant,\n\nDe Closing Binders voor ${naam} zijn beschikbaar en geüpload naar uw dossier.\n\nStatuspagina: ${statusUrl}` },
+    complete:            { subject: `Dossier afgerond — ${naam}`, body: `Gefeliciteerd!\n\nHet dossier voor ${naam} is volledig afgerond.\n\nStatuspagina: ${statusUrl}` },
+    'complete-review':   { subject: `Dossier in eindcontrole — ${naam}`, body: `Beste klant,\n\nHet dossier voor ${naam} wordt momenteel in eindcontrole genomen.\n\nStatuspagina: ${statusUrl}` },
+    rejected:            { subject: `Update over uw dossier — ${naam}`, body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.` }
   };
   return t[status] || { subject: `Status update — ${naam}`, body: `Uw dossier heeft een nieuwe status.` };
 }

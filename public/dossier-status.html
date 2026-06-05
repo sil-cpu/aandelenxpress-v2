@@ -759,39 +759,51 @@
 <script>
 // Status configuration
 const statusSteps = [
-    { key: 'pending',       label: 'Aanvraag ingediend',      description: 'Aanvraag ontvangen en geregistreerd' },
-    { key: 'vragenlijst',   label: 'Vragenlijst verzonden',   description: 'Vragenlijst per e-mail verstuurd' },
-    { key: 'vl-ontvangen',  label: 'Vragenlijst ontvangen',   description: 'Ingevulde vragenlijst ontvangen' },
-    { key: 'vl-controle',   label: 'Documentcontrole',        description: 'Uw documenten worden gecontroleerd' },
-    { key: 'betaling',      label: 'Betaling',                description: 'Betaling verwerken' },
-    { key: 'notary-prep',   label: 'Voorbereiding notaris',   description: 'Dossier klaarzetten voor notaris' },
-    { key: 'notary',        label: 'Notariële Akte',          description: 'Akte wordt opgesteld en ondertekend' },
-    { key: 'kvk',           label: 'KvK inschrijving',        description: 'Registratie bij KvK' },
-    { key: 'bank',          label: 'Bankrekening openen',     description: 'Zakelijke bankrekening openen' },
-    { key: 'complete',      label: 'Voltooid',                description: 'Dossier volledig afgerond' }
+    { key: 'pending',             label: 'Aanvraag ingediend',       description: 'Aanvraag ontvangen en geregistreerd' },
+    { key: 'vragenlijst',         label: 'Vragenlijst',              description: 'Vragenlijst per e-mail verstuurd' },
+    { key: 'wwft',                label: 'WWFT Check',               description: 'WWFT-controle wordt uitgevoerd' },
+    { key: 'betaling',            label: 'Betaling',                 description: 'Betaling verwerken' },
+    { key: 'ocr',                 label: 'OCR',                      description: 'OCR-verwerking van documenten' },
+    { key: 'ocr-signed',          label: 'OCR Signed',               description: 'OCR-documenten ondertekend' },
+    { key: 'draft-accountant',    label: 'Draft to Accountant',      description: 'Concept ter beoordeling accountant' },
+    { key: 'accountant-accepted', label: 'Accountant accepted',      description: 'Concept goedgekeurd door accountant' },
+    { key: 'draft-client',        label: 'Draft to Client',          description: 'Concept ter ondertekening klant' },
+    { key: 'client-signed',       label: 'Client Signed',            description: 'Document ondertekend door klant' },
+    { key: 'invitation-om',       label: 'Invitation OM',            description: 'Uitnodiging Openbaar Ministerie' },
+    { key: 'executed-notaris',    label: 'Executed Notaris',         description: 'Notariële akte gepasseerd' },
+    { key: 'kvk',                 label: 'KvK inschrijving',         description: 'Registratie bij KvK' },
+    { key: 'passed-kvk',          label: 'Passed by KvK',            description: 'KvK-inschrijving goedgekeurd' },
+    { key: 'making-binders',      label: 'Making Closing Binders',   description: 'Closing Binders worden opgesteld' },
+    { key: 'upload-binders',      label: 'Upload Closing Binders',   description: 'Closing Binders beschikbaar' },
+    { key: 'complete',            label: 'Case completed',           description: 'Dossier volledig afgerond' },
+    { key: 'complete-review',     label: 'Case completed review',    description: 'Eindcontrole dossier' },
 ];
 
 // Map backend status keys to step keys (backwards compatibility)
 const STATUS_STEP_ALIAS = {
     approved: 'vragenlijst',
-    'vl-ontvangen': 'vl-ontvangen',
-    'vl-controle': 'vl-controle',
-    'notary-prep': 'notary-prep',
-    bank: 'bank'
 };
 
 const statusDescriptions = {
-    pending:        'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier spoedig in behandeling.',
-    vragenlijst:    'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
-    approved:       'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
-    'vl-ontvangen': 'Uw ingevulde vragenlijst is ontvangen. Wij gaan uw documenten controleren.',
-    'vl-controle':  'Uw documenten worden zorgvuldig gecontroleerd door ons team. U ontvangt bericht wanneer alles in orde is.',
-    betaling:       'De documentcontrole is afgerond. Wij verzoeken u de betaling te voldoen om verder te gaan.',
-    'notary-prep':  'Uw dossier wordt klaargezet voor de notaris. Dit duurt doorgaans 1-2 werkdagen.',
-    notary:         'De notariële akte wordt opgesteld door onze partnernotaris. U wordt uitgenodigd voor ondertekening.',
-    kvk:            'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel. U ontvangt uw KvK-uittreksel per e-mail.',
-    bank:           'Uw bedrijf is ingeschreven bij de KvK. Het is nu tijd om een zakelijke bankrekening te openen.',
-    complete:       'Uw dossier is volledig afgerond. Gefeliciteerd met uw nieuwe B.V.! Alle documenten zijn beschikbaar in uw dossier.'
+    pending:               'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier spoedig in behandeling.',
+    vragenlijst:           'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
+    approved:              'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
+    wwft:                  'Wij voeren een WWFT-check uit op uw dossier. Wij nemen contact op indien aanvullende informatie nodig is.',
+    betaling:              'De volgende stap is de betaling. U ontvangt een betalingsverzoek per e-mail.',
+    ocr:                   'Wij verwerken uw documenten via OCR. Dit duurt doorgaans 1-2 werkdagen.',
+    'ocr-signed':          'De OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap.',
+    'draft-accountant':    'Een concept is ter beoordeling verzonden naar de accountant.',
+    'accountant-accepted': 'De accountant heeft het concept goedgekeurd. Wij gaan door met de volgende stap.',
+    'draft-client':        'Het concept ligt klaar voor uw beoordeling en ondertekening.',
+    'client-signed':       'Bedankt voor het ondertekenen. Wij verwerken uw document en gaan verder.',
+    'invitation-om':       'De uitnodiging voor het Openbaar Ministerie is verstuurd.',
+    'executed-notaris':    'De notariële akte is gepasseerd. Wij starten nu de KvK-inschrijving.',
+    kvk:                   'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel. U ontvangt uw KvK-uittreksel per e-mail.',
+    'passed-kvk':          'Uw bedrijf is succesvol ingeschreven bij de Kamer van Koophandel.',
+    'making-binders':      'Wij stellen de Closing Binders op voor uw dossier.',
+    'upload-binders':      'De Closing Binders zijn gereed en beschikbaar in uw dossier.',
+    complete:              'Uw dossier is volledig afgerond. Gefeliciteerd! Alle documenten zijn beschikbaar in uw dossier.',
+    'complete-review':     'Uw dossier wordt momenteel in eindcontrole genomen. Wij nemen spoedig contact met u op.'
 };
 
 const todoItems = {
@@ -805,45 +817,85 @@ const todoItems = {
         { title: 'Vragenlijst invullen',     desc: 'Vul alle vragen volledig in' },
         { title: 'Vragenlijst versturen',    desc: 'Verstuur de ingevulde vragenlijst' }
     ],
-    'vl-ontvangen': [
-        { title: 'Vragenlijst ontvangen',    desc: 'Uw antwoorden zijn ontvangen' },
-        { title: 'Eerste controle',          desc: 'Wij starten de controle' },
-        { title: 'Eventuele aanvullingen',   desc: 'Wij nemen contact op indien nodig' }
-    ],
-    'vl-controle': [
-        { title: 'Documentcontrole',         desc: 'Uw documenten worden gecontroleerd' },
-        { title: 'Identiteitsverificatie',   desc: 'UBO- en bestuurderscontrole' },
-        { title: 'Goedkeuring',              desc: 'Dossier wordt goedgekeurd voor betaling' }
+    wwft: [
+        { title: 'WWFT-controle gestart',    desc: 'Wij controleren uw gegevens' },
+        { title: 'Eventuele aanvullingen',   desc: 'Wij nemen contact op indien nodig' },
+        { title: 'WWFT goedkeuring',         desc: 'Dossier wordt goedgekeurd' }
     ],
     betaling: [
         { title: 'Betaalverzoek ontvangen',  desc: 'U ontvangt een betaalverzoek per e-mail' },
         { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
         { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
     ],
-    'notary-prep': [
-        { title: 'Dossier klaarzetten',      desc: 'Alle gegevens worden gecontroleerd' },
-        { title: 'Notarisplanning',          desc: 'Afspraak wordt ingepland' },
-        { title: 'Uitnodiging verstuurd',    desc: 'U ontvangt een uitnodiging' }
+    ocr: [
+        { title: 'Documenten ontvangen',     desc: 'Uw documenten zijn ontvangen' },
+        { title: 'OCR-verwerking',           desc: 'Wij verwerken uw documenten' },
+        { title: 'Controle resultaat',       desc: 'Resultaat wordt gecontroleerd' }
     ],
-    notary: [
-        { title: 'Akte ontvangen',           desc: 'Conceptakte ter beoordeling' },
-        { title: 'Akte ondertekenen',        desc: 'Ondertekening bij de notaris' },
-        { title: 'Akte geregistreerd',       desc: 'Akte wordt ingeschreven' }
+    'ocr-signed': [
+        { title: 'OCR verwerkt',             desc: 'Documenten zijn verwerkt' },
+        { title: 'Ondertekening ontvangen',  desc: 'Uw ondertekening is ontvangen' },
+        { title: 'Volgende stap',            desc: 'Wij gaan verder met uw dossier' }
+    ],
+    'draft-accountant': [
+        { title: 'Concept opgesteld',        desc: 'Het concept is gereed' },
+        { title: 'Verzonden naar accountant', desc: 'Accountant beoordeelt het concept' },
+        { title: 'Wachten op goedkeuring',   desc: 'Wij wachten op reactie accountant' }
+    ],
+    'accountant-accepted': [
+        { title: 'Concept goedgekeurd',      desc: 'Accountant heeft goedgekeurd' },
+        { title: 'Volgende stap wordt gestart', desc: 'Wij gaan verder met uw dossier' },
+        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de voortgang' }
+    ],
+    'draft-client': [
+        { title: 'Concept ter inzage',       desc: 'Bekijk het concept zorgvuldig' },
+        { title: 'Concept ondertekenen',     desc: 'Onderteken het concept' },
+        { title: 'Retourneren',              desc: 'Stuur het ondertekende document terug' }
+    ],
+    'client-signed': [
+        { title: 'Ondertekening ontvangen',  desc: 'Uw handtekening is ontvangen' },
+        { title: 'Verwerking gestart',       desc: 'Wij verwerken uw document' },
+        { title: 'Volgende stap',            desc: 'Wij gaan verder met uw dossier' }
+    ],
+    'invitation-om': [
+        { title: 'Uitnodiging verstuurd',    desc: 'Uitnodiging OM is verstuurd' },
+        { title: 'Wachten op reactie',       desc: 'Wij wachten op reactie OM' },
+        { title: 'Verdere afhandeling',      desc: 'Na goedkeuring gaan wij verder' }
+    ],
+    'executed-notaris': [
+        { title: 'Akte gepasseerd',          desc: 'Notariële akte is getekend' },
+        { title: 'KvK-aanvraag starten',     desc: 'Inschrijving bij KvK wordt gestart' },
+        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de voortgang' }
     ],
     kvk: [
         { title: 'KvK-aanvraag ingediend',   desc: 'Wij dienen uw aanvraag in bij KvK' },
         { title: 'Goedkeuring KvK',          desc: 'KvK verwerkt uw registratie' },
         { title: 'KvK-nummer ontvangen',     desc: 'U ontvangt uw KvK-uittreksel' }
     ],
-    bank: [
-        { title: 'KvK klaar',                desc: 'Uw bedrijf is geregistreerd' },
-        { title: 'Bankrekening aanvragen',   desc: 'Vraag een zakelijke rekening aan' },
-        { title: 'Rekening actief',          desc: 'Uw zakelijke rekening is actief' }
+    'passed-kvk': [
+        { title: 'KvK-inschrijving verwerkt', desc: 'Uw bedrijf staat ingeschreven' },
+        { title: 'Closing Binders starten',  desc: 'Wij starten de Closing Binders' },
+        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de voortgang' }
+    ],
+    'making-binders': [
+        { title: 'Closing Binders gestart',  desc: 'Wij stellen de documenten op' },
+        { title: 'Controle documenten',      desc: 'Alle documenten worden gecontroleerd' },
+        { title: 'Upload volgt',             desc: 'Documenten worden spoedig geüpload' }
+    ],
+    'upload-binders': [
+        { title: 'Closing Binders gereed',   desc: 'Alle documenten zijn beschikbaar' },
+        { title: 'Eindcontrole',             desc: 'Laatste controle wordt uitgevoerd' },
+        { title: 'Dossier bijna afgerond',   desc: 'Wij ronden uw dossier af' }
     ],
     complete: [
-        { title: 'Alle stappen voltooid',    desc: 'Uw bedrijf is volledig opgericht!' },
+        { title: 'Alle stappen voltooid',    desc: 'Uw dossier is volledig afgesloten!' },
         { title: 'Documenten beschikbaar',   desc: 'Alle documenten zijn beschikbaar' },
         { title: 'Support beschikbaar',      desc: 'Ons team staat voor u klaar' }
+    ],
+    'complete-review': [
+        { title: 'Eindcontrole gestart',     desc: 'Wij controleren het dossier' },
+        { title: 'Nagenoeg afgerond',        desc: 'Bijna klaar' },
+        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de afronding' }
     ]
 };
 

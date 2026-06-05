@@ -975,18 +975,26 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         'advies':'Advies'
     };
     const statusMap = {
-        'pending':       { key:'pending',       text:'Aanvraag ingediend' },
-        'approved':      { key:'vragenlijst',   text:'Vragenlijst verzonden' },
-        'vragenlijst':   { key:'vragenlijst',   text:'Vragenlijst verzonden' },
-        'vl-ontvangen':  { key:'vl-ontvangen',  text:'Vragenlijst ontvangen' },
-        'vl-controle':   { key:'vl-controle',   text:'Documentcontrole' },
-        'betaling':      { key:'betaling',       text:'Betaling' },
-        'notary-prep':   { key:'notary-prep',   text:'Voorbereiding notaris' },
-        'notary':        { key:'notary',         text:'Notariele Akte' },
-        'kvk':           { key:'kvk',            text:'KvK inschrijving' },
-        'bank':          { key:'bank',           text:'Bankrekening' },
-        'complete':      { key:'complete',       text:'Voltooid' },
-        'rejected':      { key:'rejected',       text:'Afgewezen' },
+        'pending':             { key:'pending',             text:'Aanvraag ingediend' },
+        'approved':            { key:'vragenlijst',         text:'Vragenlijst' },
+        'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst' },
+        'wwft':                { key:'wwft',                text:'WWFT Check' },
+        'betaling':            { key:'betaling',             text:'Betaling' },
+        'ocr':                 { key:'ocr',                 text:'OCR' },
+        'ocr-signed':          { key:'ocr-signed',          text:'OCR Signed' },
+        'draft-accountant':    { key:'draft-accountant',    text:'Draft to Accountant' },
+        'accountant-accepted': { key:'accountant-accepted', text:'Accountant accepted' },
+        'draft-client':        { key:'draft-client',        text:'Draft to Client' },
+        'client-signed':       { key:'client-signed',       text:'Client Signed' },
+        'invitation-om':       { key:'invitation-om',       text:'Invitation OM' },
+        'executed-notaris':    { key:'executed-notaris',    text:'Executed Notaris' },
+        'kvk':                 { key:'kvk',                 text:'KvK inschrijving' },
+        'passed-kvk':          { key:'passed-kvk',          text:'Passed by KvK' },
+        'making-binders':      { key:'making-binders',      text:'Making Closing Binders' },
+        'upload-binders':      { key:'upload-binders',      text:'Upload Closing Binders' },
+        'complete':            { key:'complete',            text:'Case completed' },
+        'complete-review':     { key:'complete-review',     text:'Case completed review' },
+        'rejected':            { key:'rejected',            text:'Afgewezen' },
     };
     const s = statusMap[row.status] || { key: 'pending', text: 'In behandeling' };
     const brandRecord = await getBrandingByEmail(row.reseller_id, { email: row.reseller_id, company: row.reseller_company || '' });
@@ -1146,14 +1154,14 @@ app.patch('/api/reseller-requests/:id/token', requireAdmin, async (req, res) => 
 app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    const valid = ['pending', 'vragenlijst', 'vl-ontvangen', 'vl-controle', 'betaling', 'notary-prep', 'notary', 'kvk', 'bank', 'complete', 'rejected', 'approved'];
+    const valid = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected','approved'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
 
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
     const request = rowToReq(row);
-    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst verzonden', approved:'Vragenlijst verzonden', 'vl-ontvangen':'Vragenlijst ontvangen', 'vl-controle':'Documentcontrole', betaling:'Betaling', 'notary-prep':'Voorbereiding notaris', notary:'Notariele Akte', kvk:'KvK inschrijving', bank:'Bankrekening', complete:'Voltooid', rejected:'Afgewezen' };
+    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', wwft:'WWFT Check', betaling:'Betaling', ocr:'OCR', 'ocr-signed':'OCR Signed', 'draft-accountant':'Draft to Accountant', 'accountant-accepted':'Accountant accepted', 'draft-client':'Draft to Client', 'client-signed':'Client Signed', 'invitation-om':'Invitation OM', 'executed-notaris':'Executed Notaris', kvk:'KvK inschrijving', 'passed-kvk':'Passed by KvK', 'making-binders':'Making Closing Binders', 'upload-binders':'Upload Closing Binders', complete:'Case completed', 'complete-review':'Case completed review', rejected:'Afgewezen' };
     const adminName = req.session.user.name || req.session.user.email;
     addActivity(request, 'system', `Status gewijzigd van "${statusLabels[request.status]||request.status}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
 
