@@ -433,35 +433,61 @@
       .same-link-row { grid-template-columns: 1fr; }
     }
     .file-box {
-      border: 1.5px dashed #bfd0ef;
+      border: 2px dashed #bfd0ef;
       border-radius: 10px;
-      padding: 12px;
+      padding: 20px 16px;
       background: #fafcff;
       position: relative;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
     }
+    .file-box:hover { border-color: #2B6CB5; background: #EEF4FF; }
+    .file-box.drag-over { border-color: #2B6CB5; background: #EEF4FF; }
     .file-box.has-file {
       border-style: solid;
       border-color: #5bb97a;
       background: #f3fcf6;
     }
+    .file-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      font-size: 0;
+    }
+    .file-box-icon { color: #93C5FD; margin-bottom: 2px; pointer-events: none; }
     .file-label {
       display: block;
-      margin-bottom: 8px;
       font-size: 0.82rem;
       font-weight: 700;
       color: #2a467a;
+      pointer-events: none;
+    }
+    .file-cta {
+      font-size: 0.78rem;
+      color: #2B6CB5;
+      font-weight: 600;
+      pointer-events: none;
     }
     .file-meta {
-      font-size: 0.78rem;
-      color: #6982ad;
-      margin-top: 4px;
+      font-size: 0.72rem;
+      color: #94A3B8;
+      pointer-events: none;
     }
     .file-picked {
       font-size: 0.8rem;
       color: #1c7d43;
-      margin-top: 6px;
-      font-weight: 700;
+      margin-top: 4px;
+      font-weight: 600;
       word-break: break-word;
+      pointer-events: none;
     }
 
     .btns {
@@ -942,23 +968,29 @@
           <div class="card-b">
             <div class="file-grid">
               <div class="file-box" id="datacardZone">
+                <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                 <label class="file-label">Datacard / PDC bestand(en)</label>
+                <span class="file-cta">Klik of sleep bestanden</span>
                 <input id="datacardFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-meta">PDF, JPG, PNG – meerdere bestanden mogelijk – max 10 MB</div>
                 <div class="file-picked" id="datacardSelected" style="display:none;"></div>
               </div>
 
               <div class="file-box" id="pepZone">
+                <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                 <label class="file-label">PEP verklaring(en)</label>
+                <span class="file-cta">Klik of sleep bestanden</span>
                 <input id="pepFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-meta">PDF, JPG, PNG – meerdere bestanden mogelijk – max 10 MB</div>
                 <div class="file-picked" id="pepSelected" style="display:none;"></div>
               </div>
 
               <div class="file-box" id="personeelsplanZone">
+                <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                 <label class="file-label">Personeelsplan / bedrijfsplan(nen)</label>
+                <span class="file-cta">Klik of sleep bestanden</span>
                 <input id="personeelsplanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-meta">PDF, JPG, PNG – meerdere bestanden mogelijk – max 10 MB</div>
                 <div class="file-picked" id="personeelsplanSelected" style="display:none;"></div>
               </div>
             </div>
@@ -3833,6 +3865,11 @@
       const selected = document.getElementById(selectedId);
       const isMulti = !!input?.multiple;
 
+      // Drag-over visual feedback
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
+
       const renderSelected = (files) => {
         if (!files.length) {
           selected.textContent = '';
@@ -3842,8 +3879,8 @@
         }
         zone.classList.add('has-file');
         selected.textContent = files.length === 1
-          ? 'Geselecteerd: ' + files[0].naam
-          : 'Geselecteerd (' + files.length + '): ' + files.map(f => f.naam).join(', ');
+          ? '✓ ' + files[0].naam
+          : '✓ ' + files.length + ' bestanden: ' + files.map(f => f.naam).join(', ');
         selected.style.display = 'block';
       };
 
