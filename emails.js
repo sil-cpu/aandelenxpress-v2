@@ -307,69 +307,6 @@ async function emailResellerRequestRejected({ request }) {
     });
 }
 
-// ─── Support tickets ──────────────────────────────────────────────────────────
-
-/** Admin: nieuw support ticket */
-async function emailAdminNewTicket({ ticket }) {
-    const { id, dossierNr, subject, message, senderName, senderEmail } = ticket;
-    return sendEmail({
-        to:      ADMIN_EMAIL,
-        subject: `[${BRAND}] Nieuw ticket ${id}: ${subject}`,
-        html:    layout(`
-            <h2>Nieuw support ticket</h2>
-            <div class="info-box">
-                <strong>Ticket-ID:</strong> ${id}<br>
-                <strong>Dossier:</strong> ${dossierNr}<br>
-                <strong>Onderwerp:</strong> ${subject}<br>
-                <strong>Van:</strong> ${senderName || '—'} (${senderEmail || '—'})
-            </div>
-            <p><strong>Bericht:</strong><br>${message.replace(/\n/g, '<br>')}</p>
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/admin-dashboard">Ticket beantwoorden</a>
-        `),
-    });
-}
-
-/** Ticketindiener: bevestiging van ontvangst */
-async function emailTicketSenderConfirmation({ ticket }) {
-    const { id, subject, senderName, senderEmail } = ticket;
-    if (!senderEmail) return null;
-    return sendEmail({
-        to:      senderEmail,
-        subject: `${BRAND} — Ticket ontvangen: ${subject}`,
-        html:    layout(`
-            <h2>Ticket ontvangen</h2>
-            <p>Beste ${senderName || 'klant'},</p>
-            <p>Je support ticket is goed ontvangen. Ons team zal zo snel mogelijk reageren.</p>
-            <div class="info-box">
-                <strong>Ticket-ID:</strong> ${id}<br>
-                <strong>Onderwerp:</strong> ${subject}
-            </div>
-            <p>Bewaar dit email-adres voor eventuele follow-up vragen.</p>
-        `),
-    });
-}
-
-/** Ticketindiener: admin heeft gereageerd */
-async function emailTicketReply({ ticket, replyMessage, adminName }) {
-    const { id, subject, senderName, senderEmail } = ticket;
-    if (!senderEmail) return null;
-    return sendEmail({
-        to:      senderEmail,
-        subject: `${BRAND} — Reactie op je ticket: ${subject}`,
-        html:    layout(`
-            <h2>Reactie op je ticket</h2>
-            <p>Beste ${senderName || 'klant'},</p>
-            <p>Je hebt een reactie ontvangen op ticket <strong>${id}</strong>.</p>
-            <div class="info-box">
-                <strong>Onderwerp:</strong> ${subject}<br>
-                <strong>Van:</strong> ${adminName || 'AandelenXpress Team'}
-            </div>
-            <p><strong>Bericht:</strong><br>${replyMessage.replace(/\n/g, '<br>')}</p>
-            <p>Heb je nog vragen? Neem contact op via <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.</p>
-        `),
-    });
-}
-
 /** Admin: klant heeft vragenlijst ingevuld */
 async function emailAdminVragenlijstSubmitted({ submission }) {
     const { caseId, clientName, clientEmail, resellerCompany, gewenstNaam, oprichtingType,
@@ -547,9 +484,6 @@ module.exports = {
     emailClientCaseApproved,
     emailClientBetaling,
     emailResellerRequestRejected,
-    emailAdminNewTicket,
-    emailTicketSenderConfirmation,
-    emailTicketReply,
     emailAdminVragenlijstSubmitted,
     emailClientVragenlijstSubmitted,
     emailClientVragenlijstRejected,

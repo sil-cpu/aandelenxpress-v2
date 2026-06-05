@@ -411,7 +411,7 @@ app.use(cookieSession({
 }));
 
 // Redirect .html URLs to clean URLs (301 for SEO)
-const protectedPages = ['admin-dashboard', 'reseller-dashboard', 'blog-admin', 'dossier-detail', 'ticket-detail', 'partner-detail', 'dossier-status'];
+const protectedPages = ['admin-dashboard', 'reseller-dashboard', 'blog-admin', 'dossier-detail', 'partner-detail', 'dossier-status'];
 app.get('/:page.html', (req, res, next) => {
     const page = req.params.page;
     if (page === 'vragenlijst-bv-holding-preview') {
@@ -1298,73 +1298,6 @@ app.post('/api/email-templates', requireAdmin, async (req, res) => {
 app.delete('/api/email-templates/:id', requireAdmin, async (req, res) => {
     await supabase.from('email_templates').delete().eq('id', req.params.id);
     res.json({ success: true });
-});
-
-// ── Tickets ────────────────────────────────────────────────────────────────
-app.get('/api/tickets/:id', async (req, res) => {
-    const { id } = req.params;
-    if (id.startsWith('AX-') || id.startsWith('RR-')) {
-        const { data } = await supabase.from('tickets').select('*').eq('dossier_nr', id);
-        return res.json(data || []);
-    }
-    const { data: ticket } = await supabase.from('tickets').select('*').eq('id', id).single();
-    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
-    res.json(ticket);
-});
-
-app.get('/api/tickets-count', async (req, res) => {
-    const { count } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('read', false);
-    res.json({ count: count || 0 });
-});
-
-app.post('/api/tickets', async (req, res) => {
-    const { dossierNr, subject, message, senderName, senderEmail } = req.body;
-    if (!dossierNr || !subject || !message) return res.status(400).json({ error: 'Dossier, onderwerp en bericht vereist' });
-
-    const { data: idData } = await supabase.rpc('next_ticket_id');
-    const now = new Date().toISOString();
-    const ticketRow = { id: idData, dossier_nr: dossierNr, subject, message, sender_name: senderName, sender_email: senderEmail, status: 'open', read: false, created_at: now, replies: [] };
-    await supabase.from('tickets').insert(ticketRow);
-
-    const ticketEmail = { id: ticketRow.id, dossierNr, subject, message, senderName, senderEmail, status: 'open', read: false, createdAt: now, replies: [] };
-    emails.emailAdminNewTicket({ ticket: ticketEmail });
-    emails.emailTicketSenderConfirmation({ ticket: ticketEmail });
-    res.status(201).json(ticketEmail);
-});
-
-app.patch('/api/tickets/:ticketId', async (req, res) => {
-    const { data: ticket } = await supabase.from('tickets').update({ read: true }).eq('id', req.params.ticketId).select().single();
-    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
-    res.json(ticket);
-});
-
-app.get('/api/admin/tickets', requireAdmin, async (req, res) => {
-    const { data } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
-    res.json(data || []);
-});
-
-app.post('/api/tickets/:ticketId/reply', requireAdmin, async (req, res) => {
-    const { message } = req.body;
-    if (!message?.trim()) return res.status(400).json({ error: 'Bericht is vereist' });
-
-    const { data: ticket } = await supabase.from('tickets').select('*').eq('id', req.params.ticketId).single();
-    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
-
-    const reply = { author: req.session.user.name, email: req.session.user.email, message: message.trim(), createdAt: new Date().toISOString() };
-    const replies = [...(ticket.replies || []), reply];
-    const newStatus = (ticket.status === 'open' || ticket.status === 'Open') ? 'Replied' : ticket.status;
-    await supabase.from('tickets').update({ replies, status: newStatus }).eq('id', req.params.ticketId);
-    emails.emailTicketReply({ ticket: { ...ticket, replies, status: newStatus }, replyMessage: message.trim(), adminName: req.session.user.name });
-    res.json({ ...ticket, replies, status: newStatus });
-});
-
-app.patch('/api/tickets/:ticketId/status', requireAdmin, async (req, res) => {
-    const { status } = req.body;
-    const valid = ['Open', 'Waiting', 'Replied', 'Resolved', 'Closed'];
-    if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldig status' });
-    const { data: ticket } = await supabase.from('tickets').update({ status }).eq('id', req.params.ticketId).select().single();
-    if (!ticket) return res.status(404).json({ error: 'Ticket niet gevonden' });
-    res.json(ticket);
 });
 
 // ── Vragenlijsten ──────────────────────────────────────────────────────────

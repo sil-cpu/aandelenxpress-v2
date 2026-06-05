@@ -745,51 +745,6 @@
         </div>
     </div>
 
-    <!-- Support Tickets -->
-    <div class="status-card" id="supportCard" style="display:none;">
-        <div class="todo-section">
-            <div class="todo-header">
-                <div class="todo-icon">💬</div>
-                <div class="todo-title">Support Tickets</div>
-            </div>
-
-            <!-- Ticket submission form -->
-            <div style="background: #FAFBFF; padding: 20px; border-radius: 8px; border: 1px solid #E8EDF5; margin-top: 16px;">
-                <div style="font-weight: 600; color: #0F1D3A; margin-bottom: 12px;">Nieuw ticket indienen</div>
-                <div id="formSuccess" class="form-success" style="display: none;"></div>
-                <form id="ticketForm">
-                    <div class="form-group">
-                        <label class="form-label">Onderwerp</label>
-                        <input type="text" name="subject" class="form-input" placeholder="Bijv. Vraag over documenten" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Bericht</label>
-                        <textarea name="message" class="form-textarea" placeholder="Beschrijf uw vraag of probleem..." required></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Uw naam</label>
-                            <input type="text" name="senderName" class="form-input" placeholder="Uw volledige naam" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Uw e-mailadres</label>
-                            <input type="email" name="senderEmail" class="form-input" placeholder="uw@email.com" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="submit-btn">Ticket indienen</button>
-                </form>
-            </div>
-
-            <!-- Tickets list -->
-            <div style="margin-top: 20px;">
-                <div style="font-weight: 600; color: #0F1D3A; margin-bottom: 12px;">Uw tickets</div>
-                <ul class="tickets-list" id="ticketsList">
-                    <li style="color: #8A9BB5; font-size: 0.9rem; padding: 16px; text-align: center;">Geen tickets ingediend</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
     <div class="status-footer" id="footerSection" style="display:none;">
         <div class="footer-label">Vragen?</div>
@@ -799,34 +754,6 @@
         <div class="aaxp-logo">Powered by AandelenXpress</div>
     </div>
 
-    <!-- Ticket Detail Modal -->
-    <div class="ticket-modal-backdrop" id="ticketModalBackdrop" onclick="closeTicketModal()"></div>
-    <div class="ticket-modal" id="ticketModal">
-        <div class="ticket-modal-header">
-            <h3 id="ticketModalTitle"></h3>
-            <button class="ticket-modal-close" onclick="closeTicketModal()">✕</button>
-        </div>
-        <div class="ticket-modal-content">
-            <div class="ticket-modal-meta">
-                <div><strong>Ticket ID:</strong> <span id="ticketModalId"></span></div>
-                <div><strong>Status:</strong> <span id="ticketModalStatus"></span></div>
-                <div><strong>Ingediend:</strong> <span id="ticketModalDate"></span></div>
-                <div><strong>Uw naam:</strong> <span id="ticketModalSender"></span></div>
-                <div><strong>E-mailadres:</strong> <span id="ticketModalSenderEmail"></span></div>
-            </div>
-            <div class="ticket-modal-message">
-                <strong>Uw bericht:</strong>
-                <div id="ticketModalMessage"></div>
-            </div>
-            <div class="ticket-modal-replies" id="ticketModalRepliesContainer" style="display:none;">
-                <strong>Antwoorden:</strong>
-                <div id="ticketModalReplies"></div>
-            </div>
-            <div id="ticketNoReplies" style="text-align: center; color: #8A9BB5; padding: 20px; font-size: 0.9rem;">
-                Er zijn nog geen antwoorden. We nemen binnenkort contact met u op.
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -970,7 +897,7 @@ function renderTodoList(currentStatus) {
 
 function showDossier(dossier) {
     // Show all hidden cards
-    ['mainContent','statusCard','todoCard','supportCard','footerSection'].forEach(id => {
+    ['mainContent','statusCard','todoCard','footerSection'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = '';
     });

@@ -1175,61 +1175,6 @@ function initMobileMenu() {
   });
 }
 
-async function submitTicket(dossierNr) {
-  const subject = document.getElementById("ticketSubject")?.value?.trim();
-  const message = document.getElementById("ticketMessage")?.value?.trim();
-  const email = document.getElementById("ticketEmail")?.value?.trim();
-
-  if (!subject || !message || !email) {
-    alert("Vul alsjeblieft alle velden in");
-    return;
-  }
-
-  try {
-    const r = await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dossierNr, subject, message, name: "Admin", email })
-    });
-    if (!r.ok) throw new Error("Request failed");
-    
-    document.getElementById("ticketSubject").value = "";
-    document.getElementById("ticketMessage").value = "";
-    
-    showToast("Verzoek ingediend!");
-    loadTickets(dossierNr);
-  } catch (e) {
-    alert("Fout bij indienen verzoek: " + e.message);
-  }
-}
-
-async function loadTickets(dossierNr) {
-  try {
-    const r = await fetch(`/api/tickets/${dossierNr}`);
-    if (!r.ok) throw new Error("Failed to load tickets");
-    const tickets = await r.json();
-    
-    const container = document.getElementById("ticketsList");
-    if (!tickets || tickets.length === 0) {
-      container.innerHTML = '<p style="color:#A0AEC0;font-size:0.9rem;">Geen verzoeken ingediend</p>';
-      return;
-    }
-
-    container.innerHTML = tickets.map(t => `
-      <div style="padding:12px;border:1px solid #E8EDF5;border-radius:6px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="font-weight:500;color:#0F1D3A;">${t.subject}</div>
-          <span style="font-size:0.75rem;padding:4px 8px;background:#F0F2F7;color:#718096;border-radius:4px;">${t.status||'Ingediend'}</span>
-        </div>
-        <div style="font-size:0.85rem;color:#718096;margin-bottom:8px;">${t.message}</div>
-        <div style="font-size:0.75rem;color:#A0AEC0;">${new Date(t.createdAt).toLocaleDateString('nl-NL')} • ${t.email}</div>
-      </div>
-    `).join("");
-  } catch (e) {
-    console.error("Error loading tickets:", e);
-  }
-}
-
 function showToast(msg) {
   const toast = document.createElement("div");
   toast.textContent = msg;
@@ -1763,9 +1708,11 @@ function renderVlModal(d) {
       ['Naam', p.naam || p.naamBedrijf],['Geboortedatum', p.geboortedatum],['Geboorteplaats', p.geboorteplaats],
       ['Geboorteland', p.geboorteland],['Nationaliteit', p.nationaliteit],['BSN', p.bsn],
       ['Adres', [p.adresStraat, p.adresHuisnummer, p.adresPostcode, p.adresPlaats].filter(Boolean).join(' ')],
-      ['E-mail', p.email],['Telefoon', p.telefoon],['Percentage', p.percentage != null ? p.percentage + '%' : null],
+      ['E-mail', p.email],['Telefoon', p.telefoon],
+      ['Percentage', (p.percentage !== null && p.percentage !== undefined && String(p.percentage).trim() !== '') ? p.percentage + '%' : null],
       ['KvK', p.kvkNummer],['Rechtsvorm', p.rechtsvorm],
     ].filter(([,v]) => v != null && String(v).trim() !== '');
+    if (!rows.length) return '';
     return `<div style="padding:10px 14px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:8px;">
       <div style="font-size:.8rem;font-weight:700;color:#0F1D3A;margin-bottom:8px;">${escHtml(title)}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
@@ -1814,7 +1761,13 @@ function renderVlModal(d) {
   // Aandeelhouders & bestuurders
   const renderPersonList = (arr, baseTitle) => {
     if (!Array.isArray(arr) || !arr.length) return '';
-    return arr.map((p, i) => personCard(p, `${baseTitle} ${i + 1}`)).join('');
+    const cards = arr.map((p, i) => personCard(p, `${baseTitle} ${i + 1}`)).join('');
+    return cards;
+  };
+  const sectionWithCards = (label, arr, baseTitle) => {
+    const cards = renderPersonList(arr, baseTitle);
+    if (!cards) return '';
+    return `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">${label}</div>${cards}`;
   };
   const hasShareholders = (d.holdingAandeelhouders?.length || d.werkmijAandeelhouders?.length);
   const hasDirectors = (d.holdingBestuurders?.length || d.werkmijBestuurders?.length || d.bestaandHoldingBestuurders?.length);
@@ -1822,13 +1775,13 @@ function renderVlModal(d) {
 
   if (hasShareholders || hasDirectors || hasPersons) {
     html += `<div style="margin-top:4px;">`;
-    if (d.holdingAandeelhouders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Aandeelhouders holding</div>${renderPersonList(d.holdingAandeelhouders,'Aandeelhouder')}`; }
-    if (d.werkmijAandeelhouders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Aandeelhouders werkmaatschappij</div>${renderPersonList(d.werkmijAandeelhouders,'Aandeelhouder')}`; }
-    if (d.holdingBestuurders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestuurders holding</div>${renderPersonList(d.holdingBestuurders,'Bestuurder')}`; }
-    if (d.werkmijBestuurders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestuurders werkmaatschappij</div>${renderPersonList(d.werkmijBestuurders,'Bestuurder')}`; }
-    if (d.bestaandHoldingBestuurders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestuurders bestaande holding</div>${renderPersonList(d.bestaandHoldingBestuurders,'Bestuurder')}`; }
-    if (d.naturalPersons?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Natuurlijke personen (UBO)</div>${renderPersonList(d.naturalPersons,'Persoon')}`; }
-    if (d.rechtspersonen?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Rechtspersonen</div>${renderPersonList(d.rechtspersonen,'Rechtspersoon')}`; }
+    html += sectionWithCards('Aandeelhouders holding', d.holdingAandeelhouders, 'Aandeelhouder');
+    html += sectionWithCards('Aandeelhouders werkmaatschappij', d.werkmijAandeelhouders, 'Aandeelhouder');
+    html += sectionWithCards('Bestuurders holding', d.holdingBestuurders, 'Bestuurder');
+    html += sectionWithCards('Bestuurders werkmaatschappij', d.werkmijBestuurders, 'Bestuurder');
+    html += sectionWithCards('Bestuurders bestaande holding', d.bestaandHoldingBestuurders, 'Bestuurder');
+    html += sectionWithCards('Natuurlijke personen (UBO)', d.naturalPersons, 'Persoon');
+    html += sectionWithCards('Rechtspersonen', d.rechtspersonen, 'Rechtspersoon');
     html += `</div>`;
   }
 
