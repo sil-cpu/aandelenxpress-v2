@@ -1678,7 +1678,7 @@ async function reviewVragenlijst(action) {
 }
 
 function renderVlModal(d) {
-  const fv = v => escHtml(v || '—');
+  const fv = v => escHtml(String(v ?? '—'));
   const pick = (...vals) => vals.find(v => v !== undefined && v !== null && String(v).trim() !== '') || '';
   const reviewStatus = d.reviewStatus || 'pending';
   const feedback = d.reviewFeedback || '';
@@ -1686,91 +1686,180 @@ function renderVlModal(d) {
   const rejectedAtLabel = rejectedAtRaw ? new Date(rejectedAtRaw).toLocaleString('nl-NL') : 'onbekend';
   const showRejectedOverlay = reviewStatus === 'rejected';
   vlRejectMode = false;
-  const spoedVal = String(pick(d.spoed, '')).toLowerCase();
-  const spoedLabel = (spoedVal === 'spoed' || spoedVal === 'ja' || spoedVal === 'yes') ? 'Ja — met spoed' : 'Nee — standaard';
-  const naamBv = pick(d.gewenstNaam, d.bvNaam, d.clientName);
-  const contactEmail = pick(d.contactEmail, d.bvEmail, d.clientEmail);
-  const typeOprichting = pick(d.typeOprichting, d.oprichtingType, d.formulierType);
+  const caseRef = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
+
+  const LABELS = {
+    gewenstNaam:'Gewenste bedrijfsnaam', bvNaam:'Naam BV', contactEmail:'Contact e-mail',
+    clientName:'Naam contactpersoon', clientEmail:'E-mail klant', clientPhone:'Telefoon klant',
+    oprichtingType:'Type oprichting', typeOprichting:'Type formulier', formulierType:'Formuliertype',
+    resellerCompany:'Partner', spoed:'Spoed', behandelingType:'Behandeling',
+    nederlandsTaal:'NL statuten', engelsTaal:'EN statuten', sector:'Sector',
+    doel:'Doel onderneming', aandeelhouders:'Aantal aandeelhouders',
+    kapitaal:'Startkapitaal', startSaldo:'Startsaldo',
+    holdingNaamBedrijf:'Naam holding', holdingMailadres:'E-mail holding', holdingTelefoon:'Telefoon holding',
+    holdingAdresStraat:'Straat', holdingAdresHuisnummer:'Huisnummer', holdingAdresPostcode:'Postcode', holdingAdresPlaats:'Plaats',
+    holdingHasAccountant:'Heeft accountant', holdingAccountantNaam:'Naam accountant',
+    holdingAccountantEmail:'E-mail accountant', holdingAccountantKantoor:'Kantoor accountant',
+    hasWorkmaatschappij:'Heeft werkmaatschappij', werkmijNaamBedrijf:'Naam werkmaatschappij',
+    werkmijActiviteiten:'Activiteiten', werkmijMailadres:'E-mail werkmaatschappij',
+    werkmijTelefoon:'Telefoon werkmaatschappij', werkmijAdresStraat:'Straat',
+    werkmijAdresHuisnummer:'Huisnummer', werkmijAdresPostcode:'Postcode', werkmijAdresPlaats:'Plaats',
+    werkmijImport:'Import registratie', werkmijExport:'Export registratie',
+    werkmijHasAccountant:'Heeft accountant', werkmijAccountantNaam:'Naam accountant',
+    werkmijAccountantEmail:'E-mail accountant', werkmijAccountantKantoor:'Kantoor accountant',
+    existingHoldingOwner:'Bestaande holding', bestaandHoldingNaam:'Naam bestaande holding',
+    bestaandHoldingKvk:'KvK bestaande holding',
+    omzettingBronType:'Type brononderneming', omzettingBronNaam:'Naam EMZ/VOF',
+    omzettingBronKvk:'KvK EMZ/VOF', omzettingBronZetel:'Zetel EMZ/VOF',
+    omzettingBronEigenaren:'Eigenaar(s)', omzettingBronDoel:'Doel EMZ/VOF',
+    naam:'Naam', geboortedatum:'Geboortedatum', geboorteplaats:'Geboorteplaats',
+    geboorteland:'Geboorteland', nationaliteit:'Nationaliteit', bsn:'BSN',
+    adresStraat:'Straat', adresHuisnummer:'Huisnummer', adresPostcode:'Postcode', adresPlaats:'Plaats',
+    email:'E-mail', telefoon:'Telefoon', percentage:'Percentage',
+    naamBedrijf:'Naam bedrijf', kvkNummer:'KvK-nummer', rechtsvorm:'Rechtsvorm',
+    opmerkingen:'Opmerkingen',
+  };
+
+  const SKIP = new Set(['isDraft','draftSavedAt','submittedAt','reviewStatus','reviewFeedback',
+    'reviewedAt','reviewedBy','datacardBestanden','pepBestanden','datacardBestand','pepBestand',
+    'datacardBestandNaam','pepBestandNaam','oprichtingsDocument','oprichtingsDocumentNaam',
+    'datacardIngediend','pepIngediend','oprichtingsDocumentIngediend','personeelsplannen',
+    'personeelsplan','holdingHuurovereenkomst','werkmijHuurovereenkomst',
+    'holdingAandeelhouders','werkmijAandeelhouders','holdingBestuurders','werkmijBestuurders',
+    'bestaandHoldingBestuurders','naturalPersons','rechtspersonen','holdingEntities',
+    'holdingAdresAfwijkendAandeelhouder','holdingAdresZelfdeAandeelhouderIndex',
+    'werkmijAdresAfwijkendAandeelhouder','werkmijAdresZelfdeAandeelhouderIndex',
+    'holdingAdresBron','holdingDirectorsSameAsShareholders','werkmijDirectorsSameAsShareholders',
+    'detailWinkel','detailMarkt','detailStraat','detailInternet','detailHuis','detailPostorder',
+    'detailOthers','detailOthersText','taalInstelling','singleBvExistingHoldings',
+    'singleBvExistingHoldingsCount','vofHoldingCount','omzettingInbrengbeschrijving',
+    'omzettingInbrengbeschrijvingHolding','omzettingInbrengbeschrijvingWerkmij',
+    'omzettingKvkUittreksel','omzettingVerzendbewijsIntentie','omzettingOntvangstbewijsIntentie',
+    'omzettingIntentieverklaring','omzettingGeleideformulier','omzettingVofUboUittreksel']);
+
+  const sectionHead = t => `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 6px;border-bottom:2px solid #E8EDF5;margin:20px 0 12px;grid-column:1/-1;">${t}</div>`;
+
+  const field = (lbl, val) => {
+    if (val === null || val === undefined || String(val).trim() === '' || val === false) return '';
+    return `<div><div style="font-size:.68rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">${lbl}</div><div style="font-size:.87rem;color:#0F1D3A;font-weight:500;white-space:pre-wrap;">${fv(val)}</div></div>`;
+  };
+
+  const personCard = (p, title) => {
+    const rows = [
+      ['Naam', p.naam || p.naamBedrijf],['Geboortedatum', p.geboortedatum],['Geboorteplaats', p.geboorteplaats],
+      ['Geboorteland', p.geboorteland],['Nationaliteit', p.nationaliteit],['BSN', p.bsn],
+      ['Adres', [p.adresStraat, p.adresHuisnummer, p.adresPostcode, p.adresPlaats].filter(Boolean).join(' ')],
+      ['E-mail', p.email],['Telefoon', p.telefoon],['Percentage', p.percentage != null ? p.percentage + '%' : null],
+      ['KvK', p.kvkNummer],['Rechtsvorm', p.rechtsvorm],
+    ].filter(([,v]) => v != null && String(v).trim() !== '');
+    return `<div style="padding:10px 14px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;margin-bottom:8px;">
+      <div style="font-size:.8rem;font-weight:700;color:#0F1D3A;margin-bottom:8px;">${escHtml(title)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
+        ${rows.map(([l,v]) => field(l,v)).join('')}
+      </div></div>`;
+  };
+
+  // Build sections
+  const SECTIONS = [
+    { title:'Basisgegevens', keys:['gewenstNaam','bvNaam','contactEmail','clientName','clientEmail','clientPhone','oprichtingType','typeOprichting','formulierType','spoed','behandelingType','nederlandsTaal','engelsTaal','sector','doel','aandeelhouders','kapitaal','startSaldo','resellerCompany','caseId'] },
+    { title:'Holding B.V.', keys:['holdingNaamBedrijf','holdingMailadres','holdingTelefoon','holdingAdresStraat','holdingAdresHuisnummer','holdingAdresPostcode','holdingAdresPlaats','holdingHasAccountant','holdingAccountantNaam','holdingAccountantEmail','holdingAccountantKantoor'] },
+    { title:'Werkmaatschappij B.V.', keys:['hasWorkmaatschappij','werkmijNaamBedrijf','werkmijActiviteiten','werkmijMailadres','werkmijTelefoon','werkmijAdresStraat','werkmijAdresHuisnummer','werkmijAdresPostcode','werkmijAdresPlaats','werkmijImport','werkmijExport','werkmijHasAccountant','werkmijAccountantNaam','werkmijAccountantEmail','werkmijAccountantKantoor'] },
+    { title:'Bestaande holding', keys:['existingHoldingOwner','bestaandHoldingNaam','bestaandHoldingKvk'] },
+    { title:'Omzetting (EMZ/VOF)', keys:['omzettingBronType','omzettingBronNaam','omzettingBronKvk','omzettingBronZetel','omzettingBronEigenaren','omzettingBronDoel'] },
+  ];
+
+  let html = `<div style="position:relative;">
+    <div style="margin-bottom:16px;padding:10px 16px;background:#F5F8FF;border-left:4px solid #1A3B70;border-radius:4px;font-size:.83rem;color:#4A5568;">
+      Ingediend op: <strong>${d.submittedAt ? new Date(d.submittedAt).toLocaleString('nl-NL') : '—'}</strong>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;">`;
+
+  const shown = new Set();
+  SECTIONS.forEach(sec => {
+    const rows = sec.keys.map(k => field(LABELS[k] || k, d[k])).filter(Boolean);
+    if (!rows.length) return;
+    html += sectionHead(sec.title) + rows.join('');
+    sec.keys.forEach(k => shown.add(k));
+  });
+
+  // Remaining scalar fields not yet shown
+  const remaining = Object.entries(d).filter(([k, v]) =>
+    !shown.has(k) && !SKIP.has(k) && typeof v !== 'object' && v !== null && String(v).trim() !== ''
+  );
+  if (remaining.length) {
+    html += sectionHead('Overige velden');
+    remaining.forEach(([k, v]) => { html += field(LABELS[k] || k, v); });
+  }
+
+  // Detailhandel
+  const details = [d.detailWinkel && 'Winkel', d.detailMarkt && 'Markt', d.detailStraat && 'Straathandel', d.detailInternet && 'Internet', d.detailHuis && 'Aan huis', d.detailPostorder && 'Postorder', d.detailOthers && (d.detailOthersText || 'Anders')].filter(Boolean);
+  if (details.length) { html += sectionHead('Detailhandel / KvK'); html += field('Detailhandel', details.join(', ')); }
+
+  html += `</div>`;
+
+  // Aandeelhouders & bestuurders
+  const renderPersonList = (arr, baseTitle) => {
+    if (!Array.isArray(arr) || !arr.length) return '';
+    return arr.map((p, i) => personCard(p, `${baseTitle} ${i + 1}`)).join('');
+  };
+  const hasShareholders = (d.holdingAandeelhouders?.length || d.werkmijAandeelhouders?.length);
+  const hasDirectors = (d.holdingBestuurders?.length || d.werkmijBestuurders?.length || d.bestaandHoldingBestuurders?.length);
+  const hasPersons = d.naturalPersons?.length || d.rechtspersonen?.length;
+
+  if (hasShareholders || hasDirectors || hasPersons) {
+    html += `<div style="margin-top:4px;">`;
+    if (d.holdingAandeelhouders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Aandeelhouders holding</div>${renderPersonList(d.holdingAandeelhouders,'Aandeelhouder')}`; }
+    if (d.werkmijAandeelhouders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Aandeelhouders werkmaatschappij</div>${renderPersonList(d.werkmijAandeelhouders,'Aandeelhouder')}`; }
+    if (d.holdingBestuurders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestuurders holding</div>${renderPersonList(d.holdingBestuurders,'Bestuurder')}`; }
+    if (d.werkmijBestuurders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestuurders werkmaatschappij</div>${renderPersonList(d.werkmijBestuurders,'Bestuurder')}`; }
+    if (d.bestaandHoldingBestuurders?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestuurders bestaande holding</div>${renderPersonList(d.bestaandHoldingBestuurders,'Bestuurder')}`; }
+    if (d.naturalPersons?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Natuurlijke personen (UBO)</div>${renderPersonList(d.naturalPersons,'Persoon')}`; }
+    if (d.rechtspersonen?.length) { html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Rechtspersonen</div>${renderPersonList(d.rechtspersonen,'Rechtspersoon')}`; }
+    html += `</div>`;
+  }
+
+  // Opmerkingen
+  if (d.opmerkingen) { html += `<div style="margin:16px 0;padding:12px 16px;background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:4px;font-size:.85rem;color:#78350F;"><strong>Opmerkingen klant:</strong><br>${escHtml(d.opmerkingen).replace(/\n/g,'<br>')}</div>`; }
+
+  // Bestanden
   const datacardNaam = pick(d.datacardBestandNaam, d.datacardBestand?.naam, d.datacardBestand?.filename);
   const pepNaam = pick(d.pepBestandNaam, d.pepBestand?.naam, d.pepBestand?.filename);
   const datacardIngediend = !!(d.datacardIngediend || datacardNaam);
   const pepIngediend = !!(d.pepIngediend || pepNaam);
-  const caseRef = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
   const datacardViewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/datacard` : '';
   const pepViewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/pep` : '';
+  html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestanden</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Datacard</div>
+      <div style="font-size:.85rem;color:#0F1D3A;">${fv(datacardNaam || (datacardIngediend ? 'Ingediend' : '—'))}</div>
+      ${datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+      ${datacardIngediend && datacardViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;"><button onclick="downloadFile('${datacardViewUrl}?download=1','datacard')" style="font-size:.78rem;color:#1A3B70;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">&#x21E9; Downloaden</button></div>` : ''}
+    </div>
+    <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PEP-verklaring</div>
+      <div style="font-size:.85rem;color:#0F1D3A;">${fv(pepNaam || (pepIngediend ? 'Ingediend' : '—'))}</div>
+      ${pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
+      ${pepIngediend && pepViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;"><button onclick="downloadFile('${pepViewUrl}?download=1','pep-verklaring')" style="font-size:.78rem;color:#1A3B70;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">&#x21E9; Downloaden</button></div>` : ''}
+    </div>
+  </div>`;
 
-  const extraFields = [
-    ['Telefoon', pick(d.bvTelefoon, d.clientPhone)],
-    ['Aantal aandeelhouders', d.aandeelhouders],
-    ['Formulier type', d.formulierType],
-    ['Partner', d.resellerCompany],
-    ['Taal NL', d.nederlandsTaal],
-    ['Taal EN', d.engelsTaal]
-  ].filter(([, val]) => String(val || '').trim() !== '');
+  // Reject feedback
+  html += `<div id="vlRejectFeedbackWrap" style="display:none;margin-top:16px;">
+    <div style="font-size:.78rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Feedback bij afkeuren</div>
+    <textarea id="vlRejectFeedback" style="width:100%;min-height:90px;border:1px solid #DDE5F4;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:.88rem;color:#0F1D3A;" placeholder="Beschrijf wat aangepast moet worden...">${escHtml(feedback)}</textarea>
+  </div>`;
 
-  document.getElementById('vlModalBody').innerHTML = `
-    <div style="position:relative;">
-    <div style="margin-bottom:16px;padding:10px 16px;background:#F5F8FF;border-left:4px solid #1A3B70;border-radius:4px;font-size:.83rem;color:#4A5568;">
-      Ingediend op: <strong>${d.submittedAt ? new Date(d.submittedAt).toLocaleString('nl-NL') : '—'}</strong>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin-bottom:20px;">
-      ${[
-        ['Naam BV', naamBv],
-        ['Contact e-mail', contactEmail],
-        ['Type oprichting', typeOprichting],
-        ['Sector', d.sector],
-        ['Spoed', spoedLabel],
-        ['Klant naam', d.clientName],
-        ['Klant e-mail', d.clientEmail],
-        ['Opdracht-ID', d.caseId],
-      ].map(([lbl,val]) => `<div>
-        <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">${lbl}</div>
-        <div style="font-size:.9rem;color:#0F1D3A;font-weight:500;">${fv(val)}</div>
-      </div>`).join('')}
-    </div>
-    ${extraFields.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin:-4px 0 18px;">${extraFields.map(([lbl,val]) => `<div>
-      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">${lbl}</div>
-      <div style="font-size:.88rem;color:#0F1D3A;">${fv(val)}</div>
-    </div>`).join('')}</div>` : ''}
-    ${d.opmerkingen ? `<div style="margin-bottom:16px;padding:12px 16px;background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:4px;font-size:.85rem;color:#78350F;"><strong>Opmerkingen klant:</strong><br>${escHtml(d.opmerkingen).replace(/\n/g,'<br>')}</div>` : ''}
-    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-        <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Datacard</div>
-        <div style="font-size:.85rem;color:#0F1D3A;">${fv(datacardNaam || (datacardIngediend ? 'Ingediend (bestandsnaam niet opgeslagen)' : '—'))}</div>
-        ${datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
-        ${datacardIngediend && datacardViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-          <a href="${datacardViewUrl}" target="_blank" rel="noopener" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Bekijken</a>
-          <a href="${datacardViewUrl}?download=1" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Downloaden</a>
-        </div>` : ''}
-      </div>
-      <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-        <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PEP-verklaring</div>
-        <div style="font-size:.85rem;color:#0F1D3A;">${fv(pepNaam || (pepIngediend ? 'Ingediend (bestandsnaam niet opgeslagen)' : '—'))}</div>
-        ${pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
-        ${pepIngediend && pepViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-          <a href="${pepViewUrl}" target="_blank" rel="noopener" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Bekijken</a>
-          <a href="${pepViewUrl}?download=1" style="font-size:.78rem;color:#1A3B70;text-decoration:none;font-weight:600;">Downloaden</a>
-        </div>` : ''}
-      </div>
-    </div>
-    <div id="vlRejectFeedbackWrap" style="display:none;margin-top:16px;">
-      <div style="font-size:.78rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Feedback bij afkeuren</div>
-      <textarea id="vlRejectFeedback" style="width:100%;min-height:90px;border:1px solid #DDE5F4;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:.88rem;color:#0F1D3A;" placeholder="Beschrijf wat aangepast moet worden...">${escHtml(feedback)}</textarea>
-    </div>
-    ${showRejectedOverlay ? `
-      <div style="position:absolute;inset:0;background:rgba(255,255,255,0.78);backdrop-filter:blur(1px);display:flex;align-items:center;justify-content:center;border-radius:10px;z-index:4;">
-        <div style="min-width:320px;max-width:92%;padding:18px 20px;background:#FFF7F7;border:1px solid #FBCACA;border-radius:10px;box-shadow:0 14px 30px rgba(15,29,58,.10);">
-          <div style="font-size:1rem;font-weight:700;color:#B42318;margin-bottom:8px;">Vragenlijst afgekeurd</div>
-          <div style="font-size:.88rem;color:#7A271A;line-height:1.45;">
-            Afgekeurd op <strong>${escHtml(rejectedAtLabel)}</strong>.<br>
-            In afwachting van een nieuwe inzending van de klant.
-          </div>
-        </div>
-      </div>
-    ` : ''}
-    </div>
-  `;
+  if (showRejectedOverlay) {
+    html += `<div style="position:absolute;inset:0;background:rgba(255,255,255,0.78);backdrop-filter:blur(1px);display:flex;align-items:center;justify-content:center;border-radius:10px;z-index:4;">
+      <div style="min-width:320px;max-width:92%;padding:18px 20px;background:#FFF7F7;border:1px solid #FBCACA;border-radius:10px;box-shadow:0 14px 30px rgba(15,29,58,.10);">
+        <div style="font-size:1rem;font-weight:700;color:#B42318;margin-bottom:8px;">Vragenlijst afgekeurd</div>
+        <div style="font-size:.88rem;color:#7A271A;line-height:1.45;">Afgekeurd op <strong>${escHtml(rejectedAtLabel)}</strong>.<br>In afwachting van een nieuwe inzending van de klant.</div>
+      </div></div>`;
+  }
 
+  html += `</div>`;
+  document.getElementById('vlModalBody').innerHTML = html;
   const canReview = currentRole === 'admin';
   updateVlReviewButtons(canReview);
 }
