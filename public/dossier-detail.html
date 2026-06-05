@@ -367,6 +367,10 @@
     <div class="em-footer">
       <button class="em-cancel" id="vlRejectBtn" style="display:none;background:#FFF5F5;color:#C53030;border:1px solid #FECACA;" onclick="toggleRejectFeedback()">Afkeuren</button>
       <button class="em-send" id="vlApproveBtn" style="display:none;" onclick="reviewVragenlijst('approve')">Goedkeuren</button>
+      <button class="em-cancel" id="vlPdfBtn" style="display:none;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;" onclick="downloadVlPdf()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="vertical-align:-2px;margin-right:5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        PDF downloaden
+      </button>
       <button class="em-cancel" onclick="closeVragenlijstModal()">Sluiten</button>
     </div>
   </div>
@@ -1565,6 +1569,14 @@ function closeVragenlijstModal() {
   document.getElementById('vlModal').classList.remove('open');
 }
 
+function downloadVlPdf() {
+  if (!currentVragenlijstData) return;
+  const pick = (...vals) => vals.find(v => v !== undefined && v !== null && String(v).trim() !== '') || '';
+  const caseId = pick(currentVragenlijstData.caseId, currentDossier?.dossierNr);
+  const naam = currentVragenlijstData.oprichtingsDocument?.naam || `oprichtingsdocument-${caseId}.pdf`;
+  downloadFile(`/api/vragenlijsten/${encodeURIComponent(caseId)}/files/oprichtingsdocument?download=1`, naam);
+}
+
 function updateVlReviewButtons(canReview) {
   const approveBtn = document.getElementById('vlApproveBtn');
   const rejectBtn = document.getElementById('vlRejectBtn');
@@ -1687,6 +1699,9 @@ function renderVlModal(d) {
   const showRejectedOverlay = reviewStatus === 'rejected';
   vlRejectMode = false;
   const caseRef = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
+  const hasPdf = !!(d.oprichtingsDocument && (d.oprichtingsDocument.naam || d.oprichtingsDocument.hasData || d.reviewStatus === 'approved'));
+  const pdfBtn = document.getElementById('vlPdfBtn');
+  if (pdfBtn) pdfBtn.style.display = hasPdf ? '' : 'none';
 
   const LABELS = {
     gewenstNaam:'Gewenste bedrijfsnaam', bvNaam:'Naam BV', contactEmail:'Contact e-mail',
