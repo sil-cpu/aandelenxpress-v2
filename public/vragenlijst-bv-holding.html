@@ -994,6 +994,19 @@
                 <div class="file-picked" id="personeelsplanSelected" style="display:none;"></div>
               </div>
             </div>
+
+            <div style="margin-top:16px;">
+              <div style="font-size:0.82rem;font-weight:700;color:#2a467a;margin-bottom:8px;">Overige uploads <span style="font-weight:400;color:#94A3B8;">(optioneel)</span></div>
+              <div class="file-box" id="overigeUploadsZone" style="flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;padding:16px 20px;text-align:left;">
+                <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" style="flex-shrink:0;margin-bottom:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                <div style="flex:1;min-width:0;">
+                  <span class="file-cta" style="display:block;">Klik of sleep overige bestanden</span>
+                  <div class="file-meta" style="margin-top:2px;">Alle bestandstypen – meerdere bestanden mogelijk – max 10 MB per bestand</div>
+                  <div class="file-picked" id="overigeUploadsSelected" style="display:none;margin-top:4px;"></div>
+                </div>
+                <input id="overigeUploadsFile" type="file" multiple>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -4255,6 +4268,7 @@
         draftData.datacardBestanden = await buildFilesPayload('datacardFile', 'datacardBestanden');
         draftData.pepBestanden = await buildFilesPayload('pepFile', 'pepBestanden');
         draftData.personeelsplannen = await buildFilesPayload('personeelsplanFile', 'personeelsplannen');
+        draftData.overigeUploads = await buildFilesPayload('overigeUploadsFile', 'overigeUploads');
         draftData.holdingHuurovereenkomst = await buildFilePayload('holdingRentalFile', 'holdingHuurovereenkomst');
         draftData.werkmijHuurovereenkomst = await buildFilePayload('werkmijRentalFile', 'werkmijHuurovereenkomst');
         draftData.omzettingKvkUittreksel = await buildFilePayload('omzettingKvkFile', 'omzettingKvkUittreksel');
@@ -4452,6 +4466,7 @@
         payload.datacardBestanden = await buildFilesPayload('datacardFile', 'datacardBestanden');
         payload.pepBestanden = await buildFilesPayload('pepFile', 'pepBestanden');
         payload.personeelsplannen = await buildFilesPayload('personeelsplanFile', 'personeelsplannen');
+        payload.overigeUploads = await buildFilesPayload('overigeUploadsFile', 'overigeUploads');
         payload.holdingHuurovereenkomst = await buildFilePayload('holdingRentalFile', 'holdingHuurovereenkomst');
         payload.werkmijHuurovereenkomst = await buildFilePayload('werkmijRentalFile', 'werkmijHuurovereenkomst');
         payload.omzettingKvkUittreksel = await buildFilePayload('omzettingKvkFile', 'omzettingKvkUittreksel');
@@ -4564,6 +4579,7 @@
       bindFileInput('datacardFile', 'datacardZone', 'datacardSelected');
       bindFileInput('pepFile', 'pepZone', 'pepSelected');
       bindFileInput('personeelsplanFile', 'personeelsplanZone', 'personeelsplanSelected');
+      bindFileInput('overigeUploadsFile', 'overigeUploadsZone', 'overigeUploadsSelected');
       bindFileInput('omzettingVofUboFile', 'omzettingVofUboZone', 'omzettingVofUboSelected');
       bindFileInput('holdingRentalFile', 'holdingRentalZone', 'holdingRentalSelected');
       bindFileInput('werkmijRentalFile', 'werkmijRentalZone', 'werkmijRentalSelected');
