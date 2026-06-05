@@ -743,7 +743,7 @@ function renderPage(d, role) {
       <div class="detail-card-head"><div class="detail-card-title">Voortgang</div></div>
       <div class="detail-card-body">
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">
-        <div class="process-timeline" style="flex-direction:row;gap:0;min-width:1400px;">${buildTimelineHorizontal(d.statusKey, role, d.hasVragenlijst)}</div>
+        <div class="process-timeline" style="flex-direction:row;gap:0;min-width:2200px;">${buildTimelineHorizontal(d.statusKey, role, d.hasVragenlijst)}</div>
         </div>
       </div>
     </div>
@@ -838,7 +838,7 @@ function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
     const vlBtn = (i === 1 && hasVragenlijst && role === 'admin')
       ? `<button onclick="openVragenlijstModal()" style="margin-top:6px;padding:3px 9px;background:#EEF4FF;color:#2B6CB5;border:1px solid #C3DAFE;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#x1F4CB; ${reviewStatus === 'approved' ? 'Vragenlijst beoordeeld' : 'Vragenlijst beoordelen'}</button>`
       : '';
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:90px;">
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:120px;">
       ${i > 0 ? `<div style="position:absolute;top:14px;right:50%;width:100%;height:2px;background:${done||active?'#1A3B70':'#E8EDF5'};z-index:0;"></div>` : ''}
       <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'#1A3B70':active?'#2B6CB5':'#E8EDF5'};background:${done?'#1A3B70':active?'#EEF4FF':'white'};display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;color:${done?'white':active?'#2B6CB5':'#CBD5E0'};position:relative;z-index:1;">
         ${done?'&#x2713;':i+1}
