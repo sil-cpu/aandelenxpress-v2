@@ -1252,15 +1252,34 @@ const STATUS_BADGE_MAP = {
 
 function toggleStatusDropdown(nr, e) {
   e.stopPropagation();
-  const menu = document.getElementById('status-dd-' + nr);
-  if (!menu) return;
-  const isOpen = menu.style.display !== 'none';
+  const badge = e.currentTarget;
+  const rect = badge.getBoundingClientRect();
+  // Close if same dropdown already open
+  const portal = document.getElementById('statusDdPortal');
+  if (portal._openNr === nr) { closeAllStatusDropdowns(); return; }
   closeAllStatusDropdowns();
-  if (!isOpen) menu.style.display = 'block';
+  // Build options
+  const d = allDossiersData.find(x => x.dossierNr === nr);
+  if (!d) return;
+  const opts = Object.entries(STATUS_BADGE_MAP).map(([key, v]) =>
+    `<div class="status-dd-opt" onclick="selectStatusFromDropdown('${nr}','${key}',event)">
+      <span class="badge ${v.css}" style="pointer-events:none;width:100%;justify-content:flex-start;border-radius:6px;">&#x25CF; ${v.label}</span>
+    </div>`
+  ).join('');
+  portal.innerHTML = opts;
+  portal._openNr = nr;
+  // Position fixed below badge
+  portal.style.display = 'block';
+  const pw = portal.offsetWidth || 220;
+  let left = rect.left;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  portal.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+  portal.style.left = left + 'px';
 }
 
 function closeAllStatusDropdowns() {
-  document.querySelectorAll('.status-dd-menu').forEach(m => m.style.display = 'none');
+  const portal = document.getElementById('statusDdPortal');
+  if (portal) { portal.style.display = 'none'; portal._openNr = null; }
 }
 
 document.addEventListener('click', closeAllStatusDropdowns);
@@ -1345,23 +1364,15 @@ function renderTable(id, rows, withActions = false) {
     const priceHint = d.pricingTotal ? `<div style="font-size:0.78rem;color:#2B6CB5;font-weight:600;margin-top:2px;">${fmtCurrency(d.pricingTotal)}</div>` : '';
     const statusBadgeClass = STATUS_BADGE_MAP[d.statusKey]?.css || 'badge-pending';
     const statusBadgeLabel = STATUS_BADGE_MAP[d.statusKey]?.label || d.statusText || d.statusKey;
-    const statusOptions = Object.entries(STATUS_BADGE_MAP).map(([key, cfg]) =>
-      `<div class="status-dd-opt" data-key="${key}" onclick="selectStatusFromDropdown('${d.dossierNr}','${key}',event)">
-        <span class="badge ${cfg.css}" style="cursor:pointer;width:100%;justify-content:flex-start;">${cfg.label}</span>
-      </div>`
-    ).join('');
     return `
     <tr class="dossier-row${isArchived ? ' row-archived' : ''}" data-idx="${idx}">
       <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a>${priceHint}</td>
       <td class="td-muted">${d.type}</td>
       <td class="td-muted">${d.partner}</td>
-      <td onclick="event.stopPropagation()" style="position:relative;">
+      <td onclick="event.stopPropagation()">
         <span class="badge ${statusBadgeClass}" style="cursor:pointer;user-select:none;padding-right:8px;" onclick="toggleStatusDropdown('${d.dossierNr}',event)">
-          ${statusBadgeLabel} <span style="font-size:0.65rem;opacity:0.7;margin-left:2px;">▾</span>
+          ${statusBadgeLabel} <span style="font-size:0.65rem;opacity:0.7;margin-left:2px;">&#9660;</span>
         </span>
-        <div class="status-dd-menu" id="status-dd-${d.dossierNr}" style="display:none;">
-          ${statusOptions}
-        </div>
       </td>
       <td class="td-muted" style="white-space:nowrap;">${fmtDate(d.date)}</td>
       <td class="td-muted">${d.kvk || '–'}</td>
@@ -2795,6 +2806,12 @@ async function adminSaveStatusAndSendEmail() {
   finally { if (btn) { btn.disabled = false; btn.textContent = 'Opslaan & versturen →'; } }
 }
 </script>
+
+<!-- Status dropdown portal (renders outside table to avoid layout shift) -->
+<div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow:hidden;padding:4px 0;"></div>
+
+<!-- Status dropdown portal (outside table to avoid layout shift) -->
+<div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow:hidden;padding:4px 0;"></div>
 
 <!-- Email modal voor status wijzigen -->
 <div id="adminEmailModal" class="em-overlay" onclick="if(event.target===this)adminCloseEmailModal()">
