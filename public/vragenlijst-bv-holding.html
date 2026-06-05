@@ -2376,6 +2376,12 @@
           setFieldRequired(el, false);
           return;
         }
+        // Skip dynamically-managed fields: they have no `name` attr so browser
+        // can't focus them on reportValidity(). Custom validators handle them.
+        if (el.hasAttribute('data-rp') || el.hasAttribute('data-np')) {
+          setFieldRequired(el, false);
+          return;
+        }
         const required = isControlVisible(el) && !isOverigeControl(el);
         setFieldRequired(el, required);
       });
