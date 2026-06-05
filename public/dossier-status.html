@@ -866,16 +866,38 @@ function storeToken(t) {
     try { localStorage.setItem('ax_token_' + dossierNr, t); } catch(e) {}
 }
 
-function renderStatusTimeline(currentStatus) {
+function renderStatusTimeline(currentStatus, activities) {
     const timelineDiv = document.getElementById('statusTimeline');
     const currentIndex = statusSteps.findIndex(s => s.key === currentStatus);
+
+    // Build timestamp map from activities: status key → earliest matching timestamp
+    const tsMap = {};
+    (activities || []).forEach(a => {
+        const msg = (a.message || a.text || '').toLowerCase();
+        statusSteps.forEach(step => {
+            const key = step.key;
+            if (!tsMap[key] && (msg.includes(`naar "${step.label.toLowerCase()}`) || msg.includes(`status gewijzigd`) && msg.includes(step.label.toLowerCase()))) {
+                tsMap[key] = a.timestamp || a.createdAt || a.created_at || null;
+            }
+        });
+    });
+    // Fallback: if we have activities with status info
+    (activities || []).forEach(a => {
+        const key = a.status || a.toStatus;
+        if (key && statusSteps.find(s => s.key === key) && !tsMap[key]) {
+            tsMap[key] = a.timestamp || a.createdAt || a.created_at || null;
+        }
+    });
+
     timelineDiv.innerHTML = statusSteps.map((step, index) => {
         let stepClass = '';
         if (index < currentIndex) stepClass = 'completed';
         else if (index === currentIndex) stepClass = 'active';
+        const ts = tsMap[step.key];
+        const tsLabel = ts ? `<div style="font-size:.7rem;color:#8A9BB5;margin-top:3px;">${new Date(ts).toLocaleDateString('nl-NL', {day:'numeric',month:'short',year:'numeric'})}</div>` : '';
         return `<div class="timeline-step ${stepClass}">
             <div class="timeline-circle">${index + 1}</div>
-            <div class="timeline-label">${step.label}</div>
+            <div class="timeline-label">${step.label}${tsLabel}</div>
         </div>`;
     }).join('');
 }
@@ -916,7 +938,7 @@ function showDossier(dossier) {
     document.getElementById('dossierTitle').textContent = dossier.name;
     document.getElementById('dossierNumber').textContent = 'Dossier nummer: ' + dossier.id;
 
-    renderStatusTimeline(dossier.statusKey);
+    renderStatusTimeline(dossier.statusKey, dossier.activities || []);
     document.getElementById('statusBadge').textContent = dossier.statusText;
     document.getElementById('statusDescription').textContent = statusDescriptions[dossier.statusKey] || '';
     document.getElementById('statusDetail').textContent = dossier.date ? 'Aangemeld: ' + new Date(dossier.date).toLocaleDateString('nl-NL', {day:'numeric',month:'long',year:'numeric'}) : '';

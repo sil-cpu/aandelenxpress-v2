@@ -1194,6 +1194,23 @@ async function assignDossier(nr, adminName) {
   } catch(e) { console.error('assignDossier error:', e); }
 }
 
+async function quickChangeStatus(nr, status) {
+  if (!status) return;
+  try {
+    const r = await fetch('/api/reseller-requests/' + encodeURIComponent(nr) + '/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    if (r.ok) {
+      const statusTextMap = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', betaling:'Betaling', notary:'Notariële Akte', kvk:'KvK inschrijving', complete:'Voltooid', rejected:'Afgewezen' };
+      const d = allDossiersData.find(x => x.dossierNr === nr);
+      if (d) { d.statusKey = status; d.statusText = statusTextMap[status] || status; }
+      applyAllFilters();
+    } else { alert('Status wijzigen mislukt.'); applyAllFilters(); }
+  } catch(e) { console.error('quickChangeStatus error:', e); applyAllFilters(); }
+}
+
 let partners = [];
 const PARTNER_COLORS = ["#1A3B70","#2A5BA0","#17518A","#1D4477","#0D3060","#2048A8","#153580","#0A2850"];
 
@@ -1277,7 +1294,17 @@ function renderTable(id, rows, withActions = false) {
       <td><a href="dossier-detail.html?nr=${d.dossierNr}" class="row-link">${d.name}</a>${priceHint}</td>
       <td class="td-muted">${d.type}</td>
       <td class="td-muted">${d.partner}</td>
-      <td><span class="badge badge-${d.statusKey}">${d.statusText}</span></td>
+      <td onclick="event.stopPropagation()">
+        <select class="assign-select" style="font-size:0.8rem;" onchange="quickChangeStatus('${d.dossierNr}', this.value)">
+          <option value="pending" ${d.statusKey==='pending'?'selected':''}>Aanvraag ingediend</option>
+          <option value="vragenlijst" ${d.statusKey==='vragenlijst'?'selected':''}>Vragenlijst</option>
+          <option value="betaling" ${d.statusKey==='betaling'?'selected':''}>Betaling</option>
+          <option value="notary" ${d.statusKey==='notary'?'selected':''}>Notariële Akte</option>
+          <option value="kvk" ${d.statusKey==='kvk'?'selected':''}>KvK inschrijving</option>
+          <option value="complete" ${d.statusKey==='complete'?'selected':''}>Voltooid</option>
+          <option value="rejected" ${d.statusKey==='rejected'?'selected':''}>Afgewezen</option>
+        </select>
+      </td>
       <td class="td-muted" style="white-space:nowrap;">${fmtDate(d.date)}</td>
       <td class="td-muted">${d.kvk || '–'}</td>
       <td class="td-muted">${d.contact || '–'}</td>

@@ -165,10 +165,11 @@ function generateDossierNr() {
     return 'AX-' + part;
 }
 
-function generateSmartToken(request) {
-    const firstName = (request.clientName || '').split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    const bvName = (request.gewenstNaam || '').toLowerCase().replace(/\s+b\.?v\.?$/i, '').replace(/[^a-z0-9]/g, '');
-    return (firstName + bvName).slice(0, 20) || generateToken();
+function generateSmartToken() {
+    // 8-char random token, uppercase, no confusable chars (0/O, 1/I/L)
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    const bytes = crypto.randomBytes(8);
+    return Array.from(bytes).map(b => chars[b % chars.length]).join('');
 }
 
 function tokenMatches(storedToken, providedToken) {
@@ -993,7 +994,8 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         statusKey: s.key,
         statusText: s.text,
         date: row.created_at,
-        branding: brandRecord.branding
+        branding: brandRecord.branding,
+        activities: row.activities || []
     });
 });
 
@@ -2471,6 +2473,25 @@ app.get('/api/vragenlijsten/:caseId/files', requireLogin, async (req, res) => {
 
     const files = listStoredVragenlijstFiles(row.data || {}, caseId);
     res.json({ files });
+});
+
+// Draft PDF — generates PDF from current vragenlijst data without requiring approval
+app.get('/api/vragenlijsten/:caseId/draft-pdf', requireAdmin, async (req, res) => {
+    const { caseId } = req.params;
+    const { data: reqRow } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
+    if (!reqRow) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    const { data: vlRow } = await supabase.from('vragenlijsten').select('*').eq('case_id', caseId).single();
+    if (!vlRow) return res.status(404).json({ error: 'Geen vragenlijst gevonden' });
+    try {
+        const request = rowToReq(reqRow);
+        const pdfBuffer = await buildVragenlijstPdfBuffer({ caseId, request, formData: vlRow.data || {} });
+        const filename = `concept-${caseId}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+    } catch (err) {
+        res.status(500).json({ error: 'PDF kon niet worden gegenereerd: ' + err.message });
+    }
 });
 
 app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) => {

@@ -829,7 +829,7 @@
             <div class="repeat-actions"><button type="button" class="icon-btn" id="addBestaandHoldingDirector">+ Bestuurder</button></div>
 
             <div class="field"><label>Is the director solely authorized to represent the company individually?</label><select name="bestaandHoldingSolelyAuthorized"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
-            <div class="field"><label>UBO</label><textarea name="bestaandHoldingUbo"></textarea></div>
+
           </div>
         </div>
 
@@ -2520,7 +2520,8 @@
           c2Talen: card.querySelector('[data-np="c2Talen"]').value.trim(),
           eenmanszaak: isOmzettingFlow() ? '' : card.querySelector('[data-np="eenmanszaak"]').value,
           eenmanszaakActie: isOmzettingFlow() ? '' : card.querySelector('[data-np="eenmanszaakActie"]').value,
-          buitenlandAdres: card.querySelector('[data-np="buitenlandAdres"]').value.trim()
+          buitenlandAdres: card.querySelector('[data-np="buitenlandAdres"]').value.trim(),
+          sameAsFirst: !!(card.querySelector('[data-np-same-first]')?.checked)
         };
       });
 
@@ -2750,7 +2751,14 @@
             <div class="repeat-head">
               <div class="repeat-title">Natuurlijk Persoon ${idx + 1} - ${sanitize(role.name)}</div>
             </div>
-            <div class="row">
+            ${idx > 0 ? `<div style="background:#EEF4FF;border:1px solid #BFDBFE;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;font-weight:500;">
+                <input type="checkbox" data-np-same-first ${v.sameAsFirst ? 'checked' : ''}>
+                Dezelfde gegevens als Persoon 1
+              </label>
+              ${v.sameAsFirst ? '<div style="font-size:.8rem;color:#2B6CB5;margin-top:6px;">&#x2713; Gegevens van Persoon 1 worden automatisch gebruikt.</div>' : ''}
+            </div>` : ''}
+            <div data-np-fields-body style="${idx > 0 && v.sameAsFirst ? 'display:none' : ''}">
               <div class="field"><label>Voornamen</label><input data-np="voornamen" value="${sanitize(v.voornamen)}"></div>
               <div class="field"><label>Achternaam</label><input data-np="achternaam" value="${sanitize(v.achternaam)}"></div>
               <div class="field"><label>Geboortedatum</label><input data-np="geboortedatum" type="date" max="${todayIsoDate()}" min="1900-01-01" value="${sanitize(v.geboortedatum)}"></div>
@@ -2855,6 +2863,7 @@
                 <div class="file-picked" id="np_${sanitize(role.roleKey)}_utility_picked" style="display:${utilityName ? 'block' : 'none'};">${utilityName ? `Geselecteerd: ${sanitize(utilityName)}` : ''}</div>
               </div>
             </div>
+            </div><!-- /data-np-fields-body -->
           </div>
         `;
       }).join('');
@@ -2954,7 +2963,10 @@
       rpContainer.innerHTML = rpHtml || '<div class="hint">Geen rechtspersonen nodig op basis van de huidige aandeelhouderkeuzes.</div>';
       npContainer.innerHTML = npHtml || '<div class="hint">Geen natuurlijke personen nodig op basis van de huidige keuzes.</div>';
 
-      const syncLanguageFollowups = (card) => {
+      // NP2=NP1 checkbox listeners
+      document.querySelectorAll('[data-np-same-first]').forEach(cb => {
+        cb.addEventListener('change', () => updateNaturalPersons());
+      });
         const dutchSelect = card.querySelector('[data-np="taalNiveau"]');
         const englishWrap = card.querySelector('[data-np-engels-wrap]');
         const englishSelect = card.querySelector('[data-np="engelsNiveau"]');
@@ -3220,7 +3232,7 @@
         });
 
         card.querySelectorAll('[data-rp="kvkNummer"], [data-rp="uboNaam"], [data-rp="uboPercentage"], [data-rp="bestuurderNaam"], [data-rp="bestuurderType"]').forEach(input => {
-          input.addEventListener('input', () => updateNaturalPersons());
+          input.addEventListener('blur', () => updateNaturalPersons());
           input.addEventListener('change', () => updateNaturalPersons());
         });
         ensureMinimumRpRows(card);
@@ -3382,34 +3394,39 @@
     }
 
     function collectNaturalPersons() {
-      return Array.from(document.querySelectorAll('[data-np-role]')).map(card => {
+      const cards = Array.from(document.querySelectorAll('[data-np-role]'));
+      const firstCard = cards[0] || null;
+      return cards.map((card, idx) => {
         const roleKey = card.getAttribute('data-np-role');
+        const isSameAsFirst = idx > 0 && !!card.querySelector('[data-np-same-first]')?.checked;
+        const src = isSameAsFirst && firstCard ? firstCard : card;
         return {
           roleKey,
-          voornamen: card.querySelector('[data-np="voornamen"]').value.trim(),
-          achternaam: card.querySelector('[data-np="achternaam"]').value.trim(),
-          geboortedatum: card.querySelector('[data-np="geboortedatum"]').value.trim(),
-          geboorteland: card.querySelector('[data-np="geboorteland"]').value.trim(),
-          heeftBsn: card.querySelector('[data-np="heeftBsn"]').value,
-          bsn: card.querySelector('[data-np="bsn"]').value.trim(),
-          nlAdresGeregistreerd: card.querySelector('[data-np="nlAdresGeregistreerd"]').value,
-          nationaliteit: card.querySelector('[data-np="nationaliteit"]').value.trim(),
-          burgerlijkeStaat: card.querySelector('[data-np="burgerlijkeStaat"]').value.trim(),
-          iban: card.querySelector('[data-np="iban"]').value.trim(),
-          telefoon: card.querySelector('[data-np="telefoon"]').value.trim(),
-          email: card.querySelector('[data-np="email"]').value.trim(),
-          adresStraat: card.querySelector('[data-np="adresStraat"]').value.trim(),
-          adresHuisnummer: card.querySelector('[data-np="adresHuisnummer"]').value.trim(),
-          adresPostcode: card.querySelector('[data-np="adresPostcode"]').value.trim(),
-          adresPlaats: card.querySelector('[data-np="adresPlaats"]').value.trim(),
-          woonland: card.querySelector('[data-np="woonland"]').value.trim(),
-          taalNiveau: card.querySelector('[data-np="taalNiveau"]').value,
-          engelsNiveau: card.querySelector('[data-np="engelsNiveau"]').value,
-          moedertalen: card.querySelector('[data-np="moedertalen"]').value.trim(),
-          c2Talen: card.querySelector('[data-np="c2Talen"]').value.trim(),
-          eenmanszaak: isOmzettingFlow() ? '' : card.querySelector('[data-np="eenmanszaak"]').value,
-          eenmanszaakActie: isOmzettingFlow() ? '' : card.querySelector('[data-np="eenmanszaakActie"]').value,
-          buitenlandAdres: card.querySelector('[data-np="buitenlandAdres"]').value.trim(),
+          sameAsFirst: isSameAsFirst,
+          voornamen: src.querySelector('[data-np="voornamen"]').value.trim(),
+          achternaam: src.querySelector('[data-np="achternaam"]').value.trim(),
+          geboortedatum: src.querySelector('[data-np="geboortedatum"]').value.trim(),
+          geboorteland: src.querySelector('[data-np="geboorteland"]').value.trim(),
+          heeftBsn: src.querySelector('[data-np="heeftBsn"]').value,
+          bsn: src.querySelector('[data-np="bsn"]').value.trim(),
+          nlAdresGeregistreerd: src.querySelector('[data-np="nlAdresGeregistreerd"]').value,
+          nationaliteit: src.querySelector('[data-np="nationaliteit"]').value.trim(),
+          burgerlijkeStaat: src.querySelector('[data-np="burgerlijkeStaat"]').value.trim(),
+          iban: src.querySelector('[data-np="iban"]').value.trim(),
+          telefoon: src.querySelector('[data-np="telefoon"]').value.trim(),
+          email: src.querySelector('[data-np="email"]').value.trim(),
+          adresStraat: src.querySelector('[data-np="adresStraat"]').value.trim(),
+          adresHuisnummer: src.querySelector('[data-np="adresHuisnummer"]').value.trim(),
+          adresPostcode: src.querySelector('[data-np="adresPostcode"]').value.trim(),
+          adresPlaats: src.querySelector('[data-np="adresPlaats"]').value.trim(),
+          woonland: src.querySelector('[data-np="woonland"]').value.trim(),
+          taalNiveau: src.querySelector('[data-np="taalNiveau"]').value,
+          engelsNiveau: src.querySelector('[data-np="engelsNiveau"]').value,
+          moedertalen: src.querySelector('[data-np="moedertalen"]').value.trim(),
+          c2Talen: src.querySelector('[data-np="c2Talen"]').value.trim(),
+          eenmanszaak: isOmzettingFlow() ? '' : src.querySelector('[data-np="eenmanszaak"]').value,
+          eenmanszaakActie: isOmzettingFlow() ? '' : src.querySelector('[data-np="eenmanszaakActie"]').value,
+          buitenlandAdres: src.querySelector('[data-np="buitenlandAdres"]').value.trim(),
           utilityBill: npFileStore[`${roleKey}__utilityBill`] || null
         };
       });
@@ -4273,6 +4290,11 @@
         if (showHolding && !payload.holdingNaamBedrijf) {
           return showFormError('Vul minimaal de naam van de holding in.', 'input[name="holdingNaamBedrijf"]');
         }
+        if (showHolding && payload.hasWorkmaatschappij === 'ja' &&
+            payload.holdingNaamBedrijf && payload.werkmijNaamBedrijf &&
+            payload.holdingNaamBedrijf.trim().toLowerCase() === payload.werkmijNaamBedrijf.trim().toLowerCase()) {
+          return showFormError('De naam van de holding en de werkmaatschappij mogen niet hetzelfde zijn.', 'input[name="holdingNaamBedrijf"]');
+        }
         if (isVofPlusHoldingFlow() && showHolding) {
           const holdingEntities = Array.isArray(payload.holdingEntities) ? payload.holdingEntities : [];
           if (!holdingEntities.length) {
@@ -4490,6 +4512,16 @@
 
       document.getElementById('btnSave').addEventListener('click', saveDraft);
       document.getElementById('cleanForm').addEventListener('submit', submitForm);
+
+      // Auto-fill KvK from bestaande holding to RP cards
+      document.querySelector('input[name="bestaandHoldingKvk"]')?.addEventListener('blur', () => {
+        const kvk = document.querySelector('input[name="bestaandHoldingKvk"]')?.value?.trim();
+        if (!kvk) return;
+        document.querySelectorAll('[data-rp-role]').forEach(card => {
+          const kvkInput = card.querySelector('[data-rp="kvkNummer"]');
+          if (kvkInput && !kvkInput.value.trim()) { kvkInput.value = kvk; }
+        });
+      });
 
       updateConditionalSections();
       updateAddressSourceVisibility();

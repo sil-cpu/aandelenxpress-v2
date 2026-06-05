@@ -1516,14 +1516,15 @@ function closeVragenlijstModal() {
 
 function downloadVlPdf() {
   if (!currentVragenlijstData) return;
-  if (currentVragenlijstData.reviewStatus !== 'approved') {
-    alert('De PDF wordt aangemaakt zodra de vragenlijst is goedgekeurd.');
-    return;
-  }
   const pick = (...vals) => vals.find(v => v !== undefined && v !== null && String(v).trim() !== '') || '';
   const caseId = pick(currentVragenlijstData.caseId, currentDossier?.dossierNr);
-  const naam = currentVragenlijstData.oprichtingsDocument?.naam || `oprichtingsdocument-${caseId}.pdf`;
-  downloadFile(`/api/vragenlijsten/${encodeURIComponent(caseId)}/files/oprichtingsdocument?download=1`, naam);
+  if (currentVragenlijstData.reviewStatus === 'approved') {
+    const naam = currentVragenlijstData.oprichtingsDocument?.naam || `oprichtingsdocument-${caseId}.pdf`;
+    downloadFile(`/api/vragenlijsten/${encodeURIComponent(caseId)}/files/oprichtingsdocument?download=1`, naam);
+  } else {
+    // Draft PDF: generate on the fly without approval
+    downloadFile(`/api/vragenlijsten/${encodeURIComponent(caseId)}/draft-pdf`, `concept-${caseId}.pdf`);
+  }
 }
 
 function updateVlReviewButtons(canReview) {
@@ -1650,6 +1651,11 @@ function renderVlModal(d) {
   const caseRef = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
   const pdfBtn = document.getElementById('vlPdfBtn');
   if (pdfBtn) pdfBtn.style.display = '';
+  const caseIdForPdf = encodeURIComponent(pick(d.caseId, currentDossier?.dossierNr));
+  if (pdfBtn) {
+    pdfBtn.onclick = () => downloadVlPdf();
+    pdfBtn.title = reviewStatus === 'approved' ? 'Download goedgekeurd PDF' : 'Download concept PDF (voor beoordeling)';
+  }
 
   const LABELS = {
     gewenstNaam:'Gewenste bedrijfsnaam', bvNaam:'Naam BV', contactEmail:'Contact e-mail',
@@ -1793,27 +1799,30 @@ function renderVlModal(d) {
   if (d.opmerkingen) { html += `<div style="margin:16px 0;padding:12px 16px;background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:4px;font-size:.85rem;color:#78350F;"><strong>Opmerkingen klant:</strong><br>${escHtml(d.opmerkingen).replace(/\n/g,'<br>')}</div>`; }
 
   // Bestanden
-  const datacardNaam = pick(d.datacardBestandNaam, d.datacardBestand?.naam, d.datacardBestand?.filename);
-  const pepNaam = pick(d.pepBestandNaam, d.pepBestand?.naam, d.pepBestand?.filename);
-  const datacardIngediend = !!(d.datacardIngediend || datacardNaam);
-  const pepIngediend = !!(d.pepIngediend || pepNaam);
-  const datacardViewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/datacard` : '';
-  const pepViewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/pep` : '';
+  const mkFileEntry = (label, keyBase, kindParam) => {
+    const f = getVraagFileMeta(d, keyBase);
+    if (!f.hasData && !f.name) return '';
+    const viewUrl = caseRef ? `/api/vragenlijsten/${caseRef}/files/${kindParam}` : '';
+    return `<div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
+      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">${label}</div>
+      <div style="font-size:.85rem;color:#0F1D3A;">${fv(f.name || 'Ingediend')}</div>
+      <span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>
+      ${viewUrl ? `<div style="margin-top:8px;"><button onclick="downloadFile('${viewUrl}?download=1','${label.replace(/'/g,'').toLowerCase()}')" style="font-size:.78rem;color:#1A3B70;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">&#x21E9; Downloaden</button></div>` : ''}
+    </div>`;
+  };
+  const fileEntries = [
+    mkFileEntry('Datacard', 'datacardBestand', 'datacard'),
+    mkFileEntry('PEP-verklaring', 'pepBestand', 'pep'),
+    mkFileEntry('Huurovereenkomst holding', 'holdingHuurovereenkomst', 'holding-huurovereenkomst'),
+    mkFileEntry('Huurovereenkomst werkmij', 'werkmijHuurovereenkomst', 'werkmij-huurovereenkomst'),
+    mkFileEntry('KvK uittreksel', 'omzettingKvkUittreksel', 'kvk-uittreksel'),
+    mkFileEntry('Intentieverklaring', 'omzettingIntentieverklaring', 'intentverklaring'),
+    mkFileEntry('Geleideformulier', 'omzettingGeleideformulier', 'geleideformulier'),
+    mkFileEntry('UBO uittreksel', 'omzettingVofUboUittreksel', 'ubo-uittreksel'),
+    mkFileEntry('Personeelsplan', 'personeelsplan', 'personeelsplan'),
+  ].filter(Boolean);
   html += `<div style="font-size:.75rem;font-weight:700;color:#1A3B70;text-transform:uppercase;letter-spacing:.06em;padding:10px 0 8px;border-bottom:2px solid #E8EDF5;margin:16px 0 10px;">Bestanden</div>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;">
-    <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Datacard</div>
-      <div style="font-size:.85rem;color:#0F1D3A;">${fv(datacardNaam || (datacardIngediend ? 'Ingediend' : '—'))}</div>
-      ${datacardIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
-      ${datacardIngediend && datacardViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;"><button onclick="downloadFile('${datacardViewUrl}?download=1','datacard')" style="font-size:.78rem;color:#1A3B70;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">&#x21E9; Downloaden</button></div>` : ''}
-    </div>
-    <div style="flex:1;min-width:160px;padding:12px 16px;background:#F7FAFC;border:1px solid #E8EDF5;border-radius:8px;">
-      <div style="font-size:.72rem;font-weight:700;color:#8A9BB5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">PEP-verklaring</div>
-      <div style="font-size:.85rem;color:#0F1D3A;">${fv(pepNaam || (pepIngediend ? 'Ingediend' : '—'))}</div>
-      ${pepIngediend ? '<span style="font-size:.75rem;color:#2B8A3E;font-weight:600;">&#x2713; Ingediend</span>' : ''}
-      ${pepIngediend && pepViewUrl ? `<div style="margin-top:8px;display:flex;gap:8px;"><button onclick="downloadFile('${pepViewUrl}?download=1','pep-verklaring')" style="font-size:.78rem;color:#1A3B70;background:none;border:none;cursor:pointer;padding:0;font-weight:600;">&#x21E9; Downloaden</button></div>` : ''}
-    </div>
-  </div>`;
+  ${fileEntries.length ? `<div style="display:flex;gap:12px;flex-wrap:wrap;">${fileEntries.join('')}</div>` : '<div style="font-size:.85rem;color:#8A9BB5;">Geen bestanden ingediend.</div>'}`;
 
   // Reject feedback
   html += `<div id="vlRejectFeedbackWrap" style="display:none;margin-top:16px;">
