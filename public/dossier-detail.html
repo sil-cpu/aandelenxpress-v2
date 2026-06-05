@@ -251,10 +251,14 @@
         <span class="ab-label">Status</span>
         <select id="statusSelect" class="ab-select" onchange="onStatusSelectChange(this.value)">
           <option value="pending">Aanvraag ingediend</option>
-          <option value="vragenlijst">Vragenlijst</option>
+          <option value="vragenlijst">Vragenlijst verzonden</option>
+          <option value="vl-ontvangen">Vragenlijst ontvangen</option>
+          <option value="vl-controle">Documentcontrole</option>
           <option value="betaling">Betaling</option>
+          <option value="notary-prep">Voorbereiding notaris</option>
           <option value="notary">Notariële Akte</option>
           <option value="kvk">KvK inschrijving</option>
+          <option value="bank">Bankrekening</option>
           <option value="complete">Voltooid</option>
           <option value="rejected">Afgewezen</option>
         </select>
@@ -730,7 +734,9 @@ function renderPage(d, role) {
     <div class="detail-card" style="margin-bottom:20px;">
       <div class="detail-card-head"><div class="detail-card-title">Voortgang</div></div>
       <div class="detail-card-body">
-        <div class="process-timeline" style="flex-direction:row;gap:0;">${buildTimelineHorizontal(d.statusKey, role, d.hasVragenlijst)}</div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">
+        <div class="process-timeline" style="flex-direction:row;gap:0;min-width:720px;">${buildTimelineHorizontal(d.statusKey, role, d.hasVragenlijst)}</div>
+        </div>
       </div>
     </div>
 
@@ -795,14 +801,18 @@ function renderPage(d, role) {
 
 function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
   const stages = [
-    { key:'pending',     label:'Aanvraag ingediend' },
-    { key:'vragenlijst', label:'Vragenlijst' },
-    { key:'betaling',    label:'Betaling' },
-    { key:'notary',      label:'Notariële Akte' },
-    { key:'kvk',         label:'KvK inschrijving' },
-    { key:'complete',    label:'Voltooid' },
+    { key:'pending',       label:'Aanvraag ingediend' },
+    { key:'vragenlijst',   label:'Vragenlijst verzonden' },
+    { key:'vl-ontvangen',  label:'VL ontvangen' },
+    { key:'vl-controle',   label:'Documentcontrole' },
+    { key:'betaling',      label:'Betaling' },
+    { key:'notary-prep',   label:'Notaris voorbereiding' },
+    { key:'notary',        label:'Notariële Akte' },
+    { key:'kvk',           label:'KvK inschrijving' },
+    { key:'bank',          label:'Bankrekening' },
+    { key:'complete',      label:'Voltooid' },
   ];
-  const order = { pending:0, approved:1, vragenlijst:1, betaling:2, notary:3, kvk:4, complete:5 };
+  const order = { pending:0, approved:1, vragenlijst:1, 'vl-ontvangen':2, 'vl-controle':3, betaling:4, 'notary-prep':5, notary:6, kvk:7, bank:8, complete:9 };
   const cur = order[statusKey] ?? 0;
   const allDone = statusKey === 'complete';
   return stages.map((s,i) => {
@@ -812,13 +822,13 @@ function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
     const vlBtn = (i === 1 && hasVragenlijst && role === 'admin')
       ? `<button onclick="openVragenlijstModal()" style="margin-top:6px;padding:3px 9px;background:#EEF4FF;color:#2B6CB5;border:1px solid #C3DAFE;border-radius:4px;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;">&#x1F4CB; ${reviewStatus === 'approved' ? 'Vragenlijst beoordeeld' : 'Vragenlijst beoordelen'}</button>`
       : '';
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;">
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:72px;">
       ${i > 0 ? `<div style="position:absolute;top:14px;right:50%;width:100%;height:2px;background:${done||active?'#1A3B70':'#E8EDF5'};z-index:0;"></div>` : ''}
       <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'#1A3B70':active?'#2B6CB5':'#E8EDF5'};background:${done?'#1A3B70':active?'#EEF4FF':'white'};display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:${done?'white':active?'#2B6CB5':'#CBD5E0'};position:relative;z-index:1;">
         ${done?'&#x2713;':i+1}
       </div>
-      <div style="margin-top:8px;font-size:0.78rem;font-weight:${active?'600':'400'};color:${done?'#1A3B70':active?'#1A3B70':'#A0AEC0'};text-align:center;line-height:1.3;">${s.label}</div>
-      <div style="font-size:0.72rem;color:${active?'#2B6CB5':'#CBD5E0'};margin-top:2px;">${active?'Actief':done?'Afgerond':''}</div>
+      <div style="margin-top:8px;font-size:0.72rem;font-weight:${active?'600':'400'};color:${done?'#1A3B70':active?'#1A3B70':'#A0AEC0'};text-align:center;line-height:1.3;">${s.label}</div>
+      <div style="font-size:0.68rem;color:${active?'#2B6CB5':'#CBD5E0'};margin-top:2px;">${active?'Actief':done?'Afgerond':''}</div>
       ${vlBtn}
     </div>`;
   }).join('');
@@ -1260,7 +1270,7 @@ async function renderActionBar(d) {
 
   // Set current status
   const statusSel = document.getElementById('statusSelect');
-  if (d.apiStatus) statusSel.value = ['pending','vragenlijst','betaling','notary','kvk','complete','rejected'].includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
+  if (d.apiStatus) statusSel.value = ['pending','vragenlijst','vl-ontvangen','vl-controle','betaling','notary-prep','notary','kvk','bank','complete','rejected'].includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
 
   document.getElementById('actionBar').style.display = 'flex';
 }
@@ -1280,14 +1290,18 @@ async function doChangeStatus(val) {
   });
   if (!r.ok) throw new Error('API fout bij status update');
   const sMap = {
-    'pending':     { key:'pending',     text:'Aanvraag ingediend' },
-    'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
-    'approved':    { key:'vragenlijst', text:'Vragenlijst' },
-    'betaling':    { key:'betaling',    text:'Betaling' },
-    'notary':      { key:'notary',      text:'Notariële Akte' },
-    'kvk':         { key:'kvk',         text:'KvK inschrijving' },
-    'complete':    { key:'complete',    text:'Voltooid' },
-    'rejected':    { key:'rejected',    text:'Afgewezen' }
+    'pending':       { key:'pending',       text:'Aanvraag ingediend' },
+    'vragenlijst':   { key:'vragenlijst',   text:'Vragenlijst verzonden' },
+    'approved':      { key:'vragenlijst',   text:'Vragenlijst verzonden' },
+    'vl-ontvangen':  { key:'vl-ontvangen',  text:'Vragenlijst ontvangen' },
+    'vl-controle':   { key:'vl-controle',   text:'Documentcontrole' },
+    'betaling':      { key:'betaling',       text:'Betaling' },
+    'notary-prep':   { key:'notary-prep',   text:'Voorbereiding notaris' },
+    'notary':        { key:'notary',         text:'Notariële Akte' },
+    'kvk':           { key:'kvk',            text:'KvK inschrijving' },
+    'bank':          { key:'bank',           text:'Bankrekening' },
+    'complete':      { key:'complete',       text:'Voltooid' },
+    'rejected':      { key:'rejected',       text:'Afgewezen' }
   };
   const s = sMap[val] || { key: val, text: val };
   currentDossier.statusKey = s.key;
@@ -1886,7 +1900,7 @@ async function init() {
         if (dr.ok) {
           const req = await dr.json();
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
-          const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'notary':{ key:'notary', text:'Notariële Akte' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
+    const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst verzonden' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst verzonden' }, 'vl-ontvangen':{ key:'vl-ontvangen', text:'Vragenlijst ontvangen' }, 'vl-controle':{ key:'vl-controle', text:'Documentcontrole' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'notary-prep':{ key:'notary-prep', text:'Voorbereiding notaris' }, 'notary':{ key:'notary', text:'Notariële Akte' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'bank':{ key:'bank', text:'Bankrekening' }, 'complete':{ key:'complete', text:'Voltooid' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'pending', text: req.status };
           d = { name: req.gewenstNaam || req.clientName, clientName: req.clientName || req.gewenstNaam || '', partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', pricing: req.pricing || null, hasVragenlijst: false };
         }
