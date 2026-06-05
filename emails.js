@@ -109,7 +109,7 @@ async function emailAdminNewRegistration({ name, email, company, phone }) {
                 <strong>Bedrijf:</strong> ${company || '—'}<br>
                 <strong>Telefoon:</strong> ${phone || '—'}
             </div>
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="https://aandelenxpress.vercel.app/admin-dashboard">Beheer dashboard</a>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/admin-dashboard">Beheer dashboard</a>
         `),
     });
 }
@@ -144,7 +144,7 @@ async function emailResellerApproved({ name, email }) {
                 <strong>Inloggen:</strong> gebruik het email-adres waarmee je je hebt aangemeld<br>
                 <strong>Wachtwoord:</strong> het wachtwoord dat je hebt ingesteld bij registratie
             </div>
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="https://aandelenxpress.vercel.app/login">Inloggen</a>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/login">Inloggen</a>
             <p>Vragen? Mail naar <a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a>.</p>
         `),
     });
@@ -183,7 +183,7 @@ async function emailAdminNewRequest({ request }) {
                 <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
                 <strong>Klant:</strong> ${clientName} (${clientEmail})
             </div>
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="https://aandelenxpress.vercel.app/admin-dashboard">Bekijken in dashboard</a>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/admin-dashboard">Bekijken in dashboard</a>
         `),
     });
 }
@@ -235,7 +235,7 @@ async function emailResellerRequestApproved({ request }) {
                 <strong>Gewenste naam:</strong> ${gewenstNaam}<br>
                 <strong>Klant:</strong> ${clientName}
             </div>
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="https://aandelenxpress.vercel.app/reseller-dashboard">Bekijken in dashboard</a>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/reseller-dashboard">Bekijken in dashboard</a>
         `),
     });
 }
@@ -324,7 +324,7 @@ async function emailAdminNewTicket({ ticket }) {
                 <strong>Van:</strong> ${senderName || '—'} (${senderEmail || '—'})
             </div>
             <p><strong>Bericht:</strong><br>${message.replace(/\n/g, '<br>')}</p>
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="https://aandelenxpress.vercel.app/admin-dashboard">Ticket beantwoorden</a>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/admin-dashboard">Ticket beantwoorden</a>
         `),
     });
 }
@@ -400,7 +400,7 @@ async function emailAdminVragenlijstSubmitted({ submission }) {
                 <strong>Ingediend op:</strong> ${datum}
             </div>
             ${opmerkingen ? `<p><strong>Opmerkingen klant:</strong><br>${opmerkingen.replace(/\n/g, '<br>')}</p>` : ''}
-            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="https://aandelenxpress.vercel.app/admin-dashboard">Bekijken in dashboard</a>
+            <a class="btn" style="color:#ffffff;-webkit-text-fill-color:#ffffff;" href="${SITE_URL}/admin-dashboard">Bekijken in dashboard</a>
         `),
     });
 }

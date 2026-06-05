@@ -187,10 +187,11 @@ function sanitizeSlug(value) {
 }
 
 function buildVragenlijstUrl(request) {
-    const base = process.env.SITE_URL || 'https://aandelenxpress.vercel.app';
+    const base = process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app';
     const id = request?.id || '';
     const product = String(request?.oprichtingType || 'bv').trim();
-    return `${base}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}`;
+    const token = request?.accessToken ? '&token=' + encodeURIComponent(request.accessToken) : '';
+    return `${base}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}${token}`;
 }
 
 function defaultBrandingForUser(user) {

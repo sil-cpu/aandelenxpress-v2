@@ -590,6 +590,25 @@ function downloadBlob(filename, content, mimeType) {
   URL.revokeObjectURL(url);
 }
 
+async function downloadFile(url, fallbackName) {
+  try {
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if (r.status === 401) { alert('Sessie verlopen. Log opnieuw in.'); window.location.href = '/login'; return; }
+    if (r.status === 403) { alert('U heeft geen toegang tot dit bestand.'); return; }
+    if (!r.ok) { const j = await r.json().catch(() => ({})); alert('Fout: ' + (j.error || 'Bestand niet gevonden')); return; }
+    const contentType = r.headers.get('Content-Type') || 'application/octet-stream';
+    const cd = r.headers.get('Content-Disposition') || '';
+    const fnMatch = cd.match(/filename="([^"]+)"/);
+    const filename = fnMatch ? fnMatch[1] : fallbackName;
+    const blob = await r.blob();
+    const blobUrl = URL.createObjectURL(new Blob([blob], { type: contentType }));
+    const a = document.createElement('a');
+    a.href = blobUrl; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(blobUrl);
+  } catch(e) { alert('Download mislukt: ' + e.message); }
+}
+
 function downloadDossierSnapshot() {
   if (!currentDossier) return;
   const payload = {
@@ -612,19 +631,18 @@ function downloadPricingSnapshot() {
 
 function renderDocumentsCard(d) {
   const q = currentVragenlijstData || {};
-  const caseId = encodeURIComponent(d.dossierNr || '');
+  const rawCaseId = d.dossierNr || '';
+  const caseId = encodeURIComponent(rawCaseId);
   const vraagFileDefs = [
     ['oprichtingsDocument', 'oprichtingsdocument', 'Oprichtingsdocument (gegenereerd PDF)'],
     ['datacardBestand', 'datacard', 'Datacard (vragenlijst)'],
     ['pepBestand', 'pep', 'PEP-verklaring (vragenlijst)'],
-    ['huurovereenkomst', 'huurovereenkomst', 'Huurovereenkomst'],
-    ['kvkUittreksel', 'kvk-uittreksel', 'KvK uittreksel (vragenlijst)'],
-    ['verzekering', 'verzekering', 'Verzekeringsbewijs'],
-    ['ontvangstIntent', 'ontvangst-intent', 'Ontvangst intentieverklaring'],
-    ['intentverklaring', 'intentverklaring', 'Intentieverklaring'],
-    ['bijlageIntent', 'bijlage-intent', 'Bijlage intentieverklaring'],
-    ['interim', 'interim', 'Interim document'],
-    ['uboUittreksel', 'ubo-uittreksel', 'UBO uittreksel'],
+    ['holdingHuurovereenkomst', 'holding-huurovereenkomst', 'Huurovereenkomst (holding)'],
+    ['werkmijHuurovereenkomst', 'werkmij-huurovereenkomst', 'Huurovereenkomst (werkmij)'],
+    ['omzettingKvkUittreksel', 'kvk-uittreksel', 'KvK uittreksel (vragenlijst)'],
+    ['omzettingIntentieverklaring', 'intentverklaring', 'Intentieverklaring'],
+    ['omzettingGeleideformulier', 'geleideformulier', 'Geleideformulier'],
+    ['omzettingVofUboUittreksel', 'ubo-uittreksel', 'UBO uittreksel'],
     ['personeelsplan', 'personeelsplan', 'Personeelsplan']
   ];
 
@@ -668,7 +686,7 @@ function renderDocumentsCard(d) {
             <span class="doc-meta">${escHtml(item.status || '')}</span>
             <span style="font-size:0.8rem;color:#718096;min-width:190px;text-align:right;">${escHtml(item.meta || '')}</span>
             ${item.downloadUrl
-              ? `<a class="btn-ghost" style="margin-left:auto;font-size:0.8rem;text-decoration:none;" href="${item.downloadUrl}">Download</a>`
+              ? `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${item.downloadUrl.replace(/'/g,'')}','${(item.meta||'bestand').replace(/'/g,'')}')">Download</button>`
               : `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="${item.onClick}">Download</button>`}
           </div>
         `).join('')}
