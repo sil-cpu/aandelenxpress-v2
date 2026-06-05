@@ -282,6 +282,10 @@
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               Verstuur email
             </button>
+            <button onclick="closeActies();openFileRequestModal()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Vraag bestanden op
+            </button>
             <div class="acties-sep"></div>
             <button onclick="closeActies();openEditModal('client')">
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -384,6 +388,29 @@
         PDF downloaden
       </button>
       <button class="em-cancel" onclick="closeVragenlijstModal()">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILE REQUEST MODAL -->
+<div id="fileRequestModal" class="em-overlay" onclick="if(event.target===this)closeFileRequestModal()">
+  <div class="em-modal" style="width:480px;">
+    <div class="em-header">
+      <h3>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Vraag extra bestanden op
+      </h3>
+      <button class="em-close" onclick="closeFileRequestModal()">✕</button>
+    </div>
+    <div class="em-body">
+      <div class="em-field">
+        <label>Bericht aan klant</label>
+        <textarea id="fileRequestMsg" rows="5" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #DDE5F4;border-radius:8px;font-size:.9rem;font-family:inherit;color:#0F1D3A;resize:vertical;" placeholder="Beschrijf welke bestanden u nodig heeft...">Wij hebben aanvullende documenten nodig om uw dossier verder te verwerken. Klik op de knop hieronder om uw bestanden te uploaden.</textarea>
+      </div>
+    </div>
+    <div class="em-footer">
+      <button class="em-cancel" onclick="closeFileRequestModal()">Annuleren</button>
+      <button class="em-send" id="fileRequestSendBtn" onclick="sendFileRequest()">Stuur uploadlink →</button>
     </div>
   </div>
 </div>
@@ -787,6 +814,12 @@ function renderPage(d, role) {
 
         ${renderDocumentsCard(d)}
 
+        <!-- Geüploade bestanden (admin only) -->
+        ${role === 'admin' ? `<div class="detail-card" id="uploadedFilesCard" style="display:none;">
+          <div class="detail-card-head"><div class="detail-card-title">Geüploade bestanden</div></div>
+          <div class="detail-card-body" id="uploadedFilesBody" style="padding:0;"></div>
+        </div>` : ''}
+
       </div><!-- /detail-left-col -->
 
       <!-- Activity feed (right column) -->
@@ -805,6 +838,7 @@ function renderPage(d, role) {
   `;
 
   loadActivity(d.dossierNr);
+  if (role === 'admin') loadUploadedFiles(d.dossierNr);
 }
 
 function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
@@ -1401,6 +1435,55 @@ function closeActies() { document.getElementById('actiesDropdown').style.display
 function closeActiesOutside(e) {
   const wrap = document.querySelector('.acties-wrap');
   if (wrap && !wrap.contains(e.target)) closeActies();
+}
+
+// ── File request modal ───────────────────────────────────────────────────────
+function openFileRequestModal() {
+  document.getElementById('fileRequestModal').classList.add('open');
+  setTimeout(() => document.getElementById('fileRequestMsg').focus(), 50);
+}
+function closeFileRequestModal() {
+  document.getElementById('fileRequestModal').classList.remove('open');
+}
+
+async function sendFileRequest() {
+  const msg = document.getElementById('fileRequestMsg').value.trim();
+  if (!msg) { alert('Voer een bericht in.'); return; }
+  const btn = document.getElementById('fileRequestSendBtn');
+  btn.disabled = true; btn.textContent = 'Verzenden...';
+  try {
+    const r = await fetch('/api/dossier-files/request', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dossierNr: currentDossier.dossierNr, message: msg })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Fout');
+    closeFileRequestModal();
+    showToast('Uploadlink verstuurd naar ' + (currentDossier.clientEmail || 'klant'));
+    loadActivity(currentDossier.dossierNr);
+  } catch(e) { alert('Fout: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Stuur uploadlink →'; }
+}
+
+async function loadUploadedFiles(nr) {
+  try {
+    const r = await fetch('/api/dossier-files/' + encodeURIComponent(nr));
+    if (!r.ok) return;
+    const files = await r.json();
+    const card = document.getElementById('uploadedFilesCard');
+    const body = document.getElementById('uploadedFilesBody');
+    if (!card || !body) return;
+    if (!files.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    body.innerHTML = files.map(f => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #F0F4FA;">
+        <svg width="16" height="16" fill="none" stroke="#2B6CB5" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0;"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <span style="flex:1;font-size:0.85rem;font-weight:500;color:#0F1D3A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>
+        <span style="font-size:0.78rem;color:#94A3B8;flex-shrink:0;">${f.size ? (f.size/1024).toFixed(0) + ' KB' : ''}</span>
+        ${f.url ? `<a href="${escHtml(f.url)}" target="_blank" rel="noopener" style="font-size:0.8rem;color:#2B6CB5;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0;">Download</a>` : ''}
+      </div>
+    `).join('');
+  } catch(_) {}
 }
 
 // ── Email modal ─────────────────────────────────────────────

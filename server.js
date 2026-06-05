@@ -13,6 +13,7 @@ const app = express();
 const DOSSIER_AUTO_TRASH_MS = 14 * 24 * 60 * 60 * 1000;
 const PRICING_MARKER = '[AX_PRICING]';
 const BRANDING_BUCKET = 'branding-assets';
+const FILE_BUCKET = 'dossier-files';
 const LEGACY_BRANDING_PREFIX = '__BRANDING__:';
 
 // ── Supabase client (service role bypasses RLS) ────────────────────────────
@@ -226,6 +227,10 @@ async function ensureBrandingBucket() {
         const exists = (buckets || []).some(b => b.name === BRANDING_BUCKET);
         if (!exists) {
             await supabase.storage.createBucket(BRANDING_BUCKET, { public: true, fileSizeLimit: 5 * 1024 * 1024 });
+        }
+        const fileExists = (buckets || []).some(b => b.name === FILE_BUCKET);
+        if (!fileExists) {
+            await supabase.storage.createBucket(FILE_BUCKET, { public: false, fileSizeLimit: 20 * 1024 * 1024 });
         }
     } catch (_) {}
 }
@@ -2666,6 +2671,67 @@ app.use((req, res, next) => {
         }
     } catch(e) {}
     next();
+});
+
+// ── Extra file upload feature ──────────────────────────────────────────────
+
+// POST /api/dossier-files/request  — admin sends "please upload" email to client
+app.post('/api/dossier-files/request', requireAdmin, async (req, res) => {
+    const { dossierNr, message } = req.body || {};
+    if (!dossierNr) return res.status(400).json({ error: 'dossierNr vereist' });
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', dossierNr).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    const request = rowToReq(row);
+    const base = process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app';
+    const uploadUrl = `${base}/extra-upload?nr=${encodeURIComponent(dossierNr)}&token=${encodeURIComponent(request.accessToken || '')}`;
+    const adminName = req.session?.user?.name || req.session?.user?.email || 'Admin';
+    const clientEmail = request.clientEmail;
+    if (!clientEmail) return res.status(400).json({ error: 'Geen e-mailadres bekend voor deze klant' });
+    const bodyHtml = (message || 'Wij verzoeken u aanvullende documenten te uploaden.')
+        .replace(/\n/g, '<br>')
+        + `<br><br><a href="${uploadUrl}" style="display:inline-block;padding:12px 24px;background:#1A3B70;color:white;text-decoration:none;border-radius:8px;font-weight:600;">Bestanden uploaden →</a>`;
+    try {
+        await emails.sendEmail({ to: clientEmail, subject: `Aanvullende documenten gevraagd — ${request.bedrijfsnaam || dossierNr}`, bodyHtml });
+    } catch(e) { console.warn('File request email failed:', e.message); }
+    addActivity(request, 'system', `Bestandsupload gevraagd door ${adminName}. E-mail verstuurd naar ${clientEmail}.`, adminName);
+    await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', dossierNr);
+    res.json({ ok: true, uploadUrl });
+});
+
+// POST /api/dossier-files/upload  — client uploads files (token-authenticated)
+app.post('/api/dossier-files/upload', async (req, res) => {
+    const { nr, token, files } = req.body || {};
+    if (!nr || !token || !Array.isArray(files) || !files.length) return res.status(400).json({ error: 'Ongeldige aanvraag' });
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', nr).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldige toegangscode' });
+    const request = rowToReq(row);
+    const results = [];
+    for (const f of files) {
+        if (!f.name || !f.base64) continue;
+        const safeName = String(f.name).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
+        const filePath = `${nr}/${Date.now()}_${safeName}`;
+        const buf = Buffer.from(f.base64, 'base64');
+        const { error } = await supabase.storage.from(FILE_BUCKET).upload(filePath, buf, { contentType: f.type || 'application/octet-stream', upsert: false });
+        if (!error) results.push({ name: safeName, path: filePath });
+    }
+    if (!results.length) return res.status(500).json({ error: 'Upload mislukt' });
+    const names = results.map(r => r.name).join(', ');
+    addActivity(request, 'file-upload', `Klant heeft ${results.length} bestand(en) geüpload: ${names}`, null);
+    await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', nr);
+    res.json({ ok: true, uploaded: results.length });
+});
+
+// GET /api/dossier-files/:nr  — admin lists uploaded files
+app.get('/api/dossier-files/:nr', requireAdmin, async (req, res) => {
+    const nr = req.params.nr;
+    const { data, error } = await supabase.storage.from(FILE_BUCKET).list(nr, { sortBy: { column: 'created_at', order: 'desc' } });
+    if (error) return res.status(500).json({ error: error.message });
+    const files = await Promise.all((data || []).map(async f => {
+        const { data: urlData } = await supabase.storage.from(FILE_BUCKET).createSignedUrl(`${nr}/${f.name}`, 3600);
+        return { name: f.name.replace(/^\d+_/, ''), path: `${nr}/${f.name}`, url: urlData?.signedUrl || null, size: f.metadata?.size || 0, created_at: f.created_at };
+    }));
+    res.json(files);
 });
 
 // Export for Vercel

@@ -2824,10 +2824,7 @@ async function adminSaveStatusAndSendEmail() {
 </script>
 
 <!-- Status dropdown portal (renders outside table to avoid layout shift) -->
-<div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow:hidden;padding:4px 0;"></div>
-
-<!-- Status dropdown portal (outside table to avoid layout shift) -->
-<div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow:hidden;padding:4px 0;"></div>
+<div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow-y:auto;padding:4px 0;max-height:340px;"></div>
 
 <!-- Email modal voor status wijzigen -->
 <div id="adminEmailModal" class="em-overlay" onclick="if(event.target===this)adminCloseEmailModal()">
