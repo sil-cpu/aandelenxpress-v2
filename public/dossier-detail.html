@@ -1516,6 +1516,10 @@ function closeVragenlijstModal() {
 
 function downloadVlPdf() {
   if (!currentVragenlijstData) return;
+  if (currentVragenlijstData.reviewStatus !== 'approved') {
+    alert('De PDF wordt aangemaakt zodra de vragenlijst is goedgekeurd.');
+    return;
+  }
   const pick = (...vals) => vals.find(v => v !== undefined && v !== null && String(v).trim() !== '') || '';
   const caseId = pick(currentVragenlijstData.caseId, currentDossier?.dossierNr);
   const naam = currentVragenlijstData.oprichtingsDocument?.naam || `oprichtingsdocument-${caseId}.pdf`;
