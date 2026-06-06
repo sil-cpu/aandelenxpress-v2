@@ -360,8 +360,16 @@
           <span class="section-heading">Reseller-aanmeldingen</span>
           <span id="pendingCount" class="text-muted text-sm">Laden...</span>
         </div>
+        <!-- Tabs -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid #E2E8F0;">
+          <button id="tabBtnPending" onclick="switchAanmTab('pending')" style="padding:10px 20px;font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;color:#2D3748;border-bottom:2px solid #1A56DB;">Openstaand <span id="pendingBadge2" style="background:#1A56DB;color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;margin-left:4px;display:none;"></span></button>
+          <button id="tabBtnRejected" onclick="switchAanmTab('rejected')" style="padding:10px 20px;font-size:14px;font-weight:600;border:none;background:none;cursor:pointer;color:#8A9BB5;border-bottom:2px solid transparent;">Afgewezen <span id="rejectedBadge" style="background:#718096;color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;margin-left:4px;display:none;"></span></button>
+        </div>
         <div class="dash-card" id="aanmeldingenCard">
           <div id="aanmeldingenList"><div style="padding:32px;text-align:center;color:#8A9BB5;">Laden...</div></div>
+        </div>
+        <div class="dash-card" id="rejectedCard" style="display:none;">
+          <div id="rejectedList"><div style="padding:32px;text-align:center;color:#8A9BB5;">Laden...</div></div>
         </div>
       </div>
 
@@ -412,9 +420,19 @@
               <div class="drawer-field-row" id="dfIntakePortal"></div>
             </div>
           </div>
-          <div style="display:flex;gap:10px;margin-top:8px;">
-            <button class="btn-primary" style="flex:1;padding:12px;" id="aanmApproveBtn" onclick="">Goedkeuren</button>
-            <button class="btn-ghost" style="flex:1;padding:12px;color:#c53030;border-color:#c53030;" id="aanmRejectBtn" onclick="">Afwijzen</button>
+          <div style="display:flex;gap:10px;margin-top:8px;flex-direction:column;">
+            <div id="aanmRejectReasonWrap" style="display:none;flex-direction:column;gap:6px;">
+              <label style="font-size:13px;font-weight:500;color:#4A5568;">Reden voor afwijzing <span style="color:#8A9BB5;font-weight:400;">(optioneel)</span></label>
+              <textarea id="aanmRejectReason" rows="3" placeholder="Bijv: onvoldoende documentatie, buiten doelgroep, ..." style="width:100%;border:1px solid #E2E8F0;border-radius:8px;padding:10px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-ghost" style="flex:1;padding:10px;color:#c53030;border-color:#c53030;" id="aanmRejectConfirmBtn">Bevestig afwijzing</button>
+                <button class="btn-ghost" style="flex:1;padding:10px;" onclick="cancelReject()">Annuleren</button>
+              </div>
+            </div>
+            <div id="aanmActionBtns" style="display:flex;gap:10px;">
+              <button class="btn-primary" style="flex:1;padding:12px;" id="aanmApproveBtn" onclick="">Goedkeuren</button>
+              <button class="btn-ghost" style="flex:1;padding:12px;color:#c53030;border-color:#c53030;" id="aanmRejectBtn" onclick="">Afwijzen</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1635,19 +1653,37 @@ function adminSaveToast(msg) {
 }
 
 // ── Aanmeldingen ────────────────────────────────────────
+let currentAanmTab = 'pending';
+
+function switchAanmTab(tab) {
+  currentAanmTab = tab;
+  const isPending = tab === 'pending';
+  document.getElementById('tabBtnPending').style.color = isPending ? '#2D3748' : '#8A9BB5';
+  document.getElementById('tabBtnPending').style.borderBottomColor = isPending ? '#1A56DB' : 'transparent';
+  document.getElementById('tabBtnRejected').style.color = !isPending ? '#2D3748' : '#8A9BB5';
+  document.getElementById('tabBtnRejected').style.borderBottomColor = !isPending ? '#1A56DB' : 'transparent';
+  document.getElementById('aanmeldingenCard').style.display = isPending ? '' : 'none';
+  document.getElementById('rejectedCard').style.display = !isPending ? '' : 'none';
+  if (!isPending) loadRejectedResellers();
+}
+
 async function loadPending() {
   const res = await fetch('/api/admin/pending');
   if (!res.ok) return;
   const list = await res.json();
 
   const badge = document.getElementById('pendingBadge');
+  const badge2 = document.getElementById('pendingBadge2');
   const countEl = document.getElementById('pendingCount');
   if (list.length === 0) {
     badge.style.display = 'none';
+    badge2.style.display = 'none';
     countEl.textContent = 'Geen openstaande aanmeldingen';
   } else {
     badge.textContent = list.length;
     badge.style.display = 'inline';
+    badge2.textContent = list.length;
+    badge2.style.display = 'inline';
     countEl.textContent = list.length + ' openstaande aanmelding' + (list.length !== 1 ? 'en' : '');
   }
 
@@ -1723,7 +1759,9 @@ function openAanmDrawer(jsonStr) {
     wrap.style.display = 'none';
   }
   document.getElementById('aanmApproveBtn').onclick = () => approveReseller(r.email);
-  document.getElementById('aanmRejectBtn').onclick  = () => rejectReseller(r.email);
+  document.getElementById('aanmRejectBtn').onclick  = () => showRejectForm(r.email);
+  document.getElementById('aanmRejectReasonWrap').style.display = 'none';
+  document.getElementById('aanmActionBtns').style.display = 'flex';
   document.getElementById('aanmDrawer').classList.add('open');
   document.getElementById('aanmDrawerBackdrop').classList.add('open');
 }
@@ -1750,19 +1788,32 @@ async function approveReseller(email) {
 }
 
 async function rejectReseller(email) {
-  if (!confirm(`Weet u zeker dat u de aanmelding van ${email} wilt afwijzen?`)) return;
+  const reason = document.getElementById('aanmRejectReason').value.trim() || null;
   const res = await fetch('/api/admin/reject', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email, reason })
   });
   if (res.ok) {
     closeAanmDrawer();
     adminSaveToast('Aanmelding afgewezen');
     loadPending();
+    loadRejectedResellers();
   } else {
     adminSaveToast('Fout bij afwijzen');
   }
+}
+
+function showRejectForm(email) {
+  document.getElementById('aanmRejectReason').value = '';
+  document.getElementById('aanmRejectReasonWrap').style.display = 'flex';
+  document.getElementById('aanmActionBtns').style.display = 'none';
+  document.getElementById('aanmRejectConfirmBtn').onclick = () => rejectReseller(email);
+}
+
+function cancelReject() {
+  document.getElementById('aanmRejectReasonWrap').style.display = 'none';
+  document.getElementById('aanmActionBtns').style.display = 'flex';
 }
 
 async function loadPendingBadge() {
@@ -1776,6 +1827,46 @@ async function loadPendingBadge() {
       badge.style.display = 'inline';
     }
   } catch(e) {}
+}
+
+async function loadRejectedResellers() {
+  const container = document.getElementById('rejectedList');
+  container.innerHTML = '<div style="padding:32px;text-align:center;color:#8A9BB5;">Laden...</div>';
+  try {
+    const res = await fetch('/api/admin/rejected-resellers');
+    if (!res.ok) return;
+    const list = await res.json();
+    const badge = document.getElementById('rejectedBadge');
+    badge.textContent = list.length;
+    badge.style.display = list.length > 0 ? 'inline' : 'none';
+    if (list.length === 0) {
+      container.innerHTML = `<div style="padding:48px;text-align:center;color:#8A9BB5;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1.5" style="display:block;margin:0 auto 12px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Geen afgewezen aanmeldingen
+      </div>`;
+      return;
+    }
+    container.innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>Kantoor</th><th>KvK</th><th>Contactpersoon</th><th>E-mail</th><th>Aangemeld</th><th>Reden</th></tr></thead>
+        <tbody>
+          ${list.map(r => {
+            const reason = r.intake_data?._rejectionReason || '—';
+            const rejectedAt = r.intake_data?._rejectedAt ? new Date(r.intake_data._rejectedAt).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}) : '—';
+            return `<tr>
+              <td style="font-weight:500;">${r.kantoor}</td>
+              <td class="td-muted" style="font-family:monospace;">${r.kvk}</td>
+              <td class="td-muted">${r.naam}</td>
+              <td class="td-muted">${r.email}</td>
+              <td class="td-muted">${new Date(r.aangemeld).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td>
+              <td class="td-muted" style="max-width:200px;white-space:normal;font-size:12px;">${reason}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    container.innerHTML = '<div style="padding:32px;text-align:center;color:#e53e3e;">Fout bij laden</div>';
+  }
 }
 
 // ── Leden & Gebruikersbeheer ────────────────────────────────────────

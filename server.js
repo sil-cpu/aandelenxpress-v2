@@ -606,8 +606,13 @@ app.post('/api/register', async (req, res) => {
     const { data: existing } = await supabase.from('users').select('email').eq('email', email).single();
     if (existing) return res.status(409).json({ error: 'Dit e-mailadres is al geregistreerd' });
 
-    const { data: existingPending } = await supabase.from('pending_resellers').select('email').eq('email', email).single();
-    if (existingPending) return res.status(409).json({ error: 'Er staat al een aanmelding open voor dit e-mailadres' });
+    const { data: existingPending } = await supabase.from('pending_resellers').select('email, intake_data').eq('email', email).single();
+    if (existingPending) {
+        if (existingPending.intake_data?._status === 'rejected') {
+            return res.status(409).json({ error: 'Dit e-mailadres is eerder afgewezen. Neem contact op met AandelenXpress.' });
+        }
+        return res.status(409).json({ error: 'Er staat al een aanmelding open voor dit e-mailadres' });
+    }
 
     const row = { email, kantoor, kvk, naam, telefoon, password, aangemeld: new Date().toISOString() };
     if (intake_data && typeof intake_data === 'object') row.intake_data = intake_data;
@@ -621,7 +626,15 @@ app.post('/api/register', async (req, res) => {
 // ── Admin: pending registrations ───────────────────────────────────────────
 app.get('/api/admin/pending', requireAdmin, async (req, res) => {
     const { data } = await supabase.from('pending_resellers').select('email, kantoor, kvk, naam, telefoon, aangemeld, intake_data').order('aangemeld', { ascending: false });
-    res.json(data || []);
+    // Exclude rejected records
+    const pending = (data || []).filter(r => !r.intake_data?._status || r.intake_data._status !== 'rejected');
+    res.json(pending);
+});
+
+app.get('/api/admin/rejected-resellers', requireAdmin, async (req, res) => {
+    const { data } = await supabase.from('pending_resellers').select('email, kantoor, kvk, naam, telefoon, aangemeld, intake_data').order('aangemeld', { ascending: false });
+    const rejected = (data || []).filter(r => r.intake_data?._status === 'rejected');
+    res.json(rejected);
 });
 
 app.post('/api/admin/approve', requireAdmin, async (req, res) => {
@@ -645,7 +658,8 @@ app.post('/api/admin/reject', requireAdmin, async (req, res) => {
     const { data: r } = await supabase.from('pending_resellers').select('*').eq('email', email).single();
     if (!r) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
 
-    await supabase.from('pending_resellers').delete().eq('email', email);
+    const updatedIntake = { ...(r.intake_data || {}), _status: 'rejected', _rejectedAt: new Date().toISOString(), _rejectionReason: req.body.reason || null };
+    await supabase.from('pending_resellers').update({ intake_data: updatedIntake }).eq('email', email);
     emails.emailResellerRejected({ name: r.naam, email: r.email, reason: req.body.reason || null });
     res.json({ success: true });
 });
