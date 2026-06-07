@@ -4358,8 +4358,21 @@
 
         refreshRequiredIndicators();
         const formEl = document.getElementById('cleanForm');
-        if (!formEl.reportValidity()) {
-          return;
+
+        // Find first visible invalid field — show proper error instead of silent browser tooltip
+        const firstInvalid = Array.from(formEl.querySelectorAll(':invalid')).find(el => {
+          const t = (el.getAttribute('type') || '').toLowerCase();
+          if (t === 'hidden' || t === 'submit' || t === 'button' || t === 'checkbox' || t === 'radio') return false;
+          if (el.disabled) return false;
+          const cs = window.getComputedStyle(el);
+          return cs.display !== 'none' && cs.visibility !== 'hidden' && !!el.offsetParent;
+        });
+        if (firstInvalid) {
+          const card = firstInvalid.closest('.card');
+          if (card) { const idx = getVisibleCards().indexOf(card); if (idx >= 0) openTab(idx, true); }
+          firstInvalid.focus({ preventScroll: true });
+          const lbl = firstInvalid.closest('.field')?.querySelector('label')?.textContent?.trim();
+          return showFormError('Vul het verplichte veld in' + (lbl ? ': ' + lbl : '') + '.');
         }
 
         const legalConsentEl = document.getElementById('legalConsent');
