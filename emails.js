@@ -37,6 +37,20 @@ function buildVragenlijstUrl(request) {
     return `${SITE_URL}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(product)}${token}`;
 }
 
+function buildStatusUrl(idOrRequest, accessToken) {
+    // Accept either (request_obj) or (id, token)
+    let id, token;
+    if (idOrRequest && typeof idOrRequest === 'object') {
+        id    = idOrRequest.id || idOrRequest.caseId || '';
+        token = idOrRequest.accessToken || '';
+    } else {
+        id    = idOrRequest || '';
+        token = accessToken || '';
+    }
+    const tokenPart = token ? '&token=' + encodeURIComponent(token) : '';
+    return `${SITE_URL}/dossier-status?nr=${encodeURIComponent(id)}${tokenPart}`;
+}
+
 /**
  * Stuur een email. Als TEST_EMAIL in .env staat, wordt het echte 'to'-adres
  * vervangen zodat alle mails naar één testadres gaan.
@@ -201,7 +215,7 @@ async function emailAdminNewRequest({ request }) {
 /** Klant: bevestiging van ontvangst + link naar statuspagina / vragenlijst */
 async function emailClientNewRequest({ request }) {
     const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
-    const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
+    const statusUrl = buildStatusUrl(request);
 
     return sendEmail({
         to:      clientEmail,
@@ -255,7 +269,7 @@ async function emailResellerRequestApproved({ request }) {
 async function emailClientCaseApproved({ request }) {
     const { id, clientName, clientEmail, oprichtingType, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
     const vragenlijstUrl = buildVragenlijstUrl(request);
-    const statusUrl      = `${SITE_URL}/dossier-status?nr=${id}`;
+    const statusUrl      = buildStatusUrl(request);
     const wachtwoord     = accessToken || '—';
 
     return sendEmail({
@@ -359,7 +373,7 @@ async function emailClientVragenlijstSubmitted({ submission }) {
     const datum = new Date(submittedAt).toLocaleString('nl-NL', {
         day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
-    const statusUrl = `${SITE_URL}/dossier-status?nr=${caseId}`;
+    const statusUrl = buildStatusUrl(caseId, accessToken);
 
     return sendEmail({
         to:      clientEmail,
@@ -380,7 +394,7 @@ async function emailClientVragenlijstSubmitted({ submission }) {
 
 /** Klant: vragenlijst afgekeurd met feedback */
 async function emailClientVragenlijstRejected({ request, feedback, formUrl }) {
-    const statusUrl = `${SITE_URL}/dossier-status?nr=${request.id}`;
+    const statusUrl = buildStatusUrl(request);
     const wachtwoord = request.accessToken || '';
     return sendEmail({
         to:      request.clientEmail,
@@ -405,7 +419,7 @@ async function emailClientVragenlijstRejected({ request, feedback, formUrl }) {
 /** Klant: betalingsverzoek — stap na vragenlijst */
 async function emailClientBetaling({ request }) {
     const { id, clientName, clientEmail, gewenstNaam, resellerName, resellerCompany, accessToken } = request;
-    const statusUrl = `${SITE_URL}/dossier-status?nr=${id}`;
+    const statusUrl = buildStatusUrl(request);
     return sendEmail({
         to:      clientEmail,
         subject: `Betalingsverzoek — BV-oprichting ${gewenstNaam}`,
