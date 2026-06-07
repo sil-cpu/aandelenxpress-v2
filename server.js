@@ -514,8 +514,9 @@ app.post('/api/login', async (req, res) => {
 
     const { data: user } = await supabase.from('users').select('*').eq('email', email).single();
     if (!user || user.password !== password) {
-        const { data: pending } = await supabase.from('pending_resellers').select('email').eq('email', email).single();
-        if (pending) return res.status(401).json({ error: 'Uw aanmelding is ontvangen en wordt beoordeeld. U ontvangt bericht zodra uw account is goedgekeurd.' });
+        const { data: pending } = await supabase.from('pending_resellers').select('email, intake_data').eq('email', email).single();
+        if (pending && pending.intake_data?._status !== 'rejected') return res.status(401).json({ error: 'Uw aanmelding is ontvangen en wordt beoordeeld. U ontvangt bericht zodra uw account is goedgekeurd.' });
+        if (pending && pending.intake_data?._status === 'rejected') return res.status(401).json({ error: 'Uw aanmelding is helaas niet goedgekeurd. Neem contact op met AandelenXpress voor meer informatie.' });
         return res.status(401).json({ error: 'Ongeldig e-mailadres of wachtwoord' });
     }
     if (user.status === 'inactive') return res.status(401).json({ error: 'Uw account is gedeactiveerd. Neem contact op met AandelenXpress.' });
@@ -2321,7 +2322,7 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
 
 app.get('/api/request-info/:id', async (req, res) => {
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', req.params.id).single();
-    if (!row || !['approved','vragenlijst','betaling','ident','notary','kvk','complete'].includes(row.status))
+    if (!row || ['pending','rejected'].includes(row.status))
         return res.status(404).json({ error: 'Dossier niet gevonden of nog niet goedgekeurd' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Dossier niet gevonden of niet beschikbaar' });
     const { token } = req.query;
@@ -2398,7 +2399,7 @@ app.post('/api/vragenlijst', async (req, res) => {
     if (!caseId || !contactEmail) return res.status(400).json({ error: 'Verplichte velden ontbreken' });
 
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', caseId).single();
-    if (!row || !['approved','vragenlijst','betaling','notary','kvk','complete'].includes(row.status))
+    if (!row || ['pending','rejected'].includes(row.status))
         return res.status(404).json({ error: 'Opdracht niet gevonden of nog niet goedgekeurd' });
     if (isDossierTrashed(row)) return res.status(404).json({ error: 'Opdracht niet beschikbaar' });
     if (!tokenMatches(row.access_token, token)) return res.status(401).json({ error: 'Ongeldige toegangscode' });
