@@ -575,7 +575,7 @@ function renderPricingCard(d) {
 
 function renderCompactAccessSection(d, role) {
   const statusUrl = `${window.location.origin}/dossier-status?nr=${d.dossierNr}`;
-  const vragenlijstUrl = `${window.location.origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}`;
+  const vragenlijstUrl = `${window.location.origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}${d.accessToken ? '&token=' + encodeURIComponent(d.accessToken) : ''}`;
   return `
     <div class="detail-card">
       <div class="detail-card-head"><div class="detail-card-title">Klant toegang</div></div>
@@ -1267,7 +1267,7 @@ function getStatusEmailTemplate(status, d) {
   const naam = escHtml(d.name);
   const origin = window.location.origin;
   const statusUrl = `${origin}/dossier-status?nr=${d.dossierNr}`;
-  const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}`;
+  const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}${d.accessToken ? '&token=' + encodeURIComponent(d.accessToken) : ''}`;
   const code = d.accessToken || '—';
   const t = {
     vragenlijst:         { subject: `Uw BV-aanvraag — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
