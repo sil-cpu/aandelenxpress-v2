@@ -4729,7 +4729,7 @@
       }
     }
 
-    function init() {
+    async function init() {
       managers.holdingShareholders.setData([]);
       managers.holdingDirectors.setData([]);
       managers.werkmijShareholders.setData([]);
@@ -4836,9 +4836,10 @@
         const t = urlToken || cached;
         if (urlToken) sessionStorage.setItem('ax_form_' + caseId, urlToken);
         document.getElementById('gateInput').value = t;
-        await openWithToken();
-        // openWithToken hides gate/loading and shows form on success;
-        // if it fails (invalid token), fall through to show gate
+        try {
+          await openWithToken();
+        } catch(e) { /* network error — fall through to gate */ }
+        // If form wasn't opened successfully, show gate
         if (!document.getElementById('stateForm').classList.contains('active')) {
           document.getElementById('stateLoading').classList.remove('active');
           document.getElementById('stateGate').classList.add('active');
