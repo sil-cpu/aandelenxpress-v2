@@ -531,15 +531,26 @@ function backToStep1() {
 }
 
 const STATUS_MAP = {
-    'pending':     { key:'pending',     text:'Aanvraag ingediend', pct: 5   },
-    'vragenlijst': { key:'vragenlijst', text:'Vragenlijst',        pct: 20  },
-    'approved':    { key:'vragenlijst', text:'Vragenlijst',        pct: 20  },
-    'betaling':    { key:'betaling',    text:'Betaling',           pct: 35  },
-    'ident':       { key:'ident',       text:'iDIN verwerking',    pct: 50  },
-    'notary':      { key:'notary',      text:'Notariële Akte',     pct: 70  },
-    'kvk':         { key:'kvk',         text:'KvK inschrijving',   pct: 90  },
-    'complete':    { key:'complete',    text:'Voltooid',           pct: 100 },
-    'rejected':    { key:'rejected',    text:'Afgewezen',          pct: 0   }
+    'pending':              { key:'pending',     text:'Aanvraag ingediend', pct: 5   },
+    'vragenlijst':          { key:'vragenlijst', text:'Vragenlijst',        pct: 15  },
+    'approved':             { key:'vragenlijst', text:'Vragenlijst',        pct: 15  },
+    'betaling':             { key:'betaling',    text:'Betaling',           pct: 30  },
+    'wwft':                 { key:'notary',      text:'Notariële Akte',     pct: 40  },
+    'ocr':                  { key:'notary',      text:'Notariële Akte',     pct: 45  },
+    'ocr-signed':           { key:'notary',      text:'Notariële Akte',     pct: 50  },
+    'draft-accountant':     { key:'notary',      text:'Notariële Akte',     pct: 55  },
+    'accountant-accepted':  { key:'notary',      text:'Notariële Akte',     pct: 60  },
+    'draft-client':         { key:'notary',      text:'Notariële Akte',     pct: 65  },
+    'client-signed':        { key:'notary',      text:'Notariële Akte',     pct: 70  },
+    'invitation-om':        { key:'notary',      text:'Notariële Akte',     pct: 72  },
+    'executed-notaris':     { key:'notary',      text:'Notariële Akte',     pct: 75  },
+    'kvk':                  { key:'kvk',         text:'KvK inschrijving',   pct: 85  },
+    'passed-kvk':           { key:'kvk',         text:'KvK inschrijving',   pct: 90  },
+    'making-binders':       { key:'kvk',         text:'KvK inschrijving',   pct: 93  },
+    'upload-binders':       { key:'kvk',         text:'KvK inschrijving',   pct: 96  },
+    'complete':             { key:'complete',    text:'Voltooid',           pct: 100 },
+    'complete-review':      { key:'complete',    text:'Voltooid',           pct: 100 },
+    'rejected':             { key:'rejected',    text:'Afgewezen',          pct: 0   }
 };
 
 function renderDossiers() {
@@ -584,7 +595,7 @@ async function loadDossiers() {
             return {
                 name:        req.gewenstNaam || req.clientName,
                 date:        req.createdAt,
-                completedAt: req.status === 'complete' ? (req.statusUpdatedAt || req.createdAt) : null,
+                completedAt: ['complete','complete-review'].includes(req.status) ? (req.statusUpdatedAt || req.createdAt) : null,
                 statusKey:   s.key,
                 statusText:  s.text,
                 pct:         s.pct,

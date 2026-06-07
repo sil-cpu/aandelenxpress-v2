@@ -1116,14 +1116,26 @@ function mapRequestToDossier(req) {
     'advies':'Advies'
   };
   const statusMap = {
-    'pending':     { key:'pending',     text:'Aanvraag ingediend' },
-    'vragenlijst': { key:'vragenlijst', text:'Vragenlijst' },
-    'approved':    { key:'vragenlijst', text:'Vragenlijst' },
-    'betaling':    { key:'betaling',    text:'Betaling' },
-    'notary':      { key:'notary',      text:'Notariële Akte' },
-    'kvk':         { key:'kvk',         text:'KvK inschrijving' },
-    'complete':    { key:'complete',    text:'Voltooid' },
-    'rejected':    { key:'rejected',    text:'Afgewezen' }
+    'pending':              { key:'pending',     text:'Aanvraag ingediend' },
+    'vragenlijst':          { key:'vragenlijst', text:'Vragenlijst' },
+    'approved':             { key:'vragenlijst', text:'Vragenlijst' },
+    'betaling':             { key:'betaling',    text:'Betaling' },
+    'wwft':                 { key:'notary',      text:'Notariële Akte' },
+    'ocr':                  { key:'notary',      text:'Notariële Akte' },
+    'ocr-signed':           { key:'notary',      text:'Notariële Akte' },
+    'draft-accountant':     { key:'notary',      text:'Notariële Akte' },
+    'accountant-accepted':  { key:'notary',      text:'Notariële Akte' },
+    'draft-client':         { key:'notary',      text:'Notariële Akte' },
+    'client-signed':        { key:'notary',      text:'Notariële Akte' },
+    'invitation-om':        { key:'notary',      text:'Notariële Akte' },
+    'executed-notaris':     { key:'notary',      text:'Notariële Akte' },
+    'kvk':                  { key:'kvk',         text:'KvK inschrijving' },
+    'passed-kvk':           { key:'kvk',         text:'KvK inschrijving' },
+    'making-binders':       { key:'kvk',         text:'KvK inschrijving' },
+    'upload-binders':       { key:'kvk',         text:'KvK inschrijving' },
+    'complete':             { key:'complete',    text:'Voltooid' },
+    'complete-review':      { key:'complete',    text:'Voltooid' },
+    'rejected':             { key:'rejected',    text:'Afgewezen' }
   };
   const s = statusMap[req.status] || { key:'pending', text: req.status };
   return {
