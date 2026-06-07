@@ -1032,7 +1032,9 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         'approved':            { key:'vragenlijst',         text:'Vragenlijst' },
         'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst' },
         'wwft':                { key:'wwft',                text:'WWFT Check' },
-        'betaling':            { key:'betaling',             text:'Betaling' },
+        'betaling':            { key:'betaling',            text:'Betaling' },
+        'invoice-sent':        { key:'invoice-sent',        text:'Factuur verzonden' },
+        'invoice-paid':        { key:'invoice-paid',        text:'Factuur betaald' },
         'ocr':                 { key:'ocr',                 text:'OCR' },
         'ocr-signed':          { key:'ocr-signed',          text:'OCR Signed' },
         'draft-accountant':    { key:'draft-accountant',    text:'Draft to Accountant' },
@@ -1207,7 +1209,7 @@ app.patch('/api/reseller-requests/:id/token', requireAdmin, async (req, res) => 
 app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    const valid = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected','approved'];
+    const valid = ['pending','vragenlijst','wwft','betaling','invoice-sent','invoice-paid','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected','approved'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
     // Check status-change permissions for non-super-admins
     const actor = req.session.user;
@@ -1219,7 +1221,7 @@ app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) =>
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
     const request = rowToReq(row);
-    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', wwft:'WWFT Check', betaling:'Betaling', ocr:'OCR', 'ocr-signed':'OCR Signed', 'draft-accountant':'Draft to Accountant', 'accountant-accepted':'Accountant accepted', 'draft-client':'Draft to Client', 'client-signed':'Client Signed', 'invitation-om':'Invitation OM', 'executed-notaris':'Executed Notaris', kvk:'KvK inschrijving', 'passed-kvk':'Passed by KvK', 'making-binders':'Making Closing Binders', 'upload-binders':'Upload Closing Binders', complete:'Case completed', 'complete-review':'Case completed review', rejected:'Afgewezen' };
+    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', wwft:'WWFT Check', betaling:'Betaling', 'invoice-sent':'Factuur verzonden', 'invoice-paid':'Factuur betaald', ocr:'OCR', 'ocr-signed':'OCR Signed', 'draft-accountant':'Draft to Accountant', 'accountant-accepted':'Accountant accepted', 'draft-client':'Draft to Client', 'client-signed':'Client Signed', 'invitation-om':'Invitation OM', 'executed-notaris':'Executed Notaris', kvk:'KvK inschrijving', 'passed-kvk':'Passed by KvK', 'making-binders':'Making Closing Binders', 'upload-binders':'Upload Closing Binders', complete:'Case completed', 'complete-review':'Case completed review', rejected:'Afgewezen' };
     const adminName = req.session.user.name || req.session.user.email;
     addActivity(request, 'system', `Status gewijzigd van "${statusLabels[request.status]||request.status}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
 

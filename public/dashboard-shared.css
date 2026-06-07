@@ -630,6 +630,16 @@ body {
     color: #E67700;
 }
 
+.badge-invoice-sent {
+    background: #FFF3CD;
+    color: #CC6600;
+}
+
+.badge-invoice-paid {
+    background: #D4EDDA;
+    color: #155724;
+}
+
 .badge-rejected {
     background: #FFF5F5;
     color: #C92A2A;

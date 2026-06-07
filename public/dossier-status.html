@@ -763,6 +763,8 @@ const statusSteps = [
     { key: 'vragenlijst',         label: 'Vragenlijst',              description: 'Vragenlijst per e-mail verstuurd' },
     { key: 'wwft',                label: 'WWFT Check',               description: 'WWFT-controle wordt uitgevoerd' },
     { key: 'betaling',            label: 'Betaling',                 description: 'Betaling verwerken' },
+    { key: 'invoice-sent',        label: 'Factuur verzonden',        description: 'Factuur per e-mail verzonden' },
+    { key: 'invoice-paid',        label: 'Factuur betaald',          description: 'Betaling ontvangen en bevestigd' },
     { key: 'ocr',                 label: 'OCR',                      description: 'OCR-verwerking van documenten' },
     { key: 'ocr-signed',          label: 'OCR Signed',               description: 'OCR-documenten ondertekend' },
     { key: 'draft-accountant',    label: 'Draft to Accountant',      description: 'Concept ter beoordeling accountant' },
@@ -782,6 +784,8 @@ const statusSteps = [
 // Map backend status keys to step keys (backwards compatibility)
 const STATUS_STEP_ALIAS = {
     approved: 'vragenlijst',
+    'invoice-sent': 'invoice-sent',
+    'invoice-paid': 'invoice-paid',
 };
 
 const statusDescriptions = {
@@ -790,6 +794,8 @@ const statusDescriptions = {
     approved:              'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
     wwft:                  'Wij voeren een WWFT-check uit op uw dossier. Wij nemen contact op indien aanvullende informatie nodig is.',
     betaling:              'De volgende stap is de betaling. U ontvangt een betalingsverzoek per e-mail.',
+    'invoice-sent':        'U heeft een factuur ontvangen per e-mail. Voldoe de betaling via de betaallink.',
+    'invoice-paid':        'Uw betaling is ontvangen en bevestigd. Wij gaan verder met uw dossier.',
     ocr:                   'Wij verwerken uw documenten via OCR. Dit duurt doorgaans 1-2 werkdagen.',
     'ocr-signed':          'De OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap.',
     'draft-accountant':    'Een concept is ter beoordeling verzonden naar de accountant.',
@@ -826,6 +832,16 @@ const todoItems = {
         { title: 'Betaalverzoek ontvangen',  desc: 'U ontvangt een betaalverzoek per e-mail' },
         { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
         { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
+    ],
+    'invoice-sent': [
+        { title: 'Factuur ontvangen',        desc: 'Controleer uw inbox voor de factuur' },
+        { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
+        { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
+    ],
+    'invoice-paid': [
+        { title: 'Betaling ontvangen',       desc: 'Uw betaling is succesvol verwerkt' },
+        { title: 'Bevestiging verstuurd',    desc: 'U ontvangt een betalingsbevestiging per e-mail' },
+        { title: 'Dossier gaat verder',      desc: 'Wij gaan verder met de volgende stap' }
     ],
     ocr: [
         { title: 'Documenten ontvangen',     desc: 'Uw documenten zijn ontvangen' },

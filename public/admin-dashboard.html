@@ -262,7 +262,9 @@
               <option value="">Alle</option>
               <option value="pending">Aanvraag ingediend</option>
               <option value="vragenlijst">Vragenlijst</option>
-              <option value="betaling">Betaling</option>
+              <option value="betaling">Betaling (alle)</option>
+              <option value="invoice-sent">  ↳ Factuur verzonden</option>
+              <option value="invoice-paid">  ↳ Factuur betaald</option>
               <option value="notary">Notariële Akte</option>
               <option value="kvk">KvK inschrijving</option>
               <option value="complete">Voltooid</option>
@@ -1191,6 +1193,7 @@ function mapRequestToDossier(req) {
   const groupKey = STATUS_GROUP_MAP[req.status] || req.status;
   const groupLabels = {
     'pending':'Aanvraag ingediend','vragenlijst':'Vragenlijst','betaling':'Betaling',
+    'invoice-sent':'Factuur verzonden','invoice-paid':'Factuur betaald',
     'notary':'Notariële Akte','kvk':'KvK inschrijving','complete':'Voltooid','rejected':'Afgewezen'
   };
   return {
@@ -1333,6 +1336,8 @@ const STATUS_GROUP_MAP = {
   'vragenlijst':          'vragenlijst',
   'approved':             'vragenlijst',
   'betaling':             'betaling',
+  'invoice-sent':         'betaling',
+  'invoice-paid':         'betaling',
   'wwft':                 'notary',
   'ocr':                  'notary',
   'ocr-signed':           'notary',
@@ -1356,6 +1361,8 @@ const STATUS_BADGE_MAP = {
   'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst' },
   'wwft':                { css: 'badge-wwft',                label: 'WWFT Check' },
   'betaling':            { css: 'badge-betaling',            label: 'Betaling' },
+  'invoice-sent':        { css: 'badge-invoice-sent',        label: 'Factuur verzonden' },
+  'invoice-paid':        { css: 'badge-invoice-paid',        label: 'Factuur betaald' },
   'ocr':                 { css: 'badge-ocr',                 label: 'OCR' },
   'ocr-signed':          { css: 'badge-ocr-signed',          label: 'OCR Signed' },
   'draft-accountant':    { css: 'badge-draft-accountant',    label: 'Draft to Accountant' },
@@ -1758,6 +1765,8 @@ const ALL_STATUSES = [
   { key: 'vragenlijst',         label: 'Vragenlijst' },
   { key: 'wwft',                label: 'WWFT Check' },
   { key: 'betaling',            label: 'Betaling' },
+  { key: 'invoice-sent',         label: 'Factuur verzonden' },
+  { key: 'invoice-paid',         label: 'Factuur betaald' },
   { key: 'ocr',                 label: 'OCR' },
   { key: 'ocr-signed',          label: 'OCR Signed' },
   { key: 'draft-accountant',    label: 'Draft to Accountant' },
@@ -2530,7 +2539,11 @@ function applyAllFilters() {
     filtered = filtered.filter(d => d.assignedTo === assignedFilter);
   }
   if (statusFilter) {
-    filtered = filtered.filter(d => d.statusGroup === statusFilter);
+    if (statusFilter === 'invoice-sent' || statusFilter === 'invoice-paid') {
+      filtered = filtered.filter(d => d.statusKey === statusFilter);
+    } else {
+      filtered = filtered.filter(d => d.statusGroup === statusFilter);
+    }
   }
   if (partnerFilter) {
     filtered = filtered.filter(d => d.partner === partnerFilter);
