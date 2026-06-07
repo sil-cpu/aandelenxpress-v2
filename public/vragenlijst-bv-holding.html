@@ -828,10 +828,10 @@
             <div id="werkmijAdvancedFieldsWrap">
               <div class="field"><label>Doel van de BV (wat gaat de BV doen)</label><textarea name="werkmijActiviteiten"></textarea></div>
 
-              <div class="group-title">KVK inschrijving <span class="req">*</span></div>
+              <div class="group-title">KVK inschrijving <span style="font-size:0.8rem;font-weight:400;color:#8A9BB5;">(optioneel)</span></div>
               <div class="check-row">
-                <label><input type="checkbox" name="werkmijImport"> Gaat u producten importeren?</label>
-                <label><input type="checkbox" name="werkmijExport"> Gaat u producten exporteren?</label>
+                <label><input type="checkbox" name="werkmijImport"> Gaat u producten importeren? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
+                <label><input type="checkbox" name="werkmijExport"> Gaat u producten exporteren? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
               </div>
 
               <div class="group-title">Detailhandel <span class="req">*</span></div>
@@ -4439,10 +4439,7 @@
           return showFormError('Vul het doel van de BV in (wat de BV gaat doen).', 'textarea[name="werkmijActiviteiten"]');
         }
         if (payload.hasWorkmaatschappij === 'ja') {
-          const hasKvkRegistration = !!payload.werkmijImport || !!payload.werkmijExport;
-          if (!hasKvkRegistration) {
-            return showFormError('Kies minimaal één optie bij KVK inschrijving.', 'input[name="werkmijImport"]');
-          }
+          const hasKvkRegistration = true; // optional — both unchecked is allowed
 
           const hasDetailhandel = !!payload.detailWinkel || !!payload.detailMarkt || !!payload.detailStraat || !!payload.detailInternet || !!payload.detailHuis || !!payload.detailPostorder || !!payload.detailOthers;
           if (!hasDetailhandel) {
