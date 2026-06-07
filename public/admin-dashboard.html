@@ -3201,10 +3201,12 @@ document.addEventListener('click', closeAllDossierMenus);
 let adminPendingStatus = null; // { nr, newStatus, clientEmail, name }
 
 function adminGetStatusEmailTemplate(status, d) {
-  const naam = (d.name || d.bedrijfsnaam || d.dossierNr || '');
+  const naam = (d.name || d.bedrijfsnaam || d.dossierNr || d.nr || '');
+  const id   = d.dossierNr || d.nr || '';
   const origin = window.location.origin;
-  const statusUrl = `${origin}/dossier-status?nr=${d.dossierNr}`;
-  const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}${d.accessToken ? '&token=' + encodeURIComponent(d.accessToken) : ''}`;
+  const tokenPart = d.accessToken ? '&token=' + encodeURIComponent(d.accessToken) : '';
+  const statusUrl = `${origin}/dossier-status?nr=${encodeURIComponent(id)}${tokenPart}`;
+  const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}${tokenPart}`;
   const code = d.accessToken || '—';
   const t = {
     vragenlijst:         { subject: `Uw BV-aanvraag — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
@@ -3234,7 +3236,7 @@ async function selectStatusFromDropdown(nr, status, e) {
   closeAllStatusDropdowns();
   const d = allDossiersData.find(x => x.dossierNr === nr);
   if (!d) { await quickChangeStatus(nr, status); return; }
-  adminPendingStatus = { nr, newStatus: status, clientEmail: d.clientEmail || '', name: d.name || d.bedrijfsnaam || nr, accessToken: d.accessToken || '' };
+  adminPendingStatus = { nr, newStatus: status, clientEmail: d.clientEmail || '', name: d.name || d.bedrijfsnaam || nr, accessToken: d.accessToken || '', oprichtingType: d.oprichtingType || 'bv-holding' };
   const tpl = adminGetStatusEmailTemplate(status, adminPendingStatus);
   document.getElementById('adminEmTo').value = adminPendingStatus.clientEmail;
   document.getElementById('adminEmSubject').value = tpl.subject;
