@@ -939,6 +939,35 @@
 
             <div class="field"><label>Is the director solely authorized to represent the company individually?</label><select name="bestaandHoldingSolelyAuthorized"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
 
+            <div class="group-title" style="margin-top:20px;">Documenten bestaande holding</div>
+            <div class="hint" style="margin-bottom:12px;">Upload de vereiste documenten van de bestaande holding voor de notaris.</div>
+            <div class="file-grid">
+              <div class="file-box" id="bestaandHoldingKvkZone">
+                <label class="file-label">KVK-uittreksel <span class="req">*</span></label>
+                <input id="bestaandHoldingKvkFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="bestaandHoldingKvkSelected" style="display:none;"></div>
+              </div>
+              <div class="file-box" id="bestaandHoldingShareholdersZone">
+                <label class="file-label">Aandeelhoudersregister <span class="req">*</span></label>
+                <input id="bestaandHoldingShareholdersFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="bestaandHoldingShareholdersSelected" style="display:none;"></div>
+              </div>
+              <div class="file-box" id="bestaandHoldingOprichtingZone">
+                <label class="file-label">Oprichtingsakte</label>
+                <input id="bestaandHoldingOprichtingFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="bestaandHoldingOprichtingSelected" style="display:none;"></div>
+              </div>
+              <div class="file-box" id="bestaandHoldingUboZone">
+                <label class="file-label">UBO-uittreksel <span class="req">*</span></label>
+                <input id="bestaandHoldingUboFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                <div class="file-picked" id="bestaandHoldingUboSelected" style="display:none;"></div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -4294,7 +4323,11 @@
         ['omzettingInbrengbeschrijving', 'omzettingInbrengZone', 'omzettingInbrengSelected', 'omzettingInbrengbeschrijving'],
         ['omzettingInbrengbeschrijvingHolding', 'omzettingInbrengHoldingZone', 'omzettingInbrengHoldingSelected', 'omzettingInbrengbeschrijvingHolding'],
         ['omzettingInbrengbeschrijvingWerkmij', 'omzettingInbrengWerkmijZone', 'omzettingInbrengWerkmijSelected', 'omzettingInbrengbeschrijvingWerkmij'],
-        ['omzettingVofUboUittreksel', 'omzettingVofUboZone', 'omzettingVofUboSelected', 'omzettingVofUboUittreksel']
+        ['omzettingVofUboUittreksel', 'omzettingVofUboZone', 'omzettingVofUboSelected', 'omzettingVofUboUittreksel'],
+        ['bestaandHoldingKvkUittreksel', 'bestaandHoldingKvkZone', 'bestaandHoldingKvkSelected', 'bestaandHoldingKvkUittreksel'],
+        ['bestaandHoldingShareholdersRegister', 'bestaandHoldingShareholdersZone', 'bestaandHoldingShareholdersSelected', 'bestaandHoldingShareholdersRegister'],
+        ['bestaandHoldingOprichtingsakte', 'bestaandHoldingOprichtingZone', 'bestaandHoldingOprichtingSelected', 'bestaandHoldingOprichtingsakte'],
+        ['bestaandHoldingUboUittreksel', 'bestaandHoldingUboZone', 'bestaandHoldingUboSelected', 'bestaandHoldingUboUittreksel']
       ].forEach(([key, zoneId, selectedId, legacyKey]) => {
         const saved = existingData[key] || existingData[legacyKey] || null;
         const files = Array.isArray(saved) ? saved : (saved ? [saved] : []);
@@ -4442,6 +4475,10 @@
         draftData.omzettingInbrengbeschrijvingHolding = await buildFilesPayload('omzettingInbrengHoldingFile', 'omzettingInbrengbeschrijvingHolding');
         draftData.omzettingInbrengbeschrijvingWerkmij = await buildFilePayload('omzettingInbrengWerkmijFile', 'omzettingInbrengbeschrijvingWerkmij');
         draftData.omzettingVofUboUittreksel = await buildFilesPayload('omzettingVofUboFile', 'omzettingVofUboUittreksel');
+        draftData.bestaandHoldingKvkUittreksel = await buildFilePayload('bestaandHoldingKvkFile', 'bestaandHoldingKvkUittreksel');
+        draftData.bestaandHoldingShareholdersRegister = await buildFilePayload('bestaandHoldingShareholdersFile', 'bestaandHoldingShareholdersRegister');
+        draftData.bestaandHoldingOprichtingsakte = await buildFilePayload('bestaandHoldingOprichtingFile', 'bestaandHoldingOprichtingsakte');
+        draftData.bestaandHoldingUboUittreksel = await buildFilePayload('bestaandHoldingUboFile', 'bestaandHoldingUboUittreksel');
 
         draftData.datacardBestand = draftData.datacardBestanden[0] || null;
         draftData.pepBestand = draftData.pepBestanden[0] || null;
@@ -4650,6 +4687,10 @@
         payload.omzettingInbrengbeschrijvingHolding = await buildFilesPayload('omzettingInbrengHoldingFile', 'omzettingInbrengbeschrijvingHolding');
         payload.omzettingInbrengbeschrijvingWerkmij = await buildFilePayload('omzettingInbrengWerkmijFile', 'omzettingInbrengbeschrijvingWerkmij');
         payload.omzettingVofUboUittreksel = await buildFilesPayload('omzettingVofUboFile', 'omzettingVofUboUittreksel');
+        payload.bestaandHoldingKvkUittreksel = await buildFilePayload('bestaandHoldingKvkFile', 'bestaandHoldingKvkUittreksel');
+        payload.bestaandHoldingShareholdersRegister = await buildFilePayload('bestaandHoldingShareholdersFile', 'bestaandHoldingShareholdersRegister');
+        payload.bestaandHoldingOprichtingsakte = await buildFilePayload('bestaandHoldingOprichtingFile', 'bestaandHoldingOprichtingsakte');
+        payload.bestaandHoldingUboUittreksel = await buildFilePayload('bestaandHoldingUboFile', 'bestaandHoldingUboUittreksel');
 
         if (showHolding && holdingDiff && !payload.holdingHuurovereenkomst) {
           return showFormError('Upload de huurovereenkomst van de holding bij een afwijkend adres.', '#holdingRentalFile');
@@ -4809,6 +4850,10 @@
       bindFileInput('omzettingVofUboFile', 'omzettingVofUboZone', 'omzettingVofUboSelected');
       bindFileInput('holdingRentalFile', 'holdingRentalZone', 'holdingRentalSelected');
       bindFileInput('werkmijRentalFile', 'werkmijRentalZone', 'werkmijRentalSelected');
+      bindFileInput('bestaandHoldingKvkFile', 'bestaandHoldingKvkZone', 'bestaandHoldingKvkSelected');
+      bindFileInput('bestaandHoldingShareholdersFile', 'bestaandHoldingShareholdersZone', 'bestaandHoldingShareholdersSelected');
+      bindFileInput('bestaandHoldingOprichtingFile', 'bestaandHoldingOprichtingZone', 'bestaandHoldingOprichtingSelected');
+      bindFileInput('bestaandHoldingUboFile', 'bestaandHoldingUboZone', 'bestaandHoldingUboSelected');
       bindFileInput('omzettingKvkFile', 'omzettingKvkZone', 'omzettingKvkSelected');
       bindFileInput('omzettingVerzendbewijsFile', 'omzettingVerzendbewijsZone', 'omzettingVerzendbewijsSelected');
       bindFileInput('omzettingOntvangstbewijsFile', 'omzettingOntvangstbewijsZone', 'omzettingOntvangstbewijsSelected');
