@@ -392,9 +392,33 @@
   </div>
 </div>
 
+<!-- PRICE QUESTION MODAL -->
+<div id="priceQuestionModal" class="em-overlay" onclick="if(event.target===this)closePriceQuestionModal()">
+  <div class="em-modal" style="width:480px;">
+    <div class="em-header">
+      <h3>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Vraag over de prijs
+      </h3>
+      <button class="em-close" onclick="closePriceQuestionModal()">✕</button>
+    </div>
+    <div class="em-body">
+      <div style="font-size:0.88rem;color:#718096;margin-bottom:14px;">Uw vraag wordt doorgestuurd naar AandelenXpress. Wij nemen contact op om dit te bespreken.</div>
+      <div class="em-field">
+        <label>Uw vraag of opmerking</label>
+        <textarea id="priceQuestionMsg" rows="5" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #DDE5F4;border-radius:8px;font-size:.9rem;font-family:inherit;color:#0F1D3A;resize:vertical;" placeholder="Beschrijf uw vraag of opmerking over de prijs..."></textarea>
+      </div>
+      <div id="priceQuestionErr" style="display:none;padding:9px 12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;font-size:0.84rem;color:#B91C1C;margin-top:10px;"></div>
+    </div>
+    <div class="em-footer">
+      <button class="em-cancel" onclick="closePriceQuestionModal()">Annuleren</button>
+      <button class="em-send" id="priceQuestionSendBtn" onclick="sendPriceQuestion()">Vraag indienen →</button>
+    </div>
+  </div>
+</div>
+
 <!-- FILE REQUEST MODAL -->
 <div id="fileRequestModal" class="em-overlay" onclick="if(event.target===this)closeFileRequestModal()">
-  <div class="em-modal" style="width:480px;">
     <div class="em-header">
       <h3>
         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" style="vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -536,16 +560,19 @@ function buildTimeline(statusKey) {
   }).join("");
 }
 
-function renderPricingCard(d) {
+function renderPricingCard(d, role) {
   const pricing = d.pricing;
+  const editable = role === 'admin' || ['pending', 'vragenlijst', 'approved'].includes(d.apiStatus || d.statusKey);
+
   if (!pricing || !pricing.base) {
     return `<div class="detail-card">
       <div class="detail-card-head with-action">
         <div class="detail-card-title">Prijsopbouw</div>
-        <a href="#" class="detail-card-link" onclick="openEditModal('pricing');return false;">Gegevens wijzigen</a>
+        ${editable ? `<a href="#" class="detail-card-link" onclick="openEditModal('pricing');return false;">Gegevens wijzigen</a>` : ''}
       </div>
       <div class="detail-card-body">
         <div style="color:#8A9BB5;font-size:0.88rem;">Voor dit dossier is nog geen prijsopbouw opgeslagen.</div>
+        ${!editable ? `<button class="btn-ghost" style="margin-top:12px;" onclick="openPriceQuestionModal()"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Vraag over de prijs</button>` : ''}
       </div>
     </div>`;
   }
@@ -561,7 +588,7 @@ function renderPricingCard(d) {
   return `<div class="detail-card">
     <div class="detail-card-head with-action">
       <div class="detail-card-title">Prijsopbouw</div>
-      <a href="#" class="detail-card-link" onclick="openEditModal('pricing');return false;">Gegevens wijzigen</a>
+      ${editable ? `<a href="#" class="detail-card-link" onclick="openEditModal('pricing');return false;">Gegevens wijzigen</a>` : ''}
     </div>
     <div class="detail-card-body">
       ${linesHtml}
@@ -569,6 +596,7 @@ function renderPricingCard(d) {
         <span>Totaal</span>
         <span>${fmtMoney(pricing.total || 0)}</span>
       </div>
+      ${!editable ? `<button class="btn-ghost" style="margin-top:16px;" onclick="openPriceQuestionModal()"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Vraag over de prijs</button>` : ''}
     </div>
   </div>`;
 }
@@ -810,7 +838,7 @@ function renderPage(d, role) {
           </div>
         </div>
 
-        ${renderPricingCard(d)}
+        ${renderPricingCard(d, role)}
 
         ${renderDocumentsCard(d)}
 
@@ -1444,6 +1472,36 @@ function openFileRequestModal() {
 }
 function closeFileRequestModal() {
   document.getElementById('fileRequestModal').classList.remove('open');
+}
+
+// ── Price question modal ─────────────────────────────────────────────────────
+function openPriceQuestionModal() {
+  document.getElementById('priceQuestionMsg').value = '';
+  document.getElementById('priceQuestionErr').style.display = 'none';
+  document.getElementById('priceQuestionModal').classList.add('open');
+  setTimeout(() => document.getElementById('priceQuestionMsg').focus(), 50);
+}
+function closePriceQuestionModal() {
+  document.getElementById('priceQuestionModal').classList.remove('open');
+}
+async function sendPriceQuestion() {
+  const msg = document.getElementById('priceQuestionMsg').value.trim();
+  const errEl = document.getElementById('priceQuestionErr');
+  const btn = document.getElementById('priceQuestionSendBtn');
+  errEl.style.display = 'none';
+  if (!msg) { errEl.textContent = 'Voer een vraag of opmerking in.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Verzenden...';
+  try {
+    const r = await fetch(`/api/reseller-requests/${encodeURIComponent(currentDossier.dossierNr)}/activities`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'price-question', message: '❓ Prijsvraag van partner: ' + msg })
+    });
+    if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.error || 'Verzenden mislukt'); }
+    closePriceQuestionModal();
+    showToast('Uw vraag is ingediend. AandelenXpress neemt contact op.');
+    loadActivity(currentDossier.dossierNr);
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = 'Vraag indienen →'; }
 }
 
 async function sendFileRequest() {
