@@ -704,13 +704,14 @@ app.put('/api/admin/users/:email/permissions', requireSuperAdmin, async (req, re
 });
 
 app.post('/api/admin/users/add', requireAdmin, async (req, res) => {
-    const { email, name, password } = req.body;
+    const { email, name, password, permissions } = req.body;
     if (!email || !name || !password) return res.status(400).json({ error: 'Alle velden verplicht' });
     const { error } = await supabase.from('users').insert({
         email, name, password, type: 'admin',
         company: 'AandelenXpress',
         company_id: 'aax-admin-' + Math.random().toString(36).substr(2, 5),
-        status: 'active'
+        status: 'active',
+        permissions: permissions ?? null
     });
     if (error) return res.status(409).json({ error: 'Email bestaat al' });
     res.json({ success: true });

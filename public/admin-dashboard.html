@@ -578,8 +578,21 @@
               <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Wachtwoord</label>
               <input type="password" id="addAdminPassword" placeholder="Min. 8 tekens" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
             </div>
-            <div id="addAdminError" style="color:#c53030;font-size:0.85rem;margin-bottom:16px;display:none;"></div>
           </div>
+
+          <div class="drawer-section" style="margin-top:20px;">
+            <div class="drawer-section-title">Pagina-toegang</div>
+            <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:12px;">Welke secties mag deze beheerder zien?</p>
+            <div id="addAdminPageToggles" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+
+          <div class="drawer-section" style="margin-top:20px;">
+            <div class="drawer-section-title">Status-rechten</div>
+            <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:12px;">Welke statuswijzigingen mag deze beheerder uitvoeren?</p>
+            <div id="addAdminStatusToggles" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+
+          <div id="addAdminError" style="color:#c53030;font-size:0.85rem;margin:12px 0;display:none;"></div>
           <div style="display:flex;gap:10px;margin-top:20px;">
             <button class="btn-primary" style="flex:1;padding:12px;" onclick="saveNewAdmin()">Toevoegen</button>
             <button class="btn-ghost" style="flex:1;padding:12px;" onclick="closeAddAdminDrawer()">Annuleren</button>
@@ -2058,6 +2071,22 @@ function openAddAdminDrawer() {
   document.getElementById('addAdminEmail').value = '';
   document.getElementById('addAdminPassword').value = '';
   document.getElementById('addAdminError').style.display = 'none';
+
+  // Render permission toggles — all checked by default
+  document.getElementById('addAdminPageToggles').innerHTML = ALL_PAGES.map(p => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;border-bottom:1px solid #F0F4FA;">
+      <input type="checkbox" data-new-admin-page="${p.key}" checked
+        style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
+      <span style="font-size:0.88rem;color:#1A3B70;">${p.label}</span>
+    </label>`).join('');
+
+  document.getElementById('addAdminStatusToggles').innerHTML = ALL_STATUSES.map(s => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:5px 0;border-bottom:1px solid #F0F4FA;">
+      <input type="checkbox" data-new-admin-status="${s.key}" checked
+        style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
+      <span style="font-size:0.88rem;color:#1A3B70;">${s.label}</span>
+    </label>`).join('');
+
   document.getElementById('addAdminDrawer').classList.add('open');
   document.getElementById('addAdminBackdrop').classList.add('open');
 }
@@ -2085,10 +2114,17 @@ async function saveNewAdmin() {
     return;
   }
 
+  // Collect permissions
+  const pages = [...document.querySelectorAll('[data-new-admin-page]:checked')].map(el => el.dataset.newAdminPage);
+  const statusChanges = [...document.querySelectorAll('[data-new-admin-status]:checked')].map(el => el.dataset.newAdminStatus);
+  const permissions = (pages.length === ALL_PAGES.length && statusChanges.length === ALL_STATUSES.length)
+    ? null
+    : { pages, statusChanges };
+
   const res = await fetch('/api/admin/users/add', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, name, password })
+    body: JSON.stringify({ email, name, password, permissions })
   });
 
   const data = await res.json();
@@ -2096,6 +2132,7 @@ async function saveNewAdmin() {
     closeAddAdminDrawer();
     adminSaveToast('Admin toegevoegd');
     loadLedenTab('admins');
+    if (currentAdmin?.isSuperAdmin) loadRechten();
   } else {
     errorEl.textContent = data.error || 'Fout bij toevoegen';
     errorEl.style.display = 'block';
