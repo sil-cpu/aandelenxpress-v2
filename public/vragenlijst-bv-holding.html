@@ -565,18 +565,18 @@
           <button id="gateBtn" class="btn-primary" type="button">Open formulier</button>
         </div>
         <div id="gateErr" class="err">Ongeldige code of dossier niet gevonden.</div>
-        <button class="gate-forgot" onclick="openResetModal()">Toegangscode vergeten?</button>
+        <button class="gate-forgot" id="gateForgotBtn" type="button">Toegangscode vergeten?</button>
       </div>
     </div>
 
     <!-- Reset code overlay -->
-    <div class="reset-overlay" id="resetOverlay" onclick="handleResetOverlayClick(event)">
+    <div class="reset-overlay" id="resetOverlay">
       <div class="reset-modal">
         <h3>Nieuwe toegangscode ontvangen</h3>
         <p id="resetConfirmText">We sturen een nieuwe toegangscode naar het e-mailadres dat geregistreerd staat bij dit dossier. Weet je zeker?</p>
         <div class="reset-actions">
-          <button class="reset-confirm-btn" id="resetConfirmBtn" onclick="confirmResendToken()">Ja, verstuur code</button>
-          <button class="reset-cancel-btn" onclick="closeResetModal()">Annuleren</button>
+          <button class="reset-confirm-btn" id="resetConfirmBtn" type="button">Ja, verstuur code</button>
+          <button class="reset-cancel-btn" id="resetCancelBtn" type="button">Annuleren</button>
         </div>
         <div class="reset-msg" id="resetMsg"></div>
       </div>
@@ -4710,6 +4710,10 @@
 
       const cached = sessionStorage.getItem('ax_form_' + caseId);
       document.getElementById('gateBtn').addEventListener('click', openWithToken);
+      document.getElementById('gateForgotBtn').addEventListener('click', openResetModal);
+      document.getElementById('resetConfirmBtn').addEventListener('click', confirmResendToken);
+      document.getElementById('resetCancelBtn').addEventListener('click', closeResetModal);
+      document.getElementById('resetOverlay').addEventListener('click', handleResetOverlayClick);
       document.getElementById('gateInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') openWithToken();
       });
