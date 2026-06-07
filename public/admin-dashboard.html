@@ -592,6 +592,12 @@
             <div id="addAdminStatusToggles" style="display:flex;flex-direction:column;gap:6px;"></div>
           </div>
 
+          <div class="drawer-section" style="margin-top:20px;">
+            <div class="drawer-section-title">Product-toegang</div>
+            <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:12px;">Welke producttypen mag deze beheerder zien in het dossiersoverzicht?</p>
+            <div id="addAdminProductToggles" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+
           <div id="addAdminError" style="color:#c53030;font-size:0.85rem;margin:12px 0;display:none;"></div>
           <div style="display:flex;gap:10px;margin-top:20px;">
             <button class="btn-primary" style="flex:1;padding:12px;" onclick="saveNewAdmin()">Toevoegen</button>
@@ -842,8 +848,8 @@
         <p class="text-muted text-sm" style="margin-bottom:24px;">Stel per beheerder in welke pagina's en statuswijzigingen zijn toegestaan. Super admins hebben altijd volledige toegang.</p>
         <div class="dash-card table-scroll-wrap">
           <table class="admin-table">
-            <thead><tr><th>Naam</th><th>E-mail</th><th>Type</th><th>Pagina-toegang</th><th>Status-rechten</th><th></th></tr></thead>
-            <tbody id="rechtenList"><tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">Laden…</td></tr></tbody>
+            <thead><tr><th>Naam</th><th>E-mail</th><th>Type</th><th>Pagina-toegang</th><th>Status-rechten</th><th>Product-toegang</th><th></th></tr></thead>
+            <tbody id="rechtenList"><tr><td colspan="7" style="padding:32px;text-align:center;color:#8A9BB5;">Laden…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -874,6 +880,11 @@
       <div class="drawer-section-title">Status-rechten</div>
       <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:14px;">Welke statuswijzigingen mag deze beheerder uitvoeren?</p>
       <div id="permStatusToggles" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <div class="drawer-section" style="margin-top:24px;">
+      <div class="drawer-section-title">Product-toegang</div>
+      <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:14px;">Welke producttypen mag deze beheerder zien in het dossiersoverzicht?</p>
+      <div id="permProductToggles" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
     <div id="permSaveError" style="color:#c53030;font-size:0.85rem;margin:12px 0;display:none;"></div>
     <div style="display:flex;gap:10px;margin-top:24px;">
@@ -1195,11 +1206,12 @@ function mapRequestToDossier(req) {
     clientEmail: req.clientEmail || '',
     clientPhone: req.clientPhone || '',
     kvk:         '',
-    assignedTo:  dossierAssignments[req.id] || null,
-    archivedAt:  req.archivedAt || null,
-    trashedAt:   req.trashedAt || null,
-    pricing:     req.pricing || null,
-    pricingTotal: req.pricing?.total || 0
+    assignedTo:   dossierAssignments[req.id] || null,
+    archivedAt:   req.archivedAt || null,
+    trashedAt:    req.trashedAt || null,
+    pricing:      req.pricing || null,
+    pricingTotal: req.pricing?.total || 0,
+    oprichtingType: req.oprichtingType || ''
   };
 }
 
@@ -1764,6 +1776,18 @@ const ALL_STATUSES = [
   { key: 'approved',            label: 'Approved' },
 ];
 
+const ALL_PRODUCTS = [
+  { key: 'bv',                          label: 'BV oprichten' },
+  { key: 'bv-holding',                  label: 'BV + Holding oprichten' },
+  { key: 'holding',                     label: 'Holding oprichten' },
+  { key: 'bv-spoed',                    label: 'BV oprichten (spoed)' },
+  { key: 'eenmanszaak-omzetten',        label: 'Eenmanszaak naar BV' },
+  { key: 'vof-naar-bv',                 label: 'VOF naar BV' },
+  { key: 'eenmanszaak-omzetten-bv-holding', label: 'Eenmanszaak naar BV + Holding' },
+  { key: 'vof-naar-bv-holding',         label: 'VOF naar BV + Holding' },
+  { key: 'advies',                      label: 'Advies' },
+];
+
 function canAccessPage(user, pageKey) {
   if (!user) return false;
   if (user.isSuperAdmin) return true;
@@ -1776,6 +1800,14 @@ function canChangeStatus(user, statusKey) {
   if (user.isSuperAdmin) return true;
   if (!user.permissions || !user.permissions.statusChanges) return true; // null = full access
   return user.permissions.statusChanges.includes(statusKey);
+}
+
+function canSeeProduct(user, productKey) {
+  if (!user) return false;
+  if (user.isSuperAdmin) return true;
+  if (!productKey) return true; // dossiers without a product type are always visible
+  if (!user.permissions || !user.permissions.products) return true; // null = full access
+  return user.permissions.products.includes(productKey);
 }
 
 function applyPermissions(u) {
@@ -2098,6 +2130,13 @@ function openAddAdminDrawer() {
       <span style="font-size:0.88rem;color:#1A3B70;">${s.label}</span>
     </label>`).join('');
 
+  document.getElementById('addAdminProductToggles').innerHTML = ALL_PRODUCTS.map(p => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:5px 0;border-bottom:1px solid #F0F4FA;">
+      <input type="checkbox" data-new-admin-product="${p.key}" checked
+        style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
+      <span style="font-size:0.88rem;color:#1A3B70;">${p.label}</span>
+    </label>`).join('');
+
   document.getElementById('addAdminDrawer').classList.add('open');
   document.getElementById('addAdminBackdrop').classList.add('open');
 }
@@ -2128,9 +2167,9 @@ async function saveNewAdmin() {
   // Collect permissions
   const pages = [...document.querySelectorAll('[data-new-admin-page]:checked')].map(el => el.dataset.newAdminPage);
   const statusChanges = [...document.querySelectorAll('[data-new-admin-status]:checked')].map(el => el.dataset.newAdminStatus);
-  const permissions = (pages.length === ALL_PAGES.length && statusChanges.length === ALL_STATUSES.length)
-    ? null
-    : { pages, statusChanges };
+  const products = [...document.querySelectorAll('[data-new-admin-product]:checked')].map(el => el.dataset.newAdminProduct);
+  const allSelected = pages.length === ALL_PAGES.length && statusChanges.length === ALL_STATUSES.length && products.length === ALL_PRODUCTS.length;
+  const permissions = allSelected ? null : { pages, statusChanges, products };
 
   const res = await fetch('/api/admin/users/add', {
     method: 'POST',
@@ -2481,6 +2520,8 @@ function applyAllFilters() {
   if (!showArchived) {
     filtered = filtered.filter(d => !d.archivedAt);
   }
+  // Filter by product permissions
+  filtered = filtered.filter(d => canSeeProduct(currentAdmin, d.oprichtingType));
 
   // Apply all filters
   if (assignedFilter === '__mine__') {
@@ -3022,7 +3063,7 @@ async function loadRechten() {
     if (!r.ok) throw new Error();
     const admins = await r.json();
     if (!admins.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">Geen admins gevonden</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#8A9BB5;">Geen admins gevonden</td></tr>';
       return;
     }
     tbody.innerHTML = admins.map(a => {
@@ -3030,10 +3071,13 @@ async function loadRechten() {
       const perms = a.permissions;
       const pageCount = perms?.pages ? perms.pages.length : ALL_PAGES.length;
       const statusCount = perms?.statusChanges ? perms.statusChanges.length : ALL_STATUSES.length;
+      const productCount = perms?.products ? perms.products.length : ALL_PRODUCTS.length;
       const pageLabel = isSA ? '<span style="color:#1A56DB;font-size:0.8rem;font-weight:600;">Alle (super admin)</span>'
         : `<span style="font-size:0.82rem;color:#4A5568;">${pageCount} / ${ALL_PAGES.length} pagina's</span>`;
       const statusLabel = isSA ? '<span style="color:#1A56DB;font-size:0.8rem;font-weight:600;">Alle (super admin)</span>'
         : `<span style="font-size:0.82rem;color:#4A5568;">${statusCount} / ${ALL_STATUSES.length} statussen</span>`;
+      const productLabel = isSA ? '<span style="color:#1A56DB;font-size:0.8rem;font-weight:600;">Alle (super admin)</span>'
+        : `<span style="font-size:0.82rem;color:#4A5568;">${productCount} / ${ALL_PRODUCTS.length} producten</span>`;
       const editBtn = isSA ? '<span style="font-size:0.8rem;color:#A0AEC0;">—</span>'
         : `<button class="btn-ghost" style="padding:5px 12px;font-size:0.8rem;" onclick="openPermissionsDrawer('${a.email}','${a.name.replace(/'/g,"\\'")}')">Bewerken</button>`;
       return `<tr>
@@ -3042,11 +3086,12 @@ async function loadRechten() {
         <td>${isSA ? '<span class="badge badge-active" style="font-size:0.75rem;">Super admin</span>' : '<span style="font-size:0.82rem;color:#6B7280;">Beheerder</span>'}</td>
         <td>${pageLabel}</td>
         <td>${statusLabel}</td>
+        <td>${productLabel}</td>
         <td style="text-align:right;">${editBtn}</td>
       </tr>`;
     }).join('');
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#e53e3e;">Fout bij laden</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#e53e3e;">Fout bij laden</td></tr>';
   }
 }
 
@@ -3062,6 +3107,7 @@ function openPermissionsDrawer(email, name) {
     const perms = admin?.permissions || null;
     const allowedPages = perms?.pages || ALL_PAGES.map(p => p.key);
     const allowedStatuses = perms?.statusChanges || ALL_STATUSES.map(s => s.key);
+    const allowedProducts = perms?.products || ALL_PRODUCTS.map(p => p.key);
 
     // Render page toggles
     document.getElementById('permPageToggles').innerHTML = ALL_PAGES.map(p => `
@@ -3077,6 +3123,14 @@ function openPermissionsDrawer(email, name) {
         <input type="checkbox" data-perm-status="${s.key}" ${allowedStatuses.includes(s.key) ? 'checked' : ''}
           style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
         <span style="font-size:0.88rem;color:#1A3B70;">${s.label}</span>
+      </label>`).join('');
+
+    // Render product toggles
+    document.getElementById('permProductToggles').innerHTML = ALL_PRODUCTS.map(p => `
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;border-bottom:1px solid #F0F4FA;">
+        <input type="checkbox" data-perm-product="${p.key}" ${allowedProducts.includes(p.key) ? 'checked' : ''}
+          style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
+        <span style="font-size:0.88rem;color:#1A3B70;">${p.label}</span>
       </label>`).join('');
   });
 
@@ -3094,10 +3148,10 @@ async function savePermissions() {
   if (!permEditingEmail) return;
   const pages = [...document.querySelectorAll('[data-perm-page]:checked')].map(el => el.dataset.permPage);
   const statusChanges = [...document.querySelectorAll('[data-perm-status]:checked')].map(el => el.dataset.permStatus);
+  const products = [...document.querySelectorAll('[data-perm-product]:checked')].map(el => el.dataset.permProduct);
   // null means full access; only restrict if fewer than all are selected
-  const permissions = (pages.length === ALL_PAGES.length && statusChanges.length === ALL_STATUSES.length)
-    ? null
-    : { pages, statusChanges };
+  const allSelected = pages.length === ALL_PAGES.length && statusChanges.length === ALL_STATUSES.length && products.length === ALL_PRODUCTS.length;
+  const permissions = allSelected ? null : { pages, statusChanges, products };
 
   const errEl = document.getElementById('permSaveError');
   errEl.style.display = 'none';
