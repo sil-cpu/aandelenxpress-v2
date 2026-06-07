@@ -3062,6 +3062,7 @@
       document.querySelectorAll('[data-np-same-first]').forEach(cb => {
         cb.addEventListener('change', () => updateNaturalPersons());
       });
+      const syncLanguageFollowups = (card) => {
         const dutchSelect = card.querySelector('[data-np="taalNiveau"]');
         const englishWrap = card.querySelector('[data-np-engels-wrap]');
         const englishSelect = card.querySelector('[data-np="engelsNiveau"]');
