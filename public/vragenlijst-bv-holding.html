@@ -42,6 +42,23 @@
     }
     .gate h2 { margin: 0 0 8px; font-size: 1.25rem; }
     .gate p { margin: 0 0 14px; color: #63789c; font-size: 0.93rem; }
+    .gate-forgot { display:block; margin-top:14px; text-align:center; font-size:0.85rem; color:#8A9BB5; cursor:pointer; text-decoration:none; background:none; border:none; padding:0; width:100%; }
+    .gate-forgot:hover { color:#1A56DB; text-decoration:underline; }
+
+    /* Reset modal */
+    .reset-overlay { display:none; position:fixed; inset:0; background:rgba(15,29,58,0.5); z-index:9999; align-items:center; justify-content:center; padding:20px; }
+    .reset-overlay.open { display:flex; }
+    .reset-modal { background:#fff; border-radius:16px; padding:32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .reset-modal h3 { margin:0 0 10px; font-size:1.1rem; color:#0F1D3A; }
+    .reset-modal p { margin:0 0 20px; color:#4A5568; font-size:0.92rem; line-height:1.55; }
+    .reset-modal .reset-actions { display:flex; gap:10px; }
+    .reset-modal .reset-actions button { flex:1; padding:12px; border-radius:9px; font-size:0.93rem; font-weight:600; cursor:pointer; border:none; }
+    .reset-confirm-btn { background:#1A56DB; color:#fff; }
+    .reset-confirm-btn:disabled { opacity:0.6; cursor:not-allowed; }
+    .reset-cancel-btn { background:#F0F4F8; color:#4A5568; }
+    .reset-modal .reset-msg { font-size:0.88rem; padding:10px 14px; border-radius:7px; margin-top:14px; display:none; }
+    .reset-modal .reset-msg.ok { background:#F0FFF4; color:#276749; border:1px solid #C6F6D5; }
+    .reset-modal .reset-msg.err { background:#FFF5F5; color:#c53030; border:1px solid #FED7D7; }
 
     .hero {
       background: linear-gradient(130deg, #0f3266 0%, #1a56b4 64%, #2c74d7 100%);
@@ -548,6 +565,20 @@
           <button id="gateBtn" class="btn-primary" type="button">Open formulier</button>
         </div>
         <div id="gateErr" class="err">Ongeldige code of dossier niet gevonden.</div>
+        <button class="gate-forgot" onclick="openResetModal()">Toegangscode vergeten?</button>
+      </div>
+    </div>
+
+    <!-- Reset code overlay -->
+    <div class="reset-overlay" id="resetOverlay" onclick="handleResetOverlayClick(event)">
+      <div class="reset-modal">
+        <h3>Nieuwe toegangscode ontvangen</h3>
+        <p id="resetConfirmText">We sturen een nieuwe toegangscode naar het e-mailadres dat geregistreerd staat bij dit dossier. Weet je zeker?</p>
+        <div class="reset-actions">
+          <button class="reset-confirm-btn" id="resetConfirmBtn" onclick="confirmResendToken()">Ja, verstuur code</button>
+          <button class="reset-cancel-btn" onclick="closeResetModal()">Annuleren</button>
+        </div>
+        <div class="reset-msg" id="resetMsg"></div>
       </div>
     </div>
 
@@ -4540,6 +4571,60 @@
       } catch (e) {
         err.textContent = e.message || 'Indienen mislukt.';
         err.style.display = 'block';
+      }
+    }
+
+    function openResetModal() {
+      const msg = document.getElementById('resetMsg');
+      const btn = document.getElementById('resetConfirmBtn');
+      const txt = document.getElementById('resetConfirmText');
+      msg.style.display = 'none';
+      msg.className = 'reset-msg';
+      btn.disabled = false;
+      btn.textContent = 'Ja, verstuur code';
+      btn.style.display = '';
+      txt.textContent = 'We sturen een nieuwe toegangscode naar het e-mailadres dat geregistreerd staat bij dit dossier. Weet je zeker?';
+      document.getElementById('resetOverlay').classList.add('open');
+    }
+
+    function closeResetModal() {
+      document.getElementById('resetOverlay').classList.remove('open');
+    }
+
+    function handleResetOverlayClick(e) {
+      if (e.target === document.getElementById('resetOverlay')) closeResetModal();
+    }
+
+    async function confirmResendToken() {
+      if (!caseId) return;
+      const btn = document.getElementById('resetConfirmBtn');
+      const msg = document.getElementById('resetMsg');
+      const txt = document.getElementById('resetConfirmText');
+      btn.disabled = true;
+      btn.textContent = 'Versturen...';
+      msg.style.display = 'none';
+      try {
+        const r = await fetch('/api/dossier-status/' + encodeURIComponent(caseId) + '/resend-token', { method: 'POST' });
+        const data = await r.json().catch(() => ({}));
+        if (r.ok) {
+          txt.textContent = '';
+          btn.style.display = 'none';
+          msg.textContent = '✓ Code verstuurd naar ' + (data.maskedEmail || 'uw e-mailadres') + '. Controleer uw inbox (en spammap).';
+          msg.className = 'reset-msg ok';
+          msg.style.display = 'block';
+        } else {
+          msg.textContent = data.error || 'Versturen mislukt. Probeer het opnieuw.';
+          msg.className = 'reset-msg err';
+          msg.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Ja, verstuur code';
+        }
+      } catch {
+        msg.textContent = 'Verbindingsfout. Probeer het opnieuw.';
+        msg.className = 'reset-msg err';
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Ja, verstuur code';
       }
     }
 
