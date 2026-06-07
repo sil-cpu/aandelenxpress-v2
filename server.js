@@ -597,7 +597,10 @@ app.post('/api/auth/reset-password-token', async (req, res) => {
 });
 
 app.get('/api/user', (req, res) => {
-    if (req.session && req.session.user) return res.json(req.session.user);
+    if (req.session && req.session.user) {
+        // Always recompute isSuperAdmin so old sessions (before the field was added) still work
+        return res.json({ ...req.session.user, isSuperAdmin: isSuperAdmin(req.session.user) });
+    }
     res.status(401).json({ error: 'Not logged in' });
 });
 
