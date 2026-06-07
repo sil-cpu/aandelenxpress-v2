@@ -542,6 +542,33 @@
       font-size: 0.85rem;
       font-weight: 700;
     }
+    /* Tab-level field validation errors */
+    .field.tab-error > label,
+    .field.tab-error > .file-label {
+      color: #C53030 !important;
+    }
+    .field.tab-error > input,
+    .field.tab-error > select,
+    .field.tab-error > textarea {
+      border-color: #FC8181 !important;
+      background: #FFF5F5 !important;
+    }
+    .group-title.tab-error {
+      color: #C53030 !important;
+    }
+    .tab-error-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #FFF5F5;
+      border: 1px solid #FCA5A5;
+      border-radius: 8px;
+      color: #C53030;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
     .ok {
       display: none;
       margin-top: 10px;
@@ -3453,12 +3480,19 @@
         info.textContent = (idx + 1) + ' / ' + cards.length + ': ' + title;
         prevBtn.disabled = idx <= 0;
         nextBtn.disabled = idx >= cards.length - 1;
-        prevBtn.onclick = () => openTab(idx - 1, true);
-        nextBtn.onclick = () => openTab(idx + 1, true);
+        prevBtn.onclick = () => { clearTabErrors(); openTab(idx - 1, true); };
+        nextBtn.onclick = () => {
+          refreshRequiredIndicators();
+          const errs = validateTab(cards[idx]);
+          if (errs > 0) return;
+          clearTabErrors();
+          openTab(idx + 1, true);
+        };
       });
     }
 
     function openTab(index, shouldScroll) {
+      clearTabErrors();
       const cards = getVisibleCards();
       if (!cards.length) return;
       const target = Math.max(0, Math.min(index, cards.length - 1));
@@ -3466,6 +3500,36 @@
       currentTabIndex = target;
       updateTabNavigationInfo();
       if (shouldScroll) cards[target].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function clearTabErrors() {
+      document.querySelectorAll('.tab-error').forEach(el => el.classList.remove('tab-error'));
+      document.querySelectorAll('.tab-error-banner').forEach(el => el.remove());
+    }
+
+    function validateTab(cardEl) {
+      clearTabErrors();
+      let errorCount = 0;
+      const controls = Array.from(cardEl.querySelectorAll('input, select, textarea'));
+      controls.forEach(el => {
+        if (el.disabled || !el.offsetParent) return;
+        const type = (el.getAttribute('type') || '').toLowerCase();
+        if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'checkbox' || type === 'radio') return;
+        if (!el.validity.valid) {
+          const wrap = el.closest('.field');
+          if (wrap) wrap.classList.add('tab-error');
+          errorCount++;
+        }
+      });
+      if (errorCount > 0) {
+        const banner = document.createElement('div');
+        banner.className = 'tab-error-banner';
+        banner.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          + 'Vul alle verplichte velden in om door te gaan.';
+        cardEl.querySelector('.card-body')?.prepend(banner);
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return errorCount;
     }
 
     function syncTabNavigation() {
@@ -4228,7 +4292,7 @@
       const werkmijSameDirectors = basic.werkmijDirectorsSameAsShareholders === true || basic.werkmijDirectorsSameAsShareholders === 'ja';
       const holdingAandeelhouders = managers.holdingShareholders.getData();
       const holdingBestuurders = managers.holdingDirectors.getData();
-      const werkmijAandeelhouders = withWerkmij ? managers.werkmijShareholders.getData() : [];
+      const werkmijAandeelhouders = withWerkmij && shouldAskWerkmijShareholders() ? managers.werkmijShareholders.getData() : [];
       const werkmijBestuurders = managers.werkmijDirectors.getData();
       const bestaandHoldingBestuurders = managers.bestaandHoldingDirectors.getData();
       const naturalPersons = collectNaturalPersons();
@@ -4690,6 +4754,16 @@
 
       document.getElementById('btnSave').addEventListener('click', saveDraft);
       document.getElementById('cleanForm').addEventListener('submit', submitForm);
+
+      // Clear tab-error highlighting when user edits any field
+      document.getElementById('cleanForm').addEventListener('input', e => {
+        const wrap = e.target.closest('.field.tab-error');
+        if (wrap) wrap.classList.remove('tab-error');
+      }, true);
+      document.getElementById('cleanForm').addEventListener('change', e => {
+        const wrap = e.target.closest('.field.tab-error');
+        if (wrap) wrap.classList.remove('tab-error');
+      }, true);
 
       // Auto-fill KvK from bestaande holding to RP cards
       document.querySelector('input[name="bestaandHoldingKvk"]')?.addEventListener('blur', () => {
