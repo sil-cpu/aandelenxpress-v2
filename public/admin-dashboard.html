@@ -1177,35 +1177,18 @@ function mapRequestToDossier(req) {
     'vof-naar-bv-holding':'VOF -> B.V. + Holding',
     'advies':'Advies'
   };
-  const statusMap = {
-    'pending':              { key:'pending',     text:'Aanvraag ingediend' },
-    'vragenlijst':          { key:'vragenlijst', text:'Vragenlijst' },
-    'approved':             { key:'vragenlijst', text:'Vragenlijst' },
-    'betaling':             { key:'betaling',    text:'Betaling' },
-    'wwft':                 { key:'notary',      text:'Notariële Akte' },
-    'ocr':                  { key:'notary',      text:'Notariële Akte' },
-    'ocr-signed':           { key:'notary',      text:'Notariële Akte' },
-    'draft-accountant':     { key:'notary',      text:'Notariële Akte' },
-    'accountant-accepted':  { key:'notary',      text:'Notariële Akte' },
-    'draft-client':         { key:'notary',      text:'Notariële Akte' },
-    'client-signed':        { key:'notary',      text:'Notariële Akte' },
-    'invitation-om':        { key:'notary',      text:'Notariële Akte' },
-    'executed-notaris':     { key:'notary',      text:'Notariële Akte' },
-    'kvk':                  { key:'kvk',         text:'KvK inschrijving' },
-    'passed-kvk':           { key:'kvk',         text:'KvK inschrijving' },
-    'making-binders':       { key:'kvk',         text:'KvK inschrijving' },
-    'upload-binders':       { key:'kvk',         text:'KvK inschrijving' },
-    'complete':             { key:'complete',    text:'Voltooid' },
-    'complete-review':      { key:'complete',    text:'Voltooid' },
-    'rejected':             { key:'rejected',    text:'Afgewezen' }
+  const groupKey = STATUS_GROUP_MAP[req.status] || req.status;
+  const groupLabels = {
+    'pending':'Aanvraag ingediend','vragenlijst':'Vragenlijst','betaling':'Betaling',
+    'notary':'Notariële Akte','kvk':'KvK inschrijving','complete':'Voltooid','rejected':'Afgewezen'
   };
-  const s = statusMap[req.status] || { key:'pending', text: req.status };
   return {
     name:        req.gewenstNaam || req.clientName,
     type:        typeMap[req.oprichtingType] || req.oprichtingType || '–',
     partner:     req.resellerCompany || '–',
-    statusKey:   s.key,
-    statusText:  s.text,
+    statusKey:   req.status,          // raw DB status — used for STATUS_BADGE_MAP lookup
+    statusGroup: groupKey,            // grouped key — used for filter dropdown
+    statusText:  STATUS_BADGE_MAP[req.status]?.label || groupLabels[groupKey] || req.status,
     date:        req.createdAt,
     dossierNr:   req.id,
     contact:     req.resellerName || '–',
@@ -1322,11 +1305,39 @@ async function quickChangeStatus(nr, status) {
     });
     if (r.ok) {
       const d = allDossiersData.find(x => x.dossierNr === nr);
-      if (d) { d.statusKey = status; d.statusText = STATUS_BADGE_MAP[status]?.label || status; }
+      if (d) {
+        d.statusKey = status;
+        d.statusGroup = STATUS_GROUP_MAP[status] || status;
+        d.statusText = STATUS_BADGE_MAP[status]?.label || status;
+      }
       applyAllFilters();
     } else { alert('Status wijzigen mislukt.'); applyAllFilters(); }
   } catch(e) { console.error('quickChangeStatus error:', e); applyAllFilters(); }
 }
+
+// Maps raw DB status → grouped key used by the filter dropdown
+const STATUS_GROUP_MAP = {
+  'pending':              'pending',
+  'vragenlijst':          'vragenlijst',
+  'approved':             'vragenlijst',
+  'betaling':             'betaling',
+  'wwft':                 'notary',
+  'ocr':                  'notary',
+  'ocr-signed':           'notary',
+  'draft-accountant':     'notary',
+  'accountant-accepted':  'notary',
+  'draft-client':         'notary',
+  'client-signed':        'notary',
+  'invitation-om':        'notary',
+  'executed-notaris':     'notary',
+  'kvk':                  'kvk',
+  'passed-kvk':           'kvk',
+  'making-binders':       'kvk',
+  'upload-binders':       'kvk',
+  'complete':             'complete',
+  'complete-review':      'complete',
+  'rejected':             'rejected',
+};
 
 const STATUS_BADGE_MAP = {
   'pending':             { css: 'badge-pending',             label: 'Aanvraag ingediend' },
@@ -2478,7 +2489,7 @@ function applyAllFilters() {
     filtered = filtered.filter(d => d.assignedTo === assignedFilter);
   }
   if (statusFilter) {
-    filtered = filtered.filter(d => d.statusKey === statusFilter);
+    filtered = filtered.filter(d => d.statusGroup === statusFilter);
   }
   if (partnerFilter) {
     filtered = filtered.filter(d => d.partner === partnerFilter);
