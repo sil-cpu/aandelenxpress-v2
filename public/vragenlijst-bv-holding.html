@@ -2312,14 +2312,19 @@
       document.getElementById('singleBvExistingHoldingsCount').value = String(count);
       const manager = isSingleBvWerkmijFlow() ? managers.werkmijShareholders : managers.holdingShareholders;
       const current = manager.getData();
+      // For single-BV flow, pre-populate the naam from the bestaande holding card
+      const bestaandNaam = isSingleBvWerkmijFlow()
+        ? (document.querySelector('input[name="bestaandHoldingNaam"]')?.value?.trim() || '')
+        : '';
       const rows = current
         .slice(0, count)
-        .map(row => ({
+        .map((row, rowIdx) => ({
           ...row,
-          type: 'rp'
+          type: 'rp',
+          naam: row.naam || (rowIdx === 0 ? bestaandNaam : '')
         }));
       while (rows.length < count) {
-        rows.push({ type: 'rp', naam: '', percentage: '' });
+        rows.push({ type: 'rp', naam: bestaandNaam, percentage: '' });
       }
       if (isSingleBvWerkmijFlow()) {
         managers.werkmijShareholders.setData(rows);
@@ -4345,6 +4350,19 @@
       const bestaandHoldingBestuurders = managers.bestaandHoldingDirectors.getData();
       const naturalPersons = collectNaturalPersons();
       const rechtspersonen = collectRechtspersonen();
+      // For bv product with bestaande holding: ensure KvK and naam are propagated
+      if (withExistingHolding && isSingleBvWerkmijFlow()) {
+        const bestaandKvk = (basic.bestaandHoldingKvk || '').trim();
+        const bestaandNaam = (basic.bestaandHoldingNaam || '').trim();
+        const rpEntry = rechtspersonen.find(r => r.roleKey === 'werkmij_entity_1');
+        if (rpEntry) {
+          if (!rpEntry.kvkNummer && bestaandKvk) rpEntry.kvkNummer = bestaandKvk;
+        }
+        // Ensure werkmij shareholder naam matches bestaande holding naam
+        if (bestaandNaam && werkmijAandeelhouders.length && !werkmijAandeelhouders[0].naam) {
+          werkmijAandeelhouders[0].naam = bestaandNaam;
+        }
+      }
       const holdingEntities = isVofPlusHoldingFlow()
         ? collectVofHoldingSectionsFromDom()
         : [{
@@ -4813,15 +4831,31 @@
         if (wrap) wrap.classList.remove('tab-error');
       }, true);
 
-      // Auto-fill KvK from bestaande holding to RP cards
-      document.querySelector('input[name="bestaandHoldingKvk"]')?.addEventListener('blur', () => {
+      // Auto-fill naam from bestaande holding to werkmij shareholder row + RP card title
+      document.querySelector('input[name="bestaandHoldingNaam"]')?.addEventListener('input', function() {
+        if (!isSingleBvWerkmijFlow() || document.getElementById('singleBvExistingHoldings')?.value !== 'ja') return;
+        // Sync to the first werkmij shareholder naam input in the DOM
+        const shNaamInput = managers.werkmijShareholders.container?.querySelector('[data-repeat-item] [data-field="naam"]');
+        if (shNaamInput && !shNaamInput.value.trim()) shNaamInput.value = this.value;
+        // Update the RP card title directly without full re-render
+        const rpTitle = document.querySelector('[data-rp-role="werkmij_entity_1"] .repeat-title');
+        if (rpTitle) {
+          const label = this.value.trim() || 'Werkmij aandeelhouder 1';
+          rpTitle.textContent = `Rechtspersoon Werkmij 1 - ${label}`;
+        }
+      });
+
+      // Auto-fill KvK from bestaande holding to RP cards (both on input and blur for reliability)
+      const syncBestaandKvk = () => {
         const kvk = document.querySelector('input[name="bestaandHoldingKvk"]')?.value?.trim();
         if (!kvk) return;
         document.querySelectorAll('[data-rp-role]').forEach(card => {
           const kvkInput = card.querySelector('[data-rp="kvkNummer"]');
           if (kvkInput && !kvkInput.value.trim()) { kvkInput.value = kvk; }
         });
-      });
+      };
+      document.querySelector('input[name="bestaandHoldingKvk"]')?.addEventListener('input', syncBestaandKvk);
+      document.querySelector('input[name="bestaandHoldingKvk"]')?.addEventListener('blur', syncBestaandKvk);
 
       updateConditionalSections();
       updateAddressSourceVisibility();
