@@ -112,6 +112,10 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         Instellingen
       </a>
+      <a href="#" class="dash-nav-item" data-section="rechten" id="navRechten" style="display:none;">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Rechten
+      </a>
     </nav>
 
     <div class="dash-sidebar-foot">
@@ -817,8 +821,53 @@
         </div>
       </div>
 
+      <!-- RECHTEN -->
+      <div class="dash-section" id="section-rechten">
+        <div class="section-row mb-20">
+          <span class="section-heading">Rechten beheer</span>
+        </div>
+        <p class="text-muted text-sm" style="margin-bottom:24px;">Stel per beheerder in welke pagina's en statuswijzigingen zijn toegestaan. Super admins hebben altijd volledige toegang.</p>
+        <div class="dash-card table-scroll-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Naam</th><th>E-mail</th><th>Type</th><th>Pagina-toegang</th><th>Status-rechten</th><th></th></tr></thead>
+            <tbody id="rechtenList"><tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">Laden…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </main>
+</div>
+
+<!-- PERMISSIONS DRAWER -->
+<div class="drawer-backdrop" id="permissionsBackdrop" onclick="closePermissionsDrawer()"></div>
+<div class="detail-drawer" id="permissionsDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title">
+      <h2 id="permDrawerTitle">Rechten bewerken</h2>
+      <p id="permDrawerSub"></p>
+    </div>
+    <button class="drawer-close" onclick="closePermissionsDrawer()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-section-title">Pagina-toegang</div>
+      <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:14px;">Welke secties mag deze beheerder zien?</p>
+      <div id="permPageToggles" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+    <div class="drawer-section" style="margin-top:24px;">
+      <div class="drawer-section-title">Status-rechten</div>
+      <p style="font-size:0.82rem;color:#8A9BB5;margin-bottom:14px;">Welke statuswijzigingen mag deze beheerder uitvoeren?</p>
+      <div id="permStatusToggles" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <div id="permSaveError" style="color:#c53030;font-size:0.85rem;margin:12px 0;display:none;"></div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <button class="btn-primary" style="flex:1;padding:12px;" onclick="savePermissions()">Opslaan</button>
+      <button class="btn-ghost" style="flex:1;padding:12px;" onclick="closePermissionsDrawer()">Annuleren</button>
+    </div>
+  </div>
 </div>
 
 <!-- ADMIN CREATE DOSSIER MODAL -->
@@ -1296,15 +1345,17 @@ function toggleStatusDropdown(nr, e) {
   const portal = document.getElementById('statusDdPortal');
   if (portal._openNr === nr) { closeAllStatusDropdowns(); return; }
   closeAllStatusDropdowns();
-  // Build options
+  // Build options filtered by current admin's status-change permissions
   const d = allDossiersData.find(x => x.dossierNr === nr);
   if (!d) return;
-  const opts = Object.entries(STATUS_BADGE_MAP).map(([key, v]) =>
-    `<div class="status-dd-opt" onclick="selectStatusFromDropdown('${nr}','${key}',event)">
-      <span class="badge ${v.css}" style="pointer-events:none;width:100%;justify-content:flex-start;border-radius:6px;">&#x25CF; ${v.label}</span>
-    </div>`
-  ).join('');
-  portal.innerHTML = opts;
+  const opts = Object.entries(STATUS_BADGE_MAP)
+    .filter(([key]) => canChangeStatus(currentAdmin, key))
+    .map(([key, v]) =>
+      `<div class="status-dd-opt" onclick="selectStatusFromDropdown('${nr}','${key}',event)">
+        <span class="badge ${v.css}" style="pointer-events:none;width:100%;justify-content:flex-start;border-radius:6px;">&#x25CF; ${v.label}</span>
+      </div>`
+    ).join('');
+  portal.innerHTML = opts || '<div style="padding:10px 14px;color:#8A9BB5;font-size:0.85rem;">Geen statuswijzigingen toegestaan</div>';
   portal._openNr = nr;
   // Position fixed below badge
   portal.style.display = 'block';
@@ -1604,10 +1655,11 @@ function initMobileMenu() {
 function showSection(s) {
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   document.getElementById("section-" + s).classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", forms:"Forms", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", 'reseller-requests':"Reseller aanvragen", leden:"Leden & gebruikers", forms:"Forms", instellingen:"Instellingen", rechten:"Rechten beheer" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
+  if (s === "rechten") loadRechten();
   document.querySelectorAll(".dash-nav-item").forEach(i => {
     i.classList.toggle("active", i.dataset.section === s);
   });
@@ -1628,10 +1680,11 @@ function showSectionSilent(s) {
   
   document.querySelectorAll(".dash-section").forEach(el => el.classList.remove("active"));
   section.classList.add("active");
-  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", leden:"Leden & gebruikers", forms:"Forms", instellingen:"Instellingen" };
+  const titles = { overzicht:"Dashboard", partners:"Partners", dossiers:"Alle dossiers", prullenbak:"Prullenbak", aanmeldingen:"Reseller-aanmeldingen", 'reseller-requests':"Reseller aanvragen", leden:"Leden & gebruikers", forms:"Forms", instellingen:"Instellingen", rechten:"Rechten beheer" };
   document.getElementById("topbarTitle").textContent = titles[s] || s;
   if (s === "aanmeldingen") loadPending();
   if (s === "leden") loadLedenTab("admins");
+  if (s === "rechten") loadRechten();
   document.querySelectorAll(".dash-nav-item").forEach(i => {
     i.classList.toggle("active", i.dataset.section === s);
   });
@@ -1648,7 +1701,78 @@ async function loadUser() {
     document.getElementById("userName").textContent = u.name;
     document.getElementById("userEmail").textContent = u.email;
     document.getElementById("userInitials").textContent = u.name.split(" ").map(p => p[0]).join("").slice(0,2).toUpperCase();
+    applyPermissions(u);
   } catch(e) { window.location.href = "/login"; }
+}
+
+// ── Permissions: define available pages and statuses ───────────────────────
+const ALL_PAGES = [
+  { key: 'overzicht',          label: 'Dashboard' },
+  { key: 'partners',           label: 'Partners' },
+  { key: 'dossiers',           label: 'Alle dossiers' },
+  { key: 'aanmeldingen',       label: 'Aanmeldingen' },
+  { key: 'reseller-requests',  label: 'Reseller aanvragen' },
+  { key: 'leden',              label: 'Leden & gebruikers' },
+  { key: 'forms',              label: 'Forms' },
+  { key: 'instellingen',       label: 'Instellingen' },
+];
+
+const ALL_STATUSES = [
+  { key: 'pending',             label: 'Aanvraag ingediend' },
+  { key: 'vragenlijst',         label: 'Vragenlijst' },
+  { key: 'wwft',                label: 'WWFT Check' },
+  { key: 'betaling',            label: 'Betaling' },
+  { key: 'ocr',                 label: 'OCR' },
+  { key: 'ocr-signed',          label: 'OCR Signed' },
+  { key: 'draft-accountant',    label: 'Draft to Accountant' },
+  { key: 'accountant-accepted', label: 'Accountant accepted' },
+  { key: 'draft-client',        label: 'Draft to Client' },
+  { key: 'client-signed',       label: 'Client Signed' },
+  { key: 'invitation-om',       label: 'Invitation OM' },
+  { key: 'executed-notaris',    label: 'Executed Notaris' },
+  { key: 'kvk',                 label: 'KvK inschrijving' },
+  { key: 'passed-kvk',          label: 'Passed by KvK' },
+  { key: 'making-binders',      label: 'Making Closing Binders' },
+  { key: 'upload-binders',      label: 'Upload Closing Binders' },
+  { key: 'complete',            label: 'Case completed' },
+  { key: 'complete-review',     label: 'Case completed review' },
+  { key: 'rejected',            label: 'Afgewezen' },
+  { key: 'approved',            label: 'Approved' },
+];
+
+function canAccessPage(user, pageKey) {
+  if (!user) return false;
+  if (user.isSuperAdmin) return true;
+  if (!user.permissions || !user.permissions.pages) return true; // null = full access
+  return user.permissions.pages.includes(pageKey);
+}
+
+function canChangeStatus(user, statusKey) {
+  if (!user) return false;
+  if (user.isSuperAdmin) return true;
+  if (!user.permissions || !user.permissions.statusChanges) return true; // null = full access
+  return user.permissions.statusChanges.includes(statusKey);
+}
+
+function applyPermissions(u) {
+  if (u.isSuperAdmin) {
+    // Super admin: show Rechten nav item, show + Admin toevoegen
+    const navRechten = document.getElementById('navRechten');
+    if (navRechten) navRechten.style.display = '';
+    return;
+  }
+  // Hide nav items for pages this admin can't access
+  ALL_PAGES.forEach(p => {
+    if (!canAccessPage(u, p.key)) {
+      const navItem = document.querySelector(`.dash-nav-item[data-section="${p.key}"]`);
+      if (navItem) navItem.style.display = 'none';
+    }
+  });
+  // For "leden" restricted admins, also hide the + Admin toevoegen button
+  if (!canAccessPage(u, 'leden')) return;
+  // Hide the + Admin toevoegen for non-super-admins
+  const addAdminBtn = document.querySelector('#section-leden .section-row .btn-primary');
+  if (addAdminBtn) addAdminBtn.style.display = 'none';
 }
 
 function logout() {
@@ -2838,6 +2962,117 @@ document.getElementById('adminNewDossierForm').addEventListener('submit', async 
     errEl.style.display = 'block';
   }
 });
+
+// ── Rechten beheer ─────────────────────────────────────────────────────────
+let permEditingEmail = null;
+
+async function loadRechten() {
+  const tbody = document.getElementById('rechtenList');
+  if (!tbody) return;
+  try {
+    const r = await fetch('/api/admin/users?type=admin');
+    if (!r.ok) throw new Error();
+    const admins = await r.json();
+    if (!admins.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#8A9BB5;">Geen admins gevonden</td></tr>';
+      return;
+    }
+    tbody.innerHTML = admins.map(a => {
+      const isSA = a.isSuperAdmin;
+      const perms = a.permissions;
+      const pageCount = perms?.pages ? perms.pages.length : ALL_PAGES.length;
+      const statusCount = perms?.statusChanges ? perms.statusChanges.length : ALL_STATUSES.length;
+      const pageLabel = isSA ? '<span style="color:#1A56DB;font-size:0.8rem;font-weight:600;">Alle (super admin)</span>'
+        : `<span style="font-size:0.82rem;color:#4A5568;">${pageCount} / ${ALL_PAGES.length} pagina's</span>`;
+      const statusLabel = isSA ? '<span style="color:#1A56DB;font-size:0.8rem;font-weight:600;">Alle (super admin)</span>'
+        : `<span style="font-size:0.82rem;color:#4A5568;">${statusCount} / ${ALL_STATUSES.length} statussen</span>`;
+      const editBtn = isSA ? '<span style="font-size:0.8rem;color:#A0AEC0;">—</span>'
+        : `<button class="btn-ghost" style="padding:5px 12px;font-size:0.8rem;" onclick="openPermissionsDrawer('${a.email}','${a.name.replace(/'/g,"\\'")}')">Bewerken</button>`;
+      return `<tr>
+        <td><strong>${a.name}</strong></td>
+        <td style="color:#6B7280;">${a.email}</td>
+        <td>${isSA ? '<span class="badge badge-active" style="font-size:0.75rem;">Super admin</span>' : '<span style="font-size:0.82rem;color:#6B7280;">Beheerder</span>'}</td>
+        <td>${pageLabel}</td>
+        <td>${statusLabel}</td>
+        <td style="text-align:right;">${editBtn}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:#e53e3e;">Fout bij laden</td></tr>';
+  }
+}
+
+function openPermissionsDrawer(email, name) {
+  permEditingEmail = email;
+  document.getElementById('permDrawerTitle').textContent = 'Rechten: ' + name;
+  document.getElementById('permDrawerSub').textContent = email;
+  document.getElementById('permSaveError').style.display = 'none';
+
+  // Fetch current permissions from the already-loaded admin list
+  fetch('/api/admin/users?type=admin').then(r => r.json()).then(admins => {
+    const admin = admins.find(a => a.email === email);
+    const perms = admin?.permissions || null;
+    const allowedPages = perms?.pages || ALL_PAGES.map(p => p.key);
+    const allowedStatuses = perms?.statusChanges || ALL_STATUSES.map(s => s.key);
+
+    // Render page toggles
+    document.getElementById('permPageToggles').innerHTML = ALL_PAGES.map(p => `
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;border-bottom:1px solid #F0F4FA;">
+        <input type="checkbox" data-perm-page="${p.key}" ${allowedPages.includes(p.key) ? 'checked' : ''}
+          style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
+        <span style="font-size:0.88rem;color:#1A3B70;">${p.label}</span>
+      </label>`).join('');
+
+    // Render status toggles
+    document.getElementById('permStatusToggles').innerHTML = ALL_STATUSES.map(s => `
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;border-bottom:1px solid #F0F4FA;">
+        <input type="checkbox" data-perm-status="${s.key}" ${allowedStatuses.includes(s.key) ? 'checked' : ''}
+          style="width:16px;height:16px;accent-color:#1A56DB;cursor:pointer;">
+        <span style="font-size:0.88rem;color:#1A3B70;">${s.label}</span>
+      </label>`).join('');
+  });
+
+  document.getElementById('permissionsDrawer').classList.add('open');
+  document.getElementById('permissionsBackdrop').classList.add('open');
+}
+
+function closePermissionsDrawer() {
+  document.getElementById('permissionsDrawer').classList.remove('open');
+  document.getElementById('permissionsBackdrop').classList.remove('open');
+  permEditingEmail = null;
+}
+
+async function savePermissions() {
+  if (!permEditingEmail) return;
+  const pages = [...document.querySelectorAll('[data-perm-page]:checked')].map(el => el.dataset.permPage);
+  const statusChanges = [...document.querySelectorAll('[data-perm-status]:checked')].map(el => el.dataset.permStatus);
+  // null means full access; only restrict if fewer than all are selected
+  const permissions = (pages.length === ALL_PAGES.length && statusChanges.length === ALL_STATUSES.length)
+    ? null
+    : { pages, statusChanges };
+
+  const errEl = document.getElementById('permSaveError');
+  errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/admin/users/' + encodeURIComponent(permEditingEmail) + '/permissions', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ permissions })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      closePermissionsDrawer();
+      adminSaveToast('Rechten opgeslagen');
+      loadRechten();
+    } else {
+      errEl.textContent = data.error || 'Opslaan mislukt';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Netwerkfout';
+    errEl.style.display = 'block';
+  }
+}
 
 loadUser();
 loadDossiers();

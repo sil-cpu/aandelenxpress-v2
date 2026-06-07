@@ -405,6 +405,16 @@ function requireAdmin(req, res, next) {
     res.redirect('/login');
 }
 
+function isSuperAdmin(user) {
+    const superEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@aandelenxpress.nl').toLowerCase();
+    return user?.is_super_admin === true || (user?.email || '').toLowerCase() === superEmail;
+}
+
+function requireSuperAdmin(req, res, next) {
+    if (req.session?.user?.type === 'admin' && isSuperAdmin(req.session.user)) return next();
+    res.status(403).json({ error: 'Alleen super admins hebben toegang' });
+}
+
 // ── Express middleware ─────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '25mb' }));
@@ -521,7 +531,11 @@ app.post('/api/login', async (req, res) => {
     }
     if (user.status === 'inactive') return res.status(401).json({ error: 'Uw account is gedeactiveerd. Neem contact op met AandelenXpress.' });
 
-    req.session.user = { email, name: user.name, company: user.company, type: user.type };
+    req.session.user = {
+        email, name: user.name, company: user.company, type: user.type,
+        permissions: user.permissions || null,
+        isSuperAdmin: isSuperAdmin(user)
+    };
     res.json({ success: true, redirect: user.type === 'admin' ? '/admin-dashboard' : '/reseller-dashboard' });
 });
 
@@ -668,10 +682,25 @@ app.post('/api/admin/reject', requireAdmin, async (req, res) => {
 // ── User Management ────────────────────────────────────────────────────────
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
     const type = req.query.type || 'all';
-    let q = supabase.from('users').select('email, name, company, type, status, company_id');
+    let q = supabase.from('users').select('*');
     if (type !== 'all') q = q.eq('type', type);
     const { data } = await q;
-    res.json((data || []).map(u => ({ ...u, companyId: u.company_id })));
+    res.json((data || []).map(u => ({
+        email: u.email, name: u.name, company: u.company,
+        type: u.type, status: u.status, companyId: u.company_id,
+        permissions: u.permissions || null,
+        isSuperAdmin: isSuperAdmin(u)
+    })));
+});
+
+app.put('/api/admin/users/:email/permissions', requireSuperAdmin, async (req, res) => {
+    const email = String(req.params.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email ontbreekt' });
+    if (isSuperAdmin({ email })) return res.status(403).json({ error: 'Kan rechten van super admin niet wijzigen' });
+    const { permissions } = req.body; // null = full access, { pages:[...], statusChanges:[...] } = restricted
+    const { error } = await supabase.from('users').update({ permissions: permissions ?? null }).eq('email', email).eq('type', 'admin');
+    if (error) return res.status(500).json({ error: 'Opslaan mislukt. Voeg de kolom "permissions" (JSONB) toe aan de users-tabel in Supabase.' });
+    res.json({ success: true });
 });
 
 app.post('/api/admin/users/add', requireAdmin, async (req, res) => {
@@ -1176,6 +1205,11 @@ app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) =>
     const { status } = req.body;
     const valid = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected','approved'];
     if (!valid.includes(status)) return res.status(400).json({ error: 'Ongeldige status' });
+    // Check status-change permissions for non-super-admins
+    const actor = req.session.user;
+    if (!isSuperAdmin(actor) && actor.permissions?.statusChanges && !actor.permissions.statusChanges.includes(status)) {
+        return res.status(403).json({ error: 'U heeft geen toestemming om naar deze status te wijzigen' });
+    }
 
     const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', id).single();
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
