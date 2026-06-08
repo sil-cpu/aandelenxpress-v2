@@ -2219,7 +2219,7 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
                 if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
                 if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
               });
-              [['holdingDirectorsSameAsShareholders', get('holdingDirectorsSameAsShareholders')],
+              [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('holdingDirectorsSameAsShareholders')],
                ['Meer dan 15 uur per week',           get('holdingPersoneelMeer15')],
                ['Minder dan 15 uur per week',         get('holdingPersoneelMinder15')],
                ['Overige',                            get('holdingOverige')],
@@ -2242,7 +2242,7 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
                 if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
                 if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
               });
-              [['werkmijDirectorsSameAsShareholders', get('werkmijDirectorsSameAsShareholders')],
+              [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('werkmijDirectorsSameAsShareholders')],
                ['Overige',                            get('werkmijOverige')],
               ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
               if (rows.length) allSections.push({ title: 'Oprichting document (Werkmaatschappij)', rows }); }
@@ -2305,7 +2305,7 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
             // Stap 7 – Indienen
             { const lc = formData?.legalConsent;
               const lcVal = (lc === true || lc === 'true' || lc === 'ja' || lc === 'Ja') ? 'Ja' : (lc != null && lc !== false && lc !== '' ? String(lc) : '');
-              if (lcVal) allSections.push({ title: 'Indienen', rows: [makeRow('legalConsent', lcVal)] }); }
+              if (lcVal) allSections.push({ title: 'Indienen', rows: [makeRow('Akkoord met algemene voorwaarden', lcVal)] }); }
 
             const totalSteps  = allSections.length;
             const totalFields = allSections.reduce((sum, s) => sum + s.rows.length, 0);
@@ -2799,6 +2799,12 @@ app.get('/api/dossier-files/:nr', requireAdmin, async (req, res) => {
 
 // Export for Vercel
 module.exports = app;
+// Expose helpers when required as a module (e.g. for local scripts)
+if (require.main !== module) {
+    module.exports.buildVragenlijstPdfBuffer = buildVragenlijstPdfBuffer;
+    module.exports.supabase = supabase;
+    module.exports.rowToReq = rowToReq;
+}
 
 // Start locally
 if (require.main === module) {
