@@ -1923,8 +1923,9 @@ ul { list-style: none; }
 
     /* Vertically center pill next to the shorter heading */
     .testimonials-header {
-        align-items: center;
-        gap: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
     }
 
     /* Allow pill to wrap at this width */
