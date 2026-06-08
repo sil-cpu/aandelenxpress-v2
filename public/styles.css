@@ -146,6 +146,7 @@ ul { list-style: none; }
     font-weight: 500;
     color: rgba(255,255,255,0.88);
     transition: color 0.2s;
+    white-space: nowrap;
 }
 .nav-menu a:hover { color: #fff; }
 
@@ -1873,6 +1874,15 @@ ul { list-style: none; }
 /* =========================================
    RESPONSIVE
    ========================================= */
+
+/* ── Nav: tighten spacing at medium widths ──────── */
+@media (max-width: 1200px) {
+    .nav-pill   { gap: 16px; padding: 0 16px; }
+    .nav-content { gap: 20px; }
+    .nav-menu   { gap: 16px; }
+    .nav-menu a { font-size: 0.85rem; }
+    .btn-nav-ghost { padding: 7px 14px !important; font-size: 0.82rem !important; }
+}
 
 @media (max-width: 1024px) {
     .kiyoh-widget {
