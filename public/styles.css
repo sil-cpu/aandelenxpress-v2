@@ -1913,6 +1913,64 @@ ul { list-style: none; }
     }
 }
 
+/* ── Tablet kiyoh overrides (600–1024px) ──────────────────────────── */
+@media (min-width: 600px) and (max-width: 1024px) {
+    /* Summary as compact horizontal bar instead of tall vertical block */
+    .kiyoh-summary {
+        flex-direction: row;
+        min-height: auto;
+        padding: 20px 28px;
+        justify-content: flex-start;
+        text-align: left;
+        gap: 28px;
+        align-items: center;
+    }
+
+    .kiyoh-summary-top {
+        flex-shrink: 0;
+        width: auto;
+    }
+
+    .kiyoh-rating-ring {
+        width: 72px;
+        height: 72px;
+    }
+
+    .kiyoh-rating-value {
+        font-size: 1.45rem;
+    }
+
+    .kiyoh-brand-row {
+        display: none; /* hide "kiyoh" text to keep bar compact */
+    }
+
+    /* Show 2 cards per row on tablet */
+    .kiyoh-review-card {
+        flex: 0 0 calc((100% - 14px) / 2);
+    }
+
+    /* Show arrows on tablet */
+    .kiyoh-carousel-wrap {
+        grid-template-columns: 36px 1fr 36px;
+    }
+
+    .kiyoh-arrow {
+        display: block;
+    }
+
+    /* Header pill fits on one line at tablet */
+    .testimonials-header {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+
+    .reviews-pill {
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        width: auto;
+    }
+}
+
 @media (max-width: 768px) {
     .nav-menu {
         display: none;
