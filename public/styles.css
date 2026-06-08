@@ -1915,6 +1915,25 @@ ul { list-style: none; }
 
 /* ── Tablet kiyoh overrides (600–1024px) ──────────────────────────── */
 @media (min-width: 600px) and (max-width: 1024px) {
+    /* Smaller heading so pill fits next to it */
+    .testimonials-header-left h2 {
+        font-size: 1.85rem;
+        letter-spacing: -0.5px;
+    }
+
+    /* Vertically center pill next to the shorter heading */
+    .testimonials-header {
+        align-items: center;
+        gap: 20px;
+    }
+
+    /* Allow pill to wrap at this width */
+    .reviews-pill {
+        white-space: normal;
+        flex-wrap: wrap;
+        width: auto;
+    }
+
     /* Summary as compact horizontal bar instead of tall vertical block */
     .kiyoh-summary {
         flex-direction: row;
@@ -1956,18 +1975,6 @@ ul { list-style: none; }
 
     .kiyoh-arrow {
         display: block;
-    }
-
-    /* Header pill fits on one line at tablet */
-    .testimonials-header {
-        flex-direction: row;
-        align-items: flex-end;
-    }
-
-    .reviews-pill {
-        white-space: nowrap;
-        flex-wrap: nowrap;
-        width: auto;
     }
 }
 
