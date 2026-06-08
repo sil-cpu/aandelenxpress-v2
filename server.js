@@ -4,7 +4,7 @@ const cookieSession = require('cookie-session');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const PDFDocument = require('pdfkit');
+const { PDFDocument, rgb, StandardFonts, PDFString } = require('pdf-lib');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -2057,319 +2057,312 @@ function collectPdfRows(formData) {
         .sort((a, b) => a.label.localeCompare(b.label, 'nl'));
 }
 
-function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
-    return new Promise((resolve, reject) => {
-        try {
-            const doc = new PDFDocument({ size: 'A4', margins: { top: 40, bottom: 50, left: 40, right: 40 } });
-            const chunks = [];
-            doc.on('data', chunk => chunks.push(chunk));
-            doc.on('end', () => resolve(Buffer.concat(chunks)));
-            doc.on('error', reject);
+async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
+    const product = String(formData?.formulierType || formData?.oprichtingType || request?.oprichtingType || 'bv').toLowerCase().trim();
+    const SITE    = String(process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app').replace(/\/$/, '');
 
-            const product = String(formData?.formulierType || formData?.oprichtingType || request?.oprichtingType || 'bv').toLowerCase().trim();
-            const SITE = String(process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app').replace(/\/$/, '');
-
-            // ── helpers ─────────────────────────────────────────────────
-            const fval = (v) => {
-                if (v === null || v === undefined || v === '' || v === false) return '';
-                if (typeof v === 'boolean') return 'Ja';
-                if (typeof v === 'number') return String(v);
-                if (Array.isArray(v)) {
-                    const parts = v.map(item => {
-                        if (!item) return null;
-                        if (typeof item === 'object') return item.naam || item.name || item.filename || null;
-                        return String(item).trim() || null;
-                    }).filter(Boolean);
-                    return parts.join(', ');
-                }
-                if (typeof v === 'object') return v.naam || v.name || v.filename || '';
-                return String(v).trim();
-            };
-            const get = (name) => name ? fval(formData?.[name]) : '';
-            const fileUrl = (kind, idx = 0) => `${SITE}/api/vragenlijsten/${encodeURIComponent(caseId)}/files/${kind}?index=${idx}`;
-
-            const ensureSpace = (needed) => {
-                const bottom = doc.page.height - doc.page.margins.bottom;
-                if (doc.y + needed > bottom) { doc.addPage(); doc.y = doc.page.margins.top; }
-            };
-
-            const leftX = 40; const questionW = 290; const answerW = 225; const minRowH = 24;
-
-            const drawHeader = (stepTitle, stepSub, stepMeta) => {
-                ensureSpace(80);
-                doc.moveDown(0.6);
-                const y = doc.y;
-                doc.roundedRect(leftX, y, questionW + answerW, 28, 4).fill('#1A3B70');
-                doc.font('Helvetica-Bold').fontSize(11).fillColor('#ffffff').text(stepTitle, leftX + 10, y + 9, { width: (questionW + answerW) * 0.55 });
-                if (stepMeta) {
-                    doc.font('Helvetica').fontSize(7.5).fillColor('rgba(255,255,255,0.72)').text(stepMeta, leftX + 10, y + 11, { width: questionW + answerW - 20, align: 'right' });
-                }
-                doc.y = y + 34;
-                if (stepSub) {
-                    doc.font('Helvetica').fontSize(9).fillColor('#5E6C84').text(stepSub, leftX, doc.y, { width: questionW + answerW });
-                    doc.moveDown(0.3);
-                }
-            };
-
-            const drawTableHeader = () => {
-                ensureSpace(28);
-                const y = doc.y;
-                doc.rect(leftX, y, questionW + answerW, 24).fillAndStroke('#EFF6FF', '#CBD5E1');
-                doc.moveTo(leftX + questionW, y).lineTo(leftX + questionW, y + 24).strokeColor('#CBD5E1').stroke();
-                doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#0F1D3A').text('Vraag', leftX + 8, y + 7, { width: questionW - 16 });
-                doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#0F1D3A').text('Antwoord', leftX + questionW + 8, y + 7, { width: answerW - 16 });
-                doc.y = y + 24;
-            };
-
-            const drawRow = (idx, label, answer, fileKind, fileIdx) => {
-                if (!answer && !fileKind) return;
-                const question = `${idx}. ${label}`;
-                const qH = doc.heightOfString(question, { width: questionW - 16 });
-                const aH = doc.heightOfString(String(answer || ''), { width: answerW - 16 });
-                const linkH = fileKind ? 14 : 0;
-                const rowH = Math.max(minRowH, qH + 12, aH + 12 + linkH);
-                ensureSpace(rowH + 2);
-                const y = doc.y;
-                // Question cell (white) + answer cell (light blue, like editable field)
-                doc.rect(leftX, y, questionW + answerW, rowH).stroke('#E2E8F0');
-                doc.rect(leftX, y, questionW + answerW, rowH).fill('#ffffff');
-                doc.rect(leftX + questionW, y, answerW, rowH).fill('#DBEAFE');
-                doc.rect(leftX, y, questionW + answerW, rowH).stroke('#E2E8F0');
-                doc.moveTo(leftX + questionW, y).lineTo(leftX + questionW, y + rowH).strokeColor('#E2E8F0').stroke();
-                doc.font('Helvetica').fontSize(9.2).fillColor('#111827').text(question, leftX + 8, y + 6, { width: questionW - 16 });
-                if (answer) doc.font('Helvetica').fontSize(9.2).fillColor('#0F1D3A').text(String(answer), leftX + questionW + 8, y + 6, { width: answerW - 16 });
-                if (fileKind) {
-                    const url = fileUrl(fileKind, fileIdx || 0);
-                    const linkY = y + 6 + (answer ? aH + 2 : 0);
-                    doc.font('Helvetica').fontSize(8.5).fillColor('#1D4ED8').text('Open bestand', leftX + questionW + 8, linkY, { width: answerW - 16, link: url, underline: true });
-                }
-                doc.y = y + rowH;
-            };
-
-            const drawPersonBlock = (title, persons, fields) => {
-                if (!Array.isArray(persons) || !persons.length) return;
-                const filled = persons.filter(p => fields.some(f => fval(p[f.key])));
-                if (!filled.length) return;
-                drawHeader(title, '');
-                filled.forEach((p, pi) => {
-                    const rows = fields.map(f => ({ label: f.label, val: fval(p[f.key]) })).filter(r => r.val);
-                    if (!rows.length) return;
-                    ensureSpace(30);
-                    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1A3B70').text(`Persoon ${pi + 1}`, leftX, doc.y);
-                    doc.moveDown(0.2);
-                    drawTableHeader();
-                    rows.forEach((r, ri) => drawRow(ri + 1, r.label, r.val, null, null));
-                    doc.moveDown(0.3);
-                });
-            };
-
-            const drawFileArray = (label, arr, kind, stepIdx) => {
-                if (!Array.isArray(arr) || !arr.length) return;
-                arr.forEach((item, i) => {
-                    const name = typeof item === 'object' ? (item.naam || item.name || item.filename || `Bestand ${i+1}`) : (String(item).trim() || `Bestand ${i+1}`);
-                    drawRow(stepIdx + i, `${label} ${i + 1}`, name, kind, i);
-                });
-            };
-
-            const PERSON_FIELDS = [
-                { key: 'naam', label: 'Naam' }, { key: 'naamBedrijf', label: 'Naam bedrijf' },
-                { key: 'geboortedatum', label: 'Geboortedatum' }, { key: 'geboorteplaats', label: 'Geboorteplaats' },
-                { key: 'geboorteland', label: 'Geboorteland' }, { key: 'nationaliteit', label: 'Nationaliteit' },
-                { key: 'bsn', label: 'BSN-nummer' }, { key: 'email', label: 'E-mailadres' },
-                { key: 'telefoon', label: 'Telefoonnummer' }, { key: 'percentage', label: 'Percentage' },
-                { key: 'adresStraat', label: 'Straat' }, { key: 'adresHuisnummer', label: 'Huisnummer' },
-                { key: 'adresPostcode', label: 'Postcode' }, { key: 'adresPlaats', label: 'Woonplaats' },
-                { key: 'kvkNummer', label: 'KvK-nummer' }, { key: 'rechtsvorm', label: 'Rechtsvorm' },
-                { key: 'heeftBsn', label: 'Heeft BSN' }, { key: 'nlAdresGeregistreerd', label: 'NL adres geregistreerd' },
-                { key: 'woonland', label: 'Woonland' },
-            ];
-
-            // ── Pre-collect all sections (needed before cover page for step/field counts) ──
-            const isHolding   = product.includes('holding');
-            const isVof       = product.includes('vof');
-            const isOmzetting = product.includes('omzetten') || product.includes('omzetting') || isVof;
-            const allSections = [];
-            const makeRow = (label, value, fileKind, fileIdx) => ({ label, value: String(value || ''), fileKind: fileKind || null, fileIdx: fileIdx || 0 });
-
-            // Stap 1 – Aanvraagtype
-            { const rows = [];
-              if (isVof && get('vofHoldingCount')) rows.push(makeRow('Hoeveel holdings wil je oprichten?', get('vofHoldingCount')));
-              [['Gewenste bedrijfsnaam', get('gewenstNaam') || fval(request?.gewenstNaam)],
-               ['Product type', get('oprichtingType') || fval(request?.oprichtingType)],
-               ['Spoedaanvraag', get('spoed')], ['Sector', get('sector')],
-               ['Doel van de BV', get('doel')], ['Startkapitaal', get('kapitaal')],
-               ['Bestaande holding als aandeelhouder', get('singleBvExistingHoldings')],
-               ['Wie worden aandeelhouder(s)?', get('existingHoldingOwner')],
-              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-              if (rows.length) allSections.push({ title: 'Aanvraagtype', rows }); }
-
-            // Stap 2 – Oprichting document (Holding)
-            if (isHolding) {
-              const rows = [];
-              [['Naam bedrijf',           get('holdingNaamBedrijf')],
-               ['Telefoonnummer',          get('holdingTelefoon')],
-               ['Mailadres',               get('holdingMailadres')],
-               ['Straat',                  get('holdingAdresStraat')],
-               ['Huisnummer',              get('holdingAdresHuisnummer')],
-               ['Postcode',                get('holdingAdresPostcode')],
-               ['Plaatsnaam',              get('holdingAdresPlaats')],
-               ['Naam accountantskantoor', get('holdingAccountantNaam')],
-               ['Contactpersoon',          get('holdingAccountantContact')],
-               ['Telefoonnummer',          get('holdingAccountantTelefoon')],
-               ['Mailadres',               get('holdingAccountantMail')],
-              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-              (formData?.holdingAandeelhouders || []).filter(Boolean).forEach(p => {
-                if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
-                if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
-                if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
-              });
-              [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('holdingDirectorsSameAsShareholders')],
-               ['Meer dan 15 uur per week',           get('holdingPersoneelMeer15')],
-               ['Minder dan 15 uur per week',         get('holdingPersoneelMinder15')],
-               ['Overige',                            get('holdingOverige')],
-              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-              if (rows.length) allSections.push({ title: 'Oprichting document (Holding)', rows });
-            }
-
-            // Stap 3 – Oprichting document (Werkmaatschappij)
-            { const rows = [];
-              [['Naam bedrijf',           get('werkmijNaamBedrijf')],
-               ['Telefoonnummer',          get('werkmijTelefoon')],
-               ['Mailadres',               get('werkmijMailadres')],
-               ['Naam accountantskantoor', get('werkmijAccountantNaam')],
-               ['Contactpersoon',          get('werkmijAccountantContact')],
-               ['Telefoonnummer',          get('werkmijAccountantTelefoon')],
-               ['Mailadres',               get('werkmijAccountantMail')],
-              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-              (formData?.werkmijAandeelhouders || []).filter(Boolean).forEach(p => {
-                if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
-                if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
-                if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
-              });
-              [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('werkmijDirectorsSameAsShareholders')],
-               ['Overige',                            get('werkmijOverige')],
-              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-              if (rows.length) allSections.push({ title: 'Oprichting document (Werkmaatschappij)', rows }); }
-
-            // Stap 4 – Natuurlijke personen
-            { const NP_KEYS = [
-                ['Voornamen','voornamen'],['Achternaam','achternaam'],
-                ['Geboortedatum','geboortedatum'],['Geboorteland','geboorteland'],
-                ['Heb je een BSN nummer?','heeftBsn'],['Nederlands BSN','bsn'],
-                ['Heb je een geregistreerd woonadres in Nederland?','nlAdresGeregistreerd'],
-                ['Nationaliteit','nationaliteit'],['Burgerlijke staat','burgerlijkeStaat'],
-                ['Persoonlijk IBAN','iban'],['Persoonlijk telefoonnummer','telefoon'],
-                ['Persoonlijk emailadres','email'],['Nederlands taalniveau','taalniveau'],
-                ['Volledig buitenlands woonadres','buitenlandsAdres'],
-              ];
-              const rows = [];
-              (formData?.naturalPersons || []).filter(Boolean).forEach((p, pi) => {
-                NP_KEYS.forEach(([label, key]) => { const v = fval(p[key]); if (v) rows.push(makeRow(label, v)); });
-                if (p.utilityBill) rows.push(makeRow('Upload utility bill (bewijs buitenlands adres)', fval(p.utilityBill), 'utility-bill', pi));
-              });
-              if (rows.length) allSections.push({ title: 'Natuurlijke personen', rows }); }
-
-            // Stap 5 – Omzettingsdocumenten
-            if (isOmzetting) {
-              const rows = [];
-              [['Type brononderneming',                              get('omzettingBronType')],
-               ['Naam EMZ/VOF',                                      get('omzettingBronNaam')],
-               ['KVK-nummer EMZ/VOF',                                get('omzettingBronKvk')],
-               ['Statutaire zetel EMZ/VOF',                          get('omzettingBronZetel')],
-               ['Eigenaar(s) EMZ/VOF + aandelenverdeling (bij VOF)', get('omzettingBronEigenaren')],
-               ['Doel van de EMZ/VOF',                               get('omzettingBronDoel')],
-              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-              [['KVK-uittreksel eenmanszaak/VOF',                        'omzettingKvkUittreksel',              'kvk-uittreksel'],
-               ['Verzendbewijs intentieverklaring (Belastingdienst)',     'omzettingVerzendbewijsIntentie',      'verzendbewijs-intentie'],
-               ['Bewijs van ontvangst intentieverklaring',                'omzettingOntvangstbewijsIntentie',    'ontvangst-intentie'],
-               ['Intentieverklaring',                                     'omzettingIntentieverklaring',         'intentverklaring'],
-               ['Geleideformulier intentieverklaring',                    'omzettingGeleideformulier',           'geleideformulier'],
-               ['Inbrengbeschrijving (holding)',                          'omzettingInbrengbeschrijvingHolding', 'inbrengbeschrijving-holding'],
-               ['Inbrengbeschrijving (werkmaatschappij)',                 'omzettingInbrengbeschrijvingWerkmij', 'inbrengbeschrijving-werkmij'],
-               ['UBO-uittreksel VOF (indien van toepassing)',             'omzettingVofUboUittreksel',           'ubo-uittreksel'],
-              ].forEach(([label, key, kind]) => { const val = formData?.[key]; if (val) rows.push(makeRow(label, fval(val), kind, 0)); });
-              if (rows.length) allSections.push({ title: 'Omzettingsdocumenten', rows }); }
-
-            // Stap 6 – Uploads
-            { const rows = [];
-              const addUploadRows = (arr, label, kind) => {
-                if (!Array.isArray(arr) || !arr.length) return;
-                arr.forEach((item, i) => {
-                  const name = typeof item === 'object' ? (item.naam || item.name || item.filename || `Bestand ${i+1}`) : `Bestand ${i+1}`;
-                  rows.push(makeRow(arr.length > 1 ? `${label} ${i+1}` : label, name, kind, i));
-                });
-              };
-              addUploadRows(formData?.datacardBestanden, 'Datacard / PDC bestand(en)', 'datacard');
-              addUploadRows(formData?.pepBestanden, 'PEP verklaring(en)', 'pep');
-              addUploadRows(formData?.personeelsplannen, 'Personeelsplan / bedrijfsplan(nen)', 'personeelsplan');
-              if (formData?.holdingHuurovereenkomst) rows.push(makeRow('Huurovereenkomst holding', fval(formData.holdingHuurovereenkomst), 'holding-huurovereenkomst', 0));
-              if (formData?.werkmijHuurovereenkomst) rows.push(makeRow('Huurovereenkomst werkmaatschappij', fval(formData.werkmijHuurovereenkomst), 'werkmij-huurovereenkomst', 0));
-              if (rows.length) allSections.push({ title: 'Uploads', rows }); }
-
-            // Stap 7 – Indienen
-            { const lc = formData?.legalConsent;
-              const lcVal = (lc === true || lc === 'true' || lc === 'ja' || lc === 'Ja') ? 'Ja' : (lc != null && lc !== false && lc !== '' ? String(lc) : '');
-              if (lcVal) allSections.push({ title: 'Indienen', rows: [makeRow('Akkoord met algemene voorwaarden', lcVal)] }); }
-
-            const totalSteps  = allSections.length;
-            const totalFields = allSections.reduce((sum, s) => sum + s.rows.length, 0);
-
-            // ── Cover page ────────────────────────────────────────────
-            doc.rect(40, 40, 515, 4).fill('#1A3B70');
-            doc.moveDown(0.5);
-            doc.font('Helvetica-Bold').fontSize(22).fillColor('#1A3B70').text('Oprichtingsdocument', 40, 60);
-            doc.font('Helvetica-Bold').fontSize(14).fillColor('#0F1D3A').text(request?.gewenstNaam || formData?.gewenstNaam || '—', 40, 88);
-            doc.font('Helvetica').fontSize(9.5).fillColor('#5E6C84').text(`Stappen: ${totalSteps} | Velden: ${totalFields}`, 40, 108);
-            doc.y = 122;
-            doc.moveDown(0.4);
-            const meta = [
-                ['Dossiernummer', caseId],
-                ['Product', product],
-                ['Partner', request?.resellerCompany || formData?.resellerCompany || '—'],
-                ['Klantcontact', `${request?.clientName || formData?.clientName || '—'} (${request?.clientEmail || formData?.clientEmail || '—'})`],
-                ['Datum gegenereerd', new Date().toLocaleString('nl-NL')],
-            ];
-            meta.forEach(([k, v]) => {
-                doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#5E6C84').text(k + ':', 40, doc.y, { continued: true, width: 160 });
-                doc.font('Helvetica').fontSize(9.5).fillColor('#0F1D3A').text('  ' + v);
-            });
-            doc.moveDown(1);
-            doc.rect(40, doc.y, 515, 0.7).fill('#E8EDF5');
-            doc.moveDown(1);
-
-            // ── Render sections ───────────────────────────────────────
-            allSections.forEach((section, si) => {
-                const stepNum  = si + 1;
-                const stepMeta = `Product: ${product} | Stap ${stepNum} | Veldcount: ${section.rows.length}`;
-                drawHeader(section.title, '', stepMeta);
-                drawTableHeader();
-                section.rows.forEach((row, ri) => drawRow(ri + 1, row.label, row.value, row.fileKind, row.fileIdx));
-                doc.moveDown(0.4);
-            });
-
-            // Opmerkingen
-            if (formData?.opmerkingen) {
-                ensureSpace(60);
-                doc.moveDown(0.5);
-                doc.rect(leftX, doc.y, questionW + answerW, 20).fill('#FFFBEB');
-                doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#92400E').text('Opmerkingen klant:', leftX + 8, doc.y + 5);
-                doc.y += 22;
-                doc.font('Helvetica').fontSize(9.2).fillColor('#0F1D3A').text(String(formData.opmerkingen), leftX + 8, doc.y, { width: questionW + answerW - 16 });
-                doc.moveDown(0.5);
-            }
-
-            // Footer
-            doc.moveDown(1.5);
-            ensureSpace(30);
-            doc.rect(leftX, doc.y, questionW + answerW, 0.7).fill('#E8EDF5');
-            doc.moveDown(0.4);
-            doc.font('Helvetica').fontSize(8.5).fillColor('#94A3B8').text('Automatisch gegenereerd door AandelenXpress op basis van de ingevulde vragenlijst.', leftX, doc.y, { width: questionW + answerW, align: 'center' });
-
-            doc.end();
-        } catch (err) {
-            reject(err);
+    const fval = (v) => {
+        if (v === null || v === undefined || v === '' || v === false) return '';
+        if (typeof v === 'boolean') return 'Ja';
+        if (typeof v === 'number') return String(v);
+        if (Array.isArray(v)) {
+            return v.map(i => (!i ? null : typeof i === 'object' ? i.naam || i.name || i.filename || null : String(i).trim() || null)).filter(Boolean).join(', ');
         }
+        if (typeof v === 'object') return v.naam || v.name || v.filename || '';
+        return String(v).trim();
+    };
+    const get     = (name) => name ? fval(formData?.[name]) : '';
+    const fileUrl = (kind, idx = 0) => `${SITE}/api/vragenlijsten/${encodeURIComponent(caseId)}/files/${kind}?index=${idx}`;
+
+    // ── Pre-collect sections ──────────────────────────────────────────
+    const isHolding   = product.includes('holding');
+    const isVof       = product.includes('vof');
+    const isOmzetting = product.includes('omzetten') || product.includes('omzetting') || isVof;
+    const allSections = [];
+    const makeRow = (label, value, fileKind, fileIdx) => ({ label, value: String(value || ''), fileKind: fileKind || null, fileIdx: fileIdx || 0 });
+
+    { const rows = [];
+      if (isVof && get('vofHoldingCount')) rows.push(makeRow('Hoeveel holdings wil je oprichten?', get('vofHoldingCount')));
+      [['Gewenste bedrijfsnaam', get('gewenstNaam') || fval(request?.gewenstNaam)],
+       ['Product type', get('oprichtingType') || fval(request?.oprichtingType)],
+       ['Spoedaanvraag', get('spoed')], ['Sector', get('sector')],
+       ['Doel van de BV', get('doel')], ['Startkapitaal', get('kapitaal')],
+       ['Bestaande holding als aandeelhouder', get('singleBvExistingHoldings')],
+       ['Wie worden aandeelhouder(s)?', get('existingHoldingOwner')],
+      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      if (rows.length) allSections.push({ title: 'Aanvraagtype', rows }); }
+
+    if (isHolding) {
+      const rows = [];
+      [['Naam bedrijf', get('holdingNaamBedrijf')], ['Telefoonnummer', get('holdingTelefoon')],
+       ['Mailadres', get('holdingMailadres')], ['Straat', get('holdingAdresStraat')],
+       ['Huisnummer', get('holdingAdresHuisnummer')], ['Postcode', get('holdingAdresPostcode')],
+       ['Plaatsnaam', get('holdingAdresPlaats')], ['Naam accountantskantoor', get('holdingAccountantNaam')],
+       ['Contactpersoon', get('holdingAccountantContact')], ['Telefoonnummer', get('holdingAccountantTelefoon')],
+       ['Mailadres', get('holdingAccountantMail')],
+      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      (formData?.holdingAandeelhouders || []).filter(Boolean).forEach(p => {
+        if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
+        if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
+        if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
+      });
+      [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('holdingDirectorsSameAsShareholders')],
+       ['Meer dan 15 uur per week', get('holdingPersoneelMeer15')],
+       ['Minder dan 15 uur per week', get('holdingPersoneelMinder15')],
+       ['Overige', get('holdingOverige')],
+      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      if (rows.length) allSections.push({ title: 'Oprichting document (Holding)', rows });
+    }
+
+    { const rows = [];
+      [['Naam bedrijf', get('werkmijNaamBedrijf')], ['Telefoonnummer', get('werkmijTelefoon')],
+       ['Mailadres', get('werkmijMailadres')], ['Naam accountantskantoor', get('werkmijAccountantNaam')],
+       ['Contactpersoon', get('werkmijAccountantContact')], ['Telefoonnummer', get('werkmijAccountantTelefoon')],
+       ['Mailadres', get('werkmijAccountantMail')],
+      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      (formData?.werkmijAandeelhouders || []).filter(Boolean).forEach(p => {
+        if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
+        if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
+        if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
+      });
+      [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('werkmijDirectorsSameAsShareholders')],
+       ['Overige', get('werkmijOverige')],
+      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      if (rows.length) allSections.push({ title: 'Oprichting document (Werkmaatschappij)', rows }); }
+
+    { const NP_KEYS = [
+        ['Voornamen','voornamen'],['Achternaam','achternaam'],['Geboortedatum','geboortedatum'],
+        ['Geboorteland','geboorteland'],['Heb je een BSN nummer?','heeftBsn'],['Nederlands BSN','bsn'],
+        ['Heb je een geregistreerd woonadres in Nederland?','nlAdresGeregistreerd'],
+        ['Nationaliteit','nationaliteit'],['Burgerlijke staat','burgerlijkeStaat'],
+        ['Persoonlijk IBAN','iban'],['Persoonlijk telefoonnummer','telefoon'],
+        ['Persoonlijk emailadres','email'],['Nederlands taalniveau','taalniveau'],
+        ['Volledig buitenlands woonadres','buitenlandsAdres'],
+      ];
+      const rows = [];
+      (formData?.naturalPersons || []).filter(Boolean).forEach((p, pi) => {
+        NP_KEYS.forEach(([label, key]) => { const v = fval(p[key]); if (v) rows.push(makeRow(label, v)); });
+        if (p.utilityBill) rows.push(makeRow('Upload utility bill (bewijs buitenlands adres)', fval(p.utilityBill), 'utility-bill', pi));
+      });
+      if (rows.length) allSections.push({ title: 'Natuurlijke personen', rows }); }
+
+    if (isOmzetting) {
+      const rows = [];
+      [['Type brononderneming', get('omzettingBronType')], ['Naam EMZ/VOF', get('omzettingBronNaam')],
+       ['KVK-nummer EMZ/VOF', get('omzettingBronKvk')], ['Statutaire zetel EMZ/VOF', get('omzettingBronZetel')],
+       ['Eigenaar(s) EMZ/VOF + aandelenverdeling (bij VOF)', get('omzettingBronEigenaren')],
+       ['Doel van de EMZ/VOF', get('omzettingBronDoel')],
+      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      [['KVK-uittreksel eenmanszaak/VOF','omzettingKvkUittreksel','kvk-uittreksel'],
+       ['Verzendbewijs intentieverklaring (Belastingdienst)','omzettingVerzendbewijsIntentie','verzendbewijs-intentie'],
+       ['Bewijs van ontvangst intentieverklaring','omzettingOntvangstbewijsIntentie','ontvangst-intentie'],
+       ['Intentieverklaring','omzettingIntentieverklaring','intentverklaring'],
+       ['Geleideformulier intentieverklaring','omzettingGeleideformulier','geleideformulier'],
+       ['Inbrengbeschrijving (holding)','omzettingInbrengbeschrijvingHolding','inbrengbeschrijving-holding'],
+       ['Inbrengbeschrijving (werkmaatschappij)','omzettingInbrengbeschrijvingWerkmij','inbrengbeschrijving-werkmij'],
+       ['UBO-uittreksel VOF (indien van toepassing)','omzettingVofUboUittreksel','ubo-uittreksel'],
+      ].forEach(([label, key, kind]) => { const val = formData?.[key]; if (val) rows.push(makeRow(label, fval(val), kind, 0)); });
+      if (rows.length) allSections.push({ title: 'Omzettingsdocumenten', rows }); }
+
+    { const rows = [];
+      const addUploadRows = (arr, label, kind) => {
+        if (!Array.isArray(arr) || !arr.length) return;
+        arr.forEach((item, i) => {
+          const name = typeof item === 'object' ? (item.naam || item.name || item.filename || `Bestand ${i+1}`) : `Bestand ${i+1}`;
+          rows.push(makeRow(arr.length > 1 ? `${label} ${i+1}` : label, name, kind, i));
+        });
+      };
+      addUploadRows(formData?.datacardBestanden, 'Datacard / PDC bestand(en)', 'datacard');
+      addUploadRows(formData?.pepBestanden, 'PEP verklaring(en)', 'pep');
+      addUploadRows(formData?.personeelsplannen, 'Personeelsplan / bedrijfsplan(nen)', 'personeelsplan');
+      if (formData?.holdingHuurovereenkomst) rows.push(makeRow('Huurovereenkomst holding', fval(formData.holdingHuurovereenkomst), 'holding-huurovereenkomst', 0));
+      if (formData?.werkmijHuurovereenkomst) rows.push(makeRow('Huurovereenkomst werkmaatschappij', fval(formData.werkmijHuurovereenkomst), 'werkmij-huurovereenkomst', 0));
+      if (rows.length) allSections.push({ title: 'Uploads', rows }); }
+
+    { const lc = formData?.legalConsent;
+      const lcVal = (lc === true || lc === 'true' || lc === 'ja' || lc === 'Ja') ? 'Ja' : (lc != null && lc !== false && lc !== '' ? String(lc) : '');
+      if (lcVal) allSections.push({ title: 'Indienen', rows: [makeRow('Akkoord met algemene voorwaarden', lcVal)] }); }
+
+    const totalSteps  = allSections.length;
+    const totalFields = allSections.reduce((sum, s) => sum + s.rows.length, 0);
+
+    // ── PDF document setup ────────────────────────────────────────────
+    const pdfDoc = await PDFDocument.create();
+    const fontR  = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontB  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const form   = pdfDoc.getForm();
+
+    const PW = 595.28, PH = 841.89;
+    const ML = 40, MT = 50, MB = 60;
+    const CW = PW - 2 * ML;
+    const QW = 290, AW = 225;
+    const MIN_ROW_H = 24;
+
+    const C_DARK_BLUE = rgb(0.102, 0.231, 0.439);
+    const C_LT_BLUE   = rgb(0.859, 0.922, 0.996);
+    const C_TH_BG     = rgb(0.933, 0.945, 0.965);
+    const C_BDR       = rgb(0.886, 0.910, 0.941);
+    const C_WHITE     = rgb(1, 1, 1);
+    const C_TEXT      = rgb(0.067, 0.094, 0.153);
+    const C_GRAY      = rgb(0.369, 0.424, 0.518);
+    const C_LINK      = rgb(0.114, 0.302, 0.863);
+    const C_WH_DIM    = rgb(0.88, 0.88, 0.88);
+
+    let page     = pdfDoc.addPage([PW, PH]);
+    let curY     = MT;
+    let fieldIdx = 0;
+
+    const ensureSpace = (need) => {
+        if (curY + need > PH - MB) { page = pdfDoc.addPage([PW, PH]); curY = MT; }
+    };
+
+    const wrapText = (text, maxW, fnt, size) => {
+        if (!text) return [''];
+        const words = String(text).split(' ');
+        const lines = []; let cur = '';
+        for (const w of words) {
+            const test = cur ? `${cur} ${w}` : w;
+            if (fnt.widthOfTextAtSize(test, size) <= maxW) { cur = test; }
+            else { if (cur) lines.push(cur); cur = w; }
+        }
+        if (cur) lines.push(cur);
+        return lines.length ? lines : [String(text).slice(0, 60)];
+    };
+
+    // ── Section header ──
+    const drawHeader = (title, stepMeta) => {
+        ensureSpace(42);
+        curY += 6;
+        const H = 28;
+        page.drawRectangle({ x: ML, y: PH - curY - H, width: CW, height: H, color: C_DARK_BLUE });
+        page.drawText(title, { x: ML + 10, y: PH - curY - H + 9, font: fontB, size: 11, color: C_WHITE });
+        if (stepMeta) {
+            const mW = fontR.widthOfTextAtSize(stepMeta, 7.5);
+            page.drawText(stepMeta, { x: ML + CW - mW - 10, y: PH - curY - H + 10, font: fontR, size: 7.5, color: C_WH_DIM });
+        }
+        curY += H + 2;
+    };
+
+    // ── Table header row ──
+    const drawTableHeader = () => {
+        const H = 20; ensureSpace(H + 2);
+        page.drawRectangle({ x: ML,      y: PH - curY - H, width: QW, height: H, color: C_TH_BG, borderColor: C_BDR, borderWidth: 0.5 });
+        page.drawRectangle({ x: ML + QW, y: PH - curY - H, width: AW, height: H, color: C_TH_BG, borderColor: C_BDR, borderWidth: 0.5 });
+        page.drawText('Vraag',     { x: ML + 8,      y: PH - curY - H + 6, font: fontB, size: 9.5, color: C_TEXT });
+        page.drawText('Antwoord',  { x: ML + QW + 8, y: PH - curY - H + 6, font: fontB, size: 9.5, color: C_TEXT });
+        curY += H;
+    };
+
+    // ── Data row with editable answer field ──
+    const drawRow = (idx, label, value, fileKind, fIdx) => {
+        if (!value && !fileKind) return;
+        const question = `${idx}. ${label}`;
+        const qLines   = wrapText(question, QW - 16, fontR, 9.2);
+        const linkH    = fileKind ? 14 : 0;
+        const rowH     = Math.max(MIN_ROW_H, qLines.length * 13 + 10 + linkH);
+
+        ensureSpace(rowH + 2);
+
+        // Question cell (white) + Answer cell (light blue)
+        page.drawRectangle({ x: ML,      y: PH - curY - rowH, width: QW, height: rowH, color: C_WHITE,   borderColor: C_BDR, borderWidth: 0.5 });
+        page.drawRectangle({ x: ML + QW, y: PH - curY - rowH, width: AW, height: rowH, color: C_LT_BLUE, borderColor: C_BDR, borderWidth: 0.5 });
+
+        // Question text (wrapped)
+        qLines.forEach((line, i) => {
+            page.drawText(line, { x: ML + 8, y: PH - curY - 7 - i * 13 - 9.2, font: fontR, size: 9.2, color: C_TEXT });
+        });
+
+        // Editable TextField for the answer
+        if (value) {
+            const fName  = `ans_${++fieldIdx}`;
+            const fieldH = rowH - (linkH ? linkH + 4 : 4) - 4;
+            const fieldY = PH - curY - rowH + (linkH ? linkH + 4 : 4);
+            try {
+                const tf = form.createTextField(fName);
+                tf.setText(String(value));
+                tf.setFontSize(9);
+                tf.enableMultiline();
+                tf.addToPage(page, {
+                    x: ML + QW + 3, y: fieldY, width: AW - 6, height: fieldH,
+                    textColor: C_TEXT, backgroundColor: C_LT_BLUE,
+                    borderColor: rgb(0.78, 0.86, 0.97), borderWidth: 0.5, font: fontR,
+                });
+            } catch(e) { /* skip on field name collision */ }
+        }
+
+        // File link annotation
+        if (fileKind) {
+            const linkText = 'Open bestand';
+            const linkY    = PH - curY - rowH + 10;
+            page.drawText(linkText, { x: ML + QW + 8, y: linkY, font: fontR, size: 8.5, color: C_LINK });
+            try {
+                const url      = fileUrl(fileKind, fIdx || 0);
+                const lW       = fontR.widthOfTextAtSize(linkText, 8.5);
+                const annotRef = pdfDoc.context.register(pdfDoc.context.obj({
+                    Type: 'Annot', Subtype: 'Link',
+                    Rect: [ML + QW + 6, linkY - 2, ML + QW + 8 + lW, linkY + 10],
+                    Border: [0, 0, 0],
+                    A: pdfDoc.context.obj({ S: 'URI', URI: PDFString.of(url) }),
+                }));
+                page.node.addAnnot(annotRef);
+            } catch(e) {}
+        }
+
+        curY += rowH;
+    };
+
+    // ── Cover page ────────────────────────────────────────────────────
+    page.drawRectangle({ x: ML, y: PH - MT - 4, width: CW, height: 4, color: C_DARK_BLUE });
+    curY = MT + 8;
+    page.drawText('Oprichtingsdocument', { x: ML, y: PH - curY - 22, font: fontB, size: 22, color: C_DARK_BLUE });
+    curY += 30;
+    page.drawText(String(request?.gewenstNaam || formData?.gewenstNaam || '—'), { x: ML, y: PH - curY - 14, font: fontB, size: 14, color: C_TEXT });
+    curY += 20;
+    page.drawText(`Stappen: ${totalSteps} | Velden: ${totalFields}`, { x: ML, y: PH - curY - 9.5, font: fontR, size: 9.5, color: C_GRAY });
+    curY += 16;
+    [['Dossiernummer', caseId],
+     ['Product', product],
+     ['Partner', request?.resellerCompany || formData?.resellerCompany || '—'],
+     ['Klantcontact', `${request?.clientName || formData?.clientName || '—'} (${request?.clientEmail || formData?.clientEmail || '—'})`],
+     ['Datum gegenereerd', new Date().toLocaleString('nl-NL')],
+    ].forEach(([k, v]) => {
+        page.drawText(`${k}:`, { x: ML,       y: PH - curY - 9.5, font: fontB, size: 9.5, color: C_GRAY });
+        page.drawText(String(v), { x: ML + 125, y: PH - curY - 9.5, font: fontR, size: 9.5, color: C_TEXT });
+        curY += 14;
     });
+    curY += 8;
+    page.drawLine({ start: { x: ML, y: PH - curY }, end: { x: ML + CW, y: PH - curY }, thickness: 0.7, color: C_BDR });
+    curY += 14;
+
+    // ── Render sections ───────────────────────────────────────────────
+    allSections.forEach((section, si) => {
+        const stepMeta = `Product: ${product} | Stap ${si + 1} | Veldcount: ${section.rows.length}`;
+        drawHeader(section.title, stepMeta);
+        drawTableHeader();
+        section.rows.forEach((row, ri) => drawRow(ri + 1, row.label, row.value, row.fileKind, row.fileIdx));
+        curY += 8;
+    });
+
+    // ── Opmerkingen ───────────────────────────────────────────────────
+    if (formData?.opmerkingen) {
+        ensureSpace(50); curY += 4;
+        page.drawRectangle({ x: ML, y: PH - curY - 18, width: CW, height: 18, color: rgb(1, 0.984, 0.922) });
+        page.drawText('Opmerkingen klant:', { x: ML + 8, y: PH - curY - 13, font: fontB, size: 9.5, color: rgb(0.573, 0.251, 0.055) });
+        curY += 20;
+        wrapText(String(formData.opmerkingen), CW - 16, fontR, 9.2).forEach((line, i) => {
+            page.drawText(line, { x: ML + 8, y: PH - curY - i * 13 - 9.2, font: fontR, size: 9.2, color: C_TEXT });
+        });
+        curY += 20;
+    }
+
+    // ── Footer ────────────────────────────────────────────────────────
+    ensureSpace(30); curY += 12;
+    page.drawLine({ start: { x: ML, y: PH - curY }, end: { x: ML + CW, y: PH - curY }, thickness: 0.7, color: C_BDR });
+    curY += 8;
+    const footer = 'Automatisch gegenereerd door AandelenXpress op basis van de ingevulde vragenlijst.';
+    page.drawText(footer, { x: ML + (CW - fontR.widthOfTextAtSize(footer, 8.5)) / 2, y: PH - curY - 8.5, font: fontR, size: 8.5, color: rgb(0.58, 0.635, 0.722) });
+
+    return Buffer.from(await pdfDoc.save());
 }
 
 app.get('/api/request-info/:id', async (req, res) => {
