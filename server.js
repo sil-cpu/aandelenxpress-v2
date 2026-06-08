@@ -2130,7 +2130,11 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
                 const rowH = Math.max(minRowH, qH + 12, aH + 12 + linkH);
                 ensureSpace(rowH + 2);
                 const y = doc.y;
-                doc.rect(leftX, y, questionW + answerW, rowH).fillAndStroke('#ffffff', '#E2E8F0');
+                // Question cell (white) + answer cell (light blue, like editable field)
+                doc.rect(leftX, y, questionW + answerW, rowH).stroke('#E2E8F0');
+                doc.rect(leftX, y, questionW + answerW, rowH).fill('#ffffff');
+                doc.rect(leftX + questionW, y, answerW, rowH).fill('#DBEAFE');
+                doc.rect(leftX, y, questionW + answerW, rowH).stroke('#E2E8F0');
                 doc.moveTo(leftX + questionW, y).lineTo(leftX + questionW, y + rowH).strokeColor('#E2E8F0').stroke();
                 doc.font('Helvetica').fontSize(9.2).fillColor('#111827').text(question, leftX + 8, y + 6, { width: questionW - 16 });
                 if (answer) doc.font('Helvetica').fontSize(9.2).fillColor('#0F1D3A').text(String(answer), leftX + questionW + 8, y + 6, { width: answerW - 16 });
