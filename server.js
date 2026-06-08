@@ -2095,12 +2095,15 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
 
             const leftX = 40; const questionW = 290; const answerW = 225; const minRowH = 24;
 
-            const drawHeader = (stepTitle, stepSub) => {
+            const drawHeader = (stepTitle, stepSub, stepMeta) => {
                 ensureSpace(80);
                 doc.moveDown(0.6);
                 const y = doc.y;
                 doc.roundedRect(leftX, y, questionW + answerW, 28, 4).fill('#1A3B70');
-                doc.font('Helvetica-Bold').fontSize(12).fillColor('#ffffff').text(stepTitle, leftX + 10, y + 8, { width: questionW + answerW - 20 });
+                doc.font('Helvetica-Bold').fontSize(11).fillColor('#ffffff').text(stepTitle, leftX + 10, y + 9, { width: (questionW + answerW) * 0.55 });
+                if (stepMeta) {
+                    doc.font('Helvetica').fontSize(7.5).fillColor('rgba(255,255,255,0.72)').text(stepMeta, leftX + 10, y + 11, { width: questionW + answerW - 20, align: 'right' });
+                }
                 doc.y = y + 34;
                 if (stepSub) {
                     doc.font('Helvetica').fontSize(9).fillColor('#5E6C84').text(stepSub, leftX, doc.y, { width: questionW + answerW });
@@ -2177,12 +2180,144 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
                 { key: 'woonland', label: 'Woonland' },
             ];
 
+            // ── Pre-collect all sections (needed before cover page for step/field counts) ──
+            const isHolding   = product.includes('holding');
+            const isVof       = product.includes('vof');
+            const isOmzetting = product.includes('omzetten') || product.includes('omzetting') || isVof;
+            const allSections = [];
+            const makeRow = (label, value, fileKind, fileIdx) => ({ label, value: String(value || ''), fileKind: fileKind || null, fileIdx: fileIdx || 0 });
+
+            // Stap 1 – Aanvraagtype
+            { const rows = [];
+              if (isVof && get('vofHoldingCount')) rows.push(makeRow('Hoeveel holdings wil je oprichten?', get('vofHoldingCount')));
+              [['Gewenste bedrijfsnaam', get('gewenstNaam') || fval(request?.gewenstNaam)],
+               ['Product type', get('oprichtingType') || fval(request?.oprichtingType)],
+               ['Spoedaanvraag', get('spoed')], ['Sector', get('sector')],
+               ['Doel van de BV', get('doel')], ['Startkapitaal', get('kapitaal')],
+               ['Bestaande holding als aandeelhouder', get('singleBvExistingHoldings')],
+               ['Wie worden aandeelhouder(s)?', get('existingHoldingOwner')],
+              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+              if (rows.length) allSections.push({ title: 'Aanvraagtype', rows }); }
+
+            // Stap 2 – Oprichting document (Holding)
+            if (isHolding) {
+              const rows = [];
+              [['Naam bedrijf',           get('holdingNaamBedrijf')],
+               ['Telefoonnummer',          get('holdingTelefoon')],
+               ['Mailadres',               get('holdingMailadres')],
+               ['Straat',                  get('holdingAdresStraat')],
+               ['Huisnummer',              get('holdingAdresHuisnummer')],
+               ['Postcode',                get('holdingAdresPostcode')],
+               ['Plaatsnaam',              get('holdingAdresPlaats')],
+               ['Naam accountantskantoor', get('holdingAccountantNaam')],
+               ['Contactpersoon',          get('holdingAccountantContact')],
+               ['Telefoonnummer',          get('holdingAccountantTelefoon')],
+               ['Mailadres',               get('holdingAccountantMail')],
+              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+              (formData?.holdingAandeelhouders || []).filter(Boolean).forEach(p => {
+                if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
+                if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
+                if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
+              });
+              [['holdingDirectorsSameAsShareholders', get('holdingDirectorsSameAsShareholders')],
+               ['Meer dan 15 uur per week',           get('holdingPersoneelMeer15')],
+               ['Minder dan 15 uur per week',         get('holdingPersoneelMinder15')],
+               ['Overige',                            get('holdingOverige')],
+              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+              if (rows.length) allSections.push({ title: 'Oprichting document (Holding)', rows });
+            }
+
+            // Stap 3 – Oprichting document (Werkmaatschappij)
+            { const rows = [];
+              [['Naam bedrijf',           get('werkmijNaamBedrijf')],
+               ['Telefoonnummer',          get('werkmijTelefoon')],
+               ['Mailadres',               get('werkmijMailadres')],
+               ['Naam accountantskantoor', get('werkmijAccountantNaam')],
+               ['Contactpersoon',          get('werkmijAccountantContact')],
+               ['Telefoonnummer',          get('werkmijAccountantTelefoon')],
+               ['Mailadres',               get('werkmijAccountantMail')],
+              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+              (formData?.werkmijAandeelhouders || []).filter(Boolean).forEach(p => {
+                if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
+                if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
+                if (fval(p.percentage)) rows.push(makeRow('Percentage', fval(p.percentage)));
+              });
+              [['werkmijDirectorsSameAsShareholders', get('werkmijDirectorsSameAsShareholders')],
+               ['Overige',                            get('werkmijOverige')],
+              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+              if (rows.length) allSections.push({ title: 'Oprichting document (Werkmaatschappij)', rows }); }
+
+            // Stap 4 – Natuurlijke personen
+            { const NP_KEYS = [
+                ['Voornamen','voornamen'],['Achternaam','achternaam'],
+                ['Geboortedatum','geboortedatum'],['Geboorteland','geboorteland'],
+                ['Heb je een BSN nummer?','heeftBsn'],['Nederlands BSN','bsn'],
+                ['Heb je een geregistreerd woonadres in Nederland?','nlAdresGeregistreerd'],
+                ['Nationaliteit','nationaliteit'],['Burgerlijke staat','burgerlijkeStaat'],
+                ['Persoonlijk IBAN','iban'],['Persoonlijk telefoonnummer','telefoon'],
+                ['Persoonlijk emailadres','email'],['Nederlands taalniveau','taalniveau'],
+                ['Volledig buitenlands woonadres','buitenlandsAdres'],
+              ];
+              const rows = [];
+              (formData?.naturalPersons || []).filter(Boolean).forEach((p, pi) => {
+                NP_KEYS.forEach(([label, key]) => { const v = fval(p[key]); if (v) rows.push(makeRow(label, v)); });
+                if (p.utilityBill) rows.push(makeRow('Upload utility bill (bewijs buitenlands adres)', fval(p.utilityBill), 'utility-bill', pi));
+              });
+              if (rows.length) allSections.push({ title: 'Natuurlijke personen', rows }); }
+
+            // Stap 5 – Omzettingsdocumenten
+            if (isOmzetting) {
+              const rows = [];
+              [['Type brononderneming',                              get('omzettingBronType')],
+               ['Naam EMZ/VOF',                                      get('omzettingBronNaam')],
+               ['KVK-nummer EMZ/VOF',                                get('omzettingBronKvk')],
+               ['Statutaire zetel EMZ/VOF',                          get('omzettingBronZetel')],
+               ['Eigenaar(s) EMZ/VOF + aandelenverdeling (bij VOF)', get('omzettingBronEigenaren')],
+               ['Doel van de EMZ/VOF',                               get('omzettingBronDoel')],
+              ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+              [['KVK-uittreksel eenmanszaak/VOF',                        'omzettingKvkUittreksel',              'kvk-uittreksel'],
+               ['Verzendbewijs intentieverklaring (Belastingdienst)',     'omzettingVerzendbewijsIntentie',      'verzendbewijs-intentie'],
+               ['Bewijs van ontvangst intentieverklaring',                'omzettingOntvangstbewijsIntentie',    'ontvangst-intentie'],
+               ['Intentieverklaring',                                     'omzettingIntentieverklaring',         'intentverklaring'],
+               ['Geleideformulier intentieverklaring',                    'omzettingGeleideformulier',           'geleideformulier'],
+               ['Inbrengbeschrijving (holding)',                          'omzettingInbrengbeschrijvingHolding', 'inbrengbeschrijving-holding'],
+               ['Inbrengbeschrijving (werkmaatschappij)',                 'omzettingInbrengbeschrijvingWerkmij', 'inbrengbeschrijving-werkmij'],
+               ['UBO-uittreksel VOF (indien van toepassing)',             'omzettingVofUboUittreksel',           'ubo-uittreksel'],
+              ].forEach(([label, key, kind]) => { const val = formData?.[key]; if (val) rows.push(makeRow(label, fval(val), kind, 0)); });
+              if (rows.length) allSections.push({ title: 'Omzettingsdocumenten', rows }); }
+
+            // Stap 6 – Uploads
+            { const rows = [];
+              const addUploadRows = (arr, label, kind) => {
+                if (!Array.isArray(arr) || !arr.length) return;
+                arr.forEach((item, i) => {
+                  const name = typeof item === 'object' ? (item.naam || item.name || item.filename || `Bestand ${i+1}`) : `Bestand ${i+1}`;
+                  rows.push(makeRow(arr.length > 1 ? `${label} ${i+1}` : label, name, kind, i));
+                });
+              };
+              addUploadRows(formData?.datacardBestanden, 'Datacard / PDC bestand(en)', 'datacard');
+              addUploadRows(formData?.pepBestanden, 'PEP verklaring(en)', 'pep');
+              addUploadRows(formData?.personeelsplannen, 'Personeelsplan / bedrijfsplan(nen)', 'personeelsplan');
+              if (formData?.holdingHuurovereenkomst) rows.push(makeRow('Huurovereenkomst holding', fval(formData.holdingHuurovereenkomst), 'holding-huurovereenkomst', 0));
+              if (formData?.werkmijHuurovereenkomst) rows.push(makeRow('Huurovereenkomst werkmaatschappij', fval(formData.werkmijHuurovereenkomst), 'werkmij-huurovereenkomst', 0));
+              if (rows.length) allSections.push({ title: 'Uploads', rows }); }
+
+            // Stap 7 – Indienen
+            { const lc = formData?.legalConsent;
+              const lcVal = (lc === true || lc === 'true' || lc === 'ja' || lc === 'Ja') ? 'Ja' : (lc != null && lc !== false && lc !== '' ? String(lc) : '');
+              if (lcVal) allSections.push({ title: 'Indienen', rows: [makeRow('legalConsent', lcVal)] }); }
+
+            const totalSteps  = allSections.length;
+            const totalFields = allSections.reduce((sum, s) => sum + s.rows.length, 0);
+
             // ── Cover page ────────────────────────────────────────────
             doc.rect(40, 40, 515, 4).fill('#1A3B70');
             doc.moveDown(0.5);
             doc.font('Helvetica-Bold').fontSize(22).fillColor('#1A3B70').text('Oprichtingsdocument', 40, 60);
             doc.font('Helvetica-Bold').fontSize(14).fillColor('#0F1D3A').text(request?.gewenstNaam || formData?.gewenstNaam || '—', 40, 88);
-            doc.moveDown(0.6);
+            doc.font('Helvetica').fontSize(9.5).fillColor('#5E6C84').text(`Stappen: ${totalSteps} | Velden: ${totalFields}`, 40, 108);
+            doc.y = 122;
+            doc.moveDown(0.4);
             const meta = [
                 ['Dossiernummer', caseId],
                 ['Product', product],
@@ -2198,142 +2333,15 @@ function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
             doc.rect(40, doc.y, 515, 0.7).fill('#E8EDF5');
             doc.moveDown(1);
 
-            // ── Product steps ─────────────────────────────────────────
-            const isHolding   = ['bv-holding','holding','eenmanszaak-omzetten-bv-holding','vof-naar-bv-holding'].some(t => product.includes(t.replace('bv-holding','bv holding'))) || product.includes('holding');
-            const isOmzetting = product.includes('omzetten') || product.includes('omzetting') || product.includes('vof');
-
-            // Step 1 — Aanvraagtype
-            const step1Rows = [
-                ['Gewenste bedrijfsnaam', get('gewenstNaam') || request?.gewenstNaam],
-                ['Product type', get('oprichtingType') || request?.oprichtingType],
-                ['Type formulier', get('formulierType')],
-                ['Spoedaanvraag', get('spoed')],
-                ['Nederlandse documenten', get('nederlandsTaal')],
-                ['Engelse documenten', get('engelsTaal')],
-                ['Sector', get('sector')],
-                ['Doel van de BV', get('doel')],
-                ['Startkapitaal', get('kapitaal')],
-                ['Startsaldo', get('startSaldo')],
-                ['Aandeelhouders', get('aandeelhouders')],
-                ['Bestaande holding als aandeelhouder', get('singleBvExistingHoldings')],
-                ['Wie worden aandeelhouder(s)?', get('existingHoldingOwner')],
-                ['Bestaande holding naam', get('bestaandHoldingNaam')],
-                ['Bestaande holding KvK', get('bestaandHoldingKvk')],
-            ].filter(([, v]) => v);
-            if (step1Rows.length) {
-                drawHeader('Stap 1 · Aanvraagtype', 'Kerngegevens van de aanvraag');
+            // ── Render sections ───────────────────────────────────────
+            allSections.forEach((section, si) => {
+                const stepNum  = si + 1;
+                const stepMeta = `Product: ${product} | Stap ${stepNum} | Veldcount: ${section.rows.length}`;
+                drawHeader(section.title, '', stepMeta);
                 drawTableHeader();
-                step1Rows.forEach(([l, v], i) => drawRow(i + 1, l, v));
+                section.rows.forEach((row, ri) => drawRow(ri + 1, row.label, row.value, row.fileKind, row.fileIdx));
                 doc.moveDown(0.4);
-            }
-
-            // Step 2 — Holding (if applicable)
-            if (isHolding) {
-                const holdingRows = [
-                    ['Naam holding', get('holdingNaamBedrijf')],
-                    ['Telefoonnummer', get('holdingTelefoon')],
-                    ['Mailadres', get('holdingMailadres')],
-                    ['Adres straat', get('holdingAdresStraat')],
-                    ['Adres huisnummer', get('holdingAdresHuisnummer')],
-                    ['Postcode', get('holdingAdresPostcode')],
-                    ['Woonplaats', get('holdingAdresPlaats')],
-                    ['Heeft accountant', get('holdingHasAccountant')],
-                    ['Accountantskantoor', get('holdingAccountantNaam')],
-                    ['Accountant e-mail', get('holdingAccountantEmail')],
-                ].filter(([, v]) => v);
-                if (holdingRows.length || formData?.holdingAandeelhouders?.length) {
-                    drawHeader('Stap 2 · Oprichting document (Holding)', 'Gegevens van de holding B.V.');
-                    if (holdingRows.length) { drawTableHeader(); holdingRows.forEach(([l, v], i) => drawRow(i + 1, l, v)); doc.moveDown(0.3); }
-                    drawPersonBlock('Aandeelhouders holding', formData?.holdingAandeelhouders, PERSON_FIELDS);
-                    drawPersonBlock('Bestuurders holding', formData?.holdingBestuurders, PERSON_FIELDS);
-                    doc.moveDown(0.4);
-                }
-            }
-
-            // Step 3 — Werkmaatschappij
-            const werkmijRows = [
-                ['Naam werkmaatschappij', get('werkmijNaamBedrijf')],
-                ['Telefoonnummer', get('werkmijTelefoon')],
-                ['Mailadres', get('werkmijMailadres')],
-                ['Adres straat', get('werkmijAdresStraat')],
-                ['Adres huisnummer', get('werkmijAdresHuisnummer')],
-                ['Postcode', get('werkmijAdresPostcode')],
-                ['Woonplaats', get('werkmijAdresPlaats')],
-                ['Activiteiten / doel', get('werkmijActiviteiten')],
-                ['Import registratie', get('werkmijImport')],
-                ['Export registratie', get('werkmijExport')],
-                ['Heeft accountant', get('werkmijHasAccountant')],
-                ['Accountantskantoor', get('werkmijAccountantNaam')],
-                ['Accountant e-mail', get('werkmijAccountantEmail')],
-                ['Heeft werkmaatschappij', get('hasWorkmaatschappij')],
-            ].filter(([, v]) => v);
-            if (werkmijRows.length || formData?.werkmijAandeelhouders?.length) {
-                const stepNum = isHolding ? 3 : 2;
-                drawHeader(`Stap ${stepNum} · Oprichting document (Werkmaatschappij)`, 'Gegevens van de werkmaatschappij B.V.');
-                if (werkmijRows.length) { drawTableHeader(); werkmijRows.forEach(([l, v], i) => drawRow(i + 1, l, v)); doc.moveDown(0.3); }
-                drawPersonBlock('Aandeelhouders werkmaatschappij', formData?.werkmijAandeelhouders, PERSON_FIELDS);
-                drawPersonBlock('Bestuurders werkmaatschappij', formData?.werkmijBestuurders, PERSON_FIELDS);
-                doc.moveDown(0.4);
-            }
-
-            // Step 4 — Natuurlijke personen
-            if (formData?.naturalPersons?.length || formData?.rechtspersonen?.length) {
-                const stepNum = isHolding ? 4 : 3;
-                drawHeader(`Stap ${stepNum} · Natuurlijke personen`, 'Alle personen uit de dossieropbouw');
-                drawPersonBlock('Natuurlijke personen', formData?.naturalPersons, PERSON_FIELDS);
-                drawPersonBlock('Rechtspersonen', formData?.rechtspersonen, [
-                    { key: 'naamBedrijf', label: 'Naam bedrijf' }, { key: 'kvkNummer', label: 'KvK-nummer' },
-                    { key: 'rechtsvorm', label: 'Rechtsvorm' }, { key: 'email', label: 'E-mail' },
-                ]);
-                doc.moveDown(0.4);
-            }
-
-            // Step — Omzetting (if applicable)
-            if (isOmzetting) {
-                const omzRows = [
-                    ['Bron type', get('omzettingBronType')],
-                    ['Naam bron', get('omzettingBronNaam')],
-                    ['KvK bron', get('omzettingBronKvk')],
-                    ['Zetel bron', get('omzettingBronZetel')],
-                    ['Eigenaren bron', get('omzettingBronEigenaren')],
-                    ['Doel bron', get('omzettingBronDoel')],
-                    ['KvK uittreksel ontvangen', formData?.omzettingKvkUittreksel ? 'Ja' : ''],
-                    ['Verzendbewijs intentie', formData?.omzettingVerzendbewijsIntentie ? 'Ja' : ''],
-                    ['Ontvangstbewijs intentie', formData?.omzettingOntvangstbewijsIntentie ? 'Ja' : ''],
-                    ['Intentieverklaring', formData?.omzettingIntentieverklaring ? 'Ja' : ''],
-                    ['Geleideformulier', formData?.omzettingGeleideformulier ? 'Ja' : ''],
-                ].filter(([, v]) => v);
-                if (omzRows.length) {
-                    drawHeader('Stap · Omzettingsdocumenten', 'Documenten voor omzetting');
-                    drawTableHeader();
-                    omzRows.forEach(([l, v], i) => drawRow(i + 1, l, v));
-                    doc.moveDown(0.4);
-                }
-            }
-
-            // Step — Uploads
-            const uploadStepNum = isHolding ? (isOmzetting ? 6 : 5) : (isOmzetting ? 5 : 4);
-            const hasUploads = formData?.datacardBestanden?.length || formData?.pepBestanden?.length ||
-                formData?.personeelsplannen?.length || formData?.holdingHuurovereenkomst ||
-                formData?.werkmijHuurovereenkomst;
-            if (hasUploads) {
-                drawHeader(`Stap ${uploadStepNum} · Uploads`, 'Geüploade bestanden');
-                drawTableHeader();
-                let ri = 1;
-                const addFileRows = (arr, label, kind) => {
-                    if (!Array.isArray(arr) || !arr.length) return;
-                    arr.forEach((item, i) => {
-                        const name = typeof item === 'object' ? (item.naam || item.name || item.filename || `Bestand ${i+1}`) : `Bestand ${i+1}`;
-                        drawRow(ri++, `${label} ${i + 1}`, name, kind, i);
-                    });
-                };
-                addFileRows(formData?.datacardBestanden, 'Datacard', 'datacard');
-                addFileRows(formData?.pepBestanden, 'PEP-verklaring', 'pep');
-                addFileRows(formData?.personeelsplannen, 'Personeelsplan', 'personeelsplan');
-                if (formData?.holdingHuurovereenkomst) drawRow(ri++, 'Huurovereenkomst holding', fval(formData.holdingHuurovereenkomst), 'holding-huurovereenkomst', 0);
-                if (formData?.werkmijHuurovereenkomst) drawRow(ri++, 'Huurovereenkomst werkmij', fval(formData.werkmijHuurovereenkomst), 'werkmij-huurovereenkomst', 0);
-                doc.moveDown(0.4);
-            }
+            });
 
             // Opmerkingen
             if (formData?.opmerkingen) {
