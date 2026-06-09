@@ -443,6 +443,92 @@
       margin-left: 6px;
     }
 
+    /* ── Spoed upsell card ── */
+    .spoed-card {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 14px 16px;
+      border: 1.5px solid #d6e0ef;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, box-shadow .15s;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .spoed-card:hover {
+      border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+      background: #f8faff;
+    }
+
+    .spoed-card.checked {
+      border-color: color-mix(in srgb, var(--primary) 60%, transparent);
+      background: color-mix(in srgb, var(--primary) 5%, #fff);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+
+    .spoed-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--primary) 10%, #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--primary);
+    }
+
+    .spoed-card-info { flex: 1; min-width: 0; }
+
+    .spoed-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.3;
+    }
+
+    .spoed-card-sub {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .spoed-card-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .spoed-check-indicator {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #b0bfcf;
+      border-radius: 5px;
+      flex-shrink: 0;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spoed-card.checked .spoed-check-indicator {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
     .thankyou {
       display: none;
       padding: 28px 26px 30px;
@@ -584,6 +670,22 @@
             </div>
           </div>
 
+          <!-- Spoed upsell -->
+          <label class="spoed-card" id="spoedCard" onclick="toggleSpoed(this)">
+            <input type="checkbox" class="extra-check" id="spoedCheck" data-key="spoed" data-price="909" data-label="Spoedbehandeling (24-48 uur)" style="display:none;">
+            <div class="spoed-card-icon">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div class="spoed-card-info">
+              <span class="spoed-card-title">Spoedbehandeling</span>
+              <span class="spoed-card-sub">Verwerking binnen 24-48 uur i.p.v. 5 werkdagen</span>
+            </div>
+            <span class="spoed-card-price">+ € 909</span>
+            <div class="spoed-check-indicator" id="spoedIndicator">
+              <svg width="11" height="11" fill="none" stroke="#fff" viewBox="0 0 24 24" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </label>
+
           <!-- Extra opties (dropdown met scroll) -->
           <div class="extras-wrap">
             <button type="button" class="extras-toggle" id="extrasToggleBtn" onclick="toggleExtras()">
@@ -592,7 +694,6 @@
             </button>
             <div class="extras-dropdown-body" id="extrasPanel">
               <div class="extras-scroll">
-                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="spoed" data-price="909" data-label="Spoedbehandeling (24-48 uur)"><span class="extra-opt-label">Spoedbehandeling (24-48 uur)</span><span class="extra-opt-price">+ € 909</span></label>
                 <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="aandeelhoudersregister" data-price="325" data-label="Nieuw aandeelhoudersregister"><span class="extra-opt-label">Nieuw aandeelhoudersregister</span><span class="extra-opt-price">+ € 325</span></label>
                 <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="ah-buiten-eu" data-price="500" data-label="Aandeelhouder buiten de EU"><span class="extra-opt-label">Aandeelhouder buiten de EU</span><span class="extra-opt-price">+ € 500</span></label>
                 <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-met-nl-bank" data-price="50" data-label="Persoon buiten NL met NL-bankrekening"><span class="extra-opt-label">Persoon buiten NL met NL-bankrekening</span><span class="extra-opt-price">+ € 50</span></label>
@@ -735,7 +836,13 @@
       if (icon) icon.style.transform = open ? '' : 'rotate(180deg)';
     }
 
-    function syncExtrasLabel() {
+    function toggleSpoed(card) {
+      const cb = document.getElementById('spoedCheck');
+      cb.checked = !cb.checked;
+      card.classList.toggle('checked', cb.checked);
+      updateTotals();
+      syncExtrasLabel();
+    }
       const count = document.querySelectorAll('.extra-check:checked').length;
       const lbl = document.getElementById('extrasToggleLabel');
       const btn = document.getElementById('extrasToggleBtn');
