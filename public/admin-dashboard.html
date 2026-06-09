@@ -1049,20 +1049,19 @@ let tagDefinitions = [];
 let dossierTagMap  = {};  // { dossierNr: [tagId, ...] }
 
 function loadTagSystem() {
-  const stored = localStorage.getItem('ax_tags');
-  tagDefinitions = stored ? JSON.parse(stored) : DEFAULT_TAGS.map(t => ({ ...t }));
-  if (!stored) localStorage.setItem('ax_tags', JSON.stringify(tagDefinitions));
-  const storedMap = localStorage.getItem('ax_dossier_tags');
-  dossierTagMap = storedMap ? JSON.parse(storedMap) : {};
+  return Promise.all([
+    fetch('/api/tags').then(r => r.ok ? r.json() : []),
+    fetch('/api/dossier-tags').then(r => r.ok ? r.json() : {})
+  ]).then(([tags, map]) => {
+    tagDefinitions = tags;
+    dossierTagMap  = map;
+  }).catch(() => {
+    // fallback: keep defaults already set
+  });
 }
 
-function saveTagDefinitions() {
-  localStorage.setItem('ax_tags', JSON.stringify(tagDefinitions));
-}
-
-function saveDossierTags() {
-  localStorage.setItem('ax_dossier_tags', JSON.stringify(dossierTagMap));
-}
+function saveTagDefinitions() { /* persisted via API */ }
+function saveDossierTags()    { /* persisted via API */ }
 
 function getDossierTags(nr) {
   return dossierTagMap[nr] || [];
@@ -1073,18 +1072,35 @@ function toggleDossierTag(nr, tagId) {
   const idx = tags.indexOf(tagId);
   if (idx === -1) tags.push(tagId); else tags.splice(idx, 1);
   dossierTagMap[nr] = tags;
-  saveDossierTags();
+  // Optimistic re-render, then persist
   applyAllFilters();
+  fetch('/api/dossier-tags/' + encodeURIComponent(nr), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tags })
+  }).catch(e => console.error('toggleDossierTag error:', e));
 }
 
-function addTagDefinition(name, color) {
+async function addTagDefinition(name, color) {
   const id = 'tag_' + Date.now();
+  try {
+    const r = await fetch('/api/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, name, color })
+    });
+    if (r.ok) {
+      const tag = await r.json();
+      tagDefinitions.push(tag);
+      return tag.id;
+    }
+  } catch(e) { console.error('addTagDefinition error:', e); }
+  // fallback: add locally
   tagDefinitions.push({ id, name, color });
-  saveTagDefinitions();
   return id;
 }
 
-// Auto-apply "Urgent" tag for spoed dossiers
+// Auto-apply "Urgent" tag for spoed dossiers; returns true if a change was made
 function autoApplyTags(d) {
   const isSpoed = d.oprichtingType === 'bv-spoed' ||
     (d.pricing?.extras || []).some(e =>
@@ -1096,8 +1112,10 @@ function autoApplyTags(d) {
     if (!tags.includes('urgent')) {
       tags.push('urgent');
       dossierTagMap[d.dossierNr] = tags;
+      return true;
     }
   }
+  return false;
 }
 
 function renderTagChips(nr) {
@@ -1180,15 +1198,23 @@ function closeTagCreateModal() {
   document.getElementById('tagCreateModal').style.display = 'none';
 }
 
-function createTagFromModal() {
-  const nr  = document.getElementById('tagCreateNr').value;
+async function createTagFromModal() {
+  const nr   = document.getElementById('tagCreateNr').value;
   const name = document.getElementById('tagCreateName').value.trim();
   const color = document.getElementById('tagCreateColor').value;
   if (!name) { document.getElementById('tagCreateName').focus(); return; }
-  const id = addTagDefinition(name, color);
+  const id = await addTagDefinition(name, color);
   if (nr) {
     const tags = [...getDossierTags(nr)];
-    if (!tags.includes(id)) { tags.push(id); dossierTagMap[nr] = tags; saveDossierTags(); }
+    if (!tags.includes(id)) {
+      tags.push(id);
+      dossierTagMap[nr] = tags;
+      fetch('/api/dossier-tags/' + encodeURIComponent(nr), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags })
+      }).catch(() => {});
+    }
   }
   closeTagCreateModal();
   applyAllFilters();
@@ -1432,9 +1458,16 @@ async function loadDossiers() {
         if (refreshed.ok) requests = await refreshed.json();
       }
       allDossiersData = requests.map(mapRequestToDossier);
-      // Auto-apply tags (e.g. Urgent for spoed dossiers)
-      allDossiersData.forEach(d => autoApplyTags(d));
-      saveDossierTags();
+      // Auto-apply tags (e.g. Urgent for spoed dossiers) and persist any new assignments
+      allDossiersData.forEach(d => {
+        if (autoApplyTags(d)) {
+          fetch('/api/dossier-tags/' + encodeURIComponent(d.dossierNr), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tags: dossierTagMap[d.dossierNr] || [] })
+          }).catch(() => {});
+        }
+      });
     }
   } catch(e) {
     console.error('Failed to load dossiers:', e);
@@ -3381,8 +3414,7 @@ async function savePermissions() {
 }
 
 loadUser();
-loadTagSystem();
-loadDossiers();
+loadTagSystem().then(() => loadDossiers());
 loadAdmins();
 loadPartners();
 loadPendingBadge();

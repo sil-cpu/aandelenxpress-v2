@@ -948,6 +948,47 @@ app.patch('/api/dossier-assignments/:nr', requireAdmin, async (req, res) => {
     res.json({ success: true, nr, assignedTo: adminName || null });
 });
 
+// ── Tags ───────────────────────────────────────────────────────────────────
+app.get('/api/tags', requireAdmin, async (req, res) => {
+    const { data, error } = await supabase.from('tag_definitions').select('*').order('created_at');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+});
+
+app.post('/api/tags', requireAdmin, async (req, res) => {
+    const { id, name, color } = req.body;
+    if (!name || !color) return res.status(400).json({ error: 'name en color zijn vereist' });
+    const tagId = id || ('tag_' + Date.now());
+    const { data, error } = await supabase
+        .from('tag_definitions').upsert({ id: tagId, name, color }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.get('/api/dossier-tags', requireAdmin, async (req, res) => {
+    const { data, error } = await supabase.from('dossier_tags').select('*');
+    if (error) return res.status(500).json({ error: error.message });
+    const map = {};
+    (data || []).forEach(row => {
+        if (!map[row.dossier_nr]) map[row.dossier_nr] = [];
+        map[row.dossier_nr].push(row.tag_id);
+    });
+    res.json(map);
+});
+
+app.put('/api/dossier-tags/:nr', requireAdmin, async (req, res) => {
+    const { nr } = req.params;
+    const { tags } = req.body;
+    if (!Array.isArray(tags)) return res.status(400).json({ error: 'tags moet een array zijn' });
+    await supabase.from('dossier_tags').delete().eq('dossier_nr', nr);
+    if (tags.length > 0) {
+        const rows = tags.map(tag_id => ({ dossier_nr: nr, tag_id }));
+        const { error } = await supabase.from('dossier_tags').insert(rows);
+        if (error) return res.status(500).json({ error: error.message });
+    }
+    res.json({ success: true, nr, tags });
+});
+
 // ── Reseller Requests ──────────────────────────────────────────────────────
 app.post('/api/reseller-requests', requireLogin, async (req, res) => {
     const { clientName, clientEmail, clientPhone, oprichtingType, gewenstNaam, doel, aandeelhouders, kapitaal, startSaldo, opmerkingen, pricing } = req.body;
