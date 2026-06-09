@@ -35,13 +35,15 @@
       .tag-chip { display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap;margin:1px 2px 1px 0;vertical-align:middle;cursor:default; }
       .tag-chip-add { display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:0.72rem;font-weight:600;color:#8A9BB5;border:1px dashed #CBD5E0;background:transparent;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap; }
       .tag-chip-add:hover { border-color:#1A3B70;color:#1A3B70;background:#EEF4FF; }
-      /* Tag modal items */
-      .tag-modal-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;border:1px solid #E8EDF5;margin-bottom:6px; }
-      .tag-modal-item:hover { background:#F7FAFC;border-color:#CBD5E0; }
-      .tag-modal-item.active { background:#EEF4FF;border-color:#BEE3F8; }
-      .tag-modal-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
-      .tag-modal-name { flex:1;font-size:0.88rem;color:#0F1D3A;font-weight:500; }
-      .tag-modal-check { color:#1A3B70;font-weight:700;font-size:0.9rem; }
+      /* Tag dropdown portal */
+      .tag-dd-item { display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;transition:background .1s;font-size:0.85rem;border-radius:0; }
+      .tag-dd-item:hover { background:#F7FAFC; }
+      .tag-dd-item.active { background:#EEF4FF; }
+      .tag-dd-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
+      .tag-dd-name { flex:1;color:#0F1D3A;font-weight:500; }
+      .tag-dd-check { color:#1A3B70;font-weight:700;font-size:0.82rem; }
+      .tag-color-swatch { display:inline-block;width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0; }
+      .tag-color-swatch:hover { transform:scale(1.15); }
       /* Email modal */
       .em-overlay { display:none;position:fixed;inset:0;background:rgba(10,20,50,.45);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center; }
       .em-overlay.open { display:flex; }
@@ -1109,46 +1111,87 @@ function renderTagChips(nr) {
   }).join('');
 }
 
-function openTagModal(nr, event) {
-  if (event) { event.stopPropagation(); closeAllDossierMenus(); }
-  const d = allDossiersData.find(x => x.dossierNr === nr);
-  document.getElementById('tagModalTitle').textContent = d ? d.name : nr;
-  document.getElementById('tagModalNr').value = nr;
-  document.getElementById('tagModalNewName').value = '';
-  document.getElementById('tagModalNewColor').value = '#1A3B70';
-  renderTagModalList(nr);
-  document.getElementById('tagModal').style.display = 'flex';
+// Tag dropdown portal
+function openTagDropdown(nr, e) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const portal = document.getElementById('tagDdPortal');
+  if (portal._openNr === nr) { closeTagDropdown(); return; }
+  closeTagDropdown();
+  closeAllStatusDropdowns();
+  closeAllDossierMenus();
+  renderTagDropdownContent(nr);
+  portal._openNr = nr;
+  portal.style.display = 'block';
+  const pw = Math.max(portal.scrollWidth, 200);
+  let left = rect.left + window.scrollX;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  portal.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+  portal.style.left = left + 'px';
 }
 
-function closeTagModal() {
-  document.getElementById('tagModal').style.display = 'none';
+function closeTagDropdown() {
+  const portal = document.getElementById('tagDdPortal');
+  if (portal) { portal.style.display = 'none'; portal._openNr = null; }
 }
 
-function renderTagModalList(nr) {
+function renderTagDropdownContent(nr) {
+  const portal = document.getElementById('tagDdPortal');
   const current = getDossierTags(nr);
-  const container = document.getElementById('tagModalList');
-  if (!tagDefinitions.length) {
-    container.innerHTML = '<div style="color:#8A9BB5;font-size:0.88rem;text-align:center;padding:12px 0;">Nog geen tags — maak er een aan hieronder.</div>';
-    return;
-  }
-  container.innerHTML = tagDefinitions.map(tag => {
-    const active = current.includes(tag.id);
-    return `<div class="tag-modal-item ${active ? 'active' : ''}" onclick="toggleDossierTag('${nr}','${tag.id}');renderTagModalList('${nr}')">
-      <span class="tag-modal-dot" style="background:${tag.color};"></span>
-      <span class="tag-modal-name">${tag.name}</span>
-      ${active ? '<span class="tag-modal-check">✓</span>' : ''}
+  const tagItems = tagDefinitions.length
+    ? tagDefinitions.map(tag => {
+        const active = current.includes(tag.id);
+        return `<div class="tag-dd-item ${active ? 'active' : ''}" onclick="event.stopPropagation();toggleTagInDropdown('${nr}','${tag.id}')">
+          <span class="tag-dd-dot" style="background:${tag.color};"></span>
+          <span class="tag-dd-name">${tag.name}</span>
+          ${active ? '<span class="tag-dd-check">✓</span>' : ''}
+        </div>`;
+      }).join('')
+    : '<div style="padding:8px 14px;color:#8A9BB5;font-size:0.82rem;">Nog geen tags aangemaakt</div>';
+
+  portal.innerHTML = `
+    <div style="padding:4px 0 0;">${tagItems}</div>
+    <div style="margin:4px 0 0;border-top:1px solid #E8EDF5;">
+      <button onclick="event.stopPropagation();openTagCreateModal(document.getElementById('tagDdPortal')._openNr)"
+        style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;cursor:pointer;font-size:0.85rem;color:#1A3B70;font-family:inherit;font-weight:600;transition:background .1s;"
+        onmouseover="this.style.background='#EEF4FF'" onmouseout="this.style.background='none'">
+        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tag toevoegen
+      </button>
     </div>`;
-  }).join('');
+}
+
+function toggleTagInDropdown(nr, tagId) {
+  toggleDossierTag(nr, tagId);
+  renderTagDropdownContent(nr);
+}
+
+// Small create-tag modal
+function openTagCreateModal(nr) {
+  closeTagDropdown();
+  document.getElementById('tagCreateNr').value = nr || '';
+  document.getElementById('tagCreateName').value = '';
+  document.getElementById('tagCreateColor').value = '#1A3B70';
+  document.getElementById('tagCreateModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('tagCreateName').focus(), 50);
+}
+
+function closeTagCreateModal() {
+  document.getElementById('tagCreateModal').style.display = 'none';
 }
 
 function createTagFromModal() {
-  const nr = document.getElementById('tagModalNr').value;
-  const name = document.getElementById('tagModalNewName').value.trim();
-  const color = document.getElementById('tagModalNewColor').value;
-  if (!name) { document.getElementById('tagModalNewName').focus(); return; }
-  addTagDefinition(name, color);
-  document.getElementById('tagModalNewName').value = '';
-  renderTagModalList(nr);
+  const nr  = document.getElementById('tagCreateNr').value;
+  const name = document.getElementById('tagCreateName').value.trim();
+  const color = document.getElementById('tagCreateColor').value;
+  if (!name) { document.getElementById('tagCreateName').focus(); return; }
+  const id = addTagDefinition(name, color);
+  if (nr) {
+    const tags = [...getDossierTags(nr)];
+    if (!tags.includes(id)) { tags.push(id); dossierTagMap[nr] = tags; saveDossierTags(); }
+  }
+  closeTagCreateModal();
   applyAllFilters();
 }
 // ── END TAG SYSTEM ───────────────────────────────────────────────────────────
@@ -1620,7 +1663,7 @@ function renderTable(id, rows, withActions = false) {
             <button onclick="location.href='dossier-detail.html?nr=${d.dossierNr}'">Dossier bekijken</button>
             <button onclick="${isArchived ? `unarchiveDossier('${d.dossierNr}')` : `archiveDossier('${d.dossierNr}')`}">${isArchived ? 'Dearchiveren' : 'Dossier archiveren'}</button>
             <hr/>
-            <button onclick="openTagModal('${d.dossierNr}',event)" style="display:flex;align-items:center;gap:8px;">
+            <button onclick="openTagDropdown('${d.dossierNr}',event)" style="display:flex;align-items:center;gap:8px;">
               <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
               Tags beheren
             </button>
@@ -1644,7 +1687,7 @@ function renderTable(id, rows, withActions = false) {
       </td>
       <td onclick="event.stopPropagation()" style="min-width:90px;">
         ${renderTagChips(d.dossierNr)}
-        <button class="tag-chip-add" onclick="openTagModal('${d.dossierNr}',event)" title="Tags beheren">
+        <button class="tag-chip-add" onclick="openTagDropdown('${d.dossierNr}',event)" title="Tags beheren">
           <svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </td>
@@ -3339,6 +3382,7 @@ loadPartners();
 loadPendingBadge();
 loadResellerRequests();
 document.addEventListener('click', closeAllDossierMenus);
+document.addEventListener('click', closeTagDropdown);
 
 // ── Email modal (status change) ─────────────────────────────
 let adminPendingStatus = null; // { nr, newStatus, clientEmail, name }
@@ -3424,50 +3468,49 @@ async function adminSaveStatusAndSendEmail() {
 <!-- Status dropdown portal (renders outside table to avoid layout shift) -->
 <div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow-y:auto;padding:4px 0;max-height:340px;"></div>
 
-<!-- Tag modal -->
-<div id="tagModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,50,.45);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTagModal()">
-  <div style="background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.2);width:400px;max-width:calc(100vw - 32px);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;padding:18px 22px 14px;border-bottom:1px solid #EEF2FF;">
-      <svg width="16" height="16" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0;margin-right:10px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-      <h3 style="margin:0;font-size:1rem;color:#0F1D3A;flex:1;font-weight:600;">Tags beheren</h3>
-      <button onclick="closeTagModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#94A3B8;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
+<!-- Tag dropdown portal -->
+<div id="tagDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:190px;max-width:260px;overflow-y:auto;max-height:320px;"></div>
+
+<!-- Tag create modal -->
+<div id="tagCreateModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,50,.42);backdrop-filter:blur(2px);z-index:10000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTagCreateModal()">
+  <div style="background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.18);width:340px;max-width:calc(100vw - 32px);padding:24px;">
+    <div style="display:flex;align-items:center;margin-bottom:20px;">
+      <svg width="15" height="15" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0;margin-right:9px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      <h3 style="margin:0;font-size:0.95rem;color:#0F1D3A;font-weight:600;flex:1;">Nieuwe tag aanmaken</h3>
+      <button onclick="closeTagCreateModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#94A3B8;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
     </div>
-    <!-- Dossier name sub-line -->
-    <div style="padding:10px 22px 0;font-size:0.78rem;color:#8A9BB5;">
-      Dossier: <strong id="tagModalTitle" style="color:#0F1D3A;font-weight:600;"></strong>
+    <input type="hidden" id="tagCreateNr">
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:0.78rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Naam</label>
+      <input id="tagCreateName" type="text" placeholder="bijv. Spoed, VIP, Review…" maxlength="24"
+        style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #DDE5F4;border-radius:8px;font-size:0.9rem;font-family:inherit;color:#0F1D3A;outline:none;"
+        onfocus="this.style.borderColor='#2B6CB5';this.style.boxShadow='0 0 0 3px rgba(43,108,181,.1)'"
+        onblur="this.style.borderColor='#DDE5F4';this.style.boxShadow='none'"
+        onkeydown="if(event.key==='Enter')createTagFromModal()">
     </div>
-    <input type="hidden" id="tagModalNr">
-    <!-- Tag list -->
-    <div style="padding:14px 22px;flex:1;overflow-y:auto;">
-      <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Tags selecteren</div>
-      <div id="tagModalList"></div>
-      <!-- Create new tag -->
-      <div style="border-top:1px solid #E8EDF5;padding-top:16px;margin-top:8px;">
-        <div style="font-size:0.78rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Nieuwe tag aanmaken</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input id="tagModalNewName" type="text" placeholder="Naam van de tag…" maxlength="24"
-            style="flex:1;padding:8px 10px;border:1px solid #DDE5F4;border-radius:7px;font-size:0.88rem;font-family:inherit;color:#0F1D3A;outline:none;"
-            onfocus="this.style.borderColor='#2B6CB5'"
-            onblur="this.style.borderColor='#DDE5F4'"
-            onkeydown="if(event.key==='Enter')createTagFromModal()">
-          <input id="tagModalNewColor" type="color" value="#1A3B70"
-            title="Kies een kleur"
-            style="width:38px;height:36px;border:1px solid #DDE5F4;border-radius:7px;cursor:pointer;padding:2px;flex-shrink:0;">
-          <button onclick="createTagFromModal()"
-            style="padding:8px 14px;background:#1A3B70;color:white;border:none;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;"
-            onmouseover="this.style.background='#0F2658'" onmouseout="this.style.background='#1A3B70'">
-            + Aanmaken
-          </button>
-        </div>
+    <div style="margin-bottom:22px;">
+      <label style="display:block;font-size:0.78rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Kleur</label>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span class="tag-color-swatch" style="background:#E53E3E;" onclick="document.getElementById('tagCreateColor').value='#E53E3E';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <span class="tag-color-swatch" style="background:#DD6B20;" onclick="document.getElementById('tagCreateColor').value='#DD6B20';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <span class="tag-color-swatch" style="background:#D69E2E;" onclick="document.getElementById('tagCreateColor').value='#D69E2E';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <span class="tag-color-swatch" style="background:#2F855A;" onclick="document.getElementById('tagCreateColor').value='#2F855A';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <span class="tag-color-swatch" style="background:#2B6CB0;" onclick="document.getElementById('tagCreateColor').value='#2B6CB0';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <span class="tag-color-swatch" style="background:#7B2D8B;" onclick="document.getElementById('tagCreateColor').value='#7B2D8B';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <span class="tag-color-swatch" style="background:#1A3B70;" onclick="document.getElementById('tagCreateColor').value='#1A3B70';document.querySelectorAll('.tag-color-swatch').forEach(s=>s.style.outline='none');this.style.outline='2px solid #333';"></span>
+        <input id="tagCreateColor" type="color" value="#1A3B70" title="Aangepaste kleur"
+          style="width:30px;height:30px;border:1px solid #DDE5F4;border-radius:6px;cursor:pointer;padding:1px;flex-shrink:0;">
       </div>
     </div>
-    <!-- Footer -->
-    <div style="padding:14px 22px;border-top:1px solid #EEF2FF;display:flex;justify-content:flex-end;">
-      <button onclick="closeTagModal()"
-        style="padding:9px 22px;background:#1A3B70;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;"
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeTagCreateModal()"
+        style="padding:9px 18px;background:#F0F4FF;color:#0F1D3A;border:1px solid #DDE5F4;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;">
+        Annuleren
+      </button>
+      <button onclick="createTagFromModal()"
+        style="padding:9px 20px;background:#1A3B70;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;"
         onmouseover="this.style.background='#0F2658'" onmouseout="this.style.background='#1A3B70'">
-        Sluiten
+        + Aanmaken
       </button>
     </div>
   </div>
