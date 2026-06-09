@@ -232,9 +232,11 @@ async function ensureBrandingBucket() {
         }
         const fileExists = (buckets || []).some(b => b.name === FILE_BUCKET);
         if (!fileExists) {
-            await supabase.storage.createBucket(FILE_BUCKET, { public: false, fileSizeLimit: 20 * 1024 * 1024 });
+            const { error: bucketErr } = await supabase.storage.createBucket(FILE_BUCKET, { public: false, fileSizeLimit: 20 * 1024 * 1024 });
+            if (bucketErr) console.error('[startup] Failed to create bucket dossier-files:', bucketErr.message);
+            else console.log('[startup] Created storage bucket: dossier-files');
         }
-    } catch (_) {}
+    } catch (e) { console.error('[startup] Storage init error:', e.message); }
 }
 
 async function getLegacyBrandingByEmail(email) {
