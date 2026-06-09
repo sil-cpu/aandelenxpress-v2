@@ -31,6 +31,17 @@
       .btn-trash-empty { background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030; }
       .btn-trash-empty:hover { background:#FED7D7; }
       .trash-header-icon { width:18px;height:18px;color:#C53030; }
+      /* Tag chips */
+      .tag-chip { display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap;margin:1px 2px 1px 0;vertical-align:middle;cursor:default; }
+      .tag-chip-add { display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:0.72rem;font-weight:600;color:#8A9BB5;border:1px dashed #CBD5E0;background:transparent;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap; }
+      .tag-chip-add:hover { border-color:#1A3B70;color:#1A3B70;background:#EEF4FF; }
+      /* Tag modal items */
+      .tag-modal-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;border:1px solid #E8EDF5;margin-bottom:6px; }
+      .tag-modal-item:hover { background:#F7FAFC;border-color:#CBD5E0; }
+      .tag-modal-item.active { background:#EEF4FF;border-color:#BEE3F8; }
+      .tag-modal-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+      .tag-modal-name { flex:1;font-size:0.88rem;color:#0F1D3A;font-weight:500; }
+      .tag-modal-check { color:#1A3B70;font-weight:700;font-size:0.9rem; }
       /* Email modal */
       .em-overlay { display:none;position:fixed;inset:0;background:rgba(10,20,50,.45);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center; }
       .em-overlay.open { display:flex; }
@@ -174,7 +185,7 @@
           <div class="dash-card table-scroll-wrap">
             <table class="admin-table">
               <thead>
-                <tr><th>Bedrijfsnaam</th><th>Type</th><th>Partner</th><th>Status</th><th>Datum</th><th>KvK</th><th>Contact</th><th>Toegewezen aan</th></tr>
+                <tr><th>Bedrijfsnaam</th><th>Type</th><th>Partner</th><th>Status</th><th>Tags</th><th>Datum</th><th>KvK</th><th>Contact</th><th>Toegewezen aan</th></tr>
               </thead>
               <tbody id="recentDossiers"></tbody>
             </table>
@@ -305,6 +316,7 @@
                 <th class="sortable" onclick="setSortColumn('type')">Type <span class="sort-indicator" id="sort-type"></span></th>
                 <th class="sortable" onclick="setSortColumn('partner')">Partner <span class="sort-indicator" id="sort-partner"></span></th>
                 <th class="sortable" onclick="setSortColumn('status')">Status <span class="sort-indicator" id="sort-status"></span></th>
+                <th>Tags</th>
                 <th class="sortable" onclick="setSortColumn('date')">Datum <span class="sort-indicator" id="sort-date"></span></th>
                 <th class="sortable" onclick="setSortColumn('kvk')">KvK <span class="sort-indicator" id="sort-kvk"></span></th>
                 <th class="sortable" onclick="setSortColumn('contact')">Contact <span class="sort-indicator" id="sort-contact"></span></th>
@@ -1024,6 +1036,122 @@
 
 <script>
 let allDossiersData = [];
+
+// ── TAG SYSTEM ──────────────────────────────────────────────────────────────
+const DEFAULT_TAGS = [
+  { id: 'urgent',   name: 'Urgent',   color: '#E53E3E' },
+  { id: 'opvolgen', name: 'Opvolgen', color: '#DD6B20' },
+  { id: 'upsell',   name: 'Upsell',   color: '#7B2D8B' },
+];
+
+let tagDefinitions = [];
+let dossierTagMap  = {};  // { dossierNr: [tagId, ...] }
+
+function loadTagSystem() {
+  const stored = localStorage.getItem('ax_tags');
+  tagDefinitions = stored ? JSON.parse(stored) : DEFAULT_TAGS.map(t => ({ ...t }));
+  if (!stored) localStorage.setItem('ax_tags', JSON.stringify(tagDefinitions));
+  const storedMap = localStorage.getItem('ax_dossier_tags');
+  dossierTagMap = storedMap ? JSON.parse(storedMap) : {};
+}
+
+function saveTagDefinitions() {
+  localStorage.setItem('ax_tags', JSON.stringify(tagDefinitions));
+}
+
+function saveDossierTags() {
+  localStorage.setItem('ax_dossier_tags', JSON.stringify(dossierTagMap));
+}
+
+function getDossierTags(nr) {
+  return dossierTagMap[nr] || [];
+}
+
+function toggleDossierTag(nr, tagId) {
+  const tags = [...getDossierTags(nr)];
+  const idx = tags.indexOf(tagId);
+  if (idx === -1) tags.push(tagId); else tags.splice(idx, 1);
+  dossierTagMap[nr] = tags;
+  saveDossierTags();
+  applyAllFilters();
+}
+
+function addTagDefinition(name, color) {
+  const id = 'tag_' + Date.now();
+  tagDefinitions.push({ id, name, color });
+  saveTagDefinitions();
+  return id;
+}
+
+// Auto-apply "Urgent" tag for spoed dossiers
+function autoApplyTags(d) {
+  const isSpoed = d.oprichtingType === 'bv-spoed' ||
+    (d.pricing?.extras || []).some(e =>
+      (e.key || e.code || '').toLowerCase() === 'spoed' ||
+      (e.label || '').toLowerCase().includes('spoed')
+    );
+  if (isSpoed) {
+    const tags = dossierTagMap[d.dossierNr] ? [...dossierTagMap[d.dossierNr]] : [];
+    if (!tags.includes('urgent')) {
+      tags.push('urgent');
+      dossierTagMap[d.dossierNr] = tags;
+    }
+  }
+}
+
+function renderTagChips(nr) {
+  const tags = getDossierTags(nr);
+  if (!tags.length) return '';
+  return tags.map(tagId => {
+    const def = tagDefinitions.find(t => t.id === tagId);
+    if (!def) return '';
+    return `<span class="tag-chip" style="background:${def.color}22;color:${def.color};border:1px solid ${def.color}55;">${def.name}</span>`;
+  }).join('');
+}
+
+function openTagModal(nr, event) {
+  if (event) { event.stopPropagation(); closeAllMenus(); }
+  const d = allDossiersData.find(x => x.dossierNr === nr);
+  document.getElementById('tagModalTitle').textContent = d ? d.name : nr;
+  document.getElementById('tagModalNr').value = nr;
+  document.getElementById('tagModalNewName').value = '';
+  document.getElementById('tagModalNewColor').value = '#1A3B70';
+  renderTagModalList(nr);
+  document.getElementById('tagModal').style.display = 'flex';
+}
+
+function closeTagModal() {
+  document.getElementById('tagModal').style.display = 'none';
+}
+
+function renderTagModalList(nr) {
+  const current = getDossierTags(nr);
+  const container = document.getElementById('tagModalList');
+  if (!tagDefinitions.length) {
+    container.innerHTML = '<div style="color:#8A9BB5;font-size:0.88rem;text-align:center;padding:12px 0;">Nog geen tags — maak er een aan hieronder.</div>';
+    return;
+  }
+  container.innerHTML = tagDefinitions.map(tag => {
+    const active = current.includes(tag.id);
+    return `<div class="tag-modal-item ${active ? 'active' : ''}" onclick="toggleDossierTag('${nr}','${tag.id}');renderTagModalList('${nr}')">
+      <span class="tag-modal-dot" style="background:${tag.color};"></span>
+      <span class="tag-modal-name">${tag.name}</span>
+      ${active ? '<span class="tag-modal-check">✓</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function createTagFromModal() {
+  const nr = document.getElementById('tagModalNr').value;
+  const name = document.getElementById('tagModalNewName').value.trim();
+  const color = document.getElementById('tagModalNewColor').value;
+  if (!name) { document.getElementById('tagModalNewName').focus(); return; }
+  addTagDefinition(name, color);
+  document.getElementById('tagModalNewName').value = '';
+  renderTagModalList(nr);
+  applyAllFilters();
+}
+// ── END TAG SYSTEM ───────────────────────────────────────────────────────────
 let currentAdmin = null;
 let allAdmins = [];
 let dossierAssignments = {};
@@ -1262,6 +1390,9 @@ async function loadDossiers() {
         if (refreshed.ok) requests = await refreshed.json();
       }
       allDossiersData = requests.map(mapRequestToDossier);
+      // Auto-apply tags (e.g. Urgent for spoed dossiers)
+      allDossiersData.forEach(d => autoApplyTags(d));
+      saveDossierTags();
     }
   } catch(e) {
     console.error('Failed to load dossiers:', e);
@@ -1469,7 +1600,7 @@ function copyToClipboard(text) {
 function renderTable(id, rows, withActions = false) {
   const tbody = document.getElementById(id);
   if (!tbody) return;
-  const colspan = withActions ? 9 : 8;
+  const colspan = withActions ? 10 : 9;
   if (!rows.length) {
     tbody.innerHTML = `<tr><td colspan="${colspan}" style="padding:32px;text-align:center;color:#8A9BB5;">Geen dossiers gevonden</td></tr>`;
     return;
@@ -1489,6 +1620,11 @@ function renderTable(id, rows, withActions = false) {
             <button onclick="location.href='dossier-detail.html?nr=${d.dossierNr}'">Dossier bekijken</button>
             <button onclick="${isArchived ? `unarchiveDossier('${d.dossierNr}')` : `archiveDossier('${d.dossierNr}')`}">${isArchived ? 'Dearchiveren' : 'Dossier archiveren'}</button>
             <hr/>
+            <button onclick="openTagModal('${d.dossierNr}',event)" style="display:flex;align-items:center;gap:8px;">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              Tags beheren
+            </button>
+            <hr/>
             <button class="danger" onclick="deleteDossier('${d.dossierNr}')">Naar prullenbak</button>
           </div>
         </div>
@@ -1505,6 +1641,12 @@ function renderTable(id, rows, withActions = false) {
         <span class="badge ${statusBadgeClass}" style="cursor:pointer;user-select:none;padding-right:8px;" onclick="toggleStatusDropdown('${d.dossierNr}',event)">
           ${statusBadgeLabel} <span style="font-size:0.65rem;opacity:0.7;margin-left:2px;">&#9660;</span>
         </span>
+      </td>
+      <td onclick="event.stopPropagation()" style="min-width:90px;">
+        ${renderTagChips(d.dossierNr)}
+        <button class="tag-chip-add" onclick="openTagModal('${d.dossierNr}',event)" title="Tags beheren">
+          <svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
       </td>
       <td class="td-muted" style="white-space:nowrap;">${fmtDate(d.date)}</td>
       <td class="td-muted">${d.kvk || '–'}</td>
@@ -3190,6 +3332,7 @@ async function savePermissions() {
 }
 
 loadUser();
+loadTagSystem();
 loadDossiers();
 loadAdmins();
 loadPartners();
@@ -3280,6 +3423,55 @@ async function adminSaveStatusAndSendEmail() {
 
 <!-- Status dropdown portal (renders outside table to avoid layout shift) -->
 <div id="statusDdPortal" style="display:none;position:absolute;background:#fff;border:1px solid #d0dced;border-radius:10px;box-shadow:0 8px 28px rgba(20,40,80,.18);z-index:9999;min-width:210px;overflow-y:auto;padding:4px 0;max-height:340px;"></div>
+
+<!-- Tag modal -->
+<div id="tagModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,50,.45);backdrop-filter:blur(2px);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeTagModal()">
+  <div style="background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.2);width:400px;max-width:calc(100vw - 32px);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;padding:18px 22px 14px;border-bottom:1px solid #EEF2FF;">
+      <svg width="16" height="16" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0;margin-right:10px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      <h3 style="margin:0;font-size:1rem;color:#0F1D3A;flex:1;font-weight:600;">Tags beheren</h3>
+      <button onclick="closeTagModal()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#94A3B8;padding:4px 8px;border-radius:6px;line-height:1;">✕</button>
+    </div>
+    <!-- Dossier name sub-line -->
+    <div style="padding:10px 22px 0;font-size:0.78rem;color:#8A9BB5;">
+      Dossier: <strong id="tagModalTitle" style="color:#0F1D3A;font-weight:600;"></strong>
+    </div>
+    <input type="hidden" id="tagModalNr">
+    <!-- Tag list -->
+    <div style="padding:14px 22px;flex:1;overflow-y:auto;">
+      <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Tags selecteren</div>
+      <div id="tagModalList"></div>
+      <!-- Create new tag -->
+      <div style="border-top:1px solid #E8EDF5;padding-top:16px;margin-top:8px;">
+        <div style="font-size:0.78rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Nieuwe tag aanmaken</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="tagModalNewName" type="text" placeholder="Naam van de tag…" maxlength="24"
+            style="flex:1;padding:8px 10px;border:1px solid #DDE5F4;border-radius:7px;font-size:0.88rem;font-family:inherit;color:#0F1D3A;outline:none;"
+            onfocus="this.style.borderColor='#2B6CB5'"
+            onblur="this.style.borderColor='#DDE5F4'"
+            onkeydown="if(event.key==='Enter')createTagFromModal()">
+          <input id="tagModalNewColor" type="color" value="#1A3B70"
+            title="Kies een kleur"
+            style="width:38px;height:36px;border:1px solid #DDE5F4;border-radius:7px;cursor:pointer;padding:2px;flex-shrink:0;">
+          <button onclick="createTagFromModal()"
+            style="padding:8px 14px;background:#1A3B70;color:white;border:none;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;"
+            onmouseover="this.style.background='#0F2658'" onmouseout="this.style.background='#1A3B70'">
+            + Aanmaken
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:14px 22px;border-top:1px solid #EEF2FF;display:flex;justify-content:flex-end;">
+      <button onclick="closeTagModal()"
+        style="padding:9px 22px;background:#1A3B70;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;"
+        onmouseover="this.style.background='#0F2658'" onmouseout="this.style.background='#1A3B70'">
+        Sluiten
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Email modal voor status wijzigen -->
 <div id="adminEmailModal" class="em-overlay" onclick="if(event.target===this)adminCloseEmailModal()">
