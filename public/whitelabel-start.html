@@ -843,6 +843,8 @@
       updateTotals();
       syncExtrasLabel();
     }
+
+    function syncExtrasLabel() {
       const count = document.querySelectorAll('.extra-check:checked').length;
       const lbl = document.getElementById('extrasToggleLabel');
       const btn = document.getElementById('extrasToggleBtn');
