@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
+const archiver = require('archiver');
 const { PDFDocument, rgb, StandardFonts, PDFString, PDFName, PDFBool } = require('pdf-lib');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
@@ -2883,6 +2884,173 @@ app.get('/api/dossier-files/:nr', requireAdmin, async (req, res) => {
         return { name: f.name.replace(/^\d+_/, ''), path: `${nr}/${f.name}`, url: urlData?.signedUrl || null, size: f.metadata?.size || 0, created_at: f.created_at };
     }));
     res.json(files);
+});
+
+// ── Dossier admin-upload ─────────────────────────────────────────────────
+app.post('/api/dossier-files/:nr/admin-upload', requireAdmin, async (req, res) => {
+    const { nr } = req.params;
+    const { files } = req.body; // [{ name, base64, type }]
+    if (!Array.isArray(files) || !files.length) return res.status(400).json({ error: 'Geen bestanden ontvangen' });
+
+    const { data: row } = await supabase.from('reseller_requests').select('id').eq('id', nr).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+
+    const results = [];
+    for (const f of files) {
+        if (!f.name || !f.base64) continue;
+        const safeName = String(f.name).replace(/[^a-zA-Z0-9._\-\s]/g, '_').slice(0, 100);
+        const filePath = `${nr}/${Date.now()}_${safeName}`;
+        const buf = Buffer.from(f.base64, 'base64');
+        const { error } = await supabase.storage.from(FILE_BUCKET).upload(filePath, buf, {
+            contentType: f.type || 'application/octet-stream', upsert: false
+        });
+        if (!error) results.push({ name: safeName, path: filePath });
+    }
+    if (!results.length) return res.status(500).json({ error: 'Upload mislukt' });
+
+    const { data: reqRow } = await supabase.from('reseller_requests').select('*').eq('id', nr).single();
+    if (reqRow) {
+        const request = rowToReq(reqRow);
+        const actor = req.session.user.name || req.session.user.email;
+        const names = results.map(r => r.name).join(', ');
+        addActivity(request, 'file-upload', `Admin ${actor} heeft ${results.length} bestand(en) geüpload: ${names}`, actor);
+        await supabase.from('reseller_requests').update({ activities: request.activities }).eq('id', nr);
+    }
+    res.json({ ok: true, uploaded: results.length, files: results });
+});
+
+// ── Dossier export ZIP ────────────────────────────────────────────────────
+app.get('/api/reseller-requests/:id/export-zip', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    // 1. Fetch dossier
+    const { data: row } = await supabase.from('reseller_requests').select('*').eq('id', id).single();
+    if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
+    const dossier = rowToReq(row);
+
+    // 2. Fetch tags
+    const { data: tagRows } = await supabase.from('dossier_tags').select('tag_id').eq('dossier_nr', id);
+    const { data: allTagDefs } = await supabase.from('tag_definitions').select('*');
+    const tags = (tagRows || []).map(t => (allTagDefs || []).find(a => a.id === t.tag_id)?.name || t.tag_id);
+
+    // 3. Fetch vragenlijst + files
+    const { data: vlRow } = await supabase.from('vragenlijsten').select('*').eq('case_id', id).single();
+    const vlFiles = vlRow ? listStoredVragenlijstFiles(vlRow.data || {}, id) : [];
+
+    // 4. Fetch admin-uploaded files from storage
+    const { data: storageFiles } = await supabase.storage.from(FILE_BUCKET).list(id, { sortBy: { column: 'created_at', order: 'desc' } });
+
+    // 5. Build HTML summary
+    const fmtDt = (d) => d ? new Date(d).toLocaleString('nl-NL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const esc = (s) => String(s || '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const row2 = (label, val) => `<tr><td>${esc(label)}</td><td>${esc(val)}</td></tr>`;
+
+    const pricingHtml = dossier.pricing ? `
+      <h2>Prijsopbouw</h2>
+      <table>
+        <tr><th>Omschrijving</th><th>Bedrag</th></tr>
+        ${[dossier.pricing.base, ...(dossier.pricing.extras || [])].map(p =>
+          `<tr><td>${esc(p.label)}</td><td>€ ${Number(p.amount || 0).toLocaleString('nl-NL', {minimumFractionDigits:2})}</td></tr>`
+        ).join('')}
+        <tr style="font-weight:bold;border-top:2px solid #333;"><td>Totaal</td><td>€ ${Number(dossier.pricing.total || 0).toLocaleString('nl-NL', {minimumFractionDigits:2})}</td></tr>
+      </table>` : '';
+
+    const activitiesHtml = (dossier.activities || []).length ? `
+      <h2>Activiteitenlogboek</h2>
+      <table>
+        <tr><th>Datum &amp; tijd</th><th>Type</th><th>Omschrijving</th><th>Door</th></tr>
+        ${[...dossier.activities].reverse().map(a => `
+          <tr>
+            <td style="white-space:nowrap;">${fmtDt(a.timestamp)}</td>
+            <td>${esc(a.type)}</td>
+            <td>${esc(a.message || a.text)}</td>
+            <td>${esc(a.actor || a.author || '—')}</td>
+          </tr>`).join('')}
+      </table>` : '';
+
+    const summaryHtml = `<!DOCTYPE html>
+<html lang="nl"><head><meta charset="UTF-8">
+<title>Dossier ${esc(id)} – ${esc(dossier.gewenstNaam || dossier.clientName)}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a2e; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+  h1 { color: #1A3B70; border-bottom: 2px solid #1A3B70; padding-bottom: 8px; }
+  h2 { color: #1A3B70; margin-top: 32px; font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { background: #1A3B70; color: white; text-align: left; padding: 8px 10px; font-size: 12px; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e8edf5; }
+  tr:nth-child(even) td { background: #f7fafc; }
+  .tag { display: inline-block; background: #e2e8f0; border-radius: 12px; padding: 2px 10px; font-size: 11px; margin: 2px; }
+  .footer { margin-top: 40px; font-size: 11px; color: #8a9bb5; border-top: 1px solid #e8edf5; padding-top: 12px; }
+</style></head><body>
+<h1>Dossier: ${esc(dossier.gewenstNaam || dossier.clientName)}</h1>
+<p style="color:#8a9bb5;">Exportdatum: ${fmtDt(new Date().toISOString())} &nbsp;·&nbsp; Dossiernummer: <strong>${esc(id)}</strong></p>
+
+<h2>Dossiergegevens</h2>
+<table>
+  ${row2('Dossiernummer', id)}
+  ${row2('Gewenste naam', dossier.gewenstNaam)}
+  ${row2('Product', dossier.oprichtingType)}
+  ${row2('Status', dossier.status)}
+  ${row2('Aangemeld op', fmtDt(dossier.createdAt))}
+  ${row2('Partner', dossier.resellerCompany)}
+  ${row2('Tags', tags.join(', ') || '—')}
+</table>
+
+<h2>Klantgegevens</h2>
+<table>
+  ${row2('Naam', dossier.clientName)}
+  ${row2('E-mailadres', dossier.clientEmail)}
+  ${row2('Telefoonnummer', dossier.clientPhone)}
+</table>
+
+<h2>Opdrachtdetails</h2>
+<table>
+  ${row2('Doel', dossier.doel)}
+  ${row2('Aandeelhouders', dossier.aandeelhouders)}
+  ${row2('Kapitaal', dossier.kapitaal)}
+  ${row2('Startsaldo', dossier.startSaldo)}
+</table>
+${dossier.opmerkingen ? `<h2>Opmerkingen / Notities</h2><div style="background:#f7fafc;padding:14px;border-radius:6px;white-space:pre-wrap;">${esc(dossier.opmerkingen)}</div>` : ''}
+${pricingHtml}
+${activitiesHtml}
+<div class="footer">Geëxporteerd door AandelenXpress &nbsp;·&nbsp; ${fmtDt(new Date().toISOString())}</div>
+</body></html>`;
+
+    // 6. Stream ZIP
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="dossier-${id}-export.zip"`);
+
+    const zip = archiver('zip', { zlib: { level: 6 } });
+    zip.on('error', err => { console.error('ZIP error:', err); res.end(); });
+    zip.pipe(res);
+
+    // HTML summary
+    zip.append(Buffer.from(summaryHtml, 'utf8'), { name: `dossier-${id}/dossier-samenvatting.html` });
+
+    // Vragenlijst files (from base64 in DB)
+    for (const f of vlFiles) {
+        try {
+            const file = getStoredVragenlijstFile(vlRow.data || {}, f.key, f.index);
+            if (file?.base64) {
+                const buf = Buffer.from(file.base64, 'base64');
+                zip.append(buf, { name: `dossier-${id}/vragenlijst-documenten/${f.name}` });
+            }
+        } catch(e) { /* skip */ }
+    }
+
+    // Admin-uploaded files from Supabase storage
+    for (const f of (storageFiles || [])) {
+        try {
+            const { data, error } = await supabase.storage.from(FILE_BUCKET).download(`${id}/${f.name}`);
+            if (!error && data) {
+                const arrBuf = await data.arrayBuffer();
+                const cleanName = f.name.replace(/^\d+_/, '');
+                zip.append(Buffer.from(arrBuf), { name: `dossier-${id}/geupload-documenten/${cleanName}` });
+            }
+        } catch(e) { /* skip */ }
+    }
+
+    zip.finalize();
 });
 
 // Export for Vercel

@@ -665,12 +665,13 @@ async function downloadFile(url, fallbackName) {
 
 function downloadDossierSnapshot() {
   if (!currentDossier) return;
-  const payload = {
-    dossier: currentDossier,
-    vragenlijst: currentVragenlijstData || null,
-    exportedAt: new Date().toISOString()
-  };
-  downloadBlob(`${currentDossier.dossierNr || 'dossier'}-overzicht.json`, JSON.stringify(payload, null, 2), 'application/json');
+  const nr = currentDossier.dossierNr;
+  const btn = document.getElementById('exportZipBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Bezig…'; }
+  window.location.href = `/api/reseller-requests/${encodeURIComponent(nr)}/export-zip`;
+  setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.textContent = 'Alles downloaden (.zip)'; }
+  }, 3000);
 }
 
 function downloadPricingSnapshot() {
@@ -681,6 +682,62 @@ function downloadPricingSnapshot() {
     exportedAt: new Date().toISOString()
   };
   downloadBlob(`${currentDossier.dossierNr || 'dossier'}-prijsopbouw.json`, JSON.stringify(payload, null, 2), 'application/json');
+}
+
+// Load and render admin-uploaded files into #adminUploadedFiles
+async function loadAdminUploadedFiles() {
+  if (!currentDossier) return;
+  const nr = currentDossier.dossierNr;
+  const container = document.getElementById('adminUploadedFiles');
+  if (!container) return;
+  try {
+    const r = await fetch(`/api/dossier-files/${encodeURIComponent(nr)}`);
+    if (!r.ok) return;
+    const files = await r.json();
+    if (!files.length) {
+      container.innerHTML = '<div style="color:#8A9BB5;font-size:0.82rem;padding:8px 0;">Nog geen documenten geüpload.</div>';
+      return;
+    }
+    container.innerHTML = files.map(f => `
+      <div class="doc-item">
+        <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <span class="doc-name">${escHtml(f.name)}</span>
+        <span class="doc-meta">Geüpload</span>
+        <span class="doc-filename">${f.size ? Math.round(f.size/1024) + ' KB' : ''}</span>
+        ${f.url ? `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${f.url.replace(/'/g,'')}','${f.name.replace(/'/g,'')}')">Download</button>` : ''}
+      </div>`).join('');
+  } catch(e) { console.error('loadAdminUploadedFiles:', e); }
+}
+
+async function adminUploadFiles(input) {
+  if (!input.files.length || !currentDossier) return;
+  const btn = document.getElementById('adminUploadBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploaden…'; }
+  const fileArr = [];
+  for (const f of input.files) {
+    const base64 = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(f);
+    });
+    fileArr.push({ name: f.name, type: f.type, base64 });
+  }
+  try {
+    const r = await fetch(`/api/dossier-files/${encodeURIComponent(currentDossier.dossierNr)}/admin-upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: fileArr })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      input.value = '';
+      await loadAdminUploadedFiles();
+    } else {
+      alert('Upload mislukt: ' + (data.error || 'Onbekende fout'));
+    }
+  } catch(e) { alert('Upload mislukt: ' + e.message); }
+  if (btn) { btn.disabled = false; btn.textContent = 'Uploaden'; }
 }
 
 function renderDocumentsCard(d) {
@@ -713,38 +770,46 @@ function renderDocumentsCard(d) {
     })
     .filter(Boolean);
 
-  const dossierItems = [{
-    label: 'Dossieroverzicht',
-    meta: 'Actuele dossierdata',
-    status: 'Beschikbaar',
-    onClick: 'downloadDossierSnapshot()'
-  }];
-  if (d.pricing) {
-    dossierItems.push({
-      label: 'Prijsopbouw',
-      meta: 'Huidige prijsstructuur',
-      status: 'Beschikbaar',
-      onClick: 'downloadPricingSnapshot()'
-    });
-  }
+  const adminRole = window._currentRole === 'admin';
 
-  const items = [...vraagItems, ...dossierItems];
   return `<div class="detail-card">
-    <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
+    <div class="detail-card-head" style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="detail-card-title">Documenten</div>
+      ${adminRole ? `<button id="exportZipBtn" class="btn-ghost" style="font-size:0.8rem;display:flex;align-items:center;gap:6px;" onclick="downloadDossierSnapshot()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Alles downloaden (.zip)
+      </button>` : ''}
+    </div>
     <div class="detail-card-body">
-      <div class="doc-list">
-        ${items.map(item => `
+      ${vraagItems.length ? `
+      <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Ingediende documenten</div>
+      <div class="doc-list" style="margin-bottom:20px;">
+        ${vraagItems.map(item => `
           <div class="doc-item">
             <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
             <span class="doc-name">${escHtml(item.label)}</span>
             <span class="doc-meta">${escHtml(item.status || '')}</span>
             <span class="doc-filename" title="${escHtml(item.meta || '')}">${escHtml(item.meta || '')}</span>
-            ${item.downloadUrl
-              ? `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${item.downloadUrl.replace(/'/g,'')}','${(item.meta||'bestand').replace(/'/g,'')}')">Download</button>`
-              : `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="${item.onClick}">Download</button>`}
-          </div>
-        `).join('')}
+            <button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${item.downloadUrl.replace(/'/g,'')}','${(item.meta||'bestand').replace(/'/g,'')}')">Download</button>
+          </div>`).join('')}
+      </div>` : ''}
+
+      <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Oprichtingsdocumenten &amp; overige bestanden</div>
+      <div id="adminUploadedFiles" class="doc-list" style="margin-bottom:16px;">
+        <div style="color:#8A9BB5;font-size:0.82rem;padding:8px 0;">Laden…</div>
       </div>
+      ${adminRole ? `
+      <div style="border-top:1px solid #E8EDF5;padding-top:14px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;border:1px dashed #CBD5E0;border-radius:8px;background:#FAFBFF;transition:all .15s;"
+          onmouseover="this.style.borderColor='#1A3B70';this.style.background='#EEF4FF'"
+          onmouseout="this.style.borderColor='#CBD5E0';this.style.background='#FAFBFF'">
+          <svg width="16" height="16" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span style="font-size:0.85rem;color:#1A3B70;font-weight:500;">Document uploaden</span>
+          <span style="font-size:0.75rem;color:#8A9BB5;margin-left:auto;">PDF, Word, afbeeldingen…</span>
+          <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp" style="display:none;" onchange="adminUploadFiles(this)">
+        </label>
+        <button id="adminUploadBtn" style="display:none;">Uploaden</button>
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -2160,6 +2225,7 @@ async function init() {
     document.getElementById("topbarTitle").textContent = d.name;
     currentDossier = d;
     currentRole = u.type;
+    window._currentRole = u.type;
     try {
       renderPage(d, u.type);
     } catch(re) {
@@ -2168,6 +2234,7 @@ async function init() {
     }
     if (u.type === 'admin' && d.dossierNr) {
       renderActionBar(d);
+      loadAdminUploadedFiles();
     }
   } catch(e) {
     console.error('Auth/load error:', e);
