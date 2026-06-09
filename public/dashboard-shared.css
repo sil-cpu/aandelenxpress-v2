@@ -198,6 +198,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    max-width: calc(100vw - 260px);
 }
 
 /* Topbar */
@@ -1529,8 +1531,9 @@ body {
     border-radius: 6px; display: flex; align-items: center;
     justify-content: center; color: #1A3B70; flex-shrink: 0;
 }
-.doc-name { font-size: 0.85rem; font-weight: 500; color: #0F1D3A; flex: 1; }
-.doc-meta { font-size: 0.73rem; color: #A0AEC0; white-space: nowrap; }
+.doc-name { font-size: 0.85rem; font-weight: 500; color: #0F1D3A; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-meta { font-size: 0.73rem; color: #A0AEC0; white-space: nowrap; flex-shrink: 0; }
+.doc-filename { font-size: 0.8rem; color: #718096; max-width: 260px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; flex-shrink: 1; }
 
 /* ===== SETTINGS BLOCKS ===== */
 .settings-block {

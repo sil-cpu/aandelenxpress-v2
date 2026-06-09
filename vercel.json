@@ -1,9 +1,13 @@
 {
   "version": 2,
+  "buildCommand": "npm install && pip3 install reportlab --target=python_packages 2>/dev/null || true",
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["scripts/generate_pdf.py", "python_packages/**"]
+      }
     }
   ],
   "routes": [

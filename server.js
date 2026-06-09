@@ -4,7 +4,8 @@ const cookieSession = require('cookie-session');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { PDFDocument, rgb, StandardFonts, PDFString } = require('pdf-lib');
+const { spawn } = require('child_process');
+const { PDFDocument, rgb, StandardFonts, PDFString, PDFName, PDFBool } = require('pdf-lib');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -2058,6 +2059,55 @@ function collectPdfRows(formData) {
 }
 
 async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
+    // ── Python/ReportLab PDF generation (AcroForm Widget annotations) ──────────
+    // generate_pdf.py accepts JSON on stdin and writes PDF bytes to stdout.
+    // We try interpreters in order; fall through on any error.
+    const scriptPath = path.join(__dirname, 'scripts', 'generate_pdf.py');
+    if (fs.existsSync(scriptPath)) {
+        const pythonCandidates = [
+            path.join(__dirname, '.venv', 'bin', 'python3'),
+            path.join(__dirname, '.venv', 'bin', 'python'),
+            '/usr/bin/python3',
+            'python3',
+            'python',
+        ];
+        const payload = JSON.stringify({
+            caseId,
+            request:      request  || {},
+            formData:     formData || {},
+            gewenstNaam:  formData?.gewenstNaam  || request?.gewenstNaam  || '',
+            oprichtingType: formData?.oprichtingType || request?.oprichtingType || '',
+            _date:        new Date().toLocaleString('nl-NL'),
+            _stapCount:   7,
+            _veldCount:   64,
+        });
+        for (const pythonExe of pythonCandidates) {
+            try {
+                const buf = await new Promise((resolve, reject) => {
+                    const env = { ...process.env };
+                    const pkgPath = path.join(__dirname, 'python_packages');
+                    env.PYTHONPATH = env.PYTHONPATH ? `${pkgPath}:${env.PYTHONPATH}` : pkgPath;
+                    const child = spawn(pythonExe, [scriptPath, '--stdin'], { env });
+                    const out = [], err = [];
+                    child.stdout.on('data', c => out.push(c));
+                    child.stderr.on('data', c => err.push(c));
+                    child.stdin.write(payload);
+                    child.stdin.end();
+                    const timer = setTimeout(() => { child.kill(); reject(new Error('timeout')); }, 30000);
+                    child.on('close', code => {
+                        clearTimeout(timer);
+                        if (code === 0 && out.length > 0) resolve(Buffer.concat(out));
+                        else reject(new Error(Buffer.concat(err).toString() || `exit ${code}`));
+                    });
+                    child.on('error', reject);
+                });
+                return buf;
+            } catch (_) { /* try next candidate */ }
+        }
+        // All Python attempts failed – fall through to Node.js fallback below
+    }
+
+    // ── Node.js fallback (pdf-lib, FreeText annotations) ──────────────────────
     const product = String(formData?.formulierType || formData?.oprichtingType || request?.oprichtingType || 'bv').toLowerCase().trim();
     const SITE    = String(process.env.SITE_URL || 'https://aandelenxpress-v2.vercel.app').replace(/\/$/, '');
 
@@ -2089,8 +2139,8 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
        ['Doel van de BV', get('doel')], ['Startkapitaal', get('kapitaal')],
        ['Bestaande holding als aandeelhouder', get('singleBvExistingHoldings')],
        ['Wie worden aandeelhouder(s)?', get('existingHoldingOwner')],
-      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-      if (rows.length) allSections.push({ title: 'Aanvraagtype', rows }); }
+      ].forEach(([l, v]) => rows.push(makeRow(l, v)));
+      allSections.push({ title: 'Aanvraagtype', rows }); }
 
     if (isHolding) {
       const rows = [];
@@ -2100,7 +2150,7 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
        ['Plaatsnaam', get('holdingAdresPlaats')], ['Naam accountantskantoor', get('holdingAccountantNaam')],
        ['Contactpersoon', get('holdingAccountantContact')], ['Telefoonnummer', get('holdingAccountantTelefoon')],
        ['Mailadres', get('holdingAccountantMail')],
-      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      ].forEach(([l, v]) => rows.push(makeRow(l, v)));
       (formData?.holdingAandeelhouders || []).filter(Boolean).forEach(p => {
         if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
         if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
@@ -2110,8 +2160,8 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
        ['Meer dan 15 uur per week', get('holdingPersoneelMeer15')],
        ['Minder dan 15 uur per week', get('holdingPersoneelMinder15')],
        ['Overige', get('holdingOverige')],
-      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-      if (rows.length) allSections.push({ title: 'Oprichting document (Holding)', rows });
+      ].forEach(([l, v]) => rows.push(makeRow(l, v)));
+      allSections.push({ title: 'Oprichting document (Holding)', rows });
     }
 
     { const rows = [];
@@ -2119,7 +2169,7 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
        ['Mailadres', get('werkmijMailadres')], ['Naam accountantskantoor', get('werkmijAccountantNaam')],
        ['Contactpersoon', get('werkmijAccountantContact')], ['Telefoonnummer', get('werkmijAccountantTelefoon')],
        ['Mailadres', get('werkmijAccountantMail')],
-      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      ].forEach(([l, v]) => rows.push(makeRow(l, v)));
       (formData?.werkmijAandeelhouders || []).filter(Boolean).forEach(p => {
         if (fval(p.type))       rows.push(makeRow('Type',       fval(p.type)));
         if (fval(p.naam))       rows.push(makeRow('Naam',       fval(p.naam)));
@@ -2127,8 +2177,8 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
       });
       [['Zijn de bestuurders dezelfde als de aandeelhouders?', get('werkmijDirectorsSameAsShareholders')],
        ['Overige', get('werkmijOverige')],
-      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
-      if (rows.length) allSections.push({ title: 'Oprichting document (Werkmaatschappij)', rows }); }
+      ].forEach(([l, v]) => rows.push(makeRow(l, v)));
+      allSections.push({ title: 'Oprichting document (Werkmaatschappij)', rows }); }
 
     { const NP_KEYS = [
         ['Voornamen','voornamen'],['Achternaam','achternaam'],['Geboortedatum','geboortedatum'],
@@ -2152,7 +2202,7 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
        ['KVK-nummer EMZ/VOF', get('omzettingBronKvk')], ['Statutaire zetel EMZ/VOF', get('omzettingBronZetel')],
        ['Eigenaar(s) EMZ/VOF + aandelenverdeling (bij VOF)', get('omzettingBronEigenaren')],
        ['Doel van de EMZ/VOF', get('omzettingBronDoel')],
-      ].forEach(([l, v]) => { if (v) rows.push(makeRow(l, v)); });
+      ].forEach(([l, v]) => rows.push(makeRow(l, v)));
       [['KVK-uittreksel eenmanszaak/VOF','omzettingKvkUittreksel','kvk-uittreksel'],
        ['Verzendbewijs intentieverklaring (Belastingdienst)','omzettingVerzendbewijsIntentie','verzendbewijs-intentie'],
        ['Bewijs van ontvangst intentieverklaring','omzettingOntvangstbewijsIntentie','ontvangst-intentie'],
@@ -2190,7 +2240,6 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
     const pdfDoc = await PDFDocument.create();
     const fontR  = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontB  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const form   = pdfDoc.getForm();
 
     const PW = 595.28, PH = 841.89;
     const ML = 40, MT = 50, MB = 60;
@@ -2210,7 +2259,6 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
 
     let page     = pdfDoc.addPage([PW, PH]);
     let curY     = MT;
-    let fieldIdx = 0;
 
     const ensureSpace = (need) => {
         if (curY + need > PH - MB) { page = pdfDoc.addPage([PW, PH]); curY = MT; }
@@ -2253,42 +2301,44 @@ async function buildVragenlijstPdfBuffer({ caseId, request, formData }) {
         curY += H;
     };
 
-    // ── Data row with editable answer field ──
+    // ── Data row ──
     const drawRow = (idx, label, value, fileKind, fIdx) => {
-        if (!value && !fileKind) return;
         const question = `${idx}. ${label}`;
         const qLines   = wrapText(question, QW - 16, fontR, 9.2);
+        const aLines   = value ? wrapText(String(value), AW - 12, fontR, 9) : [];
         const linkH    = fileKind ? 14 : 0;
-        const rowH     = Math.max(MIN_ROW_H, qLines.length * 13 + 10 + linkH);
+        const textH    = Math.max(qLines.length, aLines.length) * 13 + 10;
+        const rowH     = Math.max(MIN_ROW_H, textH + linkH);
 
         ensureSpace(rowH + 2);
 
-        // Question cell (white) + Answer cell (light blue)
+        // Question cell (white) + Answer cell background (light blue)
         page.drawRectangle({ x: ML,      y: PH - curY - rowH, width: QW, height: rowH, color: C_WHITE,   borderColor: C_BDR, borderWidth: 0.5 });
         page.drawRectangle({ x: ML + QW, y: PH - curY - rowH, width: AW, height: rowH, color: C_LT_BLUE, borderColor: C_BDR, borderWidth: 0.5 });
 
-        // Question text (wrapped)
+        // Question text (static)
         qLines.forEach((line, i) => {
             page.drawText(line, { x: ML + 8, y: PH - curY - 7 - i * 13 - 9.2, font: fontR, size: 9.2, color: C_TEXT });
         });
 
-        // Editable TextField for the answer
-        if (value) {
-            const fName  = `ans_${++fieldIdx}`;
-            const fieldH = rowH - (linkH ? linkH + 4 : 4) - 4;
-            const fieldY = PH - curY - rowH + (linkH ? linkH + 4 : 4);
-            try {
-                const tf = form.createTextField(fName);
-                tf.setText(String(value));
-                tf.setFontSize(9);
-                tf.enableMultiline();
-                tf.addToPage(page, {
-                    x: ML + QW + 3, y: fieldY, width: AW - 6, height: fieldH,
-                    textColor: C_TEXT, backgroundColor: C_LT_BLUE,
-                    borderColor: rgb(0.78, 0.86, 0.97), borderWidth: 0.5, font: fontR,
-                });
-            } catch(e) { /* skip on field name collision */ }
-        }
+        // Answer: FreeText annotation with matching blue background — looks like the bar but is editable
+        const annY1 = PH - curY - rowH + (linkH ? linkH + 2 : 2);
+        const annY2 = PH - curY - 2;
+        try {
+            const annotRef = pdfDoc.context.register(pdfDoc.context.obj({
+                Type:     'Annot',
+                Subtype:  'FreeText',
+                IT:       PDFName.of('FreeTextTypeWriter'),
+                Rect:     [ML + QW + 2, annY1, ML + QW + AW - 2, annY2],
+                Contents: PDFString.of(value ? String(value) : ''),
+                DA:       PDFString.of('/Helv 9 Tf 0.067 0.094 0.153 rg'),
+                Q:        0,
+                F:        4,
+                BS:       pdfDoc.context.obj({ W: 0 }),
+                IC:       pdfDoc.context.obj([0.859, 0.922, 0.996]),
+            }));
+            page.node.addAnnot(annotRef);
+        } catch(e) {}
 
         // File link annotation
         if (fileKind) {
