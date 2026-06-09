@@ -1110,7 +1110,7 @@ function renderTagChips(nr) {
 }
 
 function openTagModal(nr, event) {
-  if (event) { event.stopPropagation(); closeAllMenus(); }
+  if (event) { event.stopPropagation(); closeAllDossierMenus(); }
   const d = allDossiersData.find(x => x.dossierNr === nr);
   document.getElementById('tagModalTitle').textContent = d ? d.name : nr;
   document.getElementById('tagModalNr').value = nr;
