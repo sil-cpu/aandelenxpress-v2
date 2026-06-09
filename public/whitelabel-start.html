@@ -286,6 +286,94 @@
       color: #0a613f;
     }
 
+    /* ── Extra opties ── */
+    .extras-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #425a7f;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 20px 0 10px;
+    }
+
+    .extra-opt {
+      display: block;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .extra-check {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 0;
+      height: 0;
+    }
+
+    .extra-opt-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border: 1px solid #dce6f4;
+      border-radius: 12px;
+      background: #fff;
+      transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+
+    .extra-opt-box::before {
+      content: '';
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid #a8bdd4;
+      border-radius: 4px;
+      flex-shrink: 0;
+      background: white;
+      transition: all .15s;
+    }
+
+    .extra-opt:hover .extra-opt-box {
+      border-color: #b8cfe8;
+      background: #fafcff;
+    }
+
+    .extra-check:checked + .extra-opt-box {
+      border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+      background: color-mix(in srgb, var(--primary) 6%, #fff);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+    }
+
+    .extra-check:checked + .extra-opt-box::before {
+      border-color: var(--primary);
+      background: var(--primary);
+      box-shadow: inset 0 0 0 2px #fff;
+    }
+
+    .extra-opt-info { flex: 1; min-width: 0; }
+
+    .extra-opt-label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .extra-opt-sub {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .extra-opt-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
     .thankyou {
       display: none;
       padding: 28px 26px 30px;
@@ -426,6 +514,19 @@
               <input id="startSaldo" type="number" min="0" step="0.01" value="0" />
             </div>
           </div>
+
+          <!-- Extra opties -->
+          <div class="extras-title">Extra opties</div>
+          <label class="extra-opt">
+            <input type="checkbox" class="extra-check" id="spoedAanvraag" data-price="150">
+            <div class="extra-opt-box">
+              <div class="extra-opt-info">
+                <span class="extra-opt-label">⚡ Spoed aanvraag</span>
+                <span class="extra-opt-sub">Oprichting binnen 2 werkdagen i.p.v. 5 werkdagen</span>
+              </div>
+              <span class="extra-opt-price">+ € 150</span>
+            </div>
+          </label>
           <div class="actions">
             <span></span>
             <button class="btn btn-primary" type="button" id="toStepTwo">Verder naar contactgegevens</button>
@@ -490,6 +591,7 @@
 
       <div class="price"><span>Basispakket</span><strong id="lineBase">€ 350</strong></div>
       <div class="price"><span>Extra aandeelhouders</span><span id="lineShareholders">€ 0</span></div>
+      <div class="price" id="lineSpoedRow" style="display:none;"><span>⚡ Spoed aanvraag</span><span id="lineSpoed" style="color:#1A3B70;font-weight:600;">€ 0</span></div>
       <div class="divider"></div>
       <div class="total">
         <span>Totaal</span>
@@ -512,17 +614,25 @@
       return 'EUR ' + Number(v || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    const SPOED_PRICE = 150;
+
     function updateTotals() {
       const typeOpt = document.querySelector('#oprichtingType option:checked');
       const shareOpt = document.querySelector('#aandeelhouders option:checked');
       const base = Number(typeOpt?.dataset.base || 0);
       const shareholders = Number(shareOpt?.dataset.extra || 0);
-      const total = base + shareholders;
+      const spoedChecked = document.getElementById('spoedAanvraag')?.checked;
+      const spoed = spoedChecked ? SPOED_PRICE : 0;
+      const total = base + shareholders + spoed;
 
       document.getElementById('lineBase').textContent = euro(base);
       document.getElementById('lineShareholders').textContent = euro(shareholders);
+      const spoedRow = document.getElementById('lineSpoedRow');
+      if (spoedRow) spoedRow.style.display = spoedChecked ? '' : 'none';
+      const lineSpoed = document.getElementById('lineSpoed');
+      if (lineSpoed) lineSpoed.textContent = euro(spoed);
       document.getElementById('lineTotal').textContent = euro(total);
-      return { base, shareholders, total };
+      return { base, shareholders, spoed, total };
     }
 
     function setStep(nr) {
@@ -615,6 +725,7 @@
         kapitaal: Number(document.getElementById('kapitaal').value || 0.01),
         startSaldo: Number(document.getElementById('startSaldo').value || 0),
         opmerkingen: document.getElementById('opmerkingen').value.trim(),
+        spoedAanvraag: document.getElementById('spoedAanvraag')?.checked || false,
         pricing
       };
 
@@ -654,8 +765,10 @@
     document.getElementById('toStepOne').addEventListener('click', () => setStep(1));
     document.getElementById('newRequestBtn').addEventListener('click', resetForNewRequest);
     ['oprichtingType', 'aandeelhouders', 'holding'].forEach(id => {
-      document.getElementById(id).addEventListener('change', updateTotals);
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', updateTotals);
     });
+    document.getElementById('spoedAanvraag').addEventListener('change', updateTotals);
     document.getElementById('requestForm').addEventListener('submit', submitForm);
 
     (async () => {
