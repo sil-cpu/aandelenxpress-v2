@@ -2896,17 +2896,23 @@ app.post('/api/dossier-files/:nr/admin-upload', requireAdmin, async (req, res) =
     if (!row) return res.status(404).json({ error: 'Dossier niet gevonden' });
 
     const results = [];
+    const errors = [];
     for (const f of files) {
         if (!f.name || !f.base64) continue;
         const safeName = String(f.name).replace(/[^a-zA-Z0-9._\-\s]/g, '_').slice(0, 100);
         const filePath = `${nr}/${Date.now()}_${safeName}`;
         const buf = Buffer.from(f.base64, 'base64');
         const { error } = await supabase.storage.from(FILE_BUCKET).upload(filePath, buf, {
-            contentType: f.type || 'application/octet-stream', upsert: false
+            contentType: f.type || 'application/octet-stream', upsert: true
         });
-        if (!error) results.push({ name: safeName, path: filePath });
+        if (!error) {
+            results.push({ name: safeName, path: filePath });
+        } else {
+            console.error(`[admin-upload] Supabase error for ${safeName}:`, error);
+            errors.push(`${safeName}: ${error.message}`);
+        }
     }
-    if (!results.length) return res.status(500).json({ error: 'Upload mislukt' });
+    if (!results.length) return res.status(500).json({ error: errors.length ? errors.join('; ') : 'Upload mislukt' });
 
     const { data: reqRow } = await supabase.from('reseller_requests').select('*').eq('id', nr).single();
     if (reqRow) {
