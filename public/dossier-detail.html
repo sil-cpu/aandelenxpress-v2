@@ -242,29 +242,17 @@
         </select>
       </div>
       <div class="ab-divider"></div>
-      <div class="ab-group">
+      <div class="ab-group" style="position:relative;">
         <span class="ab-label">Status</span>
-        <select id="statusSelect" class="ab-select" onchange="onStatusSelectChange(this.value)">
-          <option value="pending">Aanvraag ingediend</option>
-          <option value="vragenlijst">Vragenlijst</option>
-          <option value="wwft">WWFT Check</option>
-          <option value="betaling">Betaling</option>
-          <option value="ocr">OCR</option>
-          <option value="ocr-signed">OCR Signed</option>
-          <option value="draft-accountant">Draft to Accountant</option>
-          <option value="accountant-accepted">Accountant accepted</option>
-          <option value="draft-client">Draft to Client</option>
-          <option value="client-signed">Client Signed</option>
-          <option value="invitation-om">Invitation OM</option>
-          <option value="executed-notaris">Executed Notaris</option>
-          <option value="kvk">KvK inschrijving</option>
-          <option value="passed-kvk">Passed by KvK</option>
-          <option value="making-binders">Making Closing Binders</option>
-          <option value="upload-binders">Upload Closing Binders</option>
-          <option value="complete">Case completed</option>
-          <option value="complete-review">Case completed review</option>
-          <option value="rejected">Afgewezen</option>
-        </select>
+        <!-- hidden select for JS compat -->
+        <select id="statusSelect" style="display:none;"></select>
+        <div style="position:relative;">
+          <button id="statusBadgeBtn" class="badge badge-pending" onclick="toggleStatusDdDetail(event)" style="cursor:pointer;border:none;font-size:0.82rem;padding:5px 26px 5px 11px;position:relative;white-space:nowrap;">
+            <span id="statusBadgeLabel">Aanvraag ingediend</span>
+            <svg style="position:absolute;right:7px;top:50%;transform:translateY(-50%);" width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="statusDdDetail" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #DDE5F4;border-radius:10px;box-shadow:0 8px 24px rgba(15,29,58,.12);min-width:220px;z-index:500;overflow:hidden;max-height:320px;overflow-y:auto;padding:4px 0;"></div>
+        </div>
       </div>
       <div style="margin-left:auto;">
         <div class="acties-wrap">
@@ -1337,10 +1325,76 @@ async function renderActionBar(d) {
 
   // Set current status
   const statusSel = document.getElementById('statusSelect');
-  if (d.apiStatus) statusSel.value = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected'].includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
+  const knownStatuses = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected'];
+  if (d.apiStatus) statusSel.value = knownStatuses.includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
+  syncStatusButton();
 
   document.getElementById('actionBar').style.display = 'flex';
 }
+
+const STATUS_BADGE_MAP_DETAIL = {
+  'pending':             { css: 'badge-pending',             label: 'Aanvraag ingediend' },
+  'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst' },
+  'wwft':                { css: 'badge-wwft',                label: 'WWFT Check' },
+  'betaling':            { css: 'badge-betaling',            label: 'Betaling' },
+  'invoice-sent':        { css: 'badge-invoice-sent',        label: 'Factuur verzonden' },
+  'invoice-paid':        { css: 'badge-invoice-paid',        label: 'Factuur betaald' },
+  'ocr':                 { css: 'badge-ocr',                 label: 'OCR' },
+  'ocr-signed':          { css: 'badge-ocr-signed',          label: 'OCR Signed' },
+  'draft-accountant':    { css: 'badge-draft-accountant',    label: 'Draft to Accountant' },
+  'accountant-accepted': { css: 'badge-accountant-accepted', label: 'Accountant accepted' },
+  'draft-client':        { css: 'badge-draft-client',        label: 'Draft to Client' },
+  'client-signed':       { css: 'badge-client-signed',       label: 'Client Signed' },
+  'invitation-om':       { css: 'badge-invitation-om',       label: 'Invitation OM' },
+  'executed-notaris':    { css: 'badge-executed-notaris',    label: 'Executed Notaris' },
+  'kvk':                 { css: 'badge-kvk',                 label: 'KvK inschrijving' },
+  'passed-kvk':          { css: 'badge-passed-kvk',          label: 'Passed by KvK' },
+  'making-binders':      { css: 'badge-making-binders',      label: 'Making Closing Binders' },
+  'upload-binders':      { css: 'badge-upload-binders',      label: 'Upload Closing Binders' },
+  'complete':            { css: 'badge-complete',            label: 'Case completed' },
+  'complete-review':     { css: 'badge-complete-review',     label: 'Case completed review' },
+  'rejected':            { css: 'badge-rejected',            label: 'Afgewezen' },
+};
+
+function syncStatusButton() {
+  const sel = document.getElementById('statusSelect');
+  const btn = document.getElementById('statusBadgeBtn');
+  const lbl = document.getElementById('statusBadgeLabel');
+  if (!btn || !sel) return;
+  const val = sel.value || 'pending';
+  const entry = STATUS_BADGE_MAP_DETAIL[val] || { css: 'badge-pending', label: val };
+  // Remove all badge- classes, add the right one
+  btn.className = 'badge ' + entry.css;
+  btn.style.cssText = 'cursor:pointer;border:none;font-size:0.82rem;padding:5px 26px 5px 11px;position:relative;white-space:nowrap;';
+  if (lbl) lbl.textContent = entry.label;
+}
+
+function toggleStatusDdDetail(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('statusDdDetail');
+  if (!dd) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  // Build options
+  dd.innerHTML = Object.entries(STATUS_BADGE_MAP_DETAIL).map(([key, v]) =>
+    `<div style="padding:5px 10px;cursor:pointer;" onmouseenter="this.style.background='#F5F8FF'" onmouseleave="this.style.background=''" onclick="pickStatus('${key}',event)">`+
+    `<span class="badge ${v.css}" style="pointer-events:none;width:100%;justify-content:flex-start;border-radius:6px;">&#x25CF; ${v.label}</span>`+
+    `</div>`
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function pickStatus(val, e) {
+  e.stopPropagation();
+  document.getElementById('statusDdDetail').style.display = 'none';
+  const sel = document.getElementById('statusSelect');
+  if (sel) sel.value = val;
+  onStatusSelectChange(val);
+}
+
+document.addEventListener('click', () => {
+  const dd = document.getElementById('statusDdDetail');
+  if (dd) dd.style.display = 'none';
+});
 
 async function onStatusSelectChange(val) {
   const oldVal = currentDossier?.apiStatus || 'pending';
@@ -1391,6 +1445,7 @@ function cancelStatusChange() {
   if (pendingStatusChange) {
     const sel = document.getElementById('statusSelect');
     if (sel) sel.value = pendingStatusChange.oldValue || 'pending';
+    syncStatusButton();
     pendingStatusChange = null;
   }
   closeEmailModal();
