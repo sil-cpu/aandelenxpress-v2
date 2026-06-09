@@ -156,11 +156,6 @@
             color: white;
         }
 
-        .timeline-step.completed .timeline-circle::before {
-            content: '✓';
-            font-weight: 700;
-        }
-
         .timeline-label {
             font-size: 0.8rem;
             color: #8A9BB5;
@@ -757,36 +752,19 @@
 </div>
 
 <script>
-// Status configuration
-const statusSteps = [
-    { key: 'pending',             label: 'Aanvraag ingediend',       description: 'Aanvraag ontvangen en geregistreerd' },
-    { key: 'vragenlijst',         label: 'Vragenlijst',              description: 'Vragenlijst per e-mail verstuurd' },
-    { key: 'wwft',                label: 'WWFT Check',               description: 'WWFT-controle wordt uitgevoerd' },
-    { key: 'betaling',            label: 'Betaling',                 description: 'Betaling verwerken' },
-    { key: 'invoice-sent',        label: 'Factuur verzonden',        description: 'Factuur per e-mail verzonden' },
-    { key: 'invoice-paid',        label: 'Factuur betaald',          description: 'Betaling ontvangen en bevestigd' },
-    { key: 'ocr',                 label: 'OCR',                      description: 'OCR-verwerking van documenten' },
-    { key: 'ocr-signed',          label: 'OCR Signed',               description: 'OCR-documenten ondertekend' },
-    { key: 'draft-accountant',    label: 'Draft to Accountant',      description: 'Concept ter beoordeling accountant' },
-    { key: 'accountant-accepted', label: 'Accountant accepted',      description: 'Concept goedgekeurd door accountant' },
-    { key: 'draft-client',        label: 'Draft to Client',          description: 'Concept ter ondertekening klant' },
-    { key: 'client-signed',       label: 'Client Signed',            description: 'Document ondertekend door klant' },
-    { key: 'invitation-om',       label: 'Invitation OM',            description: 'Uitnodiging Openbaar Ministerie' },
-    { key: 'executed-notaris',    label: 'Executed Notaris',         description: 'Notariële akte gepasseerd' },
-    { key: 'kvk',                 label: 'KvK inschrijving',         description: 'Registratie bij KvK' },
-    { key: 'passed-kvk',          label: 'Passed by KvK',            description: 'KvK-inschrijving goedgekeurd' },
-    { key: 'making-binders',      label: 'Making Closing Binders',   description: 'Closing Binders worden opgesteld' },
-    { key: 'upload-binders',      label: 'Upload Closing Binders',   description: 'Closing Binders beschikbaar' },
-    { key: 'complete',            label: 'Case completed',           description: 'Dossier volledig afgerond' },
-    { key: 'complete-review',     label: 'Case completed review',    description: 'Eindcontrole dossier' },
+// Client-facing timeline steps (internal steps are grouped/hidden)
+const clientSteps = [
+    { key: 'pending',    label: 'Aanvraag',           internalKeys: ['pending'] },
+    { key: 'vragenlijst', label: 'Vragenlijst',       internalKeys: ['vragenlijst', 'approved'] },
+    { key: 'wwft',       label: 'WWFT Check',         internalKeys: ['wwft'] },
+    { key: 'betaling',   label: 'Betaling',           internalKeys: ['betaling', 'invoice-sent', 'invoice-paid'] },
+    { key: 'ocr',        label: 'Documentverwerking', internalKeys: ['ocr', 'ocr-signed'] },
+    { key: 'concept',    label: 'Concept',            internalKeys: ['draft-accountant', 'accountant-accepted', 'draft-client', 'client-signed'] },
+    { key: 'notaris',    label: 'Notariële akte',     internalKeys: ['invitation-om', 'executed-notaris'] },
+    { key: 'kvk',        label: 'KvK inschrijving',   internalKeys: ['kvk', 'passed-kvk'] },
+    { key: 'binders',    label: 'Closing Binders',    internalKeys: ['making-binders', 'upload-binders'] },
+    { key: 'complete',   label: 'Afgerond',           internalKeys: ['complete', 'complete-review'] },
 ];
-
-// Map backend status keys to step keys (backwards compatibility)
-const STATUS_STEP_ALIAS = {
-    approved: 'vragenlijst',
-    'invoice-sent': 'invoice-sent',
-    'invoice-paid': 'invoice-paid',
-};
 
 const statusDescriptions = {
     pending:               'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier spoedig in behandeling.',
@@ -814,104 +792,109 @@ const statusDescriptions = {
 
 const todoItems = {
     pending: [
-        { title: 'Aanvraag ingediend',       desc: 'Uw aanvraag is ontvangen' },
-        { title: 'Controle gegevens',        desc: 'Wij controleren uw aanvraag' },
-        { title: 'U ontvangt bericht',       desc: 'Wij sturen u spoedig een bericht' }
+        { title: 'Gegevens worden gecontroleerd', desc: 'Wij controleren uw aanvraag' },
+        { title: 'Vragenlijst wordt opgesteld',   desc: 'U ontvangt spoedig een vragenlijst per e-mail' },
+        { title: 'U ontvangt bericht',            desc: 'Wij nemen snel contact met u op' }
     ],
     vragenlijst: [
-        { title: 'E-mail ontvangen',         desc: 'Controleer uw inbox (en spam)' },
-        { title: 'Vragenlijst invullen',     desc: 'Vul alle vragen volledig in' },
-        { title: 'Vragenlijst versturen',    desc: 'Verstuur de ingevulde vragenlijst' }
+        { title: 'E-mail controleren',            desc: 'Controleer uw inbox (en spammap)' },
+        { title: 'Vragenlijst invullen',          desc: 'Vul alle vragen volledig in' },
+        { title: 'Vragenlijst versturen',         desc: 'Verstuur de ingevulde vragenlijst' }
+    ],
+    approved: [
+        { title: 'E-mail controleren',            desc: 'Controleer uw inbox (en spammap)' },
+        { title: 'Vragenlijst invullen',          desc: 'Vul alle vragen volledig in' },
+        { title: 'Vragenlijst versturen',         desc: 'Verstuur de ingevulde vragenlijst' }
     ],
     wwft: [
-        { title: 'WWFT-controle gestart',    desc: 'Wij controleren uw gegevens' },
-        { title: 'Eventuele aanvullingen',   desc: 'Wij nemen contact op indien nodig' },
-        { title: 'WWFT goedkeuring',         desc: 'Dossier wordt goedgekeurd' }
+        { title: 'WWFT-controle loopt',           desc: 'Wij controleren uw gegevens' },
+        { title: 'Eventuele aanvullingen',        desc: 'Wij nemen contact op indien aanvullende informatie nodig is' },
+        { title: 'Factuur volgt',                 desc: 'Na goedkeuring ontvangt u een factuur' }
     ],
     betaling: [
-        { title: 'Betaalverzoek ontvangen',  desc: 'U ontvangt een betaalverzoek per e-mail' },
-        { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
-        { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
+        { title: 'Factuur controleren',           desc: 'Controleer uw inbox voor de factuur' },
+        { title: 'Betaling voldoen',              desc: 'Voldoe de betaling via de betaallink' },
+        { title: 'Dossier gaat verder',           desc: 'Na betaling starten wij de documentverwerking' }
     ],
     'invoice-sent': [
-        { title: 'Factuur ontvangen',        desc: 'Controleer uw inbox voor de factuur' },
-        { title: 'Betaling voldoen',         desc: 'Voldoe de betaling via de betaallink' },
-        { title: 'Bevestiging ontvangen',    desc: 'Wij bevestigen ontvangst van uw betaling' }
+        { title: 'Factuur controleren',           desc: 'Controleer uw inbox voor de factuur' },
+        { title: 'Betaling voldoen',              desc: 'Voldoe de betaling via de betaallink' },
+        { title: 'Dossier gaat verder',           desc: 'Na betaling starten wij de documentverwerking' }
     ],
     'invoice-paid': [
-        { title: 'Betaling ontvangen',       desc: 'Uw betaling is succesvol verwerkt' },
-        { title: 'Bevestiging verstuurd',    desc: 'U ontvangt een betalingsbevestiging per e-mail' },
-        { title: 'Dossier gaat verder',      desc: 'Wij gaan verder met de volgende stap' }
+        { title: 'Documenten worden verwerkt',    desc: 'Wij starten de digitale documentverwerking (OCR)' },
+        { title: 'Controle en verwerking',        desc: 'Resultaat wordt door ons gecontroleerd' },
+        { title: 'Concept opstellen',             desc: 'Wij stellen het notarieel concept op' }
     ],
     ocr: [
-        { title: 'Documenten ontvangen',     desc: 'Uw documenten zijn ontvangen' },
-        { title: 'OCR-verwerking',           desc: 'Wij verwerken uw documenten' },
-        { title: 'Controle resultaat',       desc: 'Resultaat wordt gecontroleerd' }
+        { title: 'OCR-verwerking loopt',          desc: 'Uw documenten worden digitaal verwerkt' },
+        { title: 'Resultaat wordt gecontroleerd', desc: 'Wij controleren de verwerkte documenten' },
+        { title: 'Ondertekening volgt',           desc: 'Na controle volgt ondertekening van het concept' }
     ],
     'ocr-signed': [
-        { title: 'OCR verwerkt',             desc: 'Documenten zijn verwerkt' },
-        { title: 'Ondertekening ontvangen',  desc: 'Uw ondertekening is ontvangen' },
-        { title: 'Volgende stap',            desc: 'Wij gaan verder met uw dossier' }
+        { title: 'Concept wordt opgesteld',       desc: 'Wij stellen het notarieel concept op' },
+        { title: 'Beoordeling en controle',       desc: 'Interne controle van het concept' },
+        { title: 'Concept ter ondertekening',     desc: 'U ontvangt het concept ter inzage en ondertekening' }
     ],
     'draft-accountant': [
-        { title: 'Concept opgesteld',        desc: 'Het concept is gereed' },
-        { title: 'Verzonden naar accountant', desc: 'Accountant beoordeelt het concept' },
-        { title: 'Wachten op goedkeuring',   desc: 'Wij wachten op reactie accountant' }
+        { title: 'Concept ter beoordeling',       desc: 'Accountant beoordeelt het concept' },
+        { title: 'Wachten op goedkeuring',        desc: 'Wij wachten op reactie van de accountant' },
+        { title: 'Concept naar u',                desc: 'Na goedkeuring ontvangt u het concept ter ondertekening' }
     ],
     'accountant-accepted': [
-        { title: 'Concept goedgekeurd',      desc: 'Accountant heeft goedgekeurd' },
-        { title: 'Volgende stap wordt gestart', desc: 'Wij gaan verder met uw dossier' },
-        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de voortgang' }
+        { title: 'Concept wordt verzonden',       desc: 'Het concept gaat naar u ter ondertekening' },
+        { title: 'Controleer uw inbox',           desc: 'U ontvangt het concept per e-mail' },
+        { title: 'Ondertekening vereist',         desc: 'Uw handtekening is nodig om door te gaan' }
     ],
     'draft-client': [
-        { title: 'Concept ter inzage',       desc: 'Bekijk het concept zorgvuldig' },
-        { title: 'Concept ondertekenen',     desc: 'Onderteken het concept' },
-        { title: 'Retourneren',              desc: 'Stuur het ondertekende document terug' }
+        { title: 'Concept bekijken',              desc: 'Bekijk het concept zorgvuldig' },
+        { title: 'Concept ondertekenen',          desc: 'Onderteken het concept digitaal' },
+        { title: 'Notariële akte volgt',          desc: 'Na ondertekening plant de notaris de akte in' }
     ],
     'client-signed': [
-        { title: 'Ondertekening ontvangen',  desc: 'Uw handtekening is ontvangen' },
-        { title: 'Verwerking gestart',       desc: 'Wij verwerken uw document' },
-        { title: 'Volgende stap',            desc: 'Wij gaan verder met uw dossier' }
+        { title: 'Afspraak notaris volgt',        desc: 'De notaris plant de afspraak in' },
+        { title: 'Notariële akte passeren',       desc: 'Akte wordt gepasseerd bij de notaris' },
+        { title: 'KvK-inschrijving volgt',        desc: 'Wij schrijven uw bedrijf in bij de KvK' }
     ],
     'invitation-om': [
-        { title: 'Uitnodiging verstuurd',    desc: 'Uitnodiging OM is verstuurd' },
-        { title: 'Wachten op reactie',       desc: 'Wij wachten op reactie OM' },
-        { title: 'Verdere afhandeling',      desc: 'Na goedkeuring gaan wij verder' }
+        { title: 'Wachten op OM-reactie',         desc: 'Wij wachten op goedkeuring van het Openbaar Ministerie' },
+        { title: 'Notariële akte volgt',          desc: 'Na goedkeuring passeert de notaris de akte' },
+        { title: 'U ontvangt bericht',            desc: 'Wij informeren u over de voortgang' }
     ],
     'executed-notaris': [
-        { title: 'Akte gepasseerd',          desc: 'Notariële akte is getekend' },
-        { title: 'KvK-aanvraag starten',     desc: 'Inschrijving bij KvK wordt gestart' },
-        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de voortgang' }
+        { title: 'KvK-aanvraag wordt ingediend',  desc: 'Wij dienen uw aanvraag in bij de KvK' },
+        { title: 'Goedkeuring KvK',               desc: 'KvK verwerkt uw registratie' },
+        { title: 'KvK-nummer ontvangt u',         desc: 'U ontvangt uw KvK-uittreksel per e-mail' }
     ],
     kvk: [
-        { title: 'KvK-aanvraag ingediend',   desc: 'Wij dienen uw aanvraag in bij KvK' },
-        { title: 'Goedkeuring KvK',          desc: 'KvK verwerkt uw registratie' },
-        { title: 'KvK-nummer ontvangen',     desc: 'U ontvangt uw KvK-uittreksel' }
+        { title: 'KvK-aanvraag loopt',            desc: 'KvK verwerkt uw registratie' },
+        { title: 'Goedkeuring verwacht',          desc: 'U ontvangt uw KvK-nummer spoedig' },
+        { title: 'Closing Binders volgen',        desc: 'Na inschrijving stellen wij de binders op' }
     ],
     'passed-kvk': [
-        { title: 'KvK-inschrijving verwerkt', desc: 'Uw bedrijf staat ingeschreven' },
-        { title: 'Closing Binders starten',  desc: 'Wij starten de Closing Binders' },
-        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de voortgang' }
+        { title: 'Closing Binders worden opgesteld', desc: 'Alle definitieve documenten worden gebundeld' },
+        { title: 'Eindcontrole',                  desc: 'Alle documenten worden gecontroleerd' },
+        { title: 'Dossier bijna afgerond',        desc: 'Wij ronden uw dossier spoedig af' }
     ],
     'making-binders': [
-        { title: 'Closing Binders gestart',  desc: 'Wij stellen de documenten op' },
-        { title: 'Controle documenten',      desc: 'Alle documenten worden gecontroleerd' },
-        { title: 'Upload volgt',             desc: 'Documenten worden spoedig geüpload' }
+        { title: 'Closing Binders in opmaak',     desc: 'Alle documenten worden gebundeld' },
+        { title: 'Eindcontrole volgt',            desc: 'Alle documenten worden gecontroleerd' },
+        { title: 'Upload beschikbaar spoedig',    desc: 'Documenten worden spoedig beschikbaar gesteld' }
     ],
     'upload-binders': [
-        { title: 'Closing Binders gereed',   desc: 'Alle documenten zijn beschikbaar' },
-        { title: 'Eindcontrole',             desc: 'Laatste controle wordt uitgevoerd' },
-        { title: 'Dossier bijna afgerond',   desc: 'Wij ronden uw dossier af' }
+        { title: 'Eindcontrole loopt',            desc: 'Laatste controle wordt uitgevoerd' },
+        { title: 'Dossier wordt afgerond',        desc: 'Wij ronden uw dossier af' },
+        { title: 'U ontvangt afsluitingsbericht', desc: 'Wij informeren u zodra alles klaar is' }
     ],
     complete: [
-        { title: 'Alle stappen voltooid',    desc: 'Uw dossier is volledig afgesloten!' },
-        { title: 'Documenten beschikbaar',   desc: 'Alle documenten zijn beschikbaar' },
-        { title: 'Support beschikbaar',      desc: 'Ons team staat voor u klaar' }
+        { title: 'Alle stappen voltooid',         desc: 'Uw dossier is volledig afgesloten!' },
+        { title: 'Documenten beschikbaar',        desc: 'Alle documenten zijn beschikbaar' },
+        { title: 'Support beschikbaar',           desc: 'Ons team staat voor u klaar' }
     ],
     'complete-review': [
-        { title: 'Eindcontrole gestart',     desc: 'Wij controleren het dossier' },
-        { title: 'Nagenoeg afgerond',        desc: 'Bijna klaar' },
-        { title: 'U ontvangt bericht',       desc: 'Wij informeren u over de afronding' }
+        { title: 'Eindcontrole loopt',            desc: 'Wij controleren het dossier' },
+        { title: 'Dossier bijna afgerond',        desc: 'Nagenoeg klaar' },
+        { title: 'U ontvangt afsluitingsbericht', desc: 'Wij informeren u over de afronding' }
     ]
 };
 
@@ -973,38 +956,21 @@ function storeToken(t) {
 
 function renderStatusTimeline(currentStatus, activities) {
     const timelineDiv = document.getElementById('statusTimeline');
-    // Resolve backend alias (e.g. 'approved' → 'vragenlijst')
-    const resolvedStatus = (typeof STATUS_STEP_ALIAS !== 'undefined' && STATUS_STEP_ALIAS[currentStatus]) || currentStatus;
-    const currentIndex = statusSteps.findIndex(s => s.key === resolvedStatus);
+    // Resolve any legacy alias
+    const resolvedStatus = currentStatus === 'approved' ? 'vragenlijst' : currentStatus;
 
-    // Build timestamp map from activities: status key → earliest matching timestamp
-    const tsMap = {};
-    (activities || []).forEach(a => {
-        const msg = (a.message || a.text || '').toLowerCase();
-        statusSteps.forEach(step => {
-            const key = step.key;
-            if (!tsMap[key] && (msg.includes(`naar "${step.label.toLowerCase()}`) || msg.includes(`status gewijzigd`) && msg.includes(step.label.toLowerCase()))) {
-                tsMap[key] = a.timestamp || a.createdAt || a.created_at || null;
-            }
-        });
-    });
-    // Fallback: if we have activities with status info
-    (activities || []).forEach(a => {
-        const key = a.status || a.toStatus;
-        if (key && statusSteps.find(s => s.key === key) && !tsMap[key]) {
-            tsMap[key] = a.timestamp || a.createdAt || a.created_at || null;
-        }
-    });
+    // Find which client step the current status maps to
+    const currentClientIndex = clientSteps.findIndex(s => s.internalKeys.includes(resolvedStatus));
 
-    timelineDiv.innerHTML = statusSteps.map((step, index) => {
+    timelineDiv.innerHTML = clientSteps.map((step, index) => {
         let stepClass = '';
-        if (index < currentIndex) stepClass = 'completed';
-        else if (index === currentIndex) stepClass = 'active';
-        const ts = tsMap[step.key];
-        const tsLabel = ts ? `<div style="font-size:.7rem;color:#8A9BB5;margin-top:3px;">${new Date(ts).toLocaleDateString('nl-NL', {day:'numeric',month:'short',year:'numeric'})}</div>` : '';
+        if (index < currentClientIndex) stepClass = 'completed';
+        else if (index === currentClientIndex) stepClass = 'active';
+
+        const circleContent = stepClass === 'completed' ? '✓' : (index + 1);
         return `<div class="timeline-step ${stepClass}">
-            <div class="timeline-circle">${index + 1}</div>
-            <div class="timeline-label">${step.label}${tsLabel}</div>
+            <div class="timeline-circle">${circleContent}</div>
+            <div class="timeline-label">${step.label}</div>
         </div>`;
     }).join('');
 }
