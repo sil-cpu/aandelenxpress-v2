@@ -161,6 +161,55 @@
       transition: border-color .15s ease, box-shadow .15s ease;
     }
 
+    input[type=checkbox], input[type=radio] {
+      width: auto;
+      padding: 0;
+      border-radius: 3px;
+      border: 1px solid #b0bfcf;
+      flex-shrink: 0;
+    }
+
+    .terms-wrap {
+      padding: 14px;
+      background: #F7F9FC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+    }
+
+    .terms-label {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+      font-size: 13px;
+      color: #4A5568;
+      line-height: 1.55;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    /* ── Extras toggle button ── */
+    .extras-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 11px 14px;
+      margin-top: 20px;
+      background: #f4f7fd;
+      border: 1px solid #dce6f4;
+      border-radius: 12px;
+      font: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+
+    .extras-toggle:hover { background: #edf2fb; border-color: #c2d4ec; }
+
     textarea { min-height: 96px; resize: vertical; }
 
     input:focus, select:focus, textarea:focus {
@@ -515,18 +564,27 @@
             </div>
           </div>
 
-          <!-- Extra opties -->
-          <div class="extras-title">Extra opties</div>
-          <label class="extra-opt">
-            <input type="checkbox" class="extra-check" id="spoedAanvraag" data-price="150">
-            <div class="extra-opt-box">
-              <div class="extra-opt-info">
-                <span class="extra-opt-label">⚡ Spoed aanvraag</span>
-                <span class="extra-opt-sub">Oprichting binnen 2 werkdagen i.p.v. 5 werkdagen</span>
-              </div>
-              <span class="extra-opt-price">+ € 150</span>
-            </div>
-          </label>
+          <!-- Extra opties (collapsible) -->
+          <button type="button" class="extras-toggle" id="extrasToggleBtn" onclick="toggleExtras()">
+            <span>Aanvullende opties</span>
+            <svg id="extrasToggleIcon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="extrasPanel" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;" hidden>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="spoed" data-price="909" data-label="Spoedbehandeling (24-48 uur)"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Spoedbehandeling (24-48 uur)</span><span class="extra-opt-sub">Verwerking binnen 24-48 uur i.p.v. 5 werkdagen</span></div><span class="extra-opt-price">+ € 909</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="aandeelhoudersregister" data-price="325" data-label="Nieuw aandeelhoudersregister"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Nieuw aandeelhoudersregister</span><span class="extra-opt-sub">Opstellen van een nieuw aandeelhoudersregister</span></div><span class="extra-opt-price">+ € 325</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="ah-buiten-eu" data-price="500" data-label="Aandeelhouder buiten de EU"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Aandeelhouder buiten de EU</span><span class="extra-opt-sub">Extra compliance-controle voor aandeelhouders buiten de EU</span></div><span class="extra-opt-price">+ € 500</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-met-nl-bank" data-price="50" data-label="Persoon buiten NL met NL-bankrekening"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Persoon buiten NL met NL-bankrekening</span><span class="extra-opt-sub">Natuurlijk persoon buiten Nederland met een Nederlandse bankrekening</span></div><span class="extra-opt-price">+ € 50</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-zonder-bank" data-price="250" data-label="Persoon buiten NL zonder NL-bankrekening"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Persoon buiten NL zonder NL-bankrekening</span><span class="extra-opt-sub">Extra identificatie vereist bij geen Nederlandse bankrekening</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="bestaande-holding" data-price="50" data-label="Bestaande Holding als aandeelhouder"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Bestaande Holding als aandeelhouder</span><span class="extra-opt-sub">Een bestaande holding wordt opgenomen als aandeelhouder</span></div><span class="extra-opt-price">+ € 50</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="compliance-tussenholdings" data-price="50" data-label="Aanvullende compliance tussenholdings"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Aanvullende compliance tussenholdings</span><span class="extra-opt-sub">Extra controle bij structuren met tussenholdings</span></div><span class="extra-opt-price">+ € 50</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="bedrijfsadres-anders" data-price="50" data-label="Bedrijfsadres afwijkend van aandeelhouder"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Bedrijfsadres afwijkend van aandeelhouder</span><span class="extra-opt-sub">Extra verwerking bij een afwijkend bedrijfsadres</span></div><span class="extra-opt-price">+ € 50</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="tolk-30min" data-price="250" data-label="Belafspraak met tolk (30 min)"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Belafspraak met tolk (30 min)</span><span class="extra-opt-sub">30 minuten taalondersteuning via een beëdigd tolk</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="engelse-vertaling" data-price="125" data-label="Engelse vertaling statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Engelse vertaling statuten</span><span class="extra-opt-sub">Officiële Engelse vertaling van de oprichtingsstatuten</span></div><span class="extra-opt-price">+ € 125</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="naamswijziging-concept" data-price="250" data-label="Naamswijziging in conceptakten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Naamswijziging in conceptakten</span><span class="extra-opt-sub">Aanpassing van de naam in reeds opgestelde conceptakten</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="advocaten-statuten" data-price="250" data-label="Advocaten statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Advocaten statuten</span><span class="extra-opt-sub">Uitbreiding met clausules voor advocatenpraktijken</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="vastgoed-statuten" data-price="250" data-label="Vastgoed statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Vastgoed statuten</span><span class="extra-opt-sub">Uitbreiding met clausules voor vastgoedactiviteiten</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="wtza-statuten" data-price="250" data-label="WTZA statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">WTZA statuten</span><span class="extra-opt-sub">Uitbreiding met WTZA-gerelateerde bepalingen</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+          </div>
           <div class="actions">
             <span></span>
             <button class="btn btn-primary" type="button" id="toStepTwo">Verder naar contactgegevens</button>
@@ -552,9 +610,9 @@
               <textarea id="opmerkingen" placeholder="Bijzonderheden die we moeten weten"></textarea>
             </div>
             <div class="field full" style="margin-top:4px;">
-              <div style="padding:14px;background:#F7F9FC;border:1px solid #E2E8F0;border-radius:8px;">
-                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:0.85rem;color:#4A5568;line-height:1.5;">
-                  <input type="checkbox" id="termsAkkoord" style="margin-top:3px;flex-shrink:0;" required>
+              <div class="terms-wrap">
+                <label class="terms-label">
+                  <input type="checkbox" id="termsAkkoord" style="margin-top:2px;" required>
                   <span>Ik bevestig dat alle ingevoerde gegevens correct en volledig zijn. Ik ga akkoord met de <a href="/algemene-voorwaarden" target="_blank" style="color:#1A3B70;">algemene voorwaarden</a> van AandelenXpress en begrijp dat ik als partner verantwoordelijk ben voor de juistheid van de verstrekte informatie.</span>
                 </label>
               </div>
@@ -591,7 +649,7 @@
 
       <div class="price"><span>Basispakket</span><strong id="lineBase">€ 350</strong></div>
       <div class="price"><span>Extra aandeelhouders</span><span id="lineShareholders">€ 0</span></div>
-      <div class="price" id="lineSpoedRow" style="display:none;"><span>⚡ Spoed aanvraag</span><span id="lineSpoed" style="color:#1A3B70;font-weight:600;">€ 0</span></div>
+      <div id="extraPriceLines"></div>
       <div class="divider"></div>
       <div class="total">
         <span>Totaal</span>
@@ -614,25 +672,42 @@
       return 'EUR ' + Number(v || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    const SPOED_PRICE = 150;
-
     function updateTotals() {
       const typeOpt = document.querySelector('#oprichtingType option:checked');
       const shareOpt = document.querySelector('#aandeelhouders option:checked');
       const base = Number(typeOpt?.dataset.base || 0);
       const shareholders = Number(shareOpt?.dataset.extra || 0);
-      const spoedChecked = document.getElementById('spoedAanvraag')?.checked;
-      const spoed = spoedChecked ? SPOED_PRICE : 0;
-      const total = base + shareholders + spoed;
+
+      // Collect all checked extras
+      const checkedExtras = [];
+      document.querySelectorAll('.extra-check:checked').forEach(cb => {
+        checkedExtras.push({ key: cb.dataset.key, label: cb.dataset.label, price: Number(cb.dataset.price || 0) });
+      });
+      const extrasTotal = checkedExtras.reduce((s, e) => s + e.price, 0);
+      const total = base + shareholders + extrasTotal;
 
       document.getElementById('lineBase').textContent = euro(base);
       document.getElementById('lineShareholders').textContent = euro(shareholders);
-      const spoedRow = document.getElementById('lineSpoedRow');
-      if (spoedRow) spoedRow.style.display = spoedChecked ? '' : 'none';
-      const lineSpoed = document.getElementById('lineSpoed');
-      if (lineSpoed) lineSpoed.textContent = euro(spoed);
+
+      // Render dynamic extra price lines
+      const linesEl = document.getElementById('extraPriceLines');
+      if (linesEl) {
+        linesEl.innerHTML = checkedExtras.map(e =>
+          `<div class="price"><span>${e.label}</span><span style="color:#1A3B70;font-weight:600;">${euro(e.price)}</span></div>`
+        ).join('');
+      }
+
       document.getElementById('lineTotal').textContent = euro(total);
-      return { base, shareholders, spoed, total };
+      return { base, shareholders, extras: checkedExtras, extrasTotal, total };
+    }
+
+    function toggleExtras() {
+      const panel = document.getElementById('extrasPanel');
+      const icon  = document.getElementById('extrasToggleIcon');
+      const open  = !panel.hidden;
+      panel.hidden = open;
+      panel.style.display = open ? 'none' : 'flex';
+      if (icon) icon.style.transform = open ? '' : 'rotate(180deg)';
     }
 
     function setStep(nr) {
@@ -725,7 +800,7 @@
         kapitaal: Number(document.getElementById('kapitaal').value || 0.01),
         startSaldo: Number(document.getElementById('startSaldo').value || 0),
         opmerkingen: document.getElementById('opmerkingen').value.trim(),
-        spoedAanvraag: document.getElementById('spoedAanvraag')?.checked || false,
+        extras: Array.from(document.querySelectorAll('.extra-check:checked')).map(cb => ({ key: cb.dataset.key, label: cb.dataset.label, price: Number(cb.dataset.price || 0) })),
         pricing
       };
 
@@ -764,11 +839,11 @@
 
     document.getElementById('toStepOne').addEventListener('click', () => setStep(1));
     document.getElementById('newRequestBtn').addEventListener('click', resetForNewRequest);
-    ['oprichtingType', 'aandeelhouders', 'holding'].forEach(id => {
+    ['oprichtingType', 'aandeelhouders'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('change', updateTotals);
     });
-    document.getElementById('spoedAanvraag').addEventListener('change', updateTotals);
+    document.querySelectorAll('.extra-check').forEach(cb => cb.addEventListener('change', updateTotals));
     document.getElementById('requestForm').addEventListener('submit', submitForm);
 
     (async () => {
