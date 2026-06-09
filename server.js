@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
-const archiver = require('archiver');
+const AdmZip = require('adm-zip');
 const { PDFDocument, rgb, StandardFonts, PDFString, PDFName, PDFBool } = require('pdf-lib');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
@@ -3016,16 +3016,11 @@ ${activitiesHtml}
 <div class="footer">Geëxporteerd door AandelenXpress &nbsp;·&nbsp; ${fmtDt(new Date().toISOString())}</div>
 </body></html>`;
 
-    // 6. Stream ZIP
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="dossier-${id}-export.zip"`);
-
-    const zip = archiver('zip', { zlib: { level: 6 } });
-    zip.on('error', err => { console.error('ZIP error:', err); res.end(); });
-    zip.pipe(res);
+    // 6. Build ZIP in memory and send
+    const zip = new AdmZip();
 
     // HTML summary
-    zip.append(Buffer.from(summaryHtml, 'utf8'), { name: `dossier-${id}/dossier-samenvatting.html` });
+    zip.addFile(`dossier-${id}/dossier-samenvatting.html`, Buffer.from(summaryHtml, 'utf8'));
 
     // Vragenlijst files (from base64 in DB)
     for (const f of vlFiles) {
@@ -3033,7 +3028,7 @@ ${activitiesHtml}
             const file = getStoredVragenlijstFile(vlRow.data || {}, f.key, f.index);
             if (file?.base64) {
                 const buf = Buffer.from(file.base64, 'base64');
-                zip.append(buf, { name: `dossier-${id}/vragenlijst-documenten/${f.name}` });
+                zip.addFile(`dossier-${id}/vragenlijst-documenten/${f.name}`, buf);
             }
         } catch(e) { /* skip */ }
     }
@@ -3045,12 +3040,16 @@ ${activitiesHtml}
             if (!error && data) {
                 const arrBuf = await data.arrayBuffer();
                 const cleanName = f.name.replace(/^\d+_/, '');
-                zip.append(Buffer.from(arrBuf), { name: `dossier-${id}/geupload-documenten/${cleanName}` });
+                zip.addFile(`dossier-${id}/geupload-documenten/${cleanName}`, Buffer.from(arrBuf));
             }
         } catch(e) { /* skip */ }
     }
 
-    zip.finalize();
+    const zipBuffer = zip.toBuffer();
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="dossier-${id}-export.zip"`);
+    res.setHeader('Content-Length', zipBuffer.length);
+    res.end(zipBuffer);
 });
 
 // Export for Vercel
