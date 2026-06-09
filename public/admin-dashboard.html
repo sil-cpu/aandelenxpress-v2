@@ -318,8 +318,7 @@
                 <th class="sortable" onclick="setSortColumn('type')">Type <span class="sort-indicator" id="sort-type"></span></th>
                 <th class="sortable" onclick="setSortColumn('partner')">Partner <span class="sort-indicator" id="sort-partner"></span></th>
                 <th class="sortable" onclick="setSortColumn('status')">Status <span class="sort-indicator" id="sort-status"></span></th>
-                <th>Tags</th>
-                <th class="sortable" onclick="setSortColumn('date')">Datum <span class="sort-indicator" id="sort-date"></span></th>
+                <th class="sortable" onclick="setSortColumn('tags')">Tags <span class="sort-indicator" id="sort-tags"></span></th> <span class="sort-indicator" id="sort-date"></span></th>
                 <th class="sortable" onclick="setSortColumn('kvk')">KvK <span class="sort-indicator" id="sort-kvk"></span></th>
                 <th class="sortable" onclick="setSortColumn('contact')">Contact <span class="sort-indicator" id="sort-contact"></span></th>
                 <th class="sortable" onclick="setSortColumn('assigned')">Toegewezen aan <span class="sort-indicator" id="sort-assigned"></span></th>
@@ -2687,6 +2686,13 @@ function sortDossiers(data) {
         aVal = (a.assignedTo || '').toLowerCase();
         bVal = (b.assignedTo || '').toLowerCase();
         break;
+      case 'tags': {
+        const aTags = getDossierTags(a.dossierNr).map(id => (tagDefinitions.find(t => t.id === id)?.name || '')).join(',').toLowerCase();
+        const bTags = getDossierTags(b.dossierNr).map(id => (tagDefinitions.find(t => t.id === id)?.name || '')).join(',').toLowerCase();
+        aVal = aTags;
+        bVal = bTags;
+        break;
+      }
       default:
         return 0;
     }
