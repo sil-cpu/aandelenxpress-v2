@@ -335,84 +335,90 @@
       color: #0a613f;
     }
 
-    /* ── Extra opties ── */
-    .extras-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #425a7f;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin: 20px 0 10px;
+    /* ── Extras dropdown ── */
+    .extras-wrap {
+      margin-top: 20px;
+    }
+
+    .extras-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 12px 13px;
+      background: #fff;
+      border: 1px solid #d6e0ef;
+      border-radius: 12px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .extras-toggle.has-selection {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .extras-toggle:focus,
+    .extras-toggle.open {
+      border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+      outline: none;
+    }
+
+    .extras-dropdown-body {
+      display: none;
+      border: 1px solid #d6e0ef;
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      overflow: hidden;
+    }
+
+    .extras-dropdown-body.open {
+      display: block;
+    }
+
+    .extras-scroll {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 4px 0;
     }
 
     .extra-opt {
-      display: block;
-      cursor: pointer;
-      margin-bottom: 8px;
-    }
-
-    .extra-check {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-      width: 0;
-      height: 0;
-    }
-
-    .extra-opt-box {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 11px 13px;
-      border: 1px solid #dce6f4;
-      border-radius: 12px;
-      background: #fff;
-      transition: border-color .15s, background .15s, box-shadow .15s;
+      padding: 10px 13px;
+      cursor: pointer;
+      transition: background .1s;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
-    .extra-opt-box::before {
-      content: '';
-      width: 15px;
-      height: 15px;
-      border: 1.5px solid #a8bdd4;
-      border-radius: 4px;
+    .extra-opt:hover { background: #f4f7fd; }
+
+    .extra-check {
+      width: 15px !important;
+      height: 15px !important;
+      padding: 0 !important;
       flex-shrink: 0;
-      background: white;
-      transition: all .15s;
+      accent-color: var(--primary);
+      cursor: pointer;
     }
-
-    .extra-opt:hover .extra-opt-box {
-      border-color: #b8cfe8;
-      background: #fafcff;
-    }
-
-    .extra-check:checked + .extra-opt-box {
-      border-color: color-mix(in srgb, var(--primary) 55%, transparent);
-      background: color-mix(in srgb, var(--primary) 6%, #fff);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
-    }
-
-    .extra-check:checked + .extra-opt-box::before {
-      border-color: var(--primary);
-      background: var(--primary);
-      box-shadow: inset 0 0 0 2px #fff;
-    }
-
-    .extra-opt-info { flex: 1; min-width: 0; }
 
     .extra-opt-label {
-      display: block;
+      flex: 1;
       font-size: 13.5px;
-      font-weight: 600;
+      font-weight: 500;
       color: var(--text);
-      line-height: 1.35;
-    }
-
-    .extra-opt-sub {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.3;
     }
 
     .extra-opt-price {
@@ -421,6 +427,20 @@
       color: var(--primary);
       white-space: nowrap;
       flex-shrink: 0;
+    }
+
+    .extras-toggle-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
     }
 
     .thankyou {
@@ -564,26 +584,30 @@
             </div>
           </div>
 
-          <!-- Extra opties (collapsible) -->
-          <button type="button" class="extras-toggle" id="extrasToggleBtn" onclick="toggleExtras()">
-            <span>Aanvullende opties</span>
-            <svg id="extrasToggleIcon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="extrasPanel" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;" hidden>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="spoed" data-price="909" data-label="Spoedbehandeling (24-48 uur)"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Spoedbehandeling (24-48 uur)</span><span class="extra-opt-sub">Verwerking binnen 24-48 uur i.p.v. 5 werkdagen</span></div><span class="extra-opt-price">+ € 909</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="aandeelhoudersregister" data-price="325" data-label="Nieuw aandeelhoudersregister"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Nieuw aandeelhoudersregister</span><span class="extra-opt-sub">Opstellen van een nieuw aandeelhoudersregister</span></div><span class="extra-opt-price">+ € 325</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="ah-buiten-eu" data-price="500" data-label="Aandeelhouder buiten de EU"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Aandeelhouder buiten de EU</span><span class="extra-opt-sub">Extra compliance-controle voor aandeelhouders buiten de EU</span></div><span class="extra-opt-price">+ € 500</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-met-nl-bank" data-price="50" data-label="Persoon buiten NL met NL-bankrekening"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Persoon buiten NL met NL-bankrekening</span><span class="extra-opt-sub">Natuurlijk persoon buiten Nederland met een Nederlandse bankrekening</span></div><span class="extra-opt-price">+ € 50</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-zonder-bank" data-price="250" data-label="Persoon buiten NL zonder NL-bankrekening"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Persoon buiten NL zonder NL-bankrekening</span><span class="extra-opt-sub">Extra identificatie vereist bij geen Nederlandse bankrekening</span></div><span class="extra-opt-price">+ € 250</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="bestaande-holding" data-price="50" data-label="Bestaande Holding als aandeelhouder"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Bestaande Holding als aandeelhouder</span><span class="extra-opt-sub">Een bestaande holding wordt opgenomen als aandeelhouder</span></div><span class="extra-opt-price">+ € 50</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="compliance-tussenholdings" data-price="50" data-label="Aanvullende compliance tussenholdings"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Aanvullende compliance tussenholdings</span><span class="extra-opt-sub">Extra controle bij structuren met tussenholdings</span></div><span class="extra-opt-price">+ € 50</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="bedrijfsadres-anders" data-price="50" data-label="Bedrijfsadres afwijkend van aandeelhouder"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Bedrijfsadres afwijkend van aandeelhouder</span><span class="extra-opt-sub">Extra verwerking bij een afwijkend bedrijfsadres</span></div><span class="extra-opt-price">+ € 50</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="tolk-30min" data-price="250" data-label="Belafspraak met tolk (30 min)"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Belafspraak met tolk (30 min)</span><span class="extra-opt-sub">30 minuten taalondersteuning via een beëdigd tolk</span></div><span class="extra-opt-price">+ € 250</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="engelse-vertaling" data-price="125" data-label="Engelse vertaling statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Engelse vertaling statuten</span><span class="extra-opt-sub">Officiële Engelse vertaling van de oprichtingsstatuten</span></div><span class="extra-opt-price">+ € 125</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="naamswijziging-concept" data-price="250" data-label="Naamswijziging in conceptakten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Naamswijziging in conceptakten</span><span class="extra-opt-sub">Aanpassing van de naam in reeds opgestelde conceptakten</span></div><span class="extra-opt-price">+ € 250</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="advocaten-statuten" data-price="250" data-label="Advocaten statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Advocaten statuten</span><span class="extra-opt-sub">Uitbreiding met clausules voor advocatenpraktijken</span></div><span class="extra-opt-price">+ € 250</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="vastgoed-statuten" data-price="250" data-label="Vastgoed statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">Vastgoed statuten</span><span class="extra-opt-sub">Uitbreiding met clausules voor vastgoedactiviteiten</span></div><span class="extra-opt-price">+ € 250</span></div></label>
-            <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="wtza-statuten" data-price="250" data-label="WTZA statuten"><div class="extra-opt-box"><div class="extra-opt-info"><span class="extra-opt-label">WTZA statuten</span><span class="extra-opt-sub">Uitbreiding met WTZA-gerelateerde bepalingen</span></div><span class="extra-opt-price">+ € 250</span></div></label>
+          <!-- Extra opties (dropdown met scroll) -->
+          <div class="extras-wrap">
+            <button type="button" class="extras-toggle" id="extrasToggleBtn" onclick="toggleExtras()">
+              <span id="extrasToggleLabel">Aanvullende opties</span>
+              <svg id="extrasToggleIcon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="flex-shrink:0;transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="extras-dropdown-body" id="extrasPanel">
+              <div class="extras-scroll">
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="spoed" data-price="909" data-label="Spoedbehandeling (24-48 uur)"><span class="extra-opt-label">Spoedbehandeling (24-48 uur)</span><span class="extra-opt-price">+ € 909</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="aandeelhoudersregister" data-price="325" data-label="Nieuw aandeelhoudersregister"><span class="extra-opt-label">Nieuw aandeelhoudersregister</span><span class="extra-opt-price">+ € 325</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="ah-buiten-eu" data-price="500" data-label="Aandeelhouder buiten de EU"><span class="extra-opt-label">Aandeelhouder buiten de EU</span><span class="extra-opt-price">+ € 500</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-met-nl-bank" data-price="50" data-label="Persoon buiten NL met NL-bankrekening"><span class="extra-opt-label">Persoon buiten NL met NL-bankrekening</span><span class="extra-opt-price">+ € 50</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="persoon-buiten-nl-zonder-bank" data-price="250" data-label="Persoon buiten NL zonder NL-bankrekening"><span class="extra-opt-label">Persoon buiten NL zonder NL-bankrekening</span><span class="extra-opt-price">+ € 250</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="bestaande-holding" data-price="50" data-label="Bestaande Holding als aandeelhouder"><span class="extra-opt-label">Bestaande Holding als aandeelhouder</span><span class="extra-opt-price">+ € 50</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="compliance-tussenholdings" data-price="50" data-label="Aanvullende compliance tussenholdings"><span class="extra-opt-label">Aanvullende compliance tussenholdings</span><span class="extra-opt-price">+ € 50</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="bedrijfsadres-anders" data-price="50" data-label="Bedrijfsadres afwijkend van aandeelhouder"><span class="extra-opt-label">Bedrijfsadres afwijkend van aandeelhouder</span><span class="extra-opt-price">+ € 50</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="tolk-30min" data-price="250" data-label="Belafspraak met tolk (30 min)"><span class="extra-opt-label">Belafspraak met tolk (30 min)</span><span class="extra-opt-price">+ € 250</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="engelse-vertaling" data-price="125" data-label="Engelse vertaling statuten"><span class="extra-opt-label">Engelse vertaling statuten</span><span class="extra-opt-price">+ € 125</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="naamswijziging-concept" data-price="250" data-label="Naamswijziging in conceptakten"><span class="extra-opt-label">Naamswijziging in conceptakten</span><span class="extra-opt-price">+ € 250</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="advocaten-statuten" data-price="250" data-label="Advocaten statuten"><span class="extra-opt-label">Advocaten statuten</span><span class="extra-opt-price">+ € 250</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="vastgoed-statuten" data-price="250" data-label="Vastgoed statuten"><span class="extra-opt-label">Vastgoed statuten</span><span class="extra-opt-price">+ € 250</span></label>
+                <label class="extra-opt"><input type="checkbox" class="extra-check" data-key="wtza-statuten" data-price="250" data-label="WTZA statuten"><span class="extra-opt-label">WTZA statuten</span><span class="extra-opt-price">+ € 250</span></label>
+              </div>
+            </div>
           </div>
           <div class="actions">
             <span></span>
@@ -703,11 +727,26 @@
 
     function toggleExtras() {
       const panel = document.getElementById('extrasPanel');
+      const btn   = document.getElementById('extrasToggleBtn');
       const icon  = document.getElementById('extrasToggleIcon');
-      const open  = !panel.hidden;
-      panel.hidden = open;
-      panel.style.display = open ? 'none' : 'flex';
+      const open  = panel.classList.contains('open');
+      panel.classList.toggle('open', !open);
+      btn.classList.toggle('open', !open);
       if (icon) icon.style.transform = open ? '' : 'rotate(180deg)';
+    }
+
+    function syncExtrasLabel() {
+      const count = document.querySelectorAll('.extra-check:checked').length;
+      const lbl = document.getElementById('extrasToggleLabel');
+      const btn = document.getElementById('extrasToggleBtn');
+      if (!lbl) return;
+      if (count === 0) {
+        lbl.innerHTML = 'Aanvullende opties';
+        btn.classList.remove('has-selection');
+      } else {
+        lbl.innerHTML = `Aanvullende opties <span class="extras-toggle-count">${count}</span>`;
+        btn.classList.add('has-selection');
+      }
     }
 
     function setStep(nr) {
@@ -843,7 +882,7 @@
       const el = document.getElementById(id);
       if (el) el.addEventListener('change', updateTotals);
     });
-    document.querySelectorAll('.extra-check').forEach(cb => cb.addEventListener('change', updateTotals));
+    document.querySelectorAll('.extra-check').forEach(cb => cb.addEventListener('change', () => { updateTotals(); syncExtrasLabel(); }));
     document.getElementById('requestForm').addEventListener('submit', submitForm);
 
     (async () => {
