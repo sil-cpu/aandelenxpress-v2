@@ -13,7 +13,6 @@
         .artikel-meta { display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 0.95rem; opacity: 0.9; flex-wrap: wrap; }
         .artikel-meta-item { display: flex; align-items: center; gap: 6px; }
         .artikel-container { max-width: 800px; margin: 60px auto; padding: 20px; }
-        .artikel-tags { display: flex; gap: 8px; margin-bottom: 30px; flex-wrap: wrap; }
         .artikel-tag { display: inline-block; padding: 6px 12px; background: #f0f4f8; color: #0F1D3A; border-radius: 4px; font-size: 0.85rem; font-weight: 500; }
         .artikel-content { font-size: 1.05rem; line-height: 1.7; color: #2d3748; }
         .artikel-content h2 { font-size: 1.5rem; font-weight: 600; margin: 30px 0 15px 0; color: #0F1D3A; }
@@ -75,7 +74,6 @@
     </div>
 
     <div class="artikel-container">
-        <div class="artikel-tags" id="artikelTags"></div>
         <div class="artikel-content" id="artikelContent"></div>
         <div class="artikel-footer">
             <div class="artikel-author">
@@ -133,12 +131,6 @@
                 
                 const initials = post.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
                 document.getElementById('artikelAvatarInit').textContent = initials;
-                
-                // Categories
-                const tagsHtml = post.categories.map(cat => 
-                    `<a href="/blog#${cat.toLowerCase()}" class="artikel-tag">${cat}</a>`
-                ).join('');
-                document.getElementById('artikelTags').innerHTML = tagsHtml;
                 
                 document.getElementById('artikelContent').innerHTML = post.content;
             } catch(e) {

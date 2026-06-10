@@ -238,7 +238,6 @@
             // Featured post
             const featured = allPosts.find(p => p.featured) || allPosts[0];
             if (featured) {
-                const catsList = (featured.categories || []).map(c => `<span class="blog-tag">${c}</span>`).join('');
                 const catsData = (featured.categories || []).join(' ').toLowerCase();
                 const excerpt = featured.excerpt || featured.content.substring(0, 150).replace(/<[^>]*>/g, '');
                 const date = new Date(featured.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
@@ -253,7 +252,7 @@
                             <img class="blog-card-featured-image" src="${image}" alt="${featured.title}" loading="eager">
                         </a>
                         <div class="blog-card-inner">
-                            <div class="blog-card-tags">${catsList}</div>
+
                             <div class="blog-card-body">
                                 <h2>${featured.title}</h2>
                                 <p>${excerpt}</p>
@@ -275,7 +274,6 @@
             // Other posts
             const others = allPosts.filter(p => p !== featured);
             const grid_html = others.map(post => {
-                const catsList = (post.categories || []).map(c => `<span class="blog-tag">${c}</span>`).join('');
                 const catsData = (post.categories || []).join(' ').toLowerCase();
                 const excerpt = post.excerpt || post.content.substring(0, 150).replace(/<[^>]*>/g, '');
                 const date = new Date(post.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
@@ -289,7 +287,6 @@
                             <img class="blog-card-media" src="${image}" alt="${post.title}" loading="lazy">
                         </a>
                         <div class="blog-card-inner">
-                            <div class="blog-card-tags">${catsList}</div>
                             <div class="blog-card-body">
                                 <h3>${post.title}</h3>
                                 <p>${excerpt}</p>
