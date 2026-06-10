@@ -1157,8 +1157,37 @@
         prevBtn.disabled = idx <= 0;
         nextBtn.disabled = idx >= cards.length - 1;
         prevBtn.onclick = () => openTab(idx - 1, true);
-        nextBtn.onclick = () => openTab(idx + 1, true);
+        nextBtn.onclick = () => {
+          const errMsg = validateCurrentTabShareholders(card);
+          if (errMsg) { showTabError(card, errMsg); return; }
+          clearTabError(card);
+          openTab(idx + 1, true);
+        };
       });
+    }
+
+    function validateCurrentTabShareholders(card) {
+      const pctInputs = card.querySelectorAll('[data-repeat-item] [data-field="percentage"]');
+      if (!pctInputs.length) return null;
+      const rows = Array.from(pctInputs).map(inp => ({ percentage: inp.value }));
+      return validateShareholderPercentages(rows, 'Aandeelhouders');
+    }
+
+    function showTabError(card, msg) {
+      let el = card.querySelector('.tab-pct-error');
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'tab-pct-error';
+        el.style.cssText = 'color:#c0392b;background:#fef0f0;border:1px solid #f5c6cb;border-radius:6px;padding:10px 14px;margin:12px 0;font-size:0.9rem;font-weight:500;';
+        const nav = card.querySelector('.tab-inline-nav');
+        nav ? nav.parentNode.insertBefore(el, nav) : card.querySelector('.card-body').appendChild(el);
+      }
+      el.textContent = '⚠ ' + msg;
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearTabError(card) {
+      card.querySelector('.tab-pct-error')?.remove();
     }
 
     function openTab(index, shouldScroll) {
