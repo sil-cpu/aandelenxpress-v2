@@ -2715,12 +2715,9 @@ app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) =>
             request.accessToken = generateSmartToken(request);
             await supabase.from('reseller_requests').update({ access_token: request.accessToken }).eq('id', caseId);
         }
-        request.status = 'betaling';
-        request.statusUpdatedAt = new Date().toISOString();
-        addActivity(request, 'system', `Vragenlijst goedgekeurd door ${actor}. Status gewijzigd naar betaling.`, actor);
+        // Status blijft ongewijzigd — admin past status handmatig aan via de statusknop
+        addActivity(request, 'system', `Vragenlijst goedgekeurd door ${actor}.`, actor);
         await supabase.from('reseller_requests').update({
-            status: request.status,
-            status_updated_at: request.statusUpdatedAt,
             activities: request.activities
         }).eq('id', caseId);
         emails.emailClientBetaling({ request });
@@ -2740,7 +2737,7 @@ app.patch('/api/vragenlijsten/:caseId/review', requireAdmin, async (req, res) =>
     res.json({
         success: true,
         reviewStatus: reviewedData.reviewStatus,
-        dossierStatus: action === 'approve' ? 'betaling' : request.status,
+        dossierStatus: request.status,
         generatedPdfDownloadUrl: action === 'approve' ? `/api/vragenlijsten/${encodeURIComponent(caseId)}/files/oprichtingsdocument?download=1` : null,
         generatedPdfName: action === 'approve' ? (reviewedData.oprichtingsDocument?.naam || '') : null
     });
