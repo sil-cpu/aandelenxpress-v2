@@ -7,7 +7,144 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .over-ons-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .over-ons-left {
+            background: linear-gradient(145deg, #0f1d3a 0%, #1a3b70 100%);
+            padding: 64px 56px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .over-ons-left::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.12) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .over-ons-nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.85rem;
+            text-decoration: none;
+            margin-bottom: 40px;
+            transition: color .2s;
+        }
+        .over-ons-nav-link:hover { color: #fff; }
+        .over-ons-left h1 {
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 28px;
+        }
+        .over-ons-left h1 em { color: #60a5fa; font-style: normal; }
+        .over-ons-body {
+            color: rgba(255,255,255,0.78);
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+        .over-ons-body p { margin: 0 0 18px; }
+        .over-ons-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.12);
+            margin: 32px 0;
+        }
+        .over-ons-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .over-ons-meta-item p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.6);
+        }
+        .over-ons-meta-item strong {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 4px;
+        }
+        .over-ons-meta-item a { color: rgba(255,255,255,0.7); text-decoration: none; }
+        .over-ons-meta-item a:hover { color: #fff; }
+        .over-ons-right {
+            background: #0f1d3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+            border-left: 1px solid rgba(255,255,255,0.06);
+        }
+        .over-ons-right img {
+            max-width: 280px;
+            width: 100%;
+            opacity: 0.95;
+        }
+        @media (max-width: 768px) {
+            .over-ons-page { grid-template-columns: 1fr; }
+            .over-ons-right { display: none; }
+            .over-ons-left { padding: 48px 28px; }
+        }
+    </style>
 </head>
+<body>
+    <div class="over-ons-page">
+        <div class="over-ons-left">
+            <a href="/" class="over-ons-nav-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                Terug naar home
+            </a>
+
+            <h1>Over <em>AandelenXpress</em></h1>
+
+            <div class="over-ons-body">
+                <p>AandelenXpress wordt uitgevoerd door <a href="https://www.dehengcc.com" target="_blank" rel="noopener" style="color:#93c5fd;">DeHeng Civil Code N.V.</a>, een notariskantoor met als specialisatie internationaal ondernemingsrecht. Het kantoor kent van oudsher voornamelijk een adviespraktijk. In de coronaperiode is bij ons aandacht ontstaan voor nationale online services.</p>
+                <p>Daarbij is compliance in het gehele online traject cruciaal. Omdat de AandelenXpress en de software in handen zijn van een notariskantoor, vallen ook bijvoorbeeld de ingevoerde gegevens in het portaal onder de bescherming van het ambtsgeheim en het daaraan gekoppelde verschoningsrecht van notarissen.</p>
+            </div>
+
+            <hr class="over-ons-divider">
+
+            <div class="over-ons-meta">
+                <div class="over-ons-meta-item">
+                    <strong>Kantoor</strong>
+                    <p>DeHeng Civil Code N.V.</p>
+                </div>
+                <div class="over-ons-meta-item">
+                    <strong>KvK</strong>
+                    <p>97116262</p>
+                </div>
+                <div class="over-ons-meta-item">
+                    <strong>Bezoekadres</strong>
+                    <p>Prinsessegracht 27<br>2514 AP Den Haag<br><em style="font-size:0.82em; opacity:.7;">Uitsluitend op afspraak</em></p>
+                </div>
+                <div class="over-ons-meta-item">
+                    <strong>Contact</strong>
+                    <p><a href="mailto:info@aandelenxpress.nl">info@aandelenxpress.nl</a><br><a href="tel:+31651851219">+31 6 51 85 12 19</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="over-ons-right">
+            <img src="AandelenXpress logo.avif" alt="AandelenXpress">
+        </div>
+    </div>
+
+    <script>(function(){})();</script>
+</body>
+</html>
 <body>
     <nav class="navbar">
         <div class="container">
