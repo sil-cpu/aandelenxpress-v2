@@ -1082,8 +1082,8 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         'invoice-paid':        { key:'invoice-paid',        text:'Factuur betaald' },
         'ocr':                 { key:'ocr',                 text:'OCR' },
         'ocr-signed':          { key:'ocr-signed',          text:'OCR Signed' },
-        'draft-accountant':    { key:'draft-accountant',    text:'Draft to Accountant' },
-        'accountant-accepted': { key:'accountant-accepted', text:'Accountant accepted' },
+        'draft-accountant':    { key:'draft-accountant',    text:'Waiting for extra information/files' },
+        'accountant-accepted': { key:'accountant-accepted', text:'Waiting for extra information/files' },
         'draft-client':        { key:'draft-client',        text:'Draft to Client' },
         'client-signed':       { key:'client-signed',       text:'Client Signed' },
         'invitation-om':       { key:'invitation-om',       text:'Invitation OM' },
@@ -1266,7 +1266,7 @@ app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) =>
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
     const request = rowToReq(row);
-    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', wwft:'WWFT Check', betaling:'Betaling', 'invoice-sent':'Factuur verzonden', 'invoice-paid':'Factuur betaald', ocr:'OCR', 'ocr-signed':'OCR Signed', 'draft-accountant':'Draft to Accountant', 'accountant-accepted':'Accountant accepted', 'draft-client':'Draft to Client', 'client-signed':'Client Signed', 'invitation-om':'Invitation OM', 'executed-notaris':'Executed Notaris', kvk:'KvK inschrijving', 'passed-kvk':'Passed by KvK', 'making-binders':'Making Closing Binders', 'upload-binders':'Upload Closing Binders', complete:'Case completed', 'complete-review':'Case completed review', rejected:'Afgewezen' };
+    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', wwft:'WWFT Check', betaling:'Betaling', 'invoice-sent':'Factuur verzonden', 'invoice-paid':'Factuur betaald', ocr:'OCR', 'ocr-signed':'OCR Signed', 'draft-accountant':'Waiting for extra information/files', 'accountant-accepted':'Waiting for extra information/files', 'draft-client':'Draft to Client', 'client-signed':'Client Signed', 'invitation-om':'Invitation OM', 'executed-notaris':'Executed Notaris', kvk:'KvK inschrijving', 'passed-kvk':'Passed by KvK', 'making-binders':'Making Closing Binders', 'upload-binders':'Upload Closing Binders', complete:'Case completed', 'complete-review':'Case completed review', rejected:'Afgewezen' };
     const adminName = req.session.user.name || req.session.user.email;
     addActivity(request, 'system', `Status gewijzigd van "${statusLabels[request.status]||request.status}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
 
