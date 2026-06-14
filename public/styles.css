@@ -3602,6 +3602,21 @@ ul { list-style: none; }
     justify-content: center;
     align-items: center;
     padding: 60px 48px;
+    position: relative;
+}
+.login-back-link {
+    position: absolute;
+    top: 28px;
+    right: 32px;
+    font-size: 0.85rem;
+    color: var(--grey-mid);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+}
+.login-back-link:hover { color: var(--dark); }
 }
 .login-form-box {
     width: 100%;
