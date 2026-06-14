@@ -3526,7 +3526,7 @@ ul { list-style: none; }
     background: var(--dark);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     padding: 80px 64px;
     position: relative;
     overflow: hidden;
@@ -3599,9 +3599,9 @@ ul { list-style: none; }
     background: #fff;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
-    padding: 80px 48px 60px;
+    padding: 60px 48px;
 }
 .login-form-box {
     width: 100%;
