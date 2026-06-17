@@ -9,6 +9,25 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .login-brand { justify-content: flex-start; }
+        .register-back-btn {
+            margin-top: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 20px;
+            border: 1px solid rgba(168, 197, 224, 0.5);
+            border-radius: 10px;
+            color: #E5EEF9;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .register-back-btn:hover {
+            background: rgba(168, 197, 224, 0.1);
+            border-color: rgba(168, 197, 224, 0.85);
+        }
         .login-form-side { justify-content: flex-start; overflow-y: auto; align-items: flex-start; padding: 60px 48px; }
         .login-form-box { max-width: 540px; }
         .intake-section {
@@ -185,6 +204,7 @@
                     Aanmelding beoordeeld binnen 1 werkdag
                 </div>
             </div>
+            <a href="/" class="register-back-btn">&larr; Terug naar website</a>
         </div>
 
         <!-- Right form panel -->
