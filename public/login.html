@@ -7,6 +7,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .login-left-back-btn {
+            margin-top: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0 20px;
+            border: 1px solid rgba(168, 197, 224, 0.5);
+            border-radius: 10px;
+            color: #E5EEF9;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .login-left-back-btn:hover {
+            background: rgba(168, 197, 224, 0.1);
+            border-color: rgba(168, 197, 224, 0.85);
+        }
+    </style>
 </head>
 <body>
 
@@ -19,11 +40,11 @@
             </div>
             <h2>Welkom terug bij<br><em>AandelenXpress</em></h2>
             <p class="login-brand-sub">Digitaal notariskantoor gespecialiseerd in BV's.</p>
+            <a href="/" class="login-left-back-btn">&larr; Terug naar website</a>
         </div>
 
         <!-- Right form panel -->
         <div class="login-form-side">
-            <a href="/" class="login-back-link">&larr; Terug naar website</a>
             <div class="login-form-box">
                 <h1>Inloggen</h1>
                 <form id="loginForm" novalidate>
