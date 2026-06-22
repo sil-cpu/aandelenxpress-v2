@@ -634,6 +634,18 @@
       </div>
     </div>
 
+    <div class="reset-overlay" id="pepInfoOverlay" onclick="if (event.target === this) closePepInfoModal()">
+      <div class="reset-modal" style="max-width:680px;">
+        <h3>Wat is een PEP verklaring?</h3>
+        <p>
+          Het is onze taak om na te gaan of je een 'PEP' (politiek prominent persoon) bent. Wij willen je dan ook vragen de PEP-verklaring in te vullen, te ondertekenen en daarna hieronder te uploaden in het onderstaande veld. De PEP-verklaring zit als bijlage aan de e-mail met daarin de link naar deze vragenlijst. Voeg hieronder de door jou ingevulde en ondertekende PEP-verklaring toe. Wat is een PEP precies? Je bent PEP als jij of een van je naaste familieleden een politiek prominente positie inneemt. Denk daarbij aan een staatshoofd, parlementslid of lid van het bestuur van een politieke partij. Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon de datacard afzonderlijk in te vullen, met pen te ondertekenen en te uploaden.
+        </p>
+        <div class="reset-actions">
+          <button class="reset-cancel-btn" type="button" onclick="closePepInfoModal()">Sluiten</button>
+        </div>
+      </div>
+    </div>
+
     <div id="stateForm" class="state">
       <div class="hero">
         <div class="language-switcher" id="languageSwitcher" aria-label="Language switcher">
@@ -1095,6 +1107,7 @@
 
               <div class="file-box" id="pepZone">
                 <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                <button type="button" onclick="openPepInfoModal()" style="margin:0 0 6px;padding:0;border:none;background:none;color:#1f5fbf;font-size:0.82rem;font-weight:700;cursor:pointer;text-decoration:underline;">Wat is een PEP verklaring?</button>
                 <label class="file-label">PEP verklaring(en)</label>
                 <span class="file-cta">Klik of sleep bestanden</span>
                 <input id="pepFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
@@ -4789,6 +4802,14 @@
 
     function handleResetOverlayClick(e) {
       if (e.target === document.getElementById('resetOverlay')) closeResetModal();
+    }
+
+    function openPepInfoModal() {
+      document.getElementById('pepInfoOverlay').classList.add('open');
+    }
+
+    function closePepInfoModal() {
+      document.getElementById('pepInfoOverlay').classList.remove('open');
     }
 
     async function confirmResendToken() {
