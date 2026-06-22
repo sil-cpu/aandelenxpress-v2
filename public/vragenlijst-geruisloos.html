@@ -512,7 +512,7 @@
                     </div>
 
                     <div class="field" id="fieldKvkUittreksel">
-                        <label class="field-label">KVK-uittreksel van de eenmanszaak of VOF<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het KVK-uittreksel van de eenmanszaak of VOF<span class="req">*</span></label>
                         <div class="file-zone" id="kvkUittrekselZone">
                             <input type="file" id="kvkUittrekselFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">🏢</div>
@@ -523,7 +523,7 @@
                     </div>
 
                     <div class="field" id="fieldVerzekering">
-                        <label class="field-label">Verzekeringsbewijs aansprakelijkheidsverzekering aan de Belastingdienst<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het verzendbewijs van de intentieverklaring aan de Belastingdienst<span class="req">*</span></label>
                         <div class="file-zone" id="verzekeringZone">
                             <input type="file" id="verzekeringFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">🛡</div>
@@ -534,7 +534,7 @@
                     </div>
 
                     <div class="field" id="fieldOntvangstIntent">
-                        <label class="field-label">Bewijs van ontvangst van de intentverklaring<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het bewijs van ontvangst van de intentieverklaring<span class="req">*</span></label>
                         <div class="file-zone" id="ontvangstIntentZone">
                             <input type="file" id="ontvangstIntentFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📬</div>
@@ -545,7 +545,7 @@
                     </div>
 
                     <div class="field" id="fieldIntentverklaring">
-                        <label class="field-label">De intentverklaring<span class="req">*</span></label>
+                        <label class="field-label">Upload hier de intentieverklaring<span class="req">*</span></label>
                         <div class="file-zone" id="intentverklaringZone">
                             <input type="file" id="intentverklaringFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📝</div>
@@ -556,7 +556,7 @@
                     </div>
 
                     <div class="field" id="fieldBijlageIntent">
-                        <label class="field-label">Het getekende/ingevulde bijlage bij de intentverklaring<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het geleideformulier bij de intentieverklaring<span class="req">*</span></label>
                         <div class="file-zone" id="bijlageIntentZone">
                             <input type="file" id="bijlageIntentFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📎</div>
@@ -567,8 +567,7 @@
                     </div>
 
                     <div class="field" id="fieldInterim">
-                        <label class="field-label">De interimpbeschrijving<span class="req">*</span></label>
-                        <div class="field-hint" style="margin-bottom:8px;">Voor alle oprichtingsprocessen en aftrekposten. Opgesteld door uw accountant.</div>
+                        <label class="field-label">Upload de inbrengbeschrijving (voor elke oprichtingspersoon afzonderlijk)<span class="req">*</span></label>
                         <div class="file-zone" id="interimZone">
                             <input type="file" id="interimFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📊</div>
@@ -579,8 +578,7 @@
                     </div>
 
                     <div class="field file-optional">
-                        <label class="field-label">VOF UBO-uittreksel <span style="font-weight:400;color:#718096;">(alleen indien sprake is van een VOF)</span></label>
-                        <div class="field-hint" style="margin-bottom:8px;">Niet ouder dan 6 maanden. Op te vragen via de website van de KVK.</div>
+                        <label class="field-label">Indien sprake is van een vof, upload hier het UBO-uittreksel <span style="font-weight:400;color:#718096;">(niet ouder dan 6 maanden)</span></label>
                         <div class="file-zone" id="uboZone">
                             <input type="file" id="uboFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">👥</div>
@@ -598,7 +596,7 @@
                 <div class="card-header"><div class="card-icon">7</div><div class="card-title">Fiscaal adviseur</div></div>
                 <div class="card-body">
                     <div class="field" id="fieldFiscalist">
-                        <label class="field-label">Werkt u met een fiscalist, accountant- of administratiekantoor?<span class="req">*</span></label>
+                        <label class="field-label">Werk je met een fiscalist, accountants- of administratiekantoor?<span class="req">*</span></label>
                         <ul class="options-list">
                             <li class="option-item" onclick="selectOption(this,'fiscalist','ja');toggleReveal('revealFiscalist',true)"><input type="radio" name="fiscalist" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
                             <li class="option-item" onclick="selectOption(this,'fiscalist','nee');toggleReveal('revealFiscalist',false)"><input type="radio" name="fiscalist" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
@@ -607,7 +605,19 @@
                     <div class="reveal" id="revealFiscalist">
                         <div class="field">
                             <label class="field-label">Naam van het kantoor<span class="req">*</span></label>
-                            <input type="text" name="fiscalistNaam" placeholder="Naam accountantskantoor">
+                            <input type="text" name="fiscalistNaam" placeholder="Naam van het kantoor">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Naam van de contactpersoon<span class="req">*</span></label>
+                            <input type="text" name="fiscalistContactpersoon" placeholder="Naam contactpersoon">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Telefoonnummer van de contactpersoon<span class="req">*</span></label>
+                            <input type="tel" name="fiscalistTelefoon" placeholder="+31 6 12345678">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Mailadres van de contactpersoon<span class="req">*</span></label>
+                            <input type="email" name="fiscalistMail" placeholder="contact@kantoor.nl">
                         </div>
                     </div>
                 </div>
@@ -643,12 +653,12 @@
                     </div>
                     <div class="reveal" id="revealKanaalAnders">
                         <div class="field">
-                            <label class="field-label">Toelichting verkoopkanalen<span class="req">*</span></label>
-                            <input type="text" name="kanaalAndersOmschrijving" placeholder="Omschrijf uw verkoopkanaal…">
+                            <label class="field-label">Omschrijf uw verkoopkanaal<span class="req">*</span></label>
+                                <input type="text" name="kanaalAndersOmschrijving" placeholder="Omschrijf uw verkoopkanaal…">
                         </div>
                     </div>
                     <div class="field" id="fieldGroothandel">
-                        <label class="field-label">Is de BV een groothandel?<span class="req">*</span></label>
+                        <label class="field-label">Verkoopt de onderneming producten aan andere ondernemingen? (groothandel)<span class="req">*</span></label>
                         <ul class="options-list">
                             <li class="option-item" onclick="selectOption(this,'groothandel','ja')"><input type="radio" name="groothandel" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
                             <li class="option-item" onclick="selectOption(this,'groothandel','nee')"><input type="radio" name="groothandel" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
@@ -670,16 +680,16 @@
                     </div>
                     <div class="field-row">
                         <div class="field">
-                            <label class="field-label">Aantal fulltime medewerkers (≥15 uur/week)</label>
+                            <label class="field-label">Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label>
                             <input type="number" name="personeelFulltime" min="0" placeholder="0">
                         </div>
                         <div class="field">
-                            <label class="field-label">Aantal parttime medewerkers (&lt;15 uur/week)</label>
+                            <label class="field-label">Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label>
                             <input type="number" name="personeelParttime" min="0" placeholder="0">
                         </div>
                     </div>
                     <div class="field file-optional">
-                        <label class="field-label">Personeelsplan <span style="font-weight:400;color:#718096;">(indien beschikbaar)</span></label>
+                        <label class="field-label">Upload hier jouw bedrijfsplan.</label>
                         <div class="file-zone" id="personeelsplanZone">
                             <input type="file" id="personeelsplanFile" accept=".pdf,.jpg,.jpeg,.png,.docx">
                             <div class="file-icon">👥</div>
@@ -700,9 +710,14 @@
                         Als u al een ingevulde datacard heeft, upload deze hier.
                         Heeft u nog geen datacard? Print hem uit, zet uw handtekening, scan hem in en upload hem hieronder.
                         De datacard staat als bijlage bij de email met de link naar dit formulier.
-                    </p>
-                    <div class="field" id="fieldDatacard">
-                        <label class="field-label">Datacard (KVK)<span class="req">*</span></label>
+                        </p>
+                        <p style="font-size:.88rem;color:#4A5568;line-height:1.6;margin-bottom:16px;">
+                            Vul de datacard in, print deze uit, onderteken deze met pen, scan deze vervolgens in en upload deze in het onderstaande vak. De datacard is als bijlage toegevoegd aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+                            <strong>Let op:</strong> datacards die voorzien zijn van een digitale handtekening worden door de KVK geweigerd.<br><br>
+                            Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon een eigen datacard afzonderlijk in te vullen, met pen te ondertekenen en vervolgens te uploaden.
+                        </p>
+                        <div class="field" id="fieldDatacard">
+                            <label class="field-label">Datacard<span class="req">*</span></label>
                         <div class="file-zone" id="datacardZone">
                             <input type="file" id="datacardFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📋</div>
@@ -723,7 +738,13 @@
                         Wij zijn hiertoe verplicht vanuit de Wet ter voorkoming van witwassen en financieren van terrorisme (Wwft).
                         Vul de PEP-verklaring in, onderteken hem, scan hem in en upload hem hieronder.
                         De PEP-verklaring staat als bijlage bij de email met de link naar dit formulier.
-                    </p>
+                        </p>
+                        <p style="font-size:.88rem;color:#4A5568;line-height:1.6;margin-bottom:16px;">
+                            Het is onze taak om na te gaan of je een <strong>'PEP'</strong> (politiek prominent persoon) bent. Wij willen je dan ook vragen de PEP-verklaring in te vullen, te ondertekenen en daarna hieronder te uploaden in het onderstaande veld. De PEP-verklaring zit als bijlage aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+                            Voeg hieronder de door jou ingevulde en ondertekende PEP-verklaring toe.<br><br>
+                            <strong>Wat is een PEP precies?</strong> Je bent PEP als jij of een van je naaste familieleden een politiek prominente positie inneemt. Denk daarbij aan een staatshoofd, parlementslid of lid van het bestuur van een politieke partij.<br><br>
+                            Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon de datacard afzonderlijk in te vullen, met pen te ondertekenen en te uploaden.
+                        </p>
                     <div class="field" id="fieldPep">
                         <label class="field-label">PEP-verklaring<span class="req">*</span></label>
                         <div class="file-zone" id="pepZone">
@@ -742,7 +763,7 @@
                 <div class="card-header"><div class="card-icon">12</div><div class="card-title">Opmerkingen</div></div>
                 <div class="card-body">
                     <div class="field">
-                        <label class="field-label">Heeft u nog vragen of opmerkingen over uw BV-aanvraag?</label>
+                        <label class="field-label">Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label>
                         <textarea name="opmerkingen" placeholder="Optioneel — stel hier uw vragen of voeg extra informatie toe…" rows="4"></textarea>
                     </div>
                 </div>

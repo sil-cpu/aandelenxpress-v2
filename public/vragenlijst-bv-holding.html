@@ -658,16 +658,16 @@
             <input type="hidden" name="behandelingType" value="standaard">
             <div class="row">
               <div class="field" id="existingHoldingQuestionWrap">
-                <label>Wie worden aandeelhouder(s) van de nieuwe werkmaatschappij?</label>
+                <label>Wie zijn de aandeelhouder(s) van de nieuwe werkmaatschappij?</label>
                 <select id="existingHoldingOwner" name="existingHoldingOwner">
                   <option value="">Maak keuze</option>
-                  <option value="new-only">Alleen nieuw op te richten holding</option>
-                  <option value="existing-only">Alleen bestaande holding</option>
-                  <option value="existing-and-new">Bestaande holding + nieuwe holding</option>
+                  <option value="new-only">Alleen nieuwe holding(s)</option>
+                  <option value="existing-only">Alleen bestaande holding(s)</option>
+                  <option value="existing-and-new">Bestaande holding(s) + nieuwe holding(s)</option>
                 </select>
               </div>
               <div class="field" id="singleBvExistingQuestionWrap" style="display:none;">
-                <label>Bij 1 BV: zijn bestaande holding(s) aandeelhouder?</label>
+                <label>Bij 1 BV: Worden bestaande holding(s) aandeelhouder van de nieuwe werkmaatschappij?</label>
                 <select id="singleBvExistingHoldings" name="singleBvExistingHoldings">
                   <option value="nee">Nee</option>
                   <option value="ja">Ja</option>
@@ -682,7 +682,7 @@
                 <label>Holding-structuur voor VOF-partijen</label>
                 <select id="vofHoldingStrategy" name="vofHoldingStrategy">
                   <option value="per-party">Elke VOF-partij krijgt een eigen holding</option>
-                  <option value="shared">Alle VOF-partijen delen 1 holding</option>
+                  <option value="shared">Alle VOF-partijen delen één holding</option>
                 </select>
               </div>
 
@@ -700,16 +700,16 @@
           <div class="card-h">Oprichting document (Holding)</div>
           <div class="card-b">
             <div class="row" id="holdingPrimaryCompanyRow">
-              <div class="field"><label>Naam bedrijf</label><input name="holdingNaamBedrijf" required></div>
-              <div class="field"><label>Telefoonnummer</label><input name="holdingTelefoon"></div>
+              <div class="field"><label>Naam van de BV</label><input name="holdingNaamBedrijf" required></div>
+              <div class="field"><label>Telefoonnummer van de BV</label><input name="holdingTelefoon"></div>
             </div>
-            <div class="field" id="holdingPrimaryMailField"><label>Mailadres</label><input name="holdingMailadres" type="email"></div>
+            <div class="field" id="holdingPrimaryMailField"><label>Mailadres van de BV</label><input name="holdingMailadres" type="email"></div>
 
             <div id="holdingMultiSectionsWrap" style="display:none;"></div>
 
             <div class="group-title">Boekkeeper/Accountant</div>
             <div class="field">
-              <label>Werk je al met een boekhouder/accountant?</label>
+              <label>Werk je met een fiscalist, accountants- of administratiekantoor?</label>
               <select id="holdingHasAccountant" name="holdingHasAccountant">
                 <option value="">Maak keuze</option>
                 <option value="ja">Ja</option>
@@ -717,10 +717,10 @@
               </select>
             </div>
             <div class="row" id="holdingAccountantDetailsWrap" style="display:none;">
-              <div class="field"><label>Naam accountantskantoor</label><input name="holdingAccountantNaam"></div>
-              <div class="field"><label>Contactpersoon</label><input name="holdingAccountantContact"></div>
-              <div class="field"><label>Telefoonnummer</label><input name="holdingAccountantTelefoon"></div>
-              <div class="field"><label>Mailadres</label><input name="holdingAccountantMail" type="email"></div>
+              <div class="field"><label>Naam van het kantoor</label><input name="holdingAccountantNaam"></div>
+              <div class="field"><label>Naam van de contactpersoon</label><input name="holdingAccountantContact"></div>
+              <div class="field"><label>Telefoonnummer van de contactpersoon</label><input name="holdingAccountantTelefoon"></div>
+              <div class="field"><label>Mailadres van de contactpersoon</label><input name="holdingAccountantMail" type="email"></div>
             </div>
 
             <div class="group-title">Aandeelhouder(s)</div>
@@ -748,15 +748,15 @@
               </label>
             </div>
             <div class="field" id="holdingAddressSameAsWrap" style="display:none;">
-              <label>Zelfde woonadres als welke aandeelhouder?</label>
+              <label>Hetzelfde woonadres als de eigenaar van de eenmanszaak</label>
               <select name="holdingAdresZelfdeAandeelhouderIndex" id="holdingAdresZelfdeAandeelhouderIndex"></select>
             </div>
             <div class="field" id="holdingAddressSourceEmzWrap" style="display:none;">
               <label>Adres van de holding BV</label>
               <select name="holdingAdresBron" id="holdingAdresBron">
                 <option value="">Maak keuze</option>
-                <option value="owner-home">Zelfde woonadres als eigenaar van de EMZ</option>
-                <option value="emz-address">Zelfde adres als de EMZ</option>
+                <option value="owner-home">Hetzelfde woonadres als de eigenaar van de eenmanszaak</option>
+                <option value="emz-address">Hetzelfde bezoekadres van de eenmanszaak</option>
                 <option value="anders">Anders (adres invullen + huurovereenkomst uploaden)</option>
               </select>
             </div>
@@ -779,7 +779,7 @@
             </div>
 
             <div class="field">
-              <label>Wordt de holding eigenaar van nog op te richten BV's?</label>
+              <label>Wordt de holding aandeelhouder van de nieuwe werkmaatschappij?</label>
               <select name="holdingEigendomNieuweBvs">
                 <option value="">Maak keuze</option>
                 <option value="ja">Ja</option>
@@ -789,12 +789,12 @@
 
             <div class="group-title">Personeel (Holding)</div>
             <div class="row">
-              <div class="field"><label>Meer dan 15 uur per week</label><input type="number" name="holdingPersoneelMeer15" min="0"></div>
-              <div class="field"><label>Minder dan 15 uur per week</label><input type="number" name="holdingPersoneelMinder15" min="0"></div>
+              <div class="field"><label>Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label><input type="number" name="holdingPersoneelMeer15" min="0"></div>
+              <div class="field"><label>Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label><input type="number" name="holdingPersoneelMinder15" min="0"></div>
             </div>
 
             <div class="group-title">Overige</div>
-            <div class="field" style="margin-top: 9px;"><label>Overige</label><textarea name="holdingOverige"></textarea></div>
+            <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label><textarea name="holdingOverige"></textarea></div>
           </div>
         </div>
 
@@ -802,14 +802,14 @@
           <div class="card-h">Oprichting document (Werkmij)</div>
           <div class="card-b">
             <div class="row">
-              <div class="field"><label>Naam bedrijf</label><input name="werkmijNaamBedrijf"></div>
-              <div class="field"><label>Telefoonnummer</label><input name="werkmijTelefoon"></div>
+              <div class="field"><label>Naam van de BV</label><input name="werkmijNaamBedrijf"></div>
+              <div class="field"><label>Telefoonnummer van de BV</label><input name="werkmijTelefoon"></div>
             </div>
-            <div class="field"><label>Mailadres</label><input name="werkmijMailadres" type="email"></div>
+            <div class="field"><label>Mailadres van de BV</label><input name="werkmijMailadres" type="email"></div>
 
             <div class="group-title">Boekkeeper/Accountant</div>
             <div class="field">
-              <label>Werk je al met een boekhouder/accountant?</label>
+              <label>Werk je met een fiscalist, accountants- of administratiekantoor?</label>
               <select id="werkmijHasAccountant" name="werkmijHasAccountant">
                 <option value="">Maak keuze</option>
                 <option value="ja">Ja</option>
@@ -817,10 +817,10 @@
               </select>
             </div>
             <div class="row" id="werkmijAccountantDetailsWrap" style="display:none;">
-              <div class="field"><label>Naam accountantskantoor</label><input name="werkmijAccountantNaam"></div>
-              <div class="field"><label>Contactpersoon</label><input name="werkmijAccountantContact"></div>
-              <div class="field"><label>Telefoonnummer</label><input name="werkmijAccountantTelefoon"></div>
-              <div class="field"><label>Mailadres</label><input name="werkmijAccountantMail" type="email"></div>
+              <div class="field"><label>Naam van het kantoor</label><input name="werkmijAccountantNaam"></div>
+              <div class="field"><label>Naam van de contactpersoon</label><input name="werkmijAccountantContact"></div>
+              <div class="field"><label>Telefoonnummer van de contactpersoon</label><input name="werkmijAccountantTelefoon"></div>
+              <div class="field"><label>Mailadres van de contactpersoon</label><input name="werkmijAccountantMail" type="email"></div>
             </div>
 
             <div id="werkmijShareholderReminder" class="repeat-item">
@@ -865,7 +865,7 @@
               </label>
             </div>
             <div class="field" id="werkmijAddressSameAsWrap" style="display:none;">
-              <label>Zelfde woonadres als welke aandeelhouder?</label>
+              <label>Hetzelfde woonadres als welke aandeelhouder?</label>
               <select name="werkmijAdresZelfdeAandeelhouderIndex" id="werkmijAdresZelfdeAandeelhouderIndex"></select>
             </div>
             <div id="werkmijRentalUploadWrap" style="display:none;">
@@ -886,7 +886,7 @@
                 <label><input type="checkbox" name="werkmijExport"> Gaat u producten exporteren? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
               </div>
 
-              <div class="group-title">Detailhandel <span class="req">*</span></div>
+              <div class="group-title">Verkoopt de onderneming producten aan consumenten? (detailhandel) <span class="req">*</span></div>
               <div class="check-row">
                 <label><input type="checkbox" name="detailWinkel"> In winkel of kiosk</label>
                 <label><input type="checkbox" name="detailMarkt"> Op de markt</label>
@@ -894,7 +894,7 @@
                 <label><input type="checkbox" name="detailInternet"> Via internet</label>
                 <label><input type="checkbox" name="detailHuis"> Vanuit huis</label>
                 <label><input type="checkbox" name="detailPostorder"> Per postorder</label>
-                <label><input type="checkbox" name="detailOthers"> Others</label>
+                <label><input type="checkbox" name="detailOthers"> Anders</label>
               </div>
               <div class="field" id="detailOthersTextWrap" style="display:none;">
                 <label>Wat bedoel je met Others?</label>
@@ -905,13 +905,13 @@
 
               <div class="group-title">Personeel</div>
               <div class="row">
-                <div class="field"><label>Meer dan 15 uur per week</label><input type="number" name="werkmijPersoneelMeer15" min="0"></div>
-                <div class="field"><label>Minder dan 15 uur per week</label><input type="number" name="werkmijPersoneelMinder15" min="0"></div>
+                <div class="field"><label>Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label><input type="number" name="werkmijPersoneelMeer15" min="0"></div>
+                <div class="field"><label>Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label><input type="number" name="werkmijPersoneelMinder15" min="0"></div>
               </div>
             </div>
 
             <div class="group-title">Overige</div>
-            <div class="field" style="margin-top: 9px;"><label>Overige</label><textarea name="werkmijOverige"></textarea></div>
+            <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label><textarea name="werkmijOverige"></textarea></div>
           </div>
         </div>
 
@@ -919,8 +919,8 @@
           <div class="card-h">Bestaande Holding B.V.</div>
           <div class="card-b">
             <div class="row">
-              <div class="field"><label>Naam bedrijf</label><input name="bestaandHoldingNaam"></div>
-              <div class="field"><label>KvK nummer</label><input name="bestaandHoldingKvk"></div>
+              <div class="field"><label>Naam van de bestaande holding</label><input name="bestaandHoldingNaam"></div>
+              <div class="field"><label>KVK-nummer van de bestaande holding</label><input name="bestaandHoldingKvk"></div>
               <div class="field"><label>Telefoonnummer</label><input name="bestaandHoldingTelefoon"></div>
               <div class="field"><label>Mailadres</label><input name="bestaandHoldingMail" type="email"></div>
             </div>
@@ -937,7 +937,7 @@
             <div id="bestaandHoldingDirectors" class="repeat-wrap"></div>
             <div class="repeat-actions"><button type="button" class="icon-btn" id="addBestaandHoldingDirector">+ Bestuurder</button></div>
 
-            <div class="field"><label>Is the director solely authorized to represent the company individually?</label><select name="bestaandHoldingSolelyAuthorized"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
+            <div class="field"><label>Is de bestuurder alleen bevoegd om de vennootschap zelfstandig te vertegenwoordigen?</label><select name="bestaandHoldingSolelyAuthorized"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
 
             <div class="group-title" style="margin-top:20px;">Documenten bestaande holding</div>
             <div class="hint" style="margin-bottom:12px;">Upload de vereiste documenten van de bestaande holding voor de notaris.</div>
@@ -994,19 +994,19 @@
             <div class="group-title">EMZ/VOF gegevens</div>
             <div class="row">
               <div class="field">
-                <label>Type brononderneming</label>
+                <label>Welke ondernemingsvorm wil je inbrengen in de BV?</label>
                 <select id="omzettingBronType" name="omzettingBronType">
                   <option value="">Maak keuze</option>
                   <option value="emz">Eenmanszaak</option>
                   <option value="vof">VOF</option>
                 </select>
               </div>
-              <div class="field"><label>Naam EMZ/VOF</label><input name="omzettingBronNaam"></div>
-              <div class="field"><label>KVK-nummer EMZ/VOF</label><input name="omzettingBronKvk"></div>
-              <div class="field"><label>Statutaire zetel EMZ/VOF</label><input name="omzettingBronZetel"></div>
+              <div class="field"><label>Naam van de eenmanszaak/VOF</label><input name="omzettingBronNaam"></div>
+              <div class="field"><label>KVK-nummer van de eenmanszaak/VOF</label><input name="omzettingBronKvk"></div>
+              <div class="field"><label>Statutaire zetel van de eenmanszaak/VOF</label><input name="omzettingBronZetel"></div>
             </div>
-            <div class="field"><label>Eigenaar(s) EMZ/VOF + aandelenverdeling (bij VOF)</label><textarea name="omzettingBronEigenaren" placeholder="Bijv. Jan (60%), Petra (40%)"></textarea></div>
-            <div class="field"><label>Doel van de EMZ/VOF</label><textarea name="omzettingBronDoel"></textarea></div>
+            <div class="field"><label>Wie zijn de eigenaren van de onderneming?</label><textarea name="omzettingBronEigenaren"></textarea></div>
+            <div class="field"><label>Wat is de aandelenverdeling? (alleen bij VOF)</label><textarea name="omzettingBronDoel" placeholder="Bijv. Jan (60%), Petra (40%)"></textarea></div>
             <div class="file-grid" style="margin-top:12px;">
               <div class="file-box" id="omzettingKvkZone">
                 <label class="file-label">KVK-uittreksel eenmanszaak/VOF</label>
@@ -1078,6 +1078,11 @@
         <div class="card">
           <div class="card-h">Uploads</div>
           <div class="card-b">
+            <p style="font-size:.82rem;color:#4A5568;line-height:1.6;margin-bottom:20px;">
+              Vul de datacard in, print deze uit, onderteken deze met pen, scan deze vervolgens in en upload deze in het onderstaande vak. De datacard is als bijlage toegevoegd aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+              <strong>Let op:</strong> datacards die voorzien zijn van een digitale handtekening worden door de KVK geweigerd.<br><br>
+              Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon een eigen datacard afzonderlijk in te vullen, met pen te ondertekenen en vervolgens te uploaden.
+            </p>
             <div class="file-grid">
               <div class="file-box" id="datacardZone">
                 <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
@@ -1195,8 +1200,8 @@
       'Natuurlijke personen kunnen ook aandeelhouder zijn van de holding en/of werkmaatschappij.': 'Natural persons can also be shareholders in the holding and/or operating company.',
       'Oprichting document (Holding)': 'Incorporation document (Holding)',
       'Oprichting document (Werkmij)': 'Incorporation document (Operating company)',
-      'Naam bedrijf': 'Company name',
-      'Telefoonnummer': 'Phone number',
+      'Naam van de BV': 'BV name',
+      'Telefoonnummer van de BV': 'BV phone number',
       'Mailadres': 'Email address',
       'Adres': 'Address',
       'Straat': 'Street',
@@ -1205,13 +1210,14 @@
       'Plaatsnaam': 'City',
       'Adres van de holding is anders dan het woonadres van de aandeelhouder(s)': 'The holding address differs from the shareholder(s) home address',
       'Adres van de werkmaatschappij is anders dan het woonadres van de aandeelhouder(s)': 'The operating company address differs from the shareholder(s) home address',
-      'Zelfde woonadres als welke aandeelhouder?': 'Same home address as which shareholder?',
+      'Hetzelfde woonadres als de eigenaar van de eenmanszaak': 'Same home address as the owner of the sole proprietorship',
+      'Hetzelfde bezoekadres van de eenmanszaak': 'Same business address of the sole proprietorship',
       'Upload huurovereenkomst holding': 'Upload rental agreement holding',
       'Upload huurovereenkomst werkmaatschappij': 'Upload rental agreement operating company',
       'PDF, JPG, PNG - max 10 MB': 'PDF, JPG, PNG - max 10 MB',
       'Boekkeeper/Accountant': 'Bookkeeper/Accountant',
-      'Naam accountantskantoor': 'Accounting firm name',
-      'Contactpersoon': 'Contact person',
+      'Naam van het kantoor': 'Accounting firm name',
+      'Naam van de contactpersoon': 'Contact person',
       'Aandeelhouder(s)': 'Shareholder(s)',
       '+ Aandeelhouder': '+ Shareholder',
       'Bestuurders zijn dezelfde personen als de aandeelhouders': 'Directors are the same persons as the shareholders',
@@ -1219,30 +1225,30 @@
       '+ Bestuurder': '+ Director',
       'Wordt de holding eigenaar van nog op te richten BV\'s?': 'Will the holding own yet-to-be-established BVs?',
       'Personeel (Holding)': 'Staff (Holding)',
-      'Meer dan 15 uur per week': 'More than 15 hours per week',
-      'Minder dan 15 uur per week': 'Less than 15 hours per week',
-      'Overige': 'Other',
+      'Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV': 'How many people will work fulltime (more than 15 hours) in the BV',
+      'Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV': 'How many people will work parttime (less than 15 hours) in the BV',
+      'Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.': 'If you have any questions about the questionnaire you filled in or comments about the BV, you can share them below.',
       'Aandeelhouder werkmaatschappij': 'Operating company shareholder',
       'De aandeelhouder van de nieuw op te richten B.V. is de nieuw op te richten holding (100%).': 'The shareholder of the newly established BV is the newly established holding (100%).',
       'Doel van de BV (wat gaat de BV doen)': 'Purpose of the BV (what will the BV do)',
       'KVK inschrijving': 'Chamber of Commerce registration',
       'Gaat u producten importeren?': 'Will you import products?',
       'Gaat u producten exporteren?': 'Will you export products?',
-      'Detailhandel': 'Retail',
+      'Verkoopt de onderneming producten aan consumenten? (detailhandel)': 'Retail',
       'In winkel of kiosk': 'In a shop or kiosk',
       'Op de markt': 'At the market',
       'Via straathandel': 'Via street trade',
       'Via internet': 'Via internet',
       'Vanuit huis': 'From home',
       'Per postorder': 'By mail order',
-      'Others': 'Others',
-      'Wat bedoel je met Others?': 'What do you mean by Others?',
+      'Others': 'Anders',
+      'Wat bedoelt u met \'Anders\'?': 'What do you mean by \'Anders\'?',
       'Licht kort toe': 'Briefly explain',
       'Groothandel: verkoopt u aan andere ondernemingen?': 'Wholesale: do you sell to other companies?',
       'Bestaande Holding B.V.': 'Existing Holding B.V.',
       'KvK nummer': 'Chamber of Commerce number',
       'Naam van Bestuurder(s)': 'Name of Director(s)',
-      'Is the director solely authorized to represent the company individually?': 'Is the director solely authorized to represent the company individually?',
+      'Is de bestuurder alleen bevoegd om de vennootschap zelfstandig te vertegenwoordigen?': 'Is de bestuurder alleen bevoegd om de vennootschap zelfstandig te vertegenwoordigen?',
       'Rechtspersonen': 'Legal entities',
       'Vul hier per rechtspersoon KvK, UBO\'s en bestuurders in.': 'Fill in Chamber of Commerce, UBOs and directors per legal entity here.',
       'Natuurlijke Personen': 'Natural Persons',
@@ -1393,11 +1399,18 @@
         nl: 'Vink dit alleen aan als het vestigingsadres echt afwijkt. Dan worden adresvelden en huurovereenkomst gevraagd.',
         en: 'Tick this only if the registered address is actually different. Address fields and rental agreement upload will then be required.'
       },
-      'Zelfde woonadres als welke aandeelhouder?': {
+      'Hetzelfde woonadres als welke aandeelhouder?': {
         nl: 'Kies de aandeelhouder van wie het woonadres als vestigingsadres gebruikt wordt.',
         en: 'Choose which shareholder\'s home address will be used as the registered address.'
       },
-      'Wordt de holding eigenaar van nog op te richten BV\'s?': {
+      'Hetzelfde woonadres als de eigenaar van de eenmanszaak': {
+        nl: 'Kies of het woonadres van de eigenaar als vestigingsadres gebruikt wordt.',
+        en: 'Choose if the home address of the owner will be used as the registered address.'
+      },
+      'Werk je met een fiscalist, accountants- of administratiekantoor?': {
+        nl: 'Geef aan of je al samenwerkt met een adviseur op fiscaal, administratief of accountancy-gebied.',
+        en: 'Indicate whether you already work with a tax advisor, accounting or administrative specialist.'
+      },
         nl: 'Met Ja geef je aan dat deze holding als moedermaatschappij optreedt voor extra op te richten BV\'s.',
         en: 'With Yes, you indicate that this holding will act as parent company for additional BVs to be established.'
       },
@@ -3566,20 +3579,6 @@
           refreshRequiredIndicators();
           const errs = validateTab(cards[idx]);
           if (errs > 0) return;
-          // Validate shareholder percentages if this tab contains shareholder blocks
-          const pctInputs = cards[idx].querySelectorAll('[data-repeat-item] [data-field="percentage"]');
-          if (pctInputs.length) {
-            const rows = Array.from(pctInputs).map(inp => ({ percentage: inp.value }));
-            const pctErr = validateShareholderPercentages(rows, 'Aandeelhouders');
-            if (pctErr) {
-              const banner = document.createElement('div');
-              banner.className = 'tab-error-banner';
-              banner.textContent = '⚠ ' + pctErr;
-              (cards[idx].querySelector('.card-b') || cards[idx]).prepend(banner);
-              cards[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
-              return;
-            }
-          }
           clearTabErrors();
           openTab(idx + 1, true);
         };
@@ -3609,8 +3608,7 @@
       controls.forEach(el => {
         if (el.disabled || !el.offsetParent) return;
         const type = (el.getAttribute('type') || '').toLowerCase();
-        // file inputs are handled by custom upload logic, skip native validity check
-        if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'checkbox' || type === 'radio' || type === 'file') return;
+        if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'checkbox' || type === 'radio') return;
         if (!el.validity.valid) {
           const wrap = el.closest('.field');
           if (wrap) wrap.classList.add('tab-error');
@@ -3622,7 +3620,7 @@
         banner.className = 'tab-error-banner';
         banner.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
           + 'Vul alle verplichte velden in om door te gaan.';
-        (cardEl.querySelector('.card-b') || cardEl).prepend(banner);
+        cardEl.querySelector('.card-body')?.prepend(banner);
         cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       return errorCount;
@@ -4519,12 +4517,8 @@
       ev.preventDefault();
       const err = document.getElementById('formErr');
       const ok = document.getElementById('formOk');
-      const submitBtn = document.getElementById('btnSubmit');
       err.style.display = 'none';
       ok.style.display = 'none';
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Bezig met versturen…</span>';
 
       try {
         if (preview) {
@@ -4768,14 +4762,10 @@
         if (!r.ok) throw new Error(out.error || 'Indienen mislukt');
 
         ok.style.display = 'block';
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Verstuurd ✓';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (e) {
         err.textContent = e.message || 'Indienen mislukt.';
         err.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Vragenlijst indienen';
       }
     }
 

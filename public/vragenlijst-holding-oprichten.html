@@ -513,20 +513,20 @@
                 </div>
                 <div class="card-body">
                     <div class="field" id="fieldSpoed">
-                        <label class="field-label">Heeft deze oprichting spoed?<span class="req">*</span></label>
+                        <label class="field-label">Maak een keuze of deze oprichting spoed heeft of niet<span class="req">*</span></label>
                         <ul class="options-list">
                             <li class="option-item" onclick="selectOption(this, 'spoed', 'standaard')">
                                 <input type="radio" name="spoed" value="standaard">
                                 <div class="option-content">
                                     <div class="option-label">Standaard</div>
-                                    <div class="option-desc">Na ontvangst van alle documenten wordt uw aanvraag binnen <strong>5 werkdagen</strong> verwerkt.</div>
+                                    <div class="option-desc">*Na ontvangst van alle vereiste documenten wordt je aanvraag binnen <strong>5 werkdagen</strong> verwerkt. Check de prijslijst op website startjouwbv.nl</div>
                                 </div>
                             </li>
                             <li class="option-item" onclick="selectOption(this, 'spoed', 'spoed')">
                                 <input type="radio" name="spoed" value="spoed">
                                 <div class="option-content">
-                                    <div class="option-label">⚡ Spoed — binnen 48 uur</div>
-                                    <div class="option-desc">Tegen meerprijs wordt uw aanvraag met voorrang behandeld. Na ontvangst van alle documenten verwerken wij uw aanvraag binnen <strong>48 uur</strong>. Controleer de prijslijst voor de exacte meerkosten.</div>
+                                    <div class="option-label">Urgent (spoed)</div>
+                                    <div class="option-desc">*Er worden EXTRA KOSTEN in rekening gebracht. Na ontvangst van alle vereiste documenten wordt je aanvraag binnen <strong>48 uur</strong> verwerkt. Voor iedere BV start de basisprijs vanaf 1.449,- excl. BTW. Check de prijslijst op website startjouwbv.nl</div>
                                 </div>
                             </li>
                         </ul>
@@ -542,7 +542,7 @@
                 </div>
                 <div class="card-body">
                     <div class="field" id="fieldNlTaal">
-                        <label class="field-label">Is uw niveau van de Nederlandse taal C1 of hoger?<span class="req">*</span></label>
+                        <label class="field-label">Is het niveau van de Nederlandse taal van de aandeelhouders en de bestuurders C1 of hoger?<span class="req">*</span></label>
                         <ul class="options-list">
                             <li class="option-item" onclick="selectOption(this, 'nederlandsTaal', 'ja'); checkTaal()">
                                 <input type="radio" name="nederlandsTaal" value="ja">
@@ -552,14 +552,14 @@
                                 <input type="radio" name="nederlandsTaal" value="nee">
                                 <div class="option-content">
                                     <div class="option-label">Nee</div>
-                                    <div class="option-desc">Indien uw niveau lager is dan C1, zijn er extra kosten van toepassing. Wij zorgen in dat geval voor een tolk bij de notaris.</div>
+                                    <div class="option-desc">Indien je niveau van de Nederlandse taal lager is dan C1, zijn er extra kosten van toepassing. Wij zullen je in dat geval voorzien van een Engelse vertaling.</div>
                                 </div>
                             </li>
                         </ul>
                     </div>
 
                     <div class="field" id="fieldEnTaal">
-                        <label class="field-label">Is uw niveau van de Engelse taal C1 of hoger?<span class="req">*</span></label>
+                        <label class="field-label">Is het niveau van de Engelse taal van de aandeelhouders en de bestuurders C1 of hoger?<span class="req">*</span></label>
                         <ul class="options-list">
                             <li class="option-item" onclick="selectOption(this, 'engelsTaal', 'ja'); checkTaal()">
                                 <input type="radio" name="engelsTaal" value="ja">
@@ -569,7 +569,7 @@
                                 <input type="radio" name="engelsTaal" value="nee">
                                 <div class="option-content">
                                     <div class="option-label">Nee</div>
-                                    <div class="option-desc">Als uw niveau van zowel de Nederlandse als Engelse taal lager is dan C1, worden er extra kosten van €250 in rekening gebracht. Wij regelen in dat geval een tolk voor uw bespreking met de notaris.</div>
+                                    <div class="option-desc">Als uw niveau van zowel de Nederlandse als Engelse taal lager is dan C1, worden er extra kosten van €250 in rekening gebracht. Wij zullen je in dat geval een tolk voor u regelen tijdens de bespreking met de notaris.</div>
                                 </div>
                             </li>
                         </ul>
@@ -577,9 +577,8 @@
 
                     <div class="reveal" id="revealTaalOpmerking">
                         <div class="field">
-                            <label class="field-label">Uw moedertaal en talen waarbij u C2-niveau heeft<span class="req">*</span></label>
+                            <label class="field-label">Om de tolkdienst zo goed mogelijk te kunnen inplannen, verzoeken wij je vriendelijk jouw moedertaal en alle talen waarin je een C2-niveau hebt te vermelden.<span class="req">*</span></label>
                             <textarea name="taalOpmerking" placeholder="Bijv. moedertaal Turks, C2 in Duits…" rows="3"></textarea>
-                            <div class="field-hint">Zodat wij de tolkdienst zo goed mogelijk kunnen inplannen.</div>
                         </div>
                     </div>
                 </div>
@@ -593,7 +592,7 @@
                 </div>
                 <div class="card-body">
                     <div class="field" id="fieldEmail">
-                        <label class="field-label">Uw contacte-mailadres<span class="req">*</span></label>
+                        <label class="field-label">Wat is jouw contacte-mailadres?<span class="req">*</span></label>
                         <input type="email" name="contactEmail" id="contactEmail" placeholder="uw@emailadres.nl">
                         <div class="field-hint">Hierop ontvangt u de vervolgcommunicatie over uw dossier.</div>
                     </div>
@@ -608,7 +607,7 @@
                 </div>
                 <div class="card-body">
                     <div class="field" id="fieldSector">
-                        <label class="field-label">In welke sector hoort uw aanvraag thuis?<span class="req">*</span></label>
+                        <label class="field-label">In welke sector hoort jouw aanvraag thuis?<span class="req">*</span></label>
                         <ul class="options-list options-grid">
                             <li class="option-item" onclick="selectOption(this, 'sector', 'Horeca')">
                                 <input type="radio" name="sector" value="Horeca">
@@ -674,7 +673,7 @@
                             <li class="option-item" onclick="selectOption(this, 'typeOprichting', 'Holding(s) en werkmaatschappij(en)')">
                                 <input type="radio" name="typeOprichting" value="Holding(s) en werkmaatschappij(en)">
                                 <div class="option-content">
-                                    <div class="option-label">Holding(s) én werkmaatschappij(en)</div>
+                                    <div class="option-label">Holding(s) en werkmaatschappij(en)</div>
                                     <div class="option-desc">Een complete structuur met zowel een holding als één of meerdere werkmaatschappijen.</div>
                                 </div>
                             </li>
@@ -692,12 +691,11 @@
                 <div class="card-body">
 
                     <div class="field">
-                        <label class="field-label">Datacard (KvK)<span class="req">*</span></label>
+                        <label class="field-label">Datacard<span class="req">*</span></label>
                         <p style="font-size:.88rem; color:#4A5568; line-height:1.6; margin-bottom:12px;">
-                            Bij inschrijving bij de Kamer van Koophandel (KvK) is een <strong>datacard</strong> vereist.
-                            Als u al een datacard heeft, upload deze hier direct.
-                            Heeft u nog geen datacard? Print de datacard uit, zet uw handtekening, scan hem in en upload hem hieronder.
-                            De datacard staat als bijlage bij de email met daarin de link naar deze vragenlijst.
+                            Vul de datacard in, print deze uit, onderteken deze met pen, scan deze vervolgens in en upload deze in het onderstaande vak. De datacard is als bijlage toegevoegd aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+                            <strong>Let op:</strong> datacards die voorzien zijn van een digitale handtekening worden door de KVK geweigerd.<br><br>
+                            Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon een eigen datacard afzonderlijk in te vullen, met pen te ondertekenen en vervolgens te uploaden.
                         </p>
                         <div class="file-zone" id="datacardZone">
                             <input type="file" id="datacardFile" name="datacardFile" accept=".pdf,.jpg,.jpeg,.png">
@@ -711,9 +709,10 @@
                     <div class="field" style="margin-top:24px;">
                         <label class="field-label">PEP-verklaring<span class="req">*</span></label>
                         <p style="font-size:.88rem; color:#4A5568; line-height:1.6; margin-bottom:12px;">
-                            Het is onze verplichting om na te gaan of u een <strong>'PEP'</strong> (Politiek Prominent Persoon) bent.
-                            Vul de PEP-verklaring in, onderteken hem, scan hem in en upload hem hieronder.
-                            De PEP-verklaring staat als bijlage bij de email met de link naar deze vragenlijst.
+                            Het is onze taak om na te gaan of je een <strong>'PEP'</strong> (politiek prominent persoon) bent. Wij willen je dan ook vragen de PEP-verklaring in te vullen, te ondertekenen en daarna hieronder te uploaden in het onderstaande veld. De PEP-verklaring zit als bijlage aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+                            Voeg hieronder de door jou ingevulde en ondertekende PEP-verklaring toe.<br><br>
+                            <strong>Wat is een PEP precies?</strong> Je bent PEP als jij of een van je naaste familieleden een politiek prominente positie inneemt. Denk daarbij aan een staatshoofd, parlementslid of lid van het bestuur van een politieke partij.<br><br>
+                            Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon de datacard afzonderlijk in te vullen, met pen te ondertekenen en te uploaden.
                         </p>
                         <div class="file-zone" id="pepZone">
                             <input type="file" id="pepFile" name="pepFile" accept=".pdf,.jpg,.jpeg,.png">
@@ -735,7 +734,7 @@
                 </div>
                 <div class="card-body">
                     <div class="field">
-                        <label class="field-label">Heeft u nog vragen of opmerkingen?</label>
+                        <label class="field-label">Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label>
                         <textarea name="opmerkingen" placeholder="Optioneel — stel hier uw eventuele vragen of voeg extra informatie toe…"></textarea>
                     </div>
                 </div>

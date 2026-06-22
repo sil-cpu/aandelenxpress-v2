@@ -387,7 +387,7 @@
                 <div class="card-header"><div class="card-icon">2</div><div class="card-title">Contactgegevens</div></div>
                 <div class="card-body">
                     <div class="field" id="fieldEmail">
-                        <label class="field-label">Uw contacte-mailadres<span class="req">*</span></label>
+                        <label class="field-label">Wat is uw contacte-mailadres?<span class="req">*</span></label>
                         <input type="email" name="contactEmail" id="contactEmail" placeholder="uw@emailadres.nl">
                         <div class="field-hint">Hierop ontvangt u de vervolgcommunicatie over uw dossier.</div>
                     </div>
@@ -399,7 +399,7 @@
                 <div class="card-header"><div class="card-icon">3</div><div class="card-title">Sector</div></div>
                 <div class="card-body">
                     <div class="field" id="fieldSector">
-                        <label class="field-label">In welke sector is uw aannemerszaak/onderneming actief?<span class="req">*</span></label>
+                        <label class="field-label">In welke sector hoort jouw aanvraag thuis?<span class="req">*</span></label>
                         <ul class="options-list options-grid">
                             <li class="option-item" onclick="selectOption(this,'sector','Finance')"><input type="radio" name="sector" value="Finance"><div class="option-content"><div class="option-label">💰 Finance</div></div></li>
                             <li class="option-item" onclick="selectOption(this,'sector','Transport')"><input type="radio" name="sector" value="Transport"><div class="option-content"><div class="option-label">🚛 Transport</div></div></li>
@@ -414,7 +414,7 @@
                     </div>
                     <div class="reveal" id="revealSectorAnders">
                         <div class="field">
-                            <label class="field-label">Omschrijf uw sector<span class="req">*</span></label>
+                            <label class="field-label">Je hebt 'anders' gekozen. Licht hieronder toe om welke sector het gaat<span class="req">*</span></label>
                             <input type="text" name="sectorAnders" placeholder="Bijv. IT-dienstverlening, landbouw…">
                         </div>
                     </div>
@@ -492,7 +492,7 @@
                 <div class="card-body">
 
                     <div class="field" id="fieldKvkUittreksel">
-                        <label class="field-label">Upload hier het KVK-uittreksel van de eenmanszaak of vof<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het KVK-uittreksel van de eenmanszaak of VOF<span class="req">*</span></label>
                         <div class="file-zone" id="kvkUittrekselZone">
                             <input type="file" id="kvkUittrekselFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">🏢</div>
@@ -586,7 +586,7 @@
                     <div class="reveal" id="revealFiscalist">
                         <div class="field">
                             <label class="field-label">Naam van het kantoor<span class="req">*</span></label>
-                            <input type="text" name="fiscalistNaam" placeholder="Naam accountantskantoor">
+                            <input type="text" name="fiscalistNaam" placeholder="Naam van het kantoor">
                         </div>
                     </div>
                 </div>
@@ -627,7 +627,7 @@
                         </div>
                     </div>
                     <div class="field" id="fieldGroothandel">
-                        <label class="field-label">Is de BV een groothandel?<span class="req">*</span></label>
+                        <label class="field-label">Verkoopt de onderneming producten aan andere ondernemingen? (groothandel)<span class="req">*</span></label>
                         <ul class="options-list">
                             <li class="option-item" onclick="selectOption(this,'groothandel','ja')"><input type="radio" name="groothandel" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
                             <li class="option-item" onclick="selectOption(this,'groothandel','nee')"><input type="radio" name="groothandel" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
@@ -649,16 +649,16 @@
                     </div>
                     <div class="field-row">
                         <div class="field">
-                            <label class="field-label">Aantal fulltime medewerkers (≥15 uur/week)</label>
+                            <label class="field-label">Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label>
                             <input type="number" name="personeelFulltime" min="0" placeholder="0">
                         </div>
                         <div class="field">
-                            <label class="field-label">Aantal parttime medewerkers (&lt;15 uur/week)</label>
+                            <label class="field-label">Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label>
                             <input type="number" name="personeelParttime" min="0" placeholder="0">
                         </div>
                     </div>
                     <div class="field file-optional">
-                        <label class="field-label">Personeelsplan <span style="font-weight:400;color:#718096;">(indien beschikbaar)</span></label>
+                        <label class="field-label">Upload hier jouw bedrijfsplan.</label>
                         <div class="file-zone" id="personeelsplanZone">
                             <input type="file" id="personeelsplanFile" accept=".pdf,.jpg,.jpeg,.png,.docx">
                             <div class="file-icon">👥</div>
@@ -675,13 +675,12 @@
                 <div class="card-header"><div class="card-icon">10</div><div class="card-title">KVK Datacard</div></div>
                 <div class="card-body">
                     <p style="font-size:.88rem;color:#4A5568;line-height:1.6;margin-bottom:16px;">
-                        Bij inschrijving bij de Kamer van Koophandel (KVK) is een <strong>datacard</strong> vereist.
-                        Als u al een ingevulde datacard heeft, upload deze hier.
-                        Heeft u nog geen datacard? Print hem uit, zet uw handtekening, scan hem in en upload hem hieronder.
-                        De datacard staat als bijlage bij de email met de link naar dit formulier.
+                        Vul de datacard in, print deze uit, onderteken deze met pen, scan deze vervolgens in en upload deze in het onderstaande vak. De datacard is als bijlage toegevoegd aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+                        <strong>Let op:</strong> datacards die voorzien zijn van een digitale handtekening worden door de KVK geweigerd.<br><br>
+                        Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon een eigen datacard afzonderlijk in te vullen, met pen te ondertekenen en vervolgens te uploaden.
                     </p>
                     <div class="field" id="fieldDatacard">
-                        <label class="field-label">Datacard (KVK)<span class="req">*</span></label>
+                        <label class="field-label">Datacard<span class="req">*</span></label>
                         <div class="file-zone" id="datacardZone">
                             <input type="file" id="datacardFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">📋</div>
@@ -698,10 +697,10 @@
                 <div class="card-header"><div class="card-icon">11</div><div class="card-title">PEP-verklaring</div></div>
                 <div class="card-body">
                     <p style="font-size:.88rem;color:#4A5568;line-height:1.6;margin-bottom:16px;">
-                        Het is onze wettelijke verplichting om na te gaan of u een <strong>PEP</strong> (Politiek Prominent Persoon) bent.
-                        Wij zijn hiertoe verplicht vanuit de Wet ter voorkoming van witwassen en financieren van terrorisme (Wwft).
-                        Vul de PEP-verklaring in, onderteken hem, scan hem in en upload hem hieronder.
-                        De PEP-verklaring staat als bijlage bij de email met de link naar dit formulier.
+                        Het is onze taak om na te gaan of je een <strong>'PEP'</strong> (politiek prominent persoon) bent. Wij willen je dan ook vragen de PEP-verklaring in te vullen, te ondertekenen en daarna hieronder te uploaden in het onderstaande veld. De PEP-verklaring zit als bijlage aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
+                        Voeg hieronder de door jou ingevulde en ondertekende PEP-verklaring toe.<br><br>
+                        <strong>Wat is een PEP precies?</strong> Je bent PEP als jij of een van je naaste familieleden een politiek prominente positie inneemt. Denk daarbij aan een staatshoofd, parlementslid of lid van het bestuur van een politieke partij.<br><br>
+                        Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon de datacard afzonderlijk in te vullen, met pen te ondertekenen en te uploaden.
                     </p>
                     <div class="field" id="fieldPep">
                         <label class="field-label">PEP-verklaring<span class="req">*</span></label>
@@ -721,7 +720,7 @@
                 <div class="card-header"><div class="card-icon">12</div><div class="card-title">Opmerkingen</div></div>
                 <div class="card-body">
                     <div class="field">
-                        <label class="field-label">Heeft u nog vragen of opmerkingen over uw BV-aanvraag?</label>
+                        <label class="field-label">Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label>
                         <textarea name="opmerkingen" placeholder="Optioneel — stel hier uw vragen of voeg extra informatie toe…" rows="4"></textarea>
                     </div>
                 </div>
