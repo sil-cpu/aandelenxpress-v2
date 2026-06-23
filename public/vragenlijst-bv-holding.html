@@ -653,13 +653,21 @@
           <select id="languageSelect" aria-label="Select language">
             <option value="nl">🇳🇱 Nederlands</option>
             <option value="en">🇬🇧 English</option>
-            <option value="tr">🇹🇷 Turkce</option>
+            <option value="tr">🇹🇷 Türkçe</option>
             <option value="ar">🇸🇦 العربية</option>
             <option value="zh">🇨🇳 中文 (Mandarin)</option>
           </select>
         </div>
         <h1>Oprichtingsformulier</h1>
         <p>Vul hieronder uw dossiergegevens in. De vragen passen zich automatisch aan op basis van het gekozen product.</p>
+        <p style="margin-top:10px;">Wij verzoeken u vriendelijk om de PDC- en PEP-formulieren vooraf te downloaden, uit te printen en volledig in te vullen.</p>
+        <p style="margin-top:8px;">Voor de vennootschapsstructuur die u gaat oprichten is het belangrijk dat u een duidelijk en volledig businessplan opstelt. Dit helpt ons bij de beoordeling van uw dossier en de verdere voorbereiding van de oprichting.</p>
+        <p style="margin-top:8px;">De gegevens die u reeds in de vragenlijst heeft ingevuld, blijven bewaard wanneer u de vragenlijst tussentijds verlaat. Wanneer u later opnieuw via dezelfde link inlogt, kunt u de vragenlijst verder invullen vanaf het punt waar u bent gebleven.</p>
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:12px 16px;">
+          <a href="#" style="color:#fff;text-decoration:underline;font-weight:700;">Download PDC-template</a>
+          <a href="#" style="color:#fff;text-decoration:underline;font-weight:700;">Download PEP-template</a>
+        </div>
+        <p style="margin-top:10px;font-size:0.84rem;opacity:.95;">Vanwege compliance- en regelgevingseisen is het uitsluitend toegestaan deze vragenlijst in het Nederlands of Engels in te vullen.</p>
       </div>
 
       <form id="cleanForm" novalidate>
@@ -667,7 +675,19 @@
           <div class="card-h">Aanvraagtype</div>
           <div class="card-b">
             <input type="hidden" id="hasWorkmaatschappij" name="hasWorkmaatschappij" value="ja">
-            <input type="hidden" name="behandelingType" value="standaard">
+            <div class="field" style="margin-bottom:14px;">
+              <label>Maak een keuze of deze oprichting spoed heeft of niet</label>
+              <select name="behandelingType">
+                <option value="standaard">Standaard</option>
+                <option value="spoed">Urgent (spoed)</option>
+              </select>
+              <div class="hint" style="margin-top:6px;">
+                Standaard: na ontvangst van alle vereiste documenten wordt je aanvraag binnen 5 werkdagen verwerkt. Check de prijslijst op website startjouwbv.nl.
+              </div>
+              <div class="hint" style="margin-top:4px;">
+                Urgent (spoed): er worden extra kosten in rekening gebracht. Na ontvangst van alle vereiste documenten wordt je aanvraag binnen 48 uur verwerkt. Voor iedere BV start de basisprijs vanaf 1.449,- excl. BTW. Check de prijslijst op website startjouwbv.nl.
+              </div>
+            </div>
             <div class="row">
               <div class="field" id="existingHoldingQuestionWrap">
                 <label>Wie zijn de aandeelhouder(s) van de nieuwe werkmaatschappij?</label>
@@ -736,6 +756,7 @@
             </div>
 
             <div class="group-title">Aandeelhouder(s)</div>
+            <div class="hint" style="margin-bottom:10px;">In de meeste gevallen hanteren wij standaard een geplaatst kapitaal van 120 aandelen met een nominale waarde van EUR 1 per aandeel. Indien u een afwijkend aantal aandelen of een afwijkende nominale waarde per aandeel wenst, kunnen hiervoor aanvullende kosten in rekening worden gebracht.</div>
             <div class="hint" id="holdingShareholderOwnerHint" style="display:none; margin-bottom:10px;">De enige aandeelhouder van de holding BV is de eigenaar van de eenmanszaak.</div>
             <div id="holdingShareholders" class="repeat-wrap"></div>
             <div class="repeat-actions" style="margin-top:18px; margin-bottom:28px;"><button type="button" class="icon-btn" id="addHoldingShareholder">+ Aandeelhouder</button></div>
@@ -760,14 +781,14 @@
               </label>
             </div>
             <div class="field" id="holdingAddressSameAsWrap" style="display:none;">
-              <label>Hetzelfde woonadres als de eigenaar van de eenmanszaak</label>
+              <label>Hetzelfde woonadres als welke aandeelhouder?</label>
               <select name="holdingAdresZelfdeAandeelhouderIndex" id="holdingAdresZelfdeAandeelhouderIndex"></select>
             </div>
             <div class="field" id="holdingAddressSourceEmzWrap" style="display:none;">
               <label>Adres van de holding BV</label>
               <select name="holdingAdresBron" id="holdingAdresBron">
                 <option value="">Maak keuze</option>
-                <option value="owner-home">Hetzelfde woonadres als de eigenaar van de eenmanszaak</option>
+                <option value="owner-home">Hetzelfde woonadres als welke aandeelhouder?</option>
                 <option value="emz-address">Hetzelfde bezoekadres van de eenmanszaak</option>
                 <option value="anders">Anders (adres invullen + huurovereenkomst uploaden)</option>
               </select>
@@ -844,6 +865,7 @@
 
             <div id="werkmijShareholdersSection" style="display:none;">
               <div class="group-title">Aandeelhouder(s)</div>
+              <div class="hint" style="margin-bottom:10px;">In de meeste gevallen hanteren wij standaard een geplaatst kapitaal van 120 aandelen met een nominale waarde van EUR 1 per aandeel. Indien u een afwijkend aantal aandelen of een afwijkende nominale waarde per aandeel wenst, kunnen hiervoor aanvullende kosten in rekening worden gebracht.</div>
               <div id="werkmijShareholders" class="repeat-wrap"></div>
               <div class="repeat-actions" style="margin-top:18px; margin-bottom:28px;"><button type="button" class="icon-btn" id="addWerkmijShareholder">+ Aandeelhouder</button></div>
             </div>
@@ -894,13 +916,13 @@
 
               <div class="group-title">KVK inschrijving <span style="font-size:0.8rem;font-weight:400;color:#8A9BB5;">(optioneel)</span></div>
               <div class="check-row">
-                <label><input type="checkbox" name="werkmijImport"> Gaat u producten importeren? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
-                <label><input type="checkbox" name="werkmijExport"> Gaat u producten exporteren? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
+                <label><input type="checkbox" name="werkmijImport"> Importeert de vestiging producten? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
+                <label><input type="checkbox" name="werkmijExport"> Exporteert de vestiging producten? <span style="font-size:0.8rem;color:#8A9BB5;">(optioneel)</span></label>
               </div>
 
               <div class="group-title">Verkoopt de onderneming producten aan consumenten? (detailhandel) <span class="req">*</span></div>
               <div class="check-row">
-                <label><input type="checkbox" name="detailWinkel"> In winkel of kiosk</label>
+                <label><input type="checkbox" name="detailWinkel"> In een winkel of kiosk</label>
                 <label><input type="checkbox" name="detailMarkt"> Op de markt</label>
                 <label><input type="checkbox" name="detailStraat"> Via straathandel</label>
                 <label><input type="checkbox" name="detailInternet"> Via internet</label>
@@ -913,7 +935,7 @@
                 <input name="detailOthersToelichting" placeholder="Licht kort toe">
               </div>
 
-              <div class="field" style="margin-top: 9px;"><label>Groothandel <span class="req">*</span>: verkoopt u aan andere ondernemingen?</label><select name="werkmijGroothandel"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
+              <div class="field" style="margin-top: 9px;"><label>Verkoopt de onderneming producten aan andere ondernemingen? (groothandel) <span class="req">*</span></label><select name="werkmijGroothandel"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
 
               <div class="group-title">Personeel</div>
               <div class="row">
@@ -1119,7 +1141,7 @@
 
               <div class="file-box" id="personeelsplanZone">
                 <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                <label class="file-label">Personeelsplan / bedrijfsplan(nen)</label>
+                <label class="file-label">Bedrijfsplan</label>
                 <span class="file-cta">Klik of sleep bestanden</span>
                 <input id="personeelsplanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
                 <div class="file-meta">PDF, JPG, PNG – meerdere bestanden mogelijk – max 10 MB</div>
@@ -1225,7 +1247,7 @@
       'Plaatsnaam': 'City',
       'Adres van de holding is anders dan het woonadres van de aandeelhouder(s)': 'The holding address differs from the shareholder(s) home address',
       'Adres van de werkmaatschappij is anders dan het woonadres van de aandeelhouder(s)': 'The operating company address differs from the shareholder(s) home address',
-      'Hetzelfde woonadres als de eigenaar van de eenmanszaak': 'Same home address as the owner of the sole proprietorship',
+      'Hetzelfde woonadres als welke aandeelhouder?': 'Same home address as which shareholder?',
       'Hetzelfde bezoekadres van de eenmanszaak': 'Same business address of the sole proprietorship',
       'Upload huurovereenkomst holding': 'Upload rental agreement holding',
       'Upload huurovereenkomst werkmaatschappij': 'Upload rental agreement operating company',
@@ -1247,8 +1269,8 @@
       'De aandeelhouder van de nieuw op te richten B.V. is de nieuw op te richten holding (100%).': 'The shareholder of the newly established BV is the newly established holding (100%).',
       'Doel van de BV (wat gaat de BV doen)': 'Purpose of the BV (what will the BV do)',
       'KVK inschrijving': 'Chamber of Commerce registration',
-      'Gaat u producten importeren?': 'Will you import products?',
-      'Gaat u producten exporteren?': 'Will you export products?',
+      'Importeert de vestiging producten?': 'Does the establishment import products?',
+      'Exporteert de vestiging producten?': 'Does the establishment export products?',
       'Verkoopt de onderneming producten aan consumenten? (detailhandel)': 'Retail',
       'In winkel of kiosk': 'In a shop or kiosk',
       'Op de markt': 'At the market',
@@ -1259,7 +1281,7 @@
       'Others': 'Anders',
       'Wat bedoelt u met \'Anders\'?': 'What do you mean by \'Anders\'?',
       'Licht kort toe': 'Briefly explain',
-      'Groothandel: verkoopt u aan andere ondernemingen?': 'Wholesale: do you sell to other companies?',
+      'Verkoopt de onderneming producten aan andere ondernemingen? (groothandel)': 'Does the business sell products to other businesses? (wholesale)',
       'Bestaande Holding B.V.': 'Existing Holding B.V.',
       'KvK nummer': 'Chamber of Commerce number',
       'Naam van Bestuurder(s)': 'Name of Director(s)',
@@ -1281,7 +1303,7 @@
       'Uploads': 'Uploads',
       'Datacard / PDC bestand(en)': 'Datacard / PDC file(s)',
       'PEP verklaring(en)': 'PEP declaration(s)',
-      'Personeelsplan / bedrijfsplan(nen)': 'Staff plan / business plan(s)',
+      'Bedrijfsplan': 'Business plan',
       'Indienen': 'Submit',
       'Concept opslaan': 'Save draft',
       'Vragenlijst indienen': 'Submit questionnaire',
@@ -1418,9 +1440,9 @@
         nl: 'Kies de aandeelhouder van wie het woonadres als vestigingsadres gebruikt wordt.',
         en: 'Choose which shareholder\'s home address will be used as the registered address.'
       },
-      'Hetzelfde woonadres als de eigenaar van de eenmanszaak': {
-        nl: 'Kies of het woonadres van de eigenaar als vestigingsadres gebruikt wordt.',
-        en: 'Choose if the home address of the owner will be used as the registered address.'
+      'Hetzelfde woonadres als welke aandeelhouder?': {
+        nl: 'Kies van welke aandeelhouder het woonadres als vestigingsadres gebruikt wordt.',
+        en: 'Choose which shareholder\'s home address will be used as the registered address.'
       },
       'Werk je met een fiscalist, accountants- of administratiekantoor?': {
         nl: 'Geef aan of je al samenwerkt met een adviseur op fiscaal, administratief of accountancy-gebied.',
@@ -1438,7 +1460,7 @@
         nl: 'Geef hier kort aan via welk extra verkoopkanaal je werkt.',
         en: 'Briefly explain which additional sales channel applies.'
       },
-      'Groothandel: verkoopt u aan andere ondernemingen?': {
+      'Verkoopt de onderneming producten aan andere ondernemingen? (groothandel)': {
         nl: 'Dit bepaalt mede de handelsomschrijving en branche-indeling.',
         en: 'This partly determines the trade description and business classification.'
       },
@@ -3083,7 +3105,7 @@
             </div>
             <div data-np-foreign-address-wrap style="display:${(v.heeftBsn !== 'ja' || v.nlAdresGeregistreerd === 'nee') ? '' : 'none'};">
               <div class="group-title">Buitenlands woonadres</div>
-              <div class="hint" style="margin-bottom:8px;">Nederlands woonadres is niet nodig in dit formulier.</div>
+              <div class="hint" style="margin-bottom:8px;">Upload hier het adresbewijs, dit moet een utility bill (nota gas, water, licht) zijn die niet ouder is dan 6 maanden.</div>
               <div class="field">
                 <label>Volledig buitenlands woonadres</label>
                 <textarea data-np="buitenlandAdres" placeholder="Straat, nummer, postcode, plaats, land">${sanitize(v.buitenlandAdres)}</textarea>
@@ -3117,10 +3139,16 @@
           const inputId = `rp_${role.roleKey}_${field.key}`;
           const pickedId = `${inputId}_picked`;
           const zoneId = `${inputId}_zone`;
+          const extraHint = field.key === 'shareholdersRegister'
+            ? 'Wij verzoeken je daarnaast om een volledige, ondertekende versie van het aandeelhoudersregister aan te leveren. Zorg er daarbij voor dat alle pagina\'s van het register, inclusief eventuele lege tussenpagina\'s, doorlopend zijn opgenomen.'
+            : (field.key === 'uboExtract'
+              ? 'Het UBO-uittreksel kun je downloaden via: https://www.kvk.nl/en/ordering-products/kvk-ubo-register-extract/. Het uittreksel mag niet ouder zijn dan zes maanden.'
+              : '');
           return `
             <div class="file-box ${fileName ? 'has-file' : ''}" id="${zoneId}" style="margin-top:10px;">
               <label class="file-label">${field.label}</label>
               <input id="${inputId}" data-rp-file="${field.key}" data-rp-file-role="${role.roleKey}" type="file" accept=".pdf,.jpg,.jpeg,.png">
+              ${extraHint ? `<div class="hint" style="margin-top:6px;">${sanitize(extraHint)}</div>` : ''}
               <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
               <div class="file-picked" id="${pickedId}" style="display:${fileName ? 'block' : 'none'};">${fileName ? `Geselecteerd: ${sanitize(fileName)}` : ''}</div>
             </div>
@@ -3171,7 +3199,7 @@
               <div class="repeat-title">${sanitize(role.title)} - ${sanitize(role.name)}</div>
             </div>
             <div class="row">
-              <div class="field"><label class="required">KvK nummer</label><input data-rp="kvkNummer" value="${sanitize(v.kvkNummer)}"></div>
+              <div class="field"><label class="required">KVK-nummer</label><input data-rp="kvkNummer" value="${sanitize(v.kvkNummer)}"></div>
             </div>
             <div class="group-title" style="margin-top:14px;">UBO('s)</div>
             <div data-rp-ubo-wrap class="repeat-wrap">${ubos.map(renderUboRow).join('')}</div>
@@ -4163,6 +4191,19 @@
       return null;
     }
 
+    function isValidEmailAddress(value) {
+      const email = String(value || '').trim();
+      if (!email) return false;
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function isValidPhoneNumber(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return false;
+      const normalized = raw.replace(/[\s().-]/g, '');
+      return /^\+?[0-9]{8,15}$/.test(normalized);
+    }
+
     function validateNaturalPersons(naturalPersons) {
       for (const person of naturalPersons) {
         if (!person.voornamen || !person.achternaam) {
@@ -4196,6 +4237,12 @@
         if (mustUseForeign) {
           if (!person.buitenlandAdres) return 'Vul het buitenlandse woonadres in bij natuurlijke personen waarvoor geen Nederlands woonadres wordt gebruikt.';
           if (!person.utilityBill) return 'Upload een utility bill bij natuurlijke personen waarvoor geen Nederlands woonadres wordt gebruikt.';
+        }
+        if (person.telefoon && !isValidPhoneNumber(person.telefoon)) {
+          return 'Vul een geldig persoonlijk telefoonnummer in bij natuurlijke personen.';
+        }
+        if (person.email && !isValidEmailAddress(person.email)) {
+          return 'Vul een geldig persoonlijk e-mailadres in bij natuurlijke personen.';
         }
         if (person.taalNiveau === 'lager-dan-c1' && !person.engelsNiveau) {
           return 'Vul bij Nederlands lager dan C1 ook het Engelse taalniveau in.';
@@ -4602,8 +4649,50 @@
           if (!String(payload.omzettingBronDoel || '').trim()) return showFormError('Vul het doel van de EMZ/VOF in.', 'textarea[name="omzettingBronDoel"]');
         }
 
-        if (!payload.contactEmail || !/^\S+@\S+\.\S+$/.test(payload.contactEmail)) {
+        if (!isValidEmailAddress(payload.contactEmail)) {
           return showFormError('Contact e-mailadres uit dossier ontbreekt of is ongeldig.', 'input[name="holdingMailadres"], input[name="werkmijMailadres"]');
+        }
+
+        const emailFieldChecks = [
+          ['holdingMailadres', payload.holdingMailadres, 'Mailadres van de BV (holding)'],
+          ['werkmijMailadres', payload.werkmijMailadres, 'Mailadres van de BV (werkmaatschappij)'],
+          ['holdingAccountantMail', payload.holdingAccountantMail, 'Mailadres van de contactpersoon (holding)'],
+          ['werkmijAccountantMail', payload.werkmijAccountantMail, 'Mailadres van de contactpersoon (werkmaatschappij)']
+        ];
+        for (const [name, value, label] of emailFieldChecks) {
+          if (String(value || '').trim() && !isValidEmailAddress(value)) {
+            return showFormError('Vul een geldig e-mailadres in voor: ' + label + '.', 'input[name="' + name + '"]');
+          }
+        }
+
+        const phoneFieldChecks = [
+          ['holdingTelefoon', payload.holdingTelefoon, 'Telefoonnummer van de BV (holding)'],
+          ['werkmijTelefoon', payload.werkmijTelefoon, 'Telefoonnummer van de BV (werkmaatschappij)'],
+          ['holdingAccountantTelefoon', payload.holdingAccountantTelefoon, 'Telefoonnummer van de contactpersoon (holding)'],
+          ['werkmijAccountantTelefoon', payload.werkmijAccountantTelefoon, 'Telefoonnummer van de contactpersoon (werkmaatschappij)']
+        ];
+        for (const [name, value, label] of phoneFieldChecks) {
+          if (String(value || '').trim() && !isValidPhoneNumber(value)) {
+            return showFormError('Vul een geldig telefoonnummer in voor: ' + label + '.', 'input[name="' + name + '"]');
+          }
+        }
+
+        if (Array.isArray(payload.holdingEntities)) {
+          for (let i = 0; i < payload.holdingEntities.length; i += 1) {
+            const entity = payload.holdingEntities[i] || {};
+            const phoneSelector = isVofPlusHoldingFlow()
+              ? '[data-vof-holding-index="' + i + '"] [data-vof-holding-field="telefoon"]'
+              : 'input[name="holdingTelefoon"]';
+            const mailSelector = isVofPlusHoldingFlow()
+              ? '[data-vof-holding-index="' + i + '"] [data-vof-holding-field="mailadres"]'
+              : 'input[name="holdingMailadres"]';
+            if (String(entity.telefoon || '').trim() && !isValidPhoneNumber(entity.telefoon)) {
+              return showFormError('Vul een geldig telefoonnummer in voor Holding ' + (i + 1) + '.', phoneSelector);
+            }
+            if (String(entity.mailadres || '').trim() && !isValidEmailAddress(entity.mailadres)) {
+              return showFormError('Vul een geldig e-mailadres in voor Holding ' + (i + 1) + '.', mailSelector);
+            }
+          }
         }
         if (showHolding && !payload.holdingNaamBedrijf) {
           return showFormError('Vul minimaal de naam van de holding in.', 'input[name="holdingNaamBedrijf"]');
@@ -4642,7 +4731,7 @@
             return showFormError('Kies minimaal één optie bij Detailhandel.', 'input[name="detailWinkel"]');
           }
           if (!payload.werkmijGroothandel) {
-            return showFormError('Kies of u producten verkoopt aan andere ondernemingen (Groothandel).', 'select[name="werkmijGroothandel"]');
+            return showFormError('Kies of de onderneming producten verkoopt aan andere ondernemingen (groothandel).', 'select[name="werkmijGroothandel"]');
           }
         }
 
