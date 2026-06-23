@@ -3139,16 +3139,16 @@
           const inputId = `rp_${role.roleKey}_${field.key}`;
           const pickedId = `${inputId}_picked`;
           const zoneId = `${inputId}_zone`;
-          const extraHint = field.key === 'shareholdersRegister'
-            ? 'Wij verzoeken je daarnaast om een volledige, ondertekende versie van het aandeelhoudersregister aan te leveren. Zorg er daarbij voor dat alle pagina\'s van het register, inclusief eventuele lege tussenpagina\'s, doorlopend zijn opgenomen.'
+          const extraHintHtml = field.key === 'shareholdersRegister'
+            ? '<div class="hint" style="margin-top:6px;">Wij verzoeken je daarnaast om een volledige, ondertekende versie van het aandeelhoudersregister aan te leveren. Zorg er daarbij voor dat alle pagina\'s van het register, inclusief eventuele lege tussenpagina\'s, doorlopend zijn opgenomen.</div>'
             : (field.key === 'uboExtract'
-              ? 'Het UBO-uittreksel kun je downloaden via: https://www.kvk.nl/en/ordering-products/kvk-ubo-register-extract/. Het uittreksel mag niet ouder zijn dan zes maanden.'
+              ? '<div class="hint" style="margin-top:6px;">Het UBO-uittreksel kun je downloaden via <a href="https://www.kvk.nl/en/ordering-products/kvk-ubo-register-extract/" target="_blank" rel="noopener noreferrer">deze link</a>. Het uittreksel mag niet ouder zijn dan zes maanden.</div>'
               : '');
           return `
             <div class="file-box ${fileName ? 'has-file' : ''}" id="${zoneId}" style="margin-top:10px;">
               <label class="file-label">${field.label}</label>
               <input id="${inputId}" data-rp-file="${field.key}" data-rp-file-role="${role.roleKey}" type="file" accept=".pdf,.jpg,.jpeg,.png">
-              ${extraHint ? `<div class="hint" style="margin-top:6px;">${sanitize(extraHint)}</div>` : ''}
+              ${extraHintHtml}
               <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
               <div class="file-picked" id="${pickedId}" style="display:${fileName ? 'block' : 'none'};">${fileName ? `Geselecteerd: ${sanitize(fileName)}` : ''}</div>
             </div>
