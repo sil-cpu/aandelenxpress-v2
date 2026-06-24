@@ -722,6 +722,12 @@
                 <label>Hoeveel holdings wil je oprichten?</label>
                 <input id="vofHoldingCount" name="vofHoldingCount" type="number" min="2" step="1" value="2">
               </div>
+
+              <div class="field" id="omzettingOwnerCountWrap" style="display:none;">
+                <label>Hoeveel eigenaren heeft uw huidige VOF?</label>
+                <input id="omzettingOwnerCount" name="omzettingOwnerCount" type="number" min="2" max="5" step="1" value="2">
+                <div class="hint" style="margin-top:6px;">Voor iedere eigenaar/vennoot wordt automatisch een natuurlijk persoon-formulier toegevoegd.</div>
+              </div>
             </div>
             <div id="ownershipNaturalPersonHint" class="hint" style="display:none; margin-top:4px;">Wanneer een of meerdere bestaande holdings als aandeelhouder zijn geselecteerd, kunnen ook een of meerdere natuurlijke personen aandeelhouder zijn. Het totaal aantal aandeelhouders per nieuwe BV mag niet hoger zijn dan 4.</div>
             <div id="dossierFlowSummary" class="hint" style="margin-top:10px;"></div>
@@ -1042,11 +1048,6 @@
               <div class="field"><label>Statutaire zetel van de eenmanszaak/VOF</label><input name="omzettingBronZetel"></div>
             </div>
             <div class="field"><label>Wie zijn de eigenaren van de onderneming?</label><textarea name="omzettingBronEigenaren"></textarea></div>
-            <div class="field" id="omzettingOwnerCountWrap" style="display:none;">
-              <label>Hoeveel eigenaren/vennoten heeft de VOF?</label>
-              <input id="omzettingOwnerCount" name="omzettingOwnerCount" type="number" min="2" max="5" step="1" value="2">
-              <div class="hint" style="margin-top:6px;">Voor iedere eigenaar/vennoot wordt automatisch een natuurlijk persoon-formulier toegevoegd.</div>
-            </div>
             <div class="field"><label>Wat is de aandelenverdeling? (alleen bij VOF)</label><textarea name="omzettingBronDoel" placeholder="Bijv. Jan (60%), Petra (40%)"></textarea></div>
             <div class="file-grid" style="margin-top:12px;">
               <div class="file-box" id="omzettingKvkZone">
@@ -1323,7 +1324,7 @@
       'Eenmanszaak': 'Sole proprietorship',
       'Naam EMZ/VOF': 'Name of sole proprietorship/VOF',
       'KVK-nummer EMZ/VOF': 'Chamber of Commerce number sole proprietorship/VOF',
-      'Hoeveel eigenaren/vennoten heeft de VOF?': 'How many owners/partners does the VOF have?',
+      'Hoeveel eigenaren heeft uw huidige VOF?': 'How many owners/partners does your current VOF have?',
       'Voor iedere eigenaar/vennoot wordt automatisch een natuurlijk persoon-formulier toegevoegd.': 'A natural person form is automatically added for each owner/partner.',
       'Statutaire zetel EMZ/VOF': 'Registered seat sole proprietorship/VOF',
       'Eigenaar(s) EMZ/VOF + aandelenverdeling (bij VOF)': 'Owner(s) sole proprietorship/VOF + share allocation (for VOF)',
@@ -1397,7 +1398,7 @@
       'Urgent (spoed)': 'Acil',
       'BV + Holding': 'BV + Holding',
       'BV': 'BV',
-      'Hoeveel eigenaren/vennoten heeft de VOF?': 'VOF\'un kac sahibi/ortagi var?',
+      'Hoeveel eigenaren heeft uw huidige VOF?': 'Mevcut VOF\'unuzun kac sahibi/ortagi var?',
       'Voor iedere eigenaar/vennoot wordt automatisch een natuurlijk persoon-formulier toegevoegd.': 'Her sahip/ortak icin otomatik olarak bir gercek kisi formu eklenir.',
       'Holding': 'Holding',
       'Eenmanszaak naar BV': 'Sahis sirketinden BV\'ye',
