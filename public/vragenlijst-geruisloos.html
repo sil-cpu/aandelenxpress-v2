@@ -512,7 +512,7 @@
                     </div>
 
                     <div class="field" id="fieldKvkUittreksel">
-                        <label class="field-label">Upload hier het KVK-uittreksel van de eenmanszaak of VOF<span class="req">*</span></label>
+                        <label class="field-label">Upload hier het KVK-uittreksel van de eenmanszaak/VOF<span class="req">*</span></label>
                         <div class="file-zone" id="kvkUittrekselZone">
                             <input type="file" id="kvkUittrekselFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">🏢</div>
@@ -578,7 +578,7 @@
                     </div>
 
                     <div class="field file-optional">
-                        <label class="field-label">Indien sprake is van een vof, upload hier het UBO-uittreksel <span style="font-weight:400;color:#718096;">(niet ouder dan 6 maanden)</span></label>
+                        <label class="field-label">Upload hier het UBO-uittreksel van de eenmanszaak/VOF <span style="font-weight:400;color:#718096;">(niet ouder dan 6 maanden)</span></label>
                         <div class="file-zone" id="uboZone">
                             <input type="file" id="uboFile" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="file-icon">👥</div>
@@ -609,7 +609,7 @@
                         </div>
                         <div class="field">
                             <label class="field-label">Naam van de contactpersoon<span class="req">*</span></label>
-                            <input type="text" name="fiscalistContactpersoon" placeholder="Naam contactpersoon">
+                            <input type="text" name="fiscalistContact" placeholder="Naam contactpersoon">
                         </div>
                         <div class="field">
                             <label class="field-label">Telefoonnummer van de contactpersoon<span class="req">*</span></label>
@@ -624,7 +624,7 @@
             </div>
 
             <!-- 8. Import / Export -->
-            <div class="card">
+            <div class="card" style="display:none;">
                 <div class="card-header"><div class="card-icon">8</div><div class="card-title">Import &amp; Export</div></div>
                 <div class="card-body">
                     <div class="field" id="fieldImport">
@@ -669,27 +669,10 @@
 
             <!-- 9. Personeel -->
             <div class="card">
-                <div class="card-header"><div class="card-icon">9</div><div class="card-title">Personeel</div></div>
+                <div class="card-header"><div class="card-icon">9</div><div class="card-title">Bedrijfsplan</div></div>
                 <div class="card-body">
-                    <div class="field" id="fieldPersoneelAnders">
-                        <label class="field-label">Gaat er personeel over van een andere onderneming?<span class="req">*</span></label>
-                        <ul class="options-list">
-                            <li class="option-item" onclick="selectOption(this,'personeelOvergang','ja')"><input type="radio" name="personeelOvergang" value="ja"><div class="option-content"><div class="option-label">Ja</div></div></li>
-                            <li class="option-item" onclick="selectOption(this,'personeelOvergang','nee')"><input type="radio" name="personeelOvergang" value="nee"><div class="option-content"><div class="option-label">Nee</div></div></li>
-                        </ul>
-                    </div>
-                    <div class="field-row">
-                        <div class="field">
-                            <label class="field-label">Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label>
-                            <input type="number" name="personeelFulltime" min="0" placeholder="0">
-                        </div>
-                        <div class="field">
-                            <label class="field-label">Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label>
-                            <input type="number" name="personeelParttime" min="0" placeholder="0">
-                        </div>
-                    </div>
                     <div class="field file-optional">
-                        <label class="field-label">Upload hier jouw bedrijfsplan.</label>
+                        <label class="field-label">Upload hier jouw bedrijfsplan (indien van toepassing).</label>
                         <div class="file-zone" id="personeelsplanZone">
                             <input type="file" id="personeelsplanFile" accept=".pdf,.jpg,.jpeg,.png,.docx">
                             <div class="file-icon">👥</div>
@@ -743,7 +726,7 @@
                             Het is onze taak om na te gaan of je een <strong>'PEP'</strong> (politiek prominent persoon) bent. Wij willen je dan ook vragen de PEP-verklaring in te vullen, te ondertekenen en daarna hieronder te uploaden in het onderstaande veld. De PEP-verklaring zit als bijlage aan de e-mail met daarin de link naar deze vragenlijst.<br><br>
                             Voeg hieronder de door jou ingevulde en ondertekende PEP-verklaring toe.<br><br>
                             <strong>Wat is een PEP precies?</strong> Je bent PEP als jij of een van je naaste familieleden een politiek prominente positie inneemt. Denk daarbij aan een staatshoofd, parlementslid of lid van het bestuur van een politieke partij.<br><br>
-                            Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon de datacard afzonderlijk in te vullen, met pen te ondertekenen en te uploaden.
+                            Indien er sprake is van meerdere natuurlijke personen, dient iedere natuurlijke persoon de PEP-verklaring afzonderlijk in te vullen, met pen te ondertekenen en te uploaden.
                         </p>
                     <div class="field" id="fieldPep">
                         <label class="field-label">PEP-verklaring<span class="req">*</span></label>
@@ -763,7 +746,7 @@
                 <div class="card-header"><div class="card-icon">12</div><div class="card-title">Opmerkingen</div></div>
                 <div class="card-body">
                     <div class="field">
-                        <label class="field-label">Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label>
+                        <label class="field-label">Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen, dan kun je die hieronder kwijt.</label>
                         <textarea name="opmerkingen" placeholder="Optioneel — stel hier uw vragen of voeg extra informatie toe…" rows="4"></textarea>
                     </div>
                 </div>
@@ -1428,14 +1411,34 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
         ['nederlandsTaal','fieldNlTaal'],['engelsTaal','fieldEnTaal'],
         ['sector','fieldSector'],['aandeelhoudersBestuurders','fieldAandeelhoudersBestuurders'],
         ['holdingAdres','fieldHoldingAdres'],['fiscalist','fieldFiscalist'],
-        ['importeert','fieldImport'],['exporteert','fieldExport'],
-        ['groothandel','fieldGroothandel'],['personeelOvergang','fieldPersoneelAnders'],
     ].forEach(([name, fieldId]) => {
         if (!f.querySelector('[name="' + name + '"]:checked')) {
             document.getElementById(fieldId).classList.add('field-error');
             valid = false;
         }
     });
+
+    const fiscalistChoice = f.querySelector('[name="fiscalist"]:checked')?.value;
+    if (fiscalistChoice === 'ja') {
+        ['fiscalistNaam', 'fiscalistContact', 'fiscalistTelefoon', 'fiscalistMail'].forEach((name) => {
+            const input = f.querySelector('[name="' + name + '"]');
+            if (!input || !input.value.trim()) {
+                input?.closest('.field')?.classList.add('field-error');
+                valid = false;
+            }
+        });
+
+        const fiscalistPhone = f.querySelector('[name="fiscalistTelefoon"]')?.value.trim() || '';
+        const fiscalistMail = f.querySelector('[name="fiscalistMail"]')?.value.trim() || '';
+        if (fiscalistPhone && !/^[0-9+()\-\s]{7,20}$/.test(fiscalistPhone)) {
+            f.querySelector('[name="fiscalistTelefoon"]')?.closest('.field')?.classList.add('field-error');
+            valid = false;
+        }
+        if (fiscalistMail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fiscalistMail)) {
+            f.querySelector('[name="fiscalistMail"]')?.closest('.field')?.classList.add('field-error');
+            valid = false;
+        }
+    }
 
     // Required text fields
     const textFields = [
@@ -1524,10 +1527,6 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
             buildFilePayload('personeelsplanFile', 'personeelsplan'),
         ]);
 
-        const kanalen = ['Nationaal','Internationaal','B2B','Retail','Anders']
-            .filter((_,i) => ['kanaalNationaal','kanaalInternationaal','kanaalB2b','kanaalRetail','kanaalAnders'][i] && f.querySelector('[name="' + ['kanaalNationaal','kanaalInternationaal','kanaalB2b','kanaalRetail','kanaalAnders'][i] + '"]')?.checked)
-            .map((_,i) => ['Nationaal','Internationaal','B2B','Retail','Anders'][i]);
-
         const payload = {
             caseId,
             token:                  verifiedToken,
@@ -1551,14 +1550,9 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
             holdingAdresAnders:     f.querySelector('[name="holdingAdresAnders"]')?.value.trim() || '',
             fiscalist:              f.querySelector('[name="fiscalist"]:checked').value,
             fiscalistNaam:          f.querySelector('[name="fiscalistNaam"]')?.value.trim() || '',
-            importeert:             f.querySelector('[name="importeert"]:checked').value,
-            exporteert:             f.querySelector('[name="exporteert"]:checked').value,
-            verkoopkanalen:         kanalen,
-            kanaalAndersOmschrijving: f.querySelector('[name="kanaalAndersOmschrijving"]')?.value.trim() || '',
-            groothandel:            f.querySelector('[name="groothandel"]:checked').value,
-            personeelOvergang:      f.querySelector('[name="personeelOvergang"]:checked').value,
-            personeelFulltime:      f.querySelector('[name="personeelFulltime"]').value || '0',
-            personeelParttime:      f.querySelector('[name="personeelParttime"]').value || '0',
+            fiscalistContact:       f.querySelector('[name="fiscalistContact"]')?.value.trim() || '',
+            fiscalistTelefoon:      f.querySelector('[name="fiscalistTelefoon"]')?.value.trim() || '',
+            fiscalistMail:          f.querySelector('[name="fiscalistMail"]')?.value.trim() || '',
             opmerkingen:            f.querySelector('[name="opmerkingen"]').value.trim(),
             huurovereenkomst:       huurPayload,
             kvkUittreksel:          kvkPayload,

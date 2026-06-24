@@ -811,7 +811,7 @@
               </div>
             </div>
 
-            <div class="field">
+            <div class="field" id="holdingEigendomNieuweBvsField">
               <label>Wordt de holding aandeelhouder van de nieuwe werkmaatschappij?</label>
               <select name="holdingEigendomNieuweBvs">
                 <option value="">Maak keuze</option>
@@ -820,14 +820,16 @@
               </select>
             </div>
 
-            <div class="group-title">Personeel (Holding)</div>
-            <div class="row">
-              <div class="field"><label>Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label><input type="number" name="holdingPersoneelMeer15" min="0"></div>
-              <div class="field"><label>Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label><input type="number" name="holdingPersoneelMinder15" min="0"></div>
+            <div id="holdingStaffSection">
+              <div class="group-title">Personeel (Holding)</div>
+              <div class="row">
+                <div class="field"><label>Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV</label><input type="number" name="holdingPersoneelMeer15" min="0"></div>
+                <div class="field"><label>Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV</label><input type="number" name="holdingPersoneelMinder15" min="0"></div>
+              </div>
             </div>
 
             <div class="group-title">Overige</div>
-            <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label><textarea name="holdingOverige"></textarea></div>
+            <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen, dan kun je die hieronder kwijt.</label><textarea name="holdingOverige"></textarea></div>
           </div>
         </div>
 
@@ -945,7 +947,7 @@
             </div>
 
             <div class="group-title">Overige</div>
-            <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.</label><textarea name="werkmijOverige"></textarea></div>
+            <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen, dan kun je die hieronder kwijt.</label><textarea name="werkmijOverige"></textarea></div>
           </div>
         </div>
 
@@ -1043,7 +1045,7 @@
             <div class="field"><label>Wat is de aandelenverdeling? (alleen bij VOF)</label><textarea name="omzettingBronDoel" placeholder="Bijv. Jan (60%), Petra (40%)"></textarea></div>
             <div class="file-grid" style="margin-top:12px;">
               <div class="file-box" id="omzettingKvkZone">
-                <label class="file-label">KVK-uittreksel eenmanszaak/VOF</label>
+                <label class="file-label">KVK-uittreksel van de eenmanszaak/VOF</label>
                 <input id="omzettingKvkFile" type="file" accept=".pdf,.jpg,.jpeg,.png">
                 <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
                 <div class="file-picked" id="omzettingKvkSelected" style="display:none;"></div>
@@ -1100,7 +1102,7 @@
               </div>
 
               <div class="file-box" id="omzettingVofUboZone">
-                <label class="file-label">UBO-uittreksel VOF (indien van toepassing)</label>
+                <label class="file-label">UBO-uittreksel van de eenmanszaak/VOF</label>
                 <input id="omzettingVofUboFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
                 <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
                 <div class="file-picked" id="omzettingVofUboSelected" style="display:none;"></div>
@@ -1145,7 +1147,7 @@
 
               <div class="file-box" id="personeelsplanZone">
                 <svg class="file-box-icon" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                <label class="file-label">Bedrijfsplan</label>
+                <label class="file-label">Personeelsplan / bedrijfsplan(nen)</label>
                 <span class="file-cta">Klik of sleep bestanden</span>
                 <input id="personeelsplanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
                 <div class="file-meta">PDF, JPG, PNG – meerdere bestanden mogelijk – max 10 MB</div>
@@ -1281,7 +1283,7 @@
       'Personeel (Holding)': 'Staff (Holding)',
       'Hoeveel mensen gaan fulltime (meer dan 15 uur) werken in de BV': 'How many people will work fulltime (more than 15 hours) in the BV',
       'Hoeveel mensen gaan parttime (minder dan 15 uur) werken in de BV': 'How many people will work parttime (less than 15 hours) in the BV',
-      'Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen over de BV, dan kun je die hieronder kwijt.': 'If you have any questions about the questionnaire you filled in or comments about the BV, you can share them below.',
+      'Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen, dan kun je die hieronder kwijt.': 'If you have any questions about the questionnaire you filled in or comments, you can share them below.',
       'Aandeelhouder werkmaatschappij': 'Operating company shareholder',
       'De aandeelhouder van de nieuw op te richten B.V. is de nieuw op te richten holding (100%).': 'The shareholder of the newly established BV is the newly established holding (100%).',
       'Doel van de BV (wat gaat de BV doen)': 'Purpose of the BV (what will the BV do)',
@@ -1322,7 +1324,7 @@
       'Uploads': 'Uploads',
       'Datacard / PDC bestand(en)': 'Datacard / PDC file(s)',
       'PEP verklaring(en)': 'PEP declaration(s)',
-      'Bedrijfsplan': 'Business plan',
+      'Personeelsplan / bedrijfsplan(nen)': 'Staff plan / business plan(s)',
       'Indienen': 'Submit',
       'Concept opslaan': 'Save draft',
       'Concept opslaan bewaart je voortgang. Indienen verstuurt de complete vragenlijst.': 'Save draft stores your progress. Submit sends the complete questionnaire.',
@@ -1560,7 +1562,7 @@
         nl: 'Beschrijf kort de activiteiten van de bestaande onderneming.',
         en: 'Briefly describe the activities of the existing business.'
       },
-      'KVK-uittreksel eenmanszaak/VOF': {
+      'KVK-uittreksel van de eenmanszaak/VOF': {
         nl: 'Upload een recente versie van het uittreksel voor controle van bedrijfsgegevens.',
         en: 'Upload a recent Chamber of Commerce extract to verify business details.'
       },
@@ -1592,7 +1594,7 @@
         nl: 'Gebruik dit document voor de inbreng in de werkmaatschappij.',
         en: 'Use this document for the contribution into the operating company.'
       },
-      'UBO-uittreksel VOF (indien van toepassing)': {
+      'UBO-uittreksel van de eenmanszaak/VOF': {
         nl: 'Voeg indien nodig meerdere uittreksels toe voor alle relevante UBO\'s.',
         en: 'If applicable, add multiple extracts for all relevant UBOs.'
       }
@@ -2601,10 +2603,7 @@
       const show = isOmzettingFlow();
       card.style.display = show ? '' : 'none';
       if (!show) card.classList.add('collapsed');
-      if (vofUboZone) {
-        const showVofUbo = dossierOprichtingType === 'vof-naar-bv' || dossierOprichtingType === 'vof-naar-bv-holding';
-        vofUboZone.style.display = showVofUbo ? '' : 'none';
-      }
+      if (vofUboZone) vofUboZone.style.display = show ? '' : 'none';
       const plusHolding = isOmzettingPlusHoldingFlow();
       if (inbrengZone) inbrengZone.style.display = plusHolding ? 'none' : '';
       if (inbrengHoldingZone) inbrengHoldingZone.style.display = plusHolding ? '' : 'none';
@@ -3118,39 +3117,39 @@
                   <option value="nee" ${v.eenmanszaak === 'nee' ? 'selected' : ''}>Nee</option>
                 </select>
               </div>
-            </div>
-            <div class="field" data-np-eenmanszaak-actie-wrap style="display:${!isOmzettingFlow() && v.eenmanszaak === 'ja' ? '' : 'none'};">
-              <label>Wat gaat er gebeuren met de eenmanszaak/VOF?</label>
-              <select data-np="eenmanszaakActie">
-                <option value="">Maak keuze</option>
-                <option value="blijft-bestaan" ${v.eenmanszaakActie === 'blijft-bestaan' ? 'selected' : ''}>Blijft bestaan (De eenmanszaak/VOF kan naast de nieuwe B.V. blijven bestaan.)</option>
-                <option value="stopt" ${v.eenmanszaakActie === 'stopt' ? 'selected' : ''}>Stopt (Bij uitschrijving bij de KvK is dit geen inbreng en geen voortzetting.)</option>
-              </select>
-              <div class="hint" style="margin-top:8px;">Let op: uw nieuw op te richten B.V. mag niet dezelfde naam hebben als uw bestaande eenmanszaak. Indien beide ondernemingen dezelfde naam hebben, adviseren wij u om de naam van uw eenmanszaak via het online formulier van de Kamer van Koophandel (KVK) te wijzigen, zodat de B.V. zonder problemen kan worden ingeschreven.</div>
-            </div>
-            <div class="group-title" data-np-nl-address-title style="display:none;">Woonadres (Nederland)</div>
-            <div class="address-grid" data-np-nl-address-wrap style="display:none;">
-              <div class="field"><label>Straat</label><input data-np="adresStraat" value="${sanitize(v.adresStraat)}"></div>
-              <div class="field"><label>Huisnummer</label><input data-np="adresHuisnummer" value="${sanitize(v.adresHuisnummer)}"></div>
-              <div class="field"><label>Postcode</label><input data-np="adresPostcode" value="${sanitize(v.adresPostcode)}"></div>
-              <div class="field"><label>Plaatsnaam</label><input data-np="adresPlaats" value="${sanitize(v.adresPlaats)}"></div>
-            </div>
-            <div class="field" data-np-nl-address-wrap style="display:none;">
-              <label>Woonland</label>
-              ${buildSearchableDatalistInput(`np_${role.roleKey}_woonland`, v.woonland, COUNTRY_OPTIONS, 'data-np="woonland"', 'Zoek land')}
-            </div>
-            <div data-np-foreign-address-wrap style="display:${(v.heeftBsn !== 'ja' || v.nlAdresGeregistreerd === 'nee') ? '' : 'none'};">
-              <div class="group-title">Buitenlands woonadres</div>
-              <div class="hint" style="margin-bottom:8px;">Upload hier het adresbewijs, dit moet een utility bill (nota gas, water, licht) zijn die niet ouder is dan 6 maanden.</div>
-              <div class="field">
-                <label>Volledig buitenlands woonadres</label>
-                <textarea data-np="buitenlandAdres" placeholder="Straat, nummer, postcode, plaats, land">${sanitize(v.buitenlandAdres)}</textarea>
+              <div class="field" data-np-eenmanszaak-actie-wrap style="display:${!isOmzettingFlow() && v.eenmanszaak === 'ja' ? '' : 'none'};">
+                <label>Wat gaat er gebeuren met de eenmanszaak/VOF?</label>
+                <select data-np="eenmanszaakActie">
+                  <option value="">Maak keuze</option>
+                  <option value="blijft-bestaan" ${v.eenmanszaakActie === 'blijft-bestaan' ? 'selected' : ''}>Blijft bestaan (De eenmanszaak/VOF kan naast de nieuwe B.V. blijven bestaan.)</option>
+                  <option value="stopt" ${v.eenmanszaakActie === 'stopt' ? 'selected' : ''}>Stopt (Bij uitschrijving bij de KvK is dit geen inbreng en geen voortzetting.)</option>
+                </select>
+                <div class="hint" style="margin-top:8px;">Let op: uw nieuw op te richten B.V. mag niet dezelfde naam hebben als uw bestaande eenmanszaak. Indien beide ondernemingen dezelfde naam hebben, adviseren wij u om de naam van uw eenmanszaak via het online formulier van de Kamer van Koophandel (KVK) te wijzigen, zodat de B.V. zonder problemen kan worden ingeschreven.</div>
               </div>
-              <div class="file-box ${utilityName ? 'has-file' : ''}" id="np_${sanitize(role.roleKey)}_utility_zone" style="margin-top:8px;">
-                <label class="file-label">Upload utility bill (bewijs buitenlands adres)</label>
-                <input id="np_${sanitize(role.roleKey)}_utility" data-np-file="utilityBill" data-np-file-role="${sanitize(role.roleKey)}" type="file" accept=".pdf,.jpg,.jpeg,.png">
-                <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
-                <div class="file-picked" id="np_${sanitize(role.roleKey)}_utility_picked" style="display:${utilityName ? 'block' : 'none'};">${utilityName ? `Geselecteerd: ${sanitize(utilityName)}` : ''}</div>
+              <div class="group-title" data-np-nl-address-title style="display:none;">Woonadres (Nederland)</div>
+              <div class="address-grid" data-np-nl-address-wrap style="display:none;">
+                <div class="field"><label>Straat</label><input data-np="adresStraat" value="${sanitize(v.adresStraat)}"></div>
+                <div class="field"><label>Huisnummer</label><input data-np="adresHuisnummer" value="${sanitize(v.adresHuisnummer)}"></div>
+                <div class="field"><label>Postcode</label><input data-np="adresPostcode" value="${sanitize(v.adresPostcode)}"></div>
+                <div class="field"><label>Plaatsnaam</label><input data-np="adresPlaats" value="${sanitize(v.adresPlaats)}"></div>
+              </div>
+              <div class="field" data-np-nl-address-wrap style="display:none;">
+                <label>Woonland</label>
+                ${buildSearchableDatalistInput(`np_${role.roleKey}_woonland`, v.woonland, COUNTRY_OPTIONS, 'data-np="woonland"', 'Zoek land')}
+              </div>
+              <div data-np-foreign-address-wrap style="display:${(v.heeftBsn !== 'ja' || v.nlAdresGeregistreerd === 'nee') ? '' : 'none'};">
+                <div class="group-title">Buitenlands woonadres</div>
+                <div class="hint" style="margin-bottom:8px;">Upload hier het adresbewijs, dit moet een utility bill (nota gas, water, licht) zijn die niet ouder is dan 6 maanden.</div>
+                <div class="field">
+                  <label>Volledig buitenlands woonadres</label>
+                  <textarea data-np="buitenlandAdres" placeholder="Straat, nummer, postcode, plaats, land">${sanitize(v.buitenlandAdres)}</textarea>
+                </div>
+                <div class="file-box ${utilityName ? 'has-file' : ''}" id="np_${sanitize(role.roleKey)}_utility_zone" style="margin-top:8px;">
+                  <label class="file-label">Upload utility bill (bewijs buitenlands adres)</label>
+                  <input id="np_${sanitize(role.roleKey)}_utility" data-np-file="utilityBill" data-np-file-role="${sanitize(role.roleKey)}" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                  <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
+                  <div class="file-picked" id="np_${sanitize(role.roleKey)}_utility_picked" style="display:${utilityName ? 'block' : 'none'};">${utilityName ? `Geselecteerd: ${sanitize(utilityName)}` : ''}</div>
+                </div>
               </div>
             </div>
             </div><!-- /data-np-fields-body -->
@@ -3684,14 +3683,16 @@
     function validateTab(cardEl) {
       clearTabErrors();
       let errorCount = 0;
+      let firstInvalidControl = null;
       const controls = Array.from(cardEl.querySelectorAll('input, select, textarea'));
       controls.forEach(el => {
         if (el.disabled || !el.offsetParent) return;
         const type = (el.getAttribute('type') || '').toLowerCase();
         if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'checkbox' || type === 'radio') return;
         if (!el.validity.valid) {
-          const wrap = el.closest('.field');
+          const wrap = el.closest('.field, .file-box');
           if (wrap) wrap.classList.add('tab-error');
+          if (!firstInvalidControl) firstInvalidControl = el;
           errorCount++;
         }
       });
@@ -3700,8 +3701,10 @@
         banner.className = 'tab-error-banner';
         banner.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
           + 'Vul alle verplichte velden in om door te gaan.';
-        cardEl.querySelector('.card-body')?.prepend(banner);
+        const body = cardEl.querySelector('.card-b, .card-body') || cardEl;
+        body.prepend(banner);
         cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        firstInvalidControl?.focus({ preventScroll: true });
       }
       return errorCount;
     }
@@ -4063,13 +4066,24 @@
       }
 
       const holdingEigendomSelect = document.querySelector('select[name="holdingEigendomNieuweBvs"]');
-      const holdingEigendomWrap = holdingEigendomSelect?.closest('.field');
-      const skipHoldingEigendomQuestion = isOmzettingPlusHoldingFlow() || dossierOprichtingType === 'bv-holding';
+      const holdingEigendomWrap = document.getElementById('holdingEigendomNieuweBvsField');
+      const holdingStaffSection = document.getElementById('holdingStaffSection');
+      const skipHoldingEigendomQuestion = isOmzettingPlusHoldingFlow() || dossierOprichtingType === 'bv-holding' || dossierOprichtingType === 'holding' || !withWerkmij;
+      const hideHoldingStaffSection = dossierOprichtingType === 'holding';
       if (holdingEigendomWrap) {
         holdingEigendomWrap.style.display = skipHoldingEigendomQuestion ? 'none' : '';
       }
       if (skipHoldingEigendomQuestion && holdingEigendomSelect) {
         holdingEigendomSelect.value = '';
+      }
+      if (holdingStaffSection) {
+        holdingStaffSection.style.display = hideHoldingStaffSection ? 'none' : '';
+      }
+      if (hideHoldingStaffSection) {
+        const holdingFulltime = document.querySelector('input[name="holdingPersoneelMeer15"]');
+        const holdingParttime = document.querySelector('input[name="holdingPersoneelMinder15"]');
+        if (holdingFulltime) holdingFulltime.value = '';
+        if (holdingParttime) holdingParttime.value = '';
       }
 
       const omzettingBronType = document.getElementById('omzettingBronType');
