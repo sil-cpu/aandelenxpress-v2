@@ -505,35 +505,6 @@
 
         <form id="vragenlijstForm" novalidate>
 
-            <!-- ── Sectie 1: Spoed ──────────────────────────── -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">1</div>
-                    <div class="card-title">Verwerking</div>
-                </div>
-                <div class="card-body">
-                    <div class="field" id="fieldSpoed">
-                        <label class="field-label">Maak een keuze of deze oprichting spoed heeft of niet<span class="req">*</span></label>
-                        <ul class="options-list">
-                            <li class="option-item" onclick="selectOption(this, 'spoed', 'standaard')">
-                                <input type="radio" name="spoed" value="standaard">
-                                <div class="option-content">
-                                    <div class="option-label">Standaard</div>
-                                    <div class="option-desc">*Na ontvangst van alle vereiste documenten wordt je aanvraag binnen <strong>5 werkdagen</strong> verwerkt. Check de prijslijst op website startjouwbv.nl</div>
-                                </div>
-                            </li>
-                            <li class="option-item" onclick="selectOption(this, 'spoed', 'spoed')">
-                                <input type="radio" name="spoed" value="spoed">
-                                <div class="option-content">
-                                    <div class="option-label">Urgent (spoed)</div>
-                                    <div class="option-desc">*Er worden EXTRA KOSTEN in rekening gebracht. Na ontvangst van alle vereiste documenten wordt je aanvraag binnen <strong>48 uur</strong> verwerkt. Voor iedere BV start de basisprijs vanaf 1.449,- excl. BTW. Check de prijslijst op website startjouwbv.nl</div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
             <!-- ── Sectie 2: Taalvereisten ─────────────────── -->
             <div class="card">
                 <div class="card-header">
@@ -1220,7 +1191,6 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
 
     // Validate required radio groups
     const radioGroups = [
-        { name: 'spoed',          fieldId: 'fieldSpoed' },
         { name: 'nederlandsTaal', fieldId: 'fieldNlTaal' },
         { name: 'engelsTaal',     fieldId: 'fieldEnTaal' },
         { name: 'sector',         fieldId: 'fieldSector' },
@@ -1283,7 +1253,7 @@ document.getElementById('vragenlijstForm').addEventListener('submit', async func
         const payload = {
             caseId:          caseId,
             token:           verifiedToken,
-            spoed:           f.querySelector('[name="spoed"]:checked').value,
+            spoed:           'standaard',
             nederlandsTaal:  f.querySelector('[name="nederlandsTaal"]:checked').value,
             engelsTaal:      f.querySelector('[name="engelsTaal"]:checked').value,
             taalOpmerking:   f.querySelector('[name="taalOpmerking"]').value.trim(),

@@ -675,19 +675,6 @@
           <div class="card-h">Aanvraagtype</div>
           <div class="card-b">
             <input type="hidden" id="hasWorkmaatschappij" name="hasWorkmaatschappij" value="ja">
-            <div class="field" style="margin-bottom:14px;">
-              <label>Maak een keuze of deze oprichting spoed heeft of niet</label>
-              <select name="behandelingType">
-                <option value="standaard">Standaard</option>
-                <option value="spoed">Urgent (spoed)</option>
-              </select>
-              <div class="hint" style="margin-top:6px;">
-                Standaard: na ontvangst van alle vereiste documenten wordt je aanvraag binnen 5 werkdagen verwerkt. Check de prijslijst op website startjouwbv.nl.
-              </div>
-              <div class="hint" style="margin-top:4px;">
-                Urgent (spoed): er worden extra kosten in rekening gebracht. Na ontvangst van alle vereiste documenten wordt je aanvraag binnen 48 uur verwerkt. Voor iedere BV start de basisprijs vanaf 1.449,- excl. BTW. Check de prijslijst op website startjouwbv.nl.
-              </div>
-            </div>
             <div class="row">
               <div class="field" id="existingHoldingQuestionWrap">
                 <label>Wie zijn de aandeelhouder(s) van de nieuwe werkmaatschappij?</label>
@@ -698,17 +685,8 @@
                   <option value="existing-and-new">Bestaande holding(s) + nieuwe holding(s)</option>
                 </select>
               </div>
-              <div class="field" id="singleBvExistingQuestionWrap" style="display:none;">
-                <label>Bij 1 BV: Worden bestaande holding(s) aandeelhouder van de nieuwe werkmaatschappij?</label>
-                <select id="singleBvExistingHoldings" name="singleBvExistingHoldings">
-                  <option value="nee">Nee</option>
-                  <option value="ja">Ja</option>
-                </select>
-              </div>
-              <div class="field" id="singleBvExistingCountWrap" style="display:none;">
-                <label>Hoeveel bestaande holdings worden aandeelhouder?</label>
-                <input id="singleBvExistingHoldingsCount" name="singleBvExistingHoldingsCount" type="number" min="1" max="4" step="1" value="1">
-              </div>
+              <input type="hidden" id="singleBvExistingHoldings" name="singleBvExistingHoldings" value="nee">
+              <input type="hidden" id="singleBvExistingHoldingsCount" name="singleBvExistingHoldingsCount" value="1">
 
               <div class="field" id="vofHoldingStrategyWrap" style="display:none;">
                 <label>Holding-structuur voor VOF-partijen</label>
@@ -1240,9 +1218,6 @@
       'Download PEP-template': 'Download PEP template',
       'Vanwege compliance- en regelgevingseisen is het uitsluitend toegestaan deze vragenlijst in het Nederlands of Engels in te vullen.': 'Due to compliance and regulatory requirements, this questionnaire may only be completed in Dutch or English.',
       'Aanvraagtype': 'Application type',
-      'Maak een keuze of deze oprichting spoed heeft of niet': 'Choose whether this incorporation is urgent or not',
-      'Standaard: na ontvangst van alle vereiste documenten wordt je aanvraag binnen 5 werkdagen verwerkt. Check de prijslijst op website startjouwbv.nl.': 'Standard: after receiving all required documents, your request will be processed within 5 working days. Check the price list at startjouwbv.nl.',
-      'Urgent (spoed): er worden extra kosten in rekening gebracht. Na ontvangst van alle vereiste documenten wordt je aanvraag binnen 48 uur verwerkt. Voor iedere BV start de basisprijs vanaf 1.449,- excl. BTW. Check de prijslijst op website startjouwbv.nl.': 'Urgent: additional costs apply. After receiving all required documents, your request will be processed within 48 hours. For each BV, the base price starts at EUR 1,449 excluding VAT. Check the price list at startjouwbv.nl.',
       'Wie zijn de aandeelhouder(s) van de nieuwe werkmaatschappij?': 'Who are the shareholders of the new operating company?',
       'Alleen nieuwe holding(s)': 'Only new holding(s)',
       'Alleen bestaande holding(s)': 'Only existing holding(s)',
@@ -1255,10 +1230,8 @@
       'Alleen nieuw op te richten holding': 'Only newly established holding',
       'Alleen bestaande holding': 'Only existing holding',
       'Bestaande holding + nieuwe holding': 'Existing holding + new holding',
-      'Bij 1 BV: zijn bestaande holding(s) aandeelhouder?': 'For 1 BV: are existing holding(s) shareholders?',
       'Nee': 'No',
       'Ja': 'Yes',
-      'Hoeveel bestaande holdings worden aandeelhouder?': 'How many existing holdings become shareholders?',
       'Natuurlijke personen kunnen ook aandeelhouder zijn van de holding en/of werkmaatschappij.': 'Natural persons can also be shareholders in the holding and/or operating company.',
       'Oprichting document (Holding)': 'Incorporation document (Holding)',
       'Oprichting document (Werkmij)': 'Incorporation document (Operating company)',
@@ -1372,9 +1345,6 @@
       'Download PEP-template': 'PEP sablonunu indir',
       'Vanwege compliance- en regelgevingseisen is het uitsluitend toegestaan deze vragenlijst in het Nederlands of Engels in te vullen.': 'Uyumluluk ve duzenleyici gereklilikler nedeniyle bu form yalnizca Hollandaca veya Ingilizce doldurulabilir.',
       'Aanvraagtype': 'Basvuru tipi',
-      'Maak een keuze of deze oprichting spoed heeft of niet': 'Bu kurulusun acil olup olmadigini secin',
-      'Standaard: na ontvangst van alle vereiste documenten wordt je aanvraag binnen 5 werkdagen verwerkt. Check de prijslijst op website startjouwbv.nl.': 'Standart: gerekli tum belgeler alindiktan sonra basvurunuz 5 is gunu icinde islenir. Fiyat listesi icin startjouwbv.nl adresine bakin.',
-      'Urgent (spoed): er worden extra kosten in rekening gebracht. Na ontvangst van alle vereiste documenten wordt je aanvraag binnen 48 uur verwerkt. Voor iedere BV start de basisprijs vanaf 1.449,- excl. BTW. Check de prijslijst op website startjouwbv.nl.': 'Acil: ek ucret uygulanir. Gerekli tum belgeler alindiktan sonra basvurunuz 48 saat icinde islenir. Her BV icin temel fiyat KDV haric 1.449 EUR\'dan baslar. Fiyat listesi icin startjouwbv.nl adresine bakin.',
       'Wie zijn de aandeelhouder(s) van de nieuwe werkmaatschappij?': 'Yeni isletme sirketinin hissedarlari kimlerdir?',
       'Alleen nieuwe holding(s)': 'Sadece yeni holding(ler)',
       'Alleen bestaande holding(s)': 'Sadece mevcut holding(ler)',
@@ -1468,14 +1438,6 @@
       'Wie worden aandeelhouder(s) van de nieuwe werkmaatschappij?': {
         nl: 'Kies hier de juridische structuur van het aandeelhouderschap. Deze keuze bepaalt welke vervolgvragen zichtbaar worden.',
         en: 'Choose the legal shareholder structure here. This determines which follow-up questions will appear.'
-      },
-      'Bij 1 BV: zijn bestaande holding(s) aandeelhouder?': {
-        nl: 'Kies Ja als bestaande holdings direct aandeelhouder worden van de nieuwe BV.',
-        en: 'Choose Yes if existing holdings will directly become shareholders of the new BV.'
-      },
-      'Hoeveel bestaande holdings worden aandeelhouder?': {
-        nl: 'Vul het aantal bestaande holdings in dat aandelen in de nieuwe BV krijgt.',
-        en: 'Enter the number of existing holdings that will receive shares in the new BV.'
       },
       'Adres van de holding is anders dan het woonadres van de aandeelhouder(s)': {
         nl: 'Vink dit alleen aan als het vestigingsadres echt afwijkt. Dan worden adresvelden en huurovereenkomst gevraagd.',
@@ -2350,10 +2312,6 @@
     }
 
     function shouldForceNaturalPersonShareholderType(baseKey) {
-      const useExistingHoldings = document.getElementById('singleBvExistingHoldings')?.value === 'ja';
-      if (isSingleBvWerkmijFlow() && baseKey === 'werkmijAandeelhouder') {
-        return !useExistingHoldings;
-      }
       if (isForcedNewOnlyWerkmijFlow() && baseKey === 'werkmijAandeelhouder') {
         return true;
       }
@@ -2374,6 +2332,16 @@
     function applyWerkmijShareholderPreset() {
       const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
       if (!withWerkmij) return;
+
+      if (isSingleBvWerkmijFlow()) {
+        const current = managers.werkmijShareholders.getData();
+        if (!current.length) {
+          managers.werkmijShareholders.setData([
+            { type: 'np', naam: '', percentage: '' }
+          ]);
+        }
+        return;
+      }
 
       const ownershipMode = normalizeOwnershipMode(document.getElementById('existingHoldingOwner').value);
       if (ownershipMode === 'existing-only') {
@@ -2418,6 +2386,7 @@
 
     function applySingleBvExistingHoldingPreset() {
       const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
+      if (isSingleBvWerkmijFlow()) return;
       if (withWerkmij && !isSingleBvWerkmijFlow()) return;
 
       const useExisting = document.getElementById('singleBvExistingHoldings').value === 'ja';
@@ -3945,7 +3914,7 @@
       const vofPlusHoldingFlow = isVofPlusHoldingFlow();
       const isHoldingOnlyFlow = dossierOprichtingType === 'holding';
       if (isSingleBvWerkmijFlow()) {
-        ownershipField.value = document.getElementById('singleBvExistingHoldings').value === 'ja' ? 'existing-only' : 'new-only';
+        ownershipField.value = 'new-only';
       }
       if (vofPlusHoldingFlow && !ownershipField.value) ownershipField.value = 'new-only';
       if (isForcedNewOnlyWerkmijFlow()) ownershipField.value = 'new-only';
@@ -3978,16 +3947,9 @@
       if (!withWerkmij) document.getElementById('werkmijCard').classList.add('collapsed');
       document.getElementById('requestTypeCard').style.display = isHoldingOnlyFlow ? 'none' : '';
       document.getElementById('existingHoldingQuestionWrap').style.display = (withWerkmij && !vofPlusHoldingFlow && !isWerkmijWithoutNewHoldingFlow() && !isFixedNewOnlyOwnershipFlow()) ? '' : 'none';
-      document.getElementById('singleBvExistingQuestionWrap').style.display = isSingleBvWerkmijFlow()
-        ? ''
-        : ((withWerkmij || forceNoExistingHolding) ? 'none' : '');
-
       if (forceNoExistingHolding) {
         document.getElementById('singleBvExistingHoldings').value = 'nee';
       }
-
-      const showSingleBvCount = (isSingleBvWerkmijFlow() || !withWerkmij) && document.getElementById('singleBvExistingHoldings').value === 'ja';
-      document.getElementById('singleBvExistingCountWrap').style.display = showSingleBvCount ? '' : 'none';
 
       document.getElementById('existingHoldingCard').style.display = (withWerkmij && hasExistingHolding) ? '' : 'none';
       if (!(withWerkmij && hasExistingHolding)) document.getElementById('existingHoldingCard').classList.add('collapsed');
