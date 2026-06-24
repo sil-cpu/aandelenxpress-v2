@@ -143,6 +143,10 @@ class Doc:
           - Real AcroForm textfield in the right column (light-blue bg, border on the field)
         No separate blue rectangle is drawn – the field IS the visual element.
         """
+        text_value = '' if value is None else str(value).strip()
+        if not text_value:
+            return False
+
         row_h = h or ROW_H
         self.ensure(row_h + 2)
         y = self.cur - row_h
@@ -164,7 +168,7 @@ class Doc:
             y           = fy,
             width       = FIELD_W - 4,
             height      = fh,
-            value       = str(value) if value else '',
+            value       = text_value,
             fillColor   = C_LT,
             borderColor = C_BDR,
             borderWidth = 0.5,
@@ -175,9 +179,13 @@ class Doc:
             relative    = False,
         )
         self.cur = y
+        return True
 
     # ── Checkbox row ────────────────────────────────────────────────────────
     def checkbox_row(self, field_name, label, checked=False):
+        if not checked:
+            return False
+
         row_h = ROW_H
         self.ensure(row_h + 2)
         y = self.cur - row_h
@@ -210,6 +218,7 @@ class Doc:
         # Fill remainder of right cell border
         self.draw_rect(FIELD_X, y, FIELD_W, row_h, fill=None, stroke=C_BDR)
         self.cur = y
+        return True
 
     def spacer(self, h=6):
         self.down(h)
@@ -260,147 +269,127 @@ def draw_cover(doc, data):
 
 # ── Section builder ──────────────────────────────────────────────────────────
 def build_sections(doc, data):
-    fd  = data.get('formData', data)   # allow flat or nested
+    fd = data.get('formData', data)
     req = data.get('request', {})
 
-    def g(key, fallback=''):
-        v = fd.get(key, fallback)
-        if v is None or v is False:
+    skip_keys = {
+        'token', 'reviewStatus', 'reviewFeedback', 'reviewedBy', 'reviewedAt',
+        'submittedAt', 'submitted_at', 'draftSavedAt', 'isDraft', 'caseId',
+        'datacardBestandData', 'pepBestandData', 'oprichtingsDocument'
+    }
+
+    def key_to_label(key):
+        text = str(key or '')
+        text = text.replace('_', ' ').replace('-', ' ')
+        text = ''.join((' ' + ch.lower()) if ch.isupper() else ch for ch in text).strip()
+        text = ' '.join(text.split())
+        if not text:
             return ''
-        if v is True:
-            return 'Ja'
-        return str(v).strip()
+        return text[0].upper() + text[1:]
 
-    def is_checked(key):
-        v = fd.get(key)
-        return v in (True, 'true', 'ja', 'Ja', 'yes', 'Yes', '1', 1)
+    def file_name_from_value(value):
+        if not isinstance(value, dict):
+            return ''
+        for key in ('naam', 'name', 'filename'):
+            if value.get(key):
+                return str(value.get(key)).strip()
+        return ''
 
-    product = (g('oprichtingType') or req.get('oprichtingType', 'bv')).lower()
-    is_holding   = 'holding' in product
-    is_omzetting = any(x in product for x in ('omzetten', 'omzetting', 'vof', 'emz'))
+    def value_to_text(value):
+        if value is None:
+            return ''
+        if isinstance(value, bool):
+            return 'Ja' if value else ''
+        if isinstance(value, (int, float)):
+            return str(value)
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, dict):
+            return file_name_from_value(value)
+        if isinstance(value, list):
+            parts = [value_to_text(item) for item in value]
+            parts = [part for part in parts if part]
+            return ', '.join(parts)
+        return str(value).strip()
 
-    # ── Stap 1 – Aanvraagtype ─────────────────────────────────────────────
-    doc.section_header('Aanvraagtype', 'Product: ' + (product or 'bv') + ' | Stap 1 | Veldcount: 8')
-    doc.table_header()
-    doc.row('stap1_bedrijfsnaam',      '1. Gewenste bedrijfsnaam',                       g('gewenstNaam') or req.get('gewenstNaam', ''))
-    doc.row('stap1_product_type',      '2. Product type',                                g('oprichtingType') or req.get('oprichtingType', ''))
-    doc.row('stap1_spoed',             '3. Spoedaanvraag',                               g('spoed'))
-    doc.row('stap1_sector',            '4. Sector',                                      g('sector'))
-    doc.row('stap1_doel',              '5. Doel van de BV',                              g('doel'))
-    doc.row('stap1_kapitaal',          '6. Startkapitaal',                               g('kapitaal'))
-    doc.row('stap1_bestaande_holding', '7. Bestaande holding als aandeelhouder',         g('singleBvExistingHoldings'))
-    doc.row('stap1_aandeelhouder',     '8. Wie worden aandeelhouder(s)?',                g('existingHoldingOwner'))
-    doc.spacer()
+    def collect_rows(value, prefix=''):
+        rows = []
+        if isinstance(value, dict):
+            for key, nested in value.items():
+                if key in skip_keys:
+                    continue
+                label = key_to_label(key)
+                if not label:
+                    continue
+                current = f'{prefix}{label}' if not prefix else f'{prefix} · {label}'
+                if isinstance(nested, dict):
+                    file_name = file_name_from_value(nested)
+                    if file_name:
+                        rows.append((current, file_name))
+                    else:
+                        rows.extend(collect_rows(nested, current))
+                    continue
+                if isinstance(nested, list):
+                    if not nested:
+                        continue
+                    for idx, item in enumerate(nested, start=1):
+                        indexed = f'{current} {idx}'
+                        if isinstance(item, dict):
+                            file_name = file_name_from_value(item)
+                            if file_name:
+                                rows.append((indexed, file_name))
+                            else:
+                                rows.extend(collect_rows(item, indexed))
+                        else:
+                            txt = value_to_text(item)
+                            if txt:
+                                rows.append((indexed, txt))
+                    continue
+                txt = value_to_text(nested)
+                if txt:
+                    rows.append((current, txt))
+            return rows
+        txt = value_to_text(value)
+        if txt:
+            rows.append((prefix or 'Waarde', txt))
+        return rows
 
-    # ── Stap 2 – Oprichting document (Holding) ────────────────────────────
-    if is_holding:
-        doc.section_header('Oprichting document (Holding)', f'Product: {product} | Stap 2 | Veldcount: 15')
+    product = (fd.get('oprichtingType') or req.get('oprichtingType') or 'bv')
+
+    intro_rows = []
+    for label, value in [
+        ('Product type', product),
+        ('Gewenste bedrijfsnaam', fd.get('gewenstNaam') or req.get('gewenstNaam', '')),
+        ('Partner', req.get('resellerCompany', '')),
+        ('Naam contactpersoon', req.get('clientName', '')),
+        ('E-mailadres', req.get('clientEmail', '')),
+    ]:
+        txt = value_to_text(value)
+        if txt:
+            intro_rows.append((label, txt))
+
+    dynamic_rows = collect_rows(fd)
+
+    sections = []
+    if intro_rows:
+        sections.append(('Dossieroverzicht', intro_rows))
+    if dynamic_rows:
+        sections.append(('Alle ingevulde velden', dynamic_rows))
+
+    if not sections:
+        return
+
+    for section_idx, (title, rows) in enumerate(sections, start=1):
+        doc.section_header(title, f'Product: {product} | Stap {section_idx} | Veldcount: {len(rows)}')
         doc.table_header()
-        doc.row('stap2_naam_bedrijf',         '1. Naam bedrijf',                        g('holdingNaamBedrijf'))
-        doc.row('stap2_telefoon',             '2. Telefoonnummer',                      g('holdingTelefoon'))
-        doc.row('stap2_mail',                 '3. Mailadres',                           g('holdingMailadres'))
-        doc.row('stap2_straat',               '4. Straat',                              g('holdingAdresStraat'))
-        doc.row('stap2_huisnummer',           '5. Huisnummer',                          g('holdingAdresHuisnummer'))
-        doc.row('stap2_postcode',             '6. Postcode',                            g('holdingAdresPostcode'))
-        doc.row('stap2_plaatsnaam',           '7. Plaatsnaam',                          g('holdingAdresPlaats'))
-        doc.row('stap2_accountant_naam',      '8. Naam accountantskantoor',             g('holdingAccountantNaam'))
-        doc.row('stap2_accountant_contact',   '9. Contactpersoon accountant',           g('holdingAccountantContact'))
-        doc.row('stap2_accountant_telefoon', '10. Telefoonnummer accountant',           g('holdingAccountantTelefoon'))
-        doc.row('stap2_accountant_mail',     '11. Mailadres accountant',                g('holdingAccountantMail'))
-        doc.checkbox_row('stap2_bestuurders_zelfde',
-                         '12. Zijn de bestuurders dezelfde als de aandeelhouders?',
-                         is_checked('holdingDirectorsSameAsShareholders'))
-        doc.row('stap2_personeel_meer15',    '13. Meer dan 15 uur per week',            g('holdingPersoneelMeer15'))
-        doc.row('stap2_personeel_minder15',  '14. Minder dan 15 uur per week',         g('holdingPersoneelMinder15'))
-        doc.row('stap2_overige',             '15. Overige',                             g('holdingOverige'))
+        row_nr = 1
+        for label, value in rows:
+            multiline = len(str(value)) > 140 or '\n' in str(value)
+            row_h = 44 if multiline else ROW_H
+            rendered = doc.row(f'sec{section_idx}_row{row_nr}', f'{row_nr}. {label}', value, multiline=multiline, h=row_h)
+            if rendered:
+                row_nr += 1
         doc.spacer()
-
-    # ── Stap 3 – Oprichting document (Werkmaatschappij) ───────────────────
-    doc.section_header('Oprichting document (Werkmaatschappij)', f'Product: {product} | Stap 3 | Veldcount: 9')
-    doc.table_header()
-    doc.row('stap3_naam_bedrijf',       '1. Naam bedrijf',                              g('werkmijNaamBedrijf'))
-    doc.row('stap3_telefoon',           '2. Telefoonnummer',                            g('werkmijTelefoon'))
-    doc.row('stap3_mail',               '3. Mailadres',                                 g('werkmijMailadres'))
-    doc.row('stap3_accountant_naam',    '4. Naam accountantskantoor',                   g('werkmijAccountantNaam'))
-    doc.row('stap3_accountant_contact', '5. Contactpersoon accountant',                 g('werkmijAccountantContact'))
-    doc.row('stap3_accountant_tel',     '6. Telefoonnummer accountant',                 g('werkmijAccountantTelefoon'))
-    doc.row('stap3_accountant_mail',    '7. Mailadres accountant',                      g('werkmijAccountantMail'))
-    doc.checkbox_row('stap3_bestuurders_zelfde',
-                     '8. Zijn de bestuurders dezelfde als de aandeelhouders?',
-                     is_checked('werkmijDirectorsSameAsShareholders'))
-    doc.row('stap3_overige',            '9. Overige',                                   g('werkmijOverige'))
-    doc.spacer()
-
-    # ── Stap 4 – Natuurlijke personen ─────────────────────────────────────
-    persons = fd.get('naturalPersons', [])
-    if not isinstance(persons, list):
-        persons = []
-    # Always show at least 1 person block
-    persons = persons if persons else [{}]
-
-    NP_KEYS = [
-        ('voornamen',            'Voornamen'),
-        ('achternaam',           'Achternaam'),
-        ('geboortedatum',        'Geboortedatum'),
-        ('geboorteland',         'Geboorteland'),
-        ('heeftBsn',             'Heeft BSN-nummer?'),
-        ('bsn',                  'Nederlands BSN'),
-        ('nlAdresGeregistreerd', 'Geregistreerd NL-adres'),
-        ('nationaliteit',        'Nationaliteit'),
-        ('burgerlijkeStaat',     'Burgerlijke staat'),
-        ('iban',                 'Persoonlijk IBAN'),
-        ('telefoon',             'Persoonlijk telefoonnummer'),
-        ('email',                'Persoonlijk e-mailadres'),
-        ('taalniveau',           'Nederlands taalniveau'),
-        ('buitenlandsAdres',     'Volledig buitenlands woonadres'),
-    ]
-    veld_count_np = len(NP_KEYS) * max(len(persons), 1)
-    doc.section_header('Natuurlijke personen', f'Product: {product} | Stap 4 | Veldcount: {veld_count_np}')
-    for pi, p in enumerate(persons):
-        if not isinstance(p, dict):
-            p = {}
-        doc.table_header()
-        if len(persons) > 1:
-            doc.ensure(ROW_H)
-            doc.draw_text(f'Persoon {pi + 1}', ML + 8, doc.cur - ROW_H + 8,
-                          font='Helvetica-Bold', size=9.5, color=C_DARK)
-            doc.down(ROW_H)
-        for ki, (key, lbl) in enumerate(NP_KEYS):
-            v = p.get(key, '')
-            if v is True: v = 'Ja'
-            if v is False: v = 'Nee'
-            doc.row(f'stap4_p{pi+1}_{key}', f'{ki+1}. {lbl}', str(v) if v else '')
-    doc.spacer()
-
-    # ── Stap 5 – Omzettingsdocumenten ────────────────────────────────────
-    if is_omzetting:
-        doc.section_header('Omzettingsdocumenten', f'Product: {product} | Stap 5 | Veldcount: 6')
-        doc.table_header()
-        doc.row('stap5_bron_type',     '1. Type brononderneming',                       g('omzettingBronType'))
-        doc.row('stap5_bron_naam',     '2. Naam EMZ/VOF',                               g('omzettingBronNaam'))
-        doc.row('stap5_bron_kvk',      '3. KVK-nummer EMZ/VOF',                        g('omzettingBronKvk'))
-        doc.row('stap5_bron_zetel',    '4. Statutaire zetel EMZ/VOF',                  g('omzettingBronZetel'))
-        doc.row('stap5_bron_eigenaren','5. Eigenaar(s) + aandelenverdeling',            g('omzettingBronEigenaren'), multiline=True, h=40)
-        doc.row('stap5_bron_doel',     '6. Doel van de EMZ/VOF',                       g('omzettingBronDoel'))
-        doc.spacer()
-
-    # ── Stap 6 – Uploads ─────────────────────────────────────────────────
-    doc.section_header('Uploads', f'Product: {product} | Stap 6 | Veldcount: 5')
-    doc.table_header()
-    doc.row('stap6_datacard',          '1. Datacard / PDC bestand(en)',                 '')
-    doc.row('stap6_pep',               '2. PEP verklaring(en)',                         '')
-    doc.row('stap6_personeelsplan',    '3. Personeelsplan / bedrijfsplan(nen)',          '')
-    doc.row('stap6_huur_holding',      '4. Huurovereenkomst holding',                   '')
-    doc.row('stap6_huur_werkmij',      '5. Huurovereenkomst werkmaatschappij',          '')
-    doc.spacer()
-
-    # ── Stap 7 – Indienen ─────────────────────────────────────────────────
-    doc.section_header('Indienen', f'Product: {product} | Stap 7 | Veldcount: 1')
-    doc.table_header()
-    doc.checkbox_row('stap7_legal_consent',
-                     '1. Akkoord met algemene voorwaarden',
-                     is_checked('legalConsent'))
-    doc.spacer()
 
 
 # ── Footer ────────────────────────────────────────────────────────────────────
