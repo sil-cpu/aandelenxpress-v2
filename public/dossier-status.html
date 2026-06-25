@@ -608,7 +608,8 @@
             background: #FAFBFF;
             padding: 16px;
             border-radius: 8px;
-            text-align: gap:12px 24px;
+            display: grid;
+            gap: 12px 24px;
             margin-bottom: 20px;
             font-size: 0.9rem;
             line-height: 1.6;
@@ -756,38 +757,38 @@
 const clientSteps = [
     { key: 'pending',    label: 'Aanvraag',           internalKeys: ['pending'] },
     { key: 'vragenlijst', label: 'Vragenlijst',       internalKeys: ['vragenlijst', 'approved'] },
-    { key: 'wwft',       label: 'WWFT Check',         internalKeys: ['wwft'] },
+    { key: 'wwft',       label: 'WWFT-controle',      internalKeys: ['wwft'] },
     { key: 'betaling',   label: 'Betaling',           internalKeys: ['betaling', 'invoice-sent', 'invoice-paid'] },
     { key: 'ocr',        label: 'Documentverwerking', internalKeys: ['ocr', 'ocr-signed'] },
     { key: 'concept',    label: 'Concept',            internalKeys: ['draft-accountant', 'accountant-accepted', 'draft-client', 'client-signed'] },
     { key: 'notaris',    label: 'Notariële akte',     internalKeys: ['invitation-om', 'executed-notaris'] },
     { key: 'kvk',        label: 'KvK inschrijving',   internalKeys: ['kvk', 'passed-kvk'] },
-    { key: 'binders',    label: 'Closing Binders',    internalKeys: ['making-binders', 'upload-binders'] },
+    { key: 'binders',    label: 'Closing binder',     internalKeys: ['making-binders', 'upload-binders'] },
     { key: 'complete',   label: 'Afgerond',           internalKeys: ['complete', 'complete-review'] },
 ];
 
 const statusDescriptions = {
-    pending:               'Uw aanvraag is ontvangen en geregistreerd. Wij nemen uw dossier spoedig in behandeling.',
-    vragenlijst:           'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
-    approved:              'U heeft een vragenlijst ontvangen per e-mail. Vul deze volledig in zodat wij uw B.V. kunnen oprichten.',
-    wwft:                  'Wij voeren een WWFT-check uit op uw dossier. Wij nemen contact op indien aanvullende informatie nodig is.',
+    pending:               'Uw aanvraag is ontvangen en geregistreerd. Wij starten met de voorlopige beoordeling.',
+    vragenlijst:           'De vragenlijst is verzonden. Vul deze volledig in zodat wij uw dossier kunnen opstarten.',
+    approved:              'Wij hebben uw vragenlijst ontvangen en beoordelen uw aangeleverde gegevens.',
+    wwft:                  'Wij voeren de WWFT-controle uit op uw dossier. Indien nodig vragen wij aanvullende informatie op.',
     betaling:              'De volgende stap is de betaling. U ontvangt een betalingsverzoek per e-mail.',
     'invoice-sent':        'U heeft een factuur ontvangen per e-mail. Voldoe de betaling via de betaallink.',
     'invoice-paid':        'Uw betaling is ontvangen en bevestigd. Wij gaan verder met uw dossier.',
-    ocr:                   'Wij verwerken uw documenten via OCR. Dit duurt doorgaans 1-2 werkdagen.',
-    'ocr-signed':          'De OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap.',
-    'draft-accountant':    'Wij wachten op aanvullende informatie of documenten.',
-    'accountant-accepted': 'Wij wachten op aanvullende informatie of documenten.',
-    'draft-client':        'Het concept ligt klaar voor uw beoordeling en ondertekening.',
-    'client-signed':       'Bedankt voor het ondertekenen. Wij verwerken uw document en gaan verder.',
-    'invitation-om':       'De uitnodiging voor het Openbaar Ministerie is verstuurd.',
-    'executed-notaris':    'De notariële akte is gepasseerd. Wij starten nu de KvK-inschrijving.',
+    ocr:                   'Uw documenten worden verwerkt via OCR.',
+    'ocr-signed':          'De OCR-documenten zijn ondertekend en verwerkt.',
+    'draft-accountant':    'Het concept is verzonden naar de accountant voor beoordeling.',
+    'accountant-accepted': 'De accountant heeft het concept goedgekeurd.',
+    'draft-client':        'Het concept is verzonden naar de client ter beoordeling en ondertekening.',
+    'client-signed':       'De client heeft ondertekend. Het notaristraject wordt nu ingepland.',
+    'invitation-om':       'U bent uitgenodigd voor het notarisgesprek.',
+    'executed-notaris':    'De akte is gepasseerd bij de notaris. Uw BV is juridisch opgericht.',
     kvk:                   'Uw bedrijf wordt ingeschreven bij de Kamer van Koophandel. U ontvangt uw KvK-uittreksel per e-mail.',
-    'passed-kvk':          'Uw bedrijf is succesvol ingeschreven bij de Kamer van Koophandel.',
-    'making-binders':      'Wij stellen de Closing Binders op voor uw dossier.',
-    'upload-binders':      'De Closing Binders zijn gereed en beschikbaar in uw dossier.',
-    complete:              'Uw dossier is volledig afgerond. Gefeliciteerd! Alle documenten zijn beschikbaar in uw dossier.',
-    'complete-review':     'Uw dossier wordt momenteel in eindcontrole genomen. Wij nemen spoedig contact met u op.'
+    'passed-kvk':          'De inschrijving is verwerkt door de Kamer van Koophandel.',
+    'making-binders':      'Wij stellen de closing binders op voor uw dossier.',
+    'upload-binders':      'De closing binder is geupload en beschikbaar in uw dossier.',
+    complete:              'Uw dossier is volledig afgerond. Gefeliciteerd! Alle documenten zijn beschikbaar.',
+    'complete-review':     'Uw dossier staat in review. Wij koppelen snel de uitkomst terug.'
 };
 
 const todoItems = {

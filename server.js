@@ -1073,27 +1073,27 @@ app.get('/api/dossier-status/:id', async (req, res) => {
         'advies':'Advies'
     };
     const statusMap = {
-        'pending':             { key:'pending',             text:'Aanvraag ingediend' },
-        'approved':            { key:'vragenlijst',         text:'Vragenlijst' },
-        'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst' },
-        'wwft':                { key:'wwft',                text:'WWFT Check' },
+        'pending':             { key:'pending',             text:'Aanvraag ontvangen' },
+        'approved':            { key:'approved',            text:'Vragenlijst ontvangen' },
+        'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst verzonden' },
+        'wwft':                { key:'wwft',                text:'WWFT-controle' },
         'betaling':            { key:'betaling',            text:'Betaling' },
         'invoice-sent':        { key:'invoice-sent',        text:'Factuur verzonden' },
         'invoice-paid':        { key:'invoice-paid',        text:'Factuur betaald' },
-        'ocr':                 { key:'ocr',                 text:'OCR' },
-        'ocr-signed':          { key:'ocr-signed',          text:'OCR Signed' },
-        'draft-accountant':    { key:'draft-accountant',    text:'Waiting for extra information/files' },
-        'accountant-accepted': { key:'accountant-accepted', text:'Waiting for extra information/files' },
-        'draft-client':        { key:'draft-client',        text:'Draft to Client' },
-        'client-signed':       { key:'client-signed',       text:'Client Signed' },
-        'invitation-om':       { key:'invitation-om',       text:'Invitation OM' },
-        'executed-notaris':    { key:'executed-notaris',    text:'Executed Notaris' },
-        'kvk':                 { key:'kvk',                 text:'KvK inschrijving' },
-        'passed-kvk':          { key:'passed-kvk',          text:'Passed by KvK' },
-        'making-binders':      { key:'making-binders',      text:'Making Closing Binders' },
-        'upload-binders':      { key:'upload-binders',      text:'Upload Closing Binders' },
-        'complete':            { key:'complete',            text:'Case completed' },
-        'complete-review':     { key:'complete-review',     text:'Case completed review' },
+        'ocr':                 { key:'ocr',                 text:'OCR-verwerking' },
+        'ocr-signed':          { key:'ocr-signed',          text:'OCR ondertekend' },
+        'draft-accountant':    { key:'draft-accountant',    text:'Concept naar accountant' },
+        'accountant-accepted': { key:'accountant-accepted', text:'Goedgekeurd door accountant' },
+        'draft-client':        { key:'draft-client',        text:'Concept naar client' },
+        'client-signed':       { key:'client-signed',       text:'Ondertekend door client' },
+        'invitation-om':       { key:'invitation-om',       text:'Uitnodiging notarisgesprek' },
+        'executed-notaris':    { key:'executed-notaris',    text:'Passeren van de akten' },
+        'kvk':                 { key:'kvk',                 text:'KvK-inschrijving' },
+        'passed-kvk':          { key:'passed-kvk',          text:'Inschrijving verwerkt door KvK' },
+        'making-binders':      { key:'making-binders',      text:'Closing binders opstellen' },
+        'upload-binders':      { key:'upload-binders',      text:'Closing binder geupload' },
+        'complete':            { key:'complete',            text:'Dossier afgerond' },
+        'complete-review':     { key:'complete-review',     text:'Reviewverzoek' },
         'rejected':            { key:'rejected',            text:'Afgewezen' },
     };
     const s = statusMap[row.status] || { key: 'pending', text: 'In behandeling' };
@@ -1266,7 +1266,7 @@ app.patch('/api/reseller-requests/:id/status', requireAdmin, async (req, res) =>
     if (!row) return res.status(404).json({ error: 'Niet gevonden' });
 
     const request = rowToReq(row);
-    const statusLabels = { pending:'Aanvraag ingediend', vragenlijst:'Vragenlijst', approved:'Vragenlijst', wwft:'WWFT Check', betaling:'Betaling', 'invoice-sent':'Factuur verzonden', 'invoice-paid':'Factuur betaald', ocr:'OCR', 'ocr-signed':'OCR Signed', 'draft-accountant':'Waiting for extra information/files', 'accountant-accepted':'Waiting for extra information/files', 'draft-client':'Draft to Client', 'client-signed':'Client Signed', 'invitation-om':'Invitation OM', 'executed-notaris':'Executed Notaris', kvk:'KvK inschrijving', 'passed-kvk':'Passed by KvK', 'making-binders':'Making Closing Binders', 'upload-binders':'Upload Closing Binders', complete:'Case completed', 'complete-review':'Case completed review', rejected:'Afgewezen' };
+    const statusLabels = { pending:'Aanvraag ontvangen', vragenlijst:'Vragenlijst verzonden', approved:'Vragenlijst ontvangen', wwft:'WWFT-controle', betaling:'Betaling', 'invoice-sent':'Factuur verzonden', 'invoice-paid':'Factuur betaald', ocr:'OCR-verwerking', 'ocr-signed':'OCR ondertekend', 'draft-accountant':'Concept naar accountant', 'accountant-accepted':'Goedgekeurd door accountant', 'draft-client':'Concept naar client', 'client-signed':'Ondertekend door client', 'invitation-om':'Uitnodiging notarisgesprek', 'executed-notaris':'Passeren van de akten', kvk:'KvK-inschrijving', 'passed-kvk':'Inschrijving verwerkt door KvK', 'making-binders':'Closing binders opstellen', 'upload-binders':'Closing binder geupload', complete:'Dossier afgerond', 'complete-review':'Reviewverzoek', rejected:'Afgewezen' };
     const adminName = req.session.user.name || req.session.user.email;
     addActivity(request, 'system', `Status gewijzigd van "${statusLabels[request.status]||request.status}" naar "${statusLabels[status]||status}" door ${adminName}`, null);
 

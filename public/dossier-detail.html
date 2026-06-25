@@ -665,13 +665,12 @@ async function downloadFile(url, fallbackName) {
 
 function downloadDossierSnapshot() {
   if (!currentDossier) return;
-  const nr = currentDossier.dossierNr;
-  const btn = document.getElementById('exportZipBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Bezig…'; }
-  window.location.href = `/api/reseller-requests/${encodeURIComponent(nr)}/export-zip`;
-  setTimeout(() => {
-    if (btn) { btn.disabled = false; btn.textContent = 'Alles downloaden (.zip)'; }
-  }, 3000);
+  const payload = {
+    dossier: currentDossier,
+    vragenlijst: currentVragenlijstData || null,
+    exportedAt: new Date().toISOString()
+  };
+  downloadBlob(`${currentDossier.dossierNr || 'dossier'}-overzicht.json`, JSON.stringify(payload, null, 2), 'application/json');
 }
 
 function downloadPricingSnapshot() {
@@ -682,62 +681,6 @@ function downloadPricingSnapshot() {
     exportedAt: new Date().toISOString()
   };
   downloadBlob(`${currentDossier.dossierNr || 'dossier'}-prijsopbouw.json`, JSON.stringify(payload, null, 2), 'application/json');
-}
-
-// Load and render admin-uploaded files into #adminUploadedFiles
-async function loadAdminUploadedFiles() {
-  if (!currentDossier) return;
-  const nr = currentDossier.dossierNr;
-  const container = document.getElementById('adminUploadedFiles');
-  if (!container) return;
-  try {
-    const r = await fetch(`/api/dossier-files/${encodeURIComponent(nr)}`);
-    if (!r.ok) return;
-    const files = await r.json();
-    if (!files.length) {
-      container.innerHTML = '<div style="color:#8A9BB5;font-size:0.82rem;padding:8px 0;">Nog geen documenten geüpload.</div>';
-      return;
-    }
-    container.innerHTML = files.map(f => `
-      <div class="doc-item">
-        <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-        <span class="doc-name">${escHtml(f.name)}</span>
-        <span class="doc-meta">Geüpload</span>
-        <span class="doc-filename">${f.size ? Math.round(f.size/1024) + ' KB' : ''}</span>
-        ${f.url ? `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${f.url.replace(/'/g,'')}','${f.name.replace(/'/g,'')}')">Download</button>` : ''}
-      </div>`).join('');
-  } catch(e) { console.error('loadAdminUploadedFiles:', e); }
-}
-
-async function adminUploadFiles(input) {
-  if (!input.files.length || !currentDossier) return;
-  const btn = document.getElementById('adminUploadBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Uploaden…'; }
-  const fileArr = [];
-  for (const f of input.files) {
-    const base64 = await new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result.split(',')[1]);
-      reader.onerror = rej;
-      reader.readAsDataURL(f);
-    });
-    fileArr.push({ name: f.name, type: f.type, base64 });
-  }
-  try {
-    const r = await fetch(`/api/dossier-files/${encodeURIComponent(currentDossier.dossierNr)}/admin-upload`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: fileArr })
-    });
-    const data = await r.json();
-    if (r.ok) {
-      input.value = '';
-      await loadAdminUploadedFiles();
-    } else {
-      alert('Upload mislukt: ' + (data.error || 'Onbekende fout'));
-    }
-  } catch(e) { alert('Upload mislukt: ' + e.message); }
-  if (btn) { btn.disabled = false; btn.textContent = 'Uploaden'; }
 }
 
 function renderDocumentsCard(d) {
@@ -770,46 +713,38 @@ function renderDocumentsCard(d) {
     })
     .filter(Boolean);
 
-  const adminRole = window._currentRole === 'admin';
+  const dossierItems = [{
+    label: 'Dossieroverzicht',
+    meta: 'Actuele dossierdata',
+    status: 'Beschikbaar',
+    onClick: 'downloadDossierSnapshot()'
+  }];
+  if (d.pricing) {
+    dossierItems.push({
+      label: 'Prijsopbouw',
+      meta: 'Huidige prijsstructuur',
+      status: 'Beschikbaar',
+      onClick: 'downloadPricingSnapshot()'
+    });
+  }
 
+  const items = [...vraagItems, ...dossierItems];
   return `<div class="detail-card">
-    <div class="detail-card-head" style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="detail-card-title">Documenten</div>
-      ${adminRole ? `<button id="exportZipBtn" class="btn-ghost" style="font-size:0.8rem;display:flex;align-items:center;gap:6px;" onclick="downloadDossierSnapshot()">
-        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Alles downloaden (.zip)
-      </button>` : ''}
-    </div>
+    <div class="detail-card-head"><div class="detail-card-title">Documenten</div></div>
     <div class="detail-card-body">
-      ${vraagItems.length ? `
-      <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Ingediende documenten</div>
-      <div class="doc-list" style="margin-bottom:20px;">
-        ${vraagItems.map(item => `
+      <div class="doc-list">
+        ${items.map(item => `
           <div class="doc-item">
             <div class="doc-icon"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
             <span class="doc-name">${escHtml(item.label)}</span>
             <span class="doc-meta">${escHtml(item.status || '')}</span>
             <span class="doc-filename" title="${escHtml(item.meta || '')}">${escHtml(item.meta || '')}</span>
-            <button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${item.downloadUrl.replace(/'/g,'')}','${(item.meta||'bestand').replace(/'/g,'')}')">Download</button>
-          </div>`).join('')}
-      </div>` : ''}
-
-      <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Oprichtingsdocumenten &amp; overige bestanden</div>
-      <div id="adminUploadedFiles" class="doc-list" style="margin-bottom:16px;">
-        <div style="color:#8A9BB5;font-size:0.82rem;padding:8px 0;">Laden…</div>
+            ${item.downloadUrl
+              ? `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="downloadFile('${item.downloadUrl.replace(/'/g,'')}','${(item.meta||'bestand').replace(/'/g,'')}')">Download</button>`
+              : `<button class="btn-ghost" style="margin-left:auto;font-size:0.8rem;" onclick="${item.onClick}">Download</button>`}
+          </div>
+        `).join('')}
       </div>
-      ${adminRole ? `
-      <div style="border-top:1px solid #E8EDF5;padding-top:14px;">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;border:1px dashed #CBD5E0;border-radius:8px;background:#FAFBFF;transition:all .15s;"
-          onmouseover="this.style.borderColor='#1A3B70';this.style.background='#EEF4FF'"
-          onmouseout="this.style.borderColor='#CBD5E0';this.style.background='#FAFBFF'">
-          <svg width="16" height="16" fill="none" stroke="#1A3B70" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span style="font-size:0.85rem;color:#1A3B70;font-weight:500;">Document uploaden</span>
-          <span style="font-size:0.75rem;color:#8A9BB5;margin-left:auto;">PDF, Word, afbeeldingen…</span>
-          <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp" style="display:none;" onchange="adminUploadFiles(this)">
-        </label>
-        <button id="adminUploadBtn" style="display:none;">Uploaden</button>
-      </div>` : ''}
     </div>
   </div>`;
 }
@@ -921,20 +856,20 @@ function buildTimelineHorizontal(statusKey, role, hasVragenlijst) {
   const stages = [
     { key:'pending',             label:'Ingediend' },
     { key:'vragenlijst',         label:'Vragenlijst' },
-    { key:'wwft',                label:'WWFT Check' },
+    { key:'wwft',                label:'WWFT-controle' },
     { key:'betaling',            label:'Betaling' },
-    { key:'ocr',                 label:'OCR' },
-    { key:'ocr-signed',          label:'OCR Signed' },
-    { key:'draft-accountant',    label:'Waiting for extra information/files' },
-    { key:'accountant-accepted', label:'Waiting for extra information/files' },
-    { key:'draft-client',        label:'Draft Client' },
-    { key:'client-signed',       label:'Client Signed' },
-    { key:'invitation-om',       label:'Invitation OM' },
-    { key:'executed-notaris',    label:'Exec. Notaris' },
+    { key:'ocr',                 label:'OCR-verwerking' },
+    { key:'ocr-signed',          label:'OCR ondertekend' },
+    { key:'draft-accountant',    label:'Concept accountant' },
+    { key:'accountant-accepted', label:'Accountant akkoord' },
+    { key:'draft-client',        label:'Concept client' },
+    { key:'client-signed',       label:'Client ondertekend' },
+    { key:'invitation-om',       label:'Notarisuitnodiging' },
+    { key:'executed-notaris',    label:'Akte gepasseerd' },
     { key:'kvk',                 label:'KvK' },
-    { key:'passed-kvk',          label:'KvK akkoord' },
-    { key:'making-binders',      label:'Closing Binders' },
-    { key:'upload-binders',      label:'Upload Binders' },
+    { key:'passed-kvk',          label:'KvK verwerkt' },
+    { key:'making-binders',      label:'Binders opstellen' },
+    { key:'upload-binders',      label:'Binder geupload' },
     { key:'complete',            label:'Voltooid' },
     { key:'complete-review',     label:'Review' },
   ];
@@ -1373,23 +1308,27 @@ function getStatusEmailTemplate(status, d) {
   const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${d.dossierNr}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}${d.accessToken ? '&token=' + encodeURIComponent(d.accessToken) : ''}`;
   const code = d.accessToken || '—';
   const t = {
-    vragenlijst:         { subject: `Uw BV-aanvraag — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
-    wwft:                { subject: `WWFT Check — ${naam}`, body: `Beste klant,\n\nWij voeren een WWFT-check uit voor de oprichting van ${naam}. Wij nemen contact met u op indien aanvullende informatie nodig is.\n\nStatuspagina: ${statusUrl}` },
-    betaling:            { subject: `Betalingsverzoek — BV-oprichting ${naam}`, body: `Beste klant,\n\nDe volgende stap is de betaling voor de oprichting van ${naam}. U ontvangt binnenkort een factuur.\n\nStatuspagina: ${statusUrl}` },
-    ocr:                 { subject: `OCR verwerking gestart — ${naam}`, body: `Beste klant,\n\nWij starten de OCR-verwerking van uw documenten voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'ocr-signed':        { subject: `OCR getekend — ${naam}`, body: `Beste klant,\n\nDe OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'draft-accountant':  { subject: `Concept klaar ter beoordeling — ${naam}`, body: `Beste accountant,\n\nEr staat een concept klaar voor uw beoordeling voor het dossier ${naam}. Wij verzoeken u dit te beoordelen.\n\nStatuspagina: ${statusUrl}` },
-    'accountant-accepted': { subject: `Concept goedgekeurd — ${naam}`, body: `Beste klant,\n\nDe accountant heeft het concept goedgekeurd voor ${naam}. Wij gaan verder met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
-    'draft-client':      { subject: `Concept ter ondertekening — ${naam}`, body: `Beste klant,\n\nHet concept voor de oprichting van ${naam} ligt klaar ter beoordeling en ondertekening.\n\nStatuspagina: ${statusUrl}` },
-    'client-signed':     { subject: `Document ondertekend — ${naam}`, body: `Beste klant,\n\nBedankt voor de ondertekening. Wij verwerken uw document voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'invitation-om':     { subject: `Uitnodiging Openbaar Ministerie — ${naam}`, body: `Beste klant,\n\nWij hebben de uitnodiging voor het Openbaar Ministerie verstuurd voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'executed-notaris':  { subject: `Notariële akte gepasseerd — ${naam}`, body: `Beste klant,\n\nDe notariële akte voor ${naam} is gepasseerd. Wij gaan nu door met de KvK-inschrijving.\n\nStatuspagina: ${statusUrl}` },
-    kvk:                 { subject: `KvK inschrijving gestart — ${naam}`, body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
-    'passed-kvk':        { subject: `KvK inschrijving verwerkt — ${naam}`, body: `Beste klant,\n\nUw BV ${naam} is succesvol ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
-    'making-binders':    { subject: `Closing Binders worden opgesteld — ${naam}`, body: `Beste klant,\n\nWij stellen de Closing Binders op voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'upload-binders':    { subject: `Closing Binders beschikbaar — ${naam}`, body: `Beste klant,\n\nDe Closing Binders voor ${naam} zijn beschikbaar en geüpload naar uw dossier.\n\nStatuspagina: ${statusUrl}` },
-    complete:            { subject: `Dossier afgerond — ${naam}`, body: `Gefeliciteerd!\n\nHet dossier voor ${naam} is volledig afgerond.\n\nStatuspagina: ${statusUrl}` },
-    'complete-review':   { subject: `Dossier in eindcontrole — ${naam}`, body: `Beste klant,\n\nHet dossier voor ${naam} wordt momenteel in eindcontrole genomen.\n\nStatuspagina: ${statusUrl}` },
+    pending:             { subject: `Aanvraag ontvangen — ${naam}`, body: `Beste aanvrager,\n\nWij hebben uw aanvraag in goede orde ontvangen en zullen deze voorlopig beoordelen conform de wettelijke voorschriften. Dit duurt doorgaans 1-2 werkdagen.\n\nStatuspagina: ${statusUrl}` },
+    vragenlijst:         { subject: `Vragenlijst verzonden — ${naam}`, body: `Beste ondernemer,\n\nWilt u de vragenlijst invullen zodat wij uw dossier kunnen opstarten?\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
+    approved:            { subject: `Vragenlijst ontvangen — ${naam}`, body: `Beste ondernemer,\n\nHartelijk dank voor het invullen van de vragenlijst. Wij hebben alles in goede orde ontvangen en starten met de beoordeling.\n\nStatuspagina: ${statusUrl}` },
+    wwft:                { subject: `WWFT-controle — ${naam}`, body: `Beste ondernemer,\n\nWij voeren de WWFT-controle uit op uw dossier. Indien aanvullende informatie nodig is, nemen wij per e-mail contact met u op.\n\nStatuspagina: ${statusUrl}` },
+    betaling:            { subject: `Betaling in behandeling — ${naam}`, body: `Beste ondernemer,\n\nUw dossier staat op de betalingsstap. Zodra de betaling is verwerkt, zetten wij direct de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'invoice-sent':      { subject: `Factuur verzonden — ${naam}`, body: `Beste ondernemer,\n\nWij hebben u via Mollie een factuur gestuurd. Controleer uw e-mail en voldoe de factuur om door te gaan.\n\nStatuspagina: ${statusUrl}` },
+    'invoice-paid':      { subject: `Factuur betaald — ${naam}`, body: `Beste ondernemer,\n\nUw betaling is ontvangen. Wij gaan verder met de online identificatie en vervolgstappen.\n\nStatuspagina: ${statusUrl}` },
+    ocr:                 { subject: `OCR-verwerking — ${naam}`, body: `Beste ondernemer,\n\nUw dossier staat in OCR-verwerking. Wij verwerken de documenten en bereiden de volgende stap voor.\n\nStatuspagina: ${statusUrl}` },
+    'ocr-signed':        { subject: `OCR ondertekend — ${naam}`, body: `Beste ondernemer,\n\nDe OCR-documenten zijn ondertekend en verwerkt. Wij vervolgen het dossier.\n\nStatuspagina: ${statusUrl}` },
+    'draft-accountant':  { subject: `Concept naar accountant — ${naam}`, body: `Beste ondernemer,\n\nHet concept is gedeeld met de accountant voor beoordeling.\n\nStatuspagina: ${statusUrl}` },
+    'accountant-accepted': { subject: `Goedgekeurd door accountant — ${naam}`, body: `Beste ondernemer,\n\nDe accountant heeft het concept goedgekeurd. Wij gaan door met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'draft-client':      { subject: `Concept naar client — ${naam}`, body: `Beste ondernemer,\n\nU heeft een concept ontvangen ter inzage en ondertekening.\n\nStatuspagina: ${statusUrl}` },
+    'client-signed':     { subject: `Ondertekend door client — ${naam}`, body: `Beste ondernemer,\n\nBedankt, uw documenten zijn ondertekend. Wij plannen het notaristraject in.\n\nStatuspagina: ${statusUrl}` },
+    'invitation-om':     { subject: `Uitnodiging notarisgesprek — ${naam}`, body: `Beste ondernemer,\n\nU bent uitgenodigd voor het notarisgesprek. Na bevestiging ontvangt u de vergaderlink.\n\nStatuspagina: ${statusUrl}` },
+    'executed-notaris':  { subject: `Passeren van de akten — ${naam}`, body: `Beste ondernemer,\n\nDe akte is gepasseerd. Juridisch is uw BV nu officieel opgericht. Wij verzorgen nu de KvK-inschrijving.\n\nStatuspagina: ${statusUrl}` },
+    kvk:                 { subject: `KvK-inschrijving — ${naam}`, body: `Beste ondernemer,\n\nWij hebben uw vennootschap ingediend bij de Kamer van Koophandel voor registratie.\n\nStatuspagina: ${statusUrl}` },
+    'passed-kvk':        { subject: `Inschrijving verwerkt door KvK — ${naam}`, body: `Beste ondernemer,\n\nDe KvK-inschrijving is verwerkt. Wij ronden de laatste dossierstappen af.\n\nStatuspagina: ${statusUrl}` },
+    'making-binders':    { subject: `Closing binders opstellen — ${naam}`, body: `Beste ondernemer,\n\nWij stellen momenteel de closing binders op voor uw dossier.\n\nStatuspagina: ${statusUrl}` },
+    'upload-binders':    { subject: `Closing binder geupload — ${naam}`, body: `Beste ondernemer,\n\nUw closing binder staat klaar in het dossier.\n\nStatuspagina: ${statusUrl}` },
+    complete:            { subject: `Dossier afgerond — ${naam}`, body: `Beste ondernemer,\n\nUw dossier is volledig afgerond. Gefeliciteerd en bedankt voor het vertrouwen.\n\nStatuspagina: ${statusUrl}` },
+    'complete-review':   { subject: `Reviewverzoek — ${naam}`, body: `Beste ondernemer,\n\nUw dossier staat in review. Wij koppelen snel de uitkomst terug.\n\nStatuspagina: ${statusUrl}` },
     rejected:            { subject: `Update over uw dossier — ${naam}`, body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.` }
   };
   return t[status] || { subject: `Status update — ${naam}`, body: `Uw dossier heeft een nieuwe status.` };
@@ -1417,7 +1356,7 @@ async function renderActionBar(d) {
 
   // Set current status
   const statusSel = document.getElementById('statusSelect');
-  const knownStatuses = ['pending','vragenlijst','wwft','betaling','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected'];
+  const knownStatuses = ['pending','vragenlijst','approved','wwft','betaling','invoice-sent','invoice-paid','ocr','ocr-signed','draft-accountant','accountant-accepted','draft-client','client-signed','invitation-om','executed-notaris','kvk','passed-kvk','making-binders','upload-binders','complete','complete-review','rejected'];
   if (d.apiStatus) statusSel.value = knownStatuses.includes(d.apiStatus) ? d.apiStatus : (d.apiStatus === 'approved' ? 'vragenlijst' : d.apiStatus);
   syncStatusButton();
 
@@ -1425,26 +1364,27 @@ async function renderActionBar(d) {
 }
 
 const STATUS_BADGE_MAP_DETAIL = {
-  'pending':             { css: 'badge-pending',             label: 'Aanvraag ingediend' },
-  'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst' },
-  'wwft':                { css: 'badge-wwft',                label: 'WWFT Check' },
+  'pending':             { css: 'badge-pending',             label: 'Aanvraag ontvangen' },
+  'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst verzonden' },
+  'approved':            { css: 'badge-vragenlijst',         label: 'Vragenlijst ontvangen' },
+  'wwft':                { css: 'badge-wwft',                label: 'WWFT-controle' },
   'betaling':            { css: 'badge-betaling',            label: 'Betaling' },
   'invoice-sent':        { css: 'badge-invoice-sent',        label: 'Factuur verzonden' },
   'invoice-paid':        { css: 'badge-invoice-paid',        label: 'Factuur betaald' },
-  'ocr':                 { css: 'badge-ocr',                 label: 'OCR' },
-  'ocr-signed':          { css: 'badge-ocr-signed',          label: 'OCR Signed' },
-  'draft-accountant':    { css: 'badge-draft-accountant',    label: 'Waiting for extra information/files' },
-  'accountant-accepted': { css: 'badge-accountant-accepted', label: 'Waiting for extra information/files' },
-  'draft-client':        { css: 'badge-draft-client',        label: 'Draft to Client' },
-  'client-signed':       { css: 'badge-client-signed',       label: 'Client Signed' },
-  'invitation-om':       { css: 'badge-invitation-om',       label: 'Invitation OM' },
-  'executed-notaris':    { css: 'badge-executed-notaris',    label: 'Executed Notaris' },
+  'ocr':                 { css: 'badge-ocr',                 label: 'OCR-verwerking' },
+  'ocr-signed':          { css: 'badge-ocr-signed',          label: 'OCR ondertekend' },
+  'draft-accountant':    { css: 'badge-draft-accountant',    label: 'Concept naar accountant' },
+  'accountant-accepted': { css: 'badge-accountant-accepted', label: 'Goedgekeurd door accountant' },
+  'draft-client':        { css: 'badge-draft-client',        label: 'Concept naar client' },
+  'client-signed':       { css: 'badge-client-signed',       label: 'Ondertekend door client' },
+  'invitation-om':       { css: 'badge-invitation-om',       label: 'Uitnodiging notarisgesprek' },
+  'executed-notaris':    { css: 'badge-executed-notaris',    label: 'Passeren van de akten' },
   'kvk':                 { css: 'badge-kvk',                 label: 'KvK inschrijving' },
-  'passed-kvk':          { css: 'badge-passed-kvk',          label: 'Passed by KvK' },
-  'making-binders':      { css: 'badge-making-binders',      label: 'Making Closing Binders' },
-  'upload-binders':      { css: 'badge-upload-binders',      label: 'Upload Closing Binders' },
-  'complete':            { css: 'badge-complete',            label: 'Case completed' },
-  'complete-review':     { css: 'badge-complete-review',     label: 'Case completed review' },
+  'passed-kvk':          { css: 'badge-passed-kvk',          label: 'Inschrijving verwerkt door KvK' },
+  'making-binders':      { css: 'badge-making-binders',      label: 'Closing binders opstellen' },
+  'upload-binders':      { css: 'badge-upload-binders',      label: 'Closing binder geupload' },
+  'complete':            { css: 'badge-complete',            label: 'Dossier afgerond' },
+  'complete-review':     { css: 'badge-complete-review',     label: 'Reviewverzoek' },
   'rejected':            { css: 'badge-rejected',            label: 'Afgewezen' },
 };
 
@@ -1503,25 +1443,27 @@ async function doChangeStatus(val) {
   });
   if (!r.ok) throw new Error('API fout bij status update');
   const sMap = {
-    'pending':             { key:'pending',             text:'Aanvraag ingediend' },
-    'approved':            { key:'vragenlijst',         text:'Vragenlijst' },
-    'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst' },
-    'wwft':                { key:'wwft',                text:'WWFT Check' },
-    'betaling':            { key:'betaling',             text:'Betaling' },
-    'ocr':                 { key:'ocr',                 text:'OCR' },
-    'ocr-signed':          { key:'ocr-signed',          text:'OCR Signed' },
-    'draft-accountant':    { key:'draft-accountant',    text:'Draft to Accountant' },
-    'accountant-accepted': { key:'accountant-accepted', text:'Accountant accepted' },
-    'draft-client':        { key:'draft-client',        text:'Draft to Client' },
-    'client-signed':       { key:'client-signed',       text:'Client Signed' },
-    'invitation-om':       { key:'invitation-om',       text:'Invitation OM' },
-    'executed-notaris':    { key:'executed-notaris',    text:'Executed Notaris' },
+    'pending':             { key:'pending',             text:'Aanvraag ontvangen' },
+    'approved':            { key:'approved',            text:'Vragenlijst ontvangen' },
+    'vragenlijst':         { key:'vragenlijst',         text:'Vragenlijst verzonden' },
+    'wwft':                { key:'wwft',                text:'WWFT-controle' },
+    'betaling':            { key:'betaling',            text:'Betaling' },
+    'invoice-sent':        { key:'invoice-sent',        text:'Factuur verzonden' },
+    'invoice-paid':        { key:'invoice-paid',        text:'Factuur betaald' },
+    'ocr':                 { key:'ocr',                 text:'OCR-verwerking' },
+    'ocr-signed':          { key:'ocr-signed',          text:'OCR ondertekend' },
+    'draft-accountant':    { key:'draft-accountant',    text:'Concept naar accountant' },
+    'accountant-accepted': { key:'accountant-accepted', text:'Goedgekeurd door accountant' },
+    'draft-client':        { key:'draft-client',        text:'Concept naar client' },
+    'client-signed':       { key:'client-signed',       text:'Ondertekend door client' },
+    'invitation-om':       { key:'invitation-om',       text:'Uitnodiging notarisgesprek' },
+    'executed-notaris':    { key:'executed-notaris',    text:'Passeren van de akten' },
     'kvk':                 { key:'kvk',                 text:'KvK inschrijving' },
-    'passed-kvk':          { key:'passed-kvk',          text:'Passed by KvK' },
-    'making-binders':      { key:'making-binders',      text:'Making Closing Binders' },
-    'upload-binders':      { key:'upload-binders',      text:'Upload Closing Binders' },
-    'complete':            { key:'complete',            text:'Case completed' },
-    'complete-review':     { key:'complete-review',     text:'Case completed review' },
+    'passed-kvk':          { key:'passed-kvk',          text:'Inschrijving verwerkt door KvK' },
+    'making-binders':      { key:'making-binders',      text:'Closing binders opstellen' },
+    'upload-binders':      { key:'upload-binders',      text:'Closing binder geupload' },
+    'complete':            { key:'complete',            text:'Dossier afgerond' },
+    'complete-review':     { key:'complete-review',     text:'Reviewverzoek' },
     'rejected':            { key:'rejected',            text:'Afgewezen' }
   };
   const s = sMap[val] || { key: val, text: val };
@@ -2201,7 +2143,7 @@ async function init() {
         if (dr.ok) {
           const req = await dr.json();
           const typeMap = { 'bv':'B.V.', 'bv-holding':'Holdings B.V.', 'bv-spoed':'B.V. (spoed)', 'eenmanszaak-omzetten':'Eenmanszaak → B.V.', 'advies':'Advies' };
-    const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ingediend' }, 'approved':{ key:'vragenlijst', text:'Vragenlijst' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst' }, 'wwft':{ key:'wwft', text:'WWFT Check' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'ocr':{ key:'ocr', text:'OCR' }, 'ocr-signed':{ key:'ocr-signed', text:'OCR Signed' }, 'draft-accountant':{ key:'draft-accountant', text:'Draft to Accountant' }, 'accountant-accepted':{ key:'accountant-accepted', text:'Accountant accepted' }, 'draft-client':{ key:'draft-client', text:'Draft to Client' }, 'client-signed':{ key:'client-signed', text:'Client Signed' }, 'invitation-om':{ key:'invitation-om', text:'Invitation OM' }, 'executed-notaris':{ key:'executed-notaris', text:'Executed Notaris' }, 'kvk':{ key:'kvk', text:'KvK inschrijving' }, 'passed-kvk':{ key:'passed-kvk', text:'Passed by KvK' }, 'making-binders':{ key:'making-binders', text:'Making Closing Binders' }, 'upload-binders':{ key:'upload-binders', text:'Upload Closing Binders' }, 'complete':{ key:'complete', text:'Case completed' }, 'complete-review':{ key:'complete-review', text:'Case completed review' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
+    const statusMap = { 'pending':{ key:'pending', text:'Aanvraag ontvangen' }, 'approved':{ key:'approved', text:'Vragenlijst ontvangen' }, 'vragenlijst':{ key:'vragenlijst', text:'Vragenlijst verzonden' }, 'wwft':{ key:'wwft', text:'WWFT-controle' }, 'betaling':{ key:'betaling', text:'Betaling' }, 'invoice-sent':{ key:'invoice-sent', text:'Factuur verzonden' }, 'invoice-paid':{ key:'invoice-paid', text:'Factuur betaald' }, 'ocr':{ key:'ocr', text:'OCR-verwerking' }, 'ocr-signed':{ key:'ocr-signed', text:'OCR ondertekend' }, 'draft-accountant':{ key:'draft-accountant', text:'Concept naar accountant' }, 'accountant-accepted':{ key:'accountant-accepted', text:'Goedgekeurd door accountant' }, 'draft-client':{ key:'draft-client', text:'Concept naar client' }, 'client-signed':{ key:'client-signed', text:'Ondertekend door client' }, 'invitation-om':{ key:'invitation-om', text:'Uitnodiging notarisgesprek' }, 'executed-notaris':{ key:'executed-notaris', text:'Passeren van de akten' }, 'kvk':{ key:'kvk', text:'KvK-inschrijving' }, 'passed-kvk':{ key:'passed-kvk', text:'Inschrijving verwerkt door KvK' }, 'making-binders':{ key:'making-binders', text:'Closing binders opstellen' }, 'upload-binders':{ key:'upload-binders', text:'Closing binder geupload' }, 'complete':{ key:'complete', text:'Dossier afgerond' }, 'complete-review':{ key:'complete-review', text:'Reviewverzoek' }, 'rejected':{ key:'rejected', text:'Afgewezen' } };
           const s = statusMap[req.status] || { key:'pending', text: req.status };
           d = { name: req.gewenstNaam || req.clientName, clientName: req.clientName || req.gewenstNaam || '', partner: req.resellerCompany || '–', statusKey: s.key, statusText: s.text, apiStatus: req.status, date: req.createdAt, dossierNr: req.id, clientEmail: req.clientEmail || '', clientPhone: req.clientPhone || '', kvk: '', accessToken: req.accessToken || '', oprichtingType: req.oprichtingType || '', pricing: req.pricing || null, hasVragenlijst: false };
         }
@@ -2225,7 +2167,6 @@ async function init() {
     document.getElementById("topbarTitle").textContent = d.name;
     currentDossier = d;
     currentRole = u.type;
-    window._currentRole = u.type;
     try {
       renderPage(d, u.type);
     } catch(re) {
@@ -2234,7 +2175,6 @@ async function init() {
     }
     if (u.type === 'admin' && d.dossierNr) {
       renderActionBar(d);
-      loadAdminUploadedFiles();
     }
   } catch(e) {
     console.error('Auth/load error:', e);
