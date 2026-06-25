@@ -2239,21 +2239,36 @@
 
     function clampVofHoldingCount(value) {
       const parsed = parseInt(value, 10);
+      if (!Number.isFinite(parsed)) return 1;
+      return Math.min(MAX_VOF_HOLDINGS, Math.max(1, parsed));
+    }
+
+    function clampVofOwnerCount(value) {
+      const parsed = parseInt(value, 10);
       if (!Number.isFinite(parsed)) return 2;
       return Math.min(MAX_VOF_HOLDINGS, Math.max(MIN_VOF_HOLDINGS, parsed));
+    }
+
+    function normalizeVofPlusHoldingCount(value, ownerCount = null) {
+      const parsed = clampVofHoldingCount(value);
+      if (!isVofPlusHoldingFlow()) return parsed;
+
+      const effectiveOwnerCount = clampVofOwnerCount(ownerCount == null ? getOmzettingOwnerCount() : ownerCount);
+      if (parsed === 1 || parsed === effectiveOwnerCount) return parsed;
+      return effectiveOwnerCount;
     }
 
     function getOmzettingOwnerCount() {
       if (isEenmanszaakOmzettingFlow()) return 1;
       if (!isVofOmzettingFlow()) return 0;
-      return clampVofHoldingCount(document.getElementById('omzettingOwnerCount')?.value || '2');
+      return clampVofOwnerCount(document.getElementById('omzettingOwnerCount')?.value || '2');
     }
 
     function getRequiredHoldingInbrengCount(payload) {
       if (dossierOprichtingType !== 'vof-naar-bv-holding') return 1;
       const fromPayload = Array.isArray(payload?.holdingEntities) ? payload.holdingEntities.length : 0;
       if (fromPayload > 0) return fromPayload;
-      return clampVofHoldingCount(document.getElementById('vofHoldingCount')?.value || '2');
+      return normalizeVofPlusHoldingCount(document.getElementById('vofHoldingCount')?.value || '1');
     }
 
     function getVofExtraOwnerIndices() {
@@ -2841,7 +2856,9 @@
 
       if (isHoldingTabsEnabled()) persistActiveHoldingTabDetails();
 
-      const count = clampVofHoldingCount(countInput.value || '2');
+      const count = isVofPlusHoldingFlow()
+        ? normalizeVofPlusHoldingCount(countInput.value || '1')
+        : clampVofHoldingCount(countInput.value || '1');
       countInput.value = String(count);
 
       const existing = collectVofHoldingSectionsFromDom();
@@ -3277,7 +3294,7 @@
       if (vofUboZone) vofUboZone.style.display = show ? '' : 'none';
       const showOwnerCount = show && isVofOmzettingFlow();
       if (ownerCountWrap) ownerCountWrap.style.display = showOwnerCount ? '' : 'none';
-      if (ownerCountInput) ownerCountInput.value = String(clampVofHoldingCount(ownerCountInput.value || '2'));
+      if (ownerCountInput) ownerCountInput.value = String(clampVofOwnerCount(ownerCountInput.value || '2'));
       const plusHolding = isOmzettingPlusHoldingFlow();
       if (inbrengZone) inbrengZone.style.display = plusHolding ? 'none' : '';
       if (inbrengHoldingZone) inbrengHoldingZone.style.display = plusHolding ? '' : 'none';
@@ -4731,7 +4748,7 @@
       if (vofHoldingCountHint) vofHoldingCountHint.style.display = showVofHoldingTabs ? '' : 'none';
       if (vofHoldingCountInput) {
         const nextHoldingCount = showVofHoldingTabs
-          ? clampVofHoldingCount(vofHoldingCountInput.value || '2')
+          ? normalizeVofPlusHoldingCount(vofHoldingCountInput.value || '1')
           : clampEntityTabCount(vofHoldingCountInput.value || '1', 1);
         vofHoldingCountInput.value = String(nextHoldingCount);
       }
@@ -5223,7 +5240,7 @@
       const vofHoldingCountInput = document.getElementById('vofHoldingCount');
       if (vofHoldingCountInput && Array.isArray(existingData.holdingEntities) && existingData.holdingEntities.length) {
         const nextCount = isVofPlusHoldingFlow()
-          ? clampVofHoldingCount(existingData.holdingEntities.length)
+          ? normalizeVofPlusHoldingCount(existingData.holdingEntities.length)
           : clampEntityTabCount(existingData.holdingEntities.length, 1);
         vofHoldingCountInput.value = String(nextCount);
       }
@@ -5986,7 +6003,8 @@
       document.getElementById('werkmijCount')?.addEventListener('input', updateConditionalSections);
       document.getElementById('omzettingOwnerCount')?.addEventListener('input', () => {
         const input = document.getElementById('omzettingOwnerCount');
-        if (input) input.value = String(clampVofHoldingCount(input.value || '2'));
+        if (input) input.value = String(clampVofOwnerCount(input.value || '2'));
+        updateConditionalSections();
         updateOmzettingDocumentsVisibility();
         updateNaturalPersons();
         refreshRequiredIndicators();
