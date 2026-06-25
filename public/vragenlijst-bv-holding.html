@@ -731,6 +731,8 @@
 
             <div id="holdingMultiSectionsWrap" style="display:none;"></div>
 
+            <div id="holdingTabScopedFieldsWrap" class="repeat-item" style="margin-top:12px;">
+
             <div class="group-title">Boekkeeper/Accountant</div>
             <div class="field">
               <label>Werk je met een fiscalist, accountants- of administratiekantoor?</label>
@@ -830,6 +832,7 @@
 
             <div class="group-title">Overige</div>
             <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen, dan kun je die hieronder kwijt.</label><textarea name="holdingOverige"></textarea></div>
+            </div>
           </div>
         </div>
 
@@ -843,6 +846,8 @@
             <div class="field" id="werkmijPrimaryMailField"><label>Mailadres van de BV</label><input name="werkmijMailadres" type="email"></div>
 
             <div id="werkmijMultiSectionsWrap" style="display:none;"></div>
+
+            <div id="werkmijTabScopedFieldsWrap" class="repeat-item" style="margin-top:12px;">
 
             <div class="group-title">Boekkeeper/Accountant</div>
             <div class="field">
@@ -950,6 +955,7 @@
 
             <div class="group-title">Overige</div>
             <div class="field" style="margin-top: 9px;"><label>Heb je nog vragen over de door jou ingevulde vragenlijst of opmerkingen, dan kun je die hieronder kwijt.</label><textarea name="werkmijOverige"></textarea></div>
+            </div>
           </div>
         </div>
 
@@ -1214,6 +1220,9 @@
     let vofOwnerIntentieFileStore = {};
     let activeHoldingTabIndex = 0;
     let activeWerkmijTabIndex = 0;
+    let holdingTabDetailsStore = [];
+    let werkmijTabDetailsStore = [];
+    let suppressTabStateSync = false;
 
     const RP_UPLOAD_FIELDS = [
       { key: 'kvkExtract', label: 'Upload KVK-uittreksel' },
@@ -2453,12 +2462,328 @@
       }));
     }
 
+    function cloneJson(value) {
+      return JSON.parse(JSON.stringify(value || null));
+    }
+
+    function isHoldingTabsEnabled() {
+      return shouldShowNewHoldingCard() && (isVofPlusHoldingFlow() || isBvHoldingFlow());
+    }
+
+    function isWerkmijTabsEnabled() {
+      return document.getElementById('hasWorkmaatschappij')?.value === 'ja' && isBvHoldingFlow();
+    }
+
+    function readNamedField(name) {
+      return document.querySelector(`[name="${name}"]`)?.value || '';
+    }
+
+    function writeNamedField(name, value) {
+      const input = document.querySelector(`[name="${name}"]`);
+      if (!input) return;
+      input.value = value == null ? '' : String(value);
+    }
+
+    function defaultHoldingTabDetail() {
+      return {
+        hasAccountant: '',
+        accountantNaam: '',
+        accountantContact: '',
+        accountantTelefoon: '',
+        accountantMail: '',
+        shareholders: [],
+        directorsSameAsShareholders: true,
+        directors: [],
+        adresAfwijkendAandeelhouder: false,
+        adresZelfdeAandeelhouderIndex: '',
+        adresBron: '',
+        adresStraat: '',
+        adresHuisnummer: '',
+        adresPostcode: '',
+        adresPlaats: '',
+        eigendomNieuweBvs: '',
+        personeelMeer15: '',
+        personeelMinder15: '',
+        overige: ''
+      };
+    }
+
+    function defaultWerkmijTabDetail() {
+      return {
+        hasAccountant: '',
+        accountantNaam: '',
+        accountantContact: '',
+        accountantTelefoon: '',
+        accountantMail: '',
+        shareholders: [],
+        directorsSameAsShareholders: true,
+        directors: [],
+        adresAfwijkendAandeelhouder: false,
+        adresZelfdeAandeelhouderIndex: '',
+        adresStraat: '',
+        adresHuisnummer: '',
+        adresPostcode: '',
+        adresPlaats: '',
+        activiteiten: '',
+        import: false,
+        export: false,
+        detailWinkel: false,
+        detailMarkt: false,
+        detailStraat: false,
+        detailInternet: false,
+        detailHuis: false,
+        detailPostorder: false,
+        detailOthers: false,
+        detailOthersToelichting: '',
+        groothandel: '',
+        personeelMeer15: '',
+        personeelMinder15: '',
+        overige: ''
+      };
+    }
+
+    function captureHoldingTabDetailFromForm() {
+      return {
+        hasAccountant: document.getElementById('holdingHasAccountant')?.value || '',
+        accountantNaam: readNamedField('holdingAccountantNaam'),
+        accountantContact: readNamedField('holdingAccountantContact'),
+        accountantTelefoon: readNamedField('holdingAccountantTelefoon'),
+        accountantMail: readNamedField('holdingAccountantMail'),
+        shareholders: cloneJson(managers.holdingShareholders.getData()) || [],
+        directorsSameAsShareholders: !!document.getElementById('holdingDirectorsSameAsShareholders')?.checked,
+        directors: cloneJson(managers.holdingDirectors.getData()) || [],
+        adresAfwijkendAandeelhouder: !!document.getElementById('holdingAdresAfwijkendAandeelhouder')?.checked,
+        adresZelfdeAandeelhouderIndex: document.getElementById('holdingAdresZelfdeAandeelhouderIndex')?.value || '',
+        adresBron: document.getElementById('holdingAdresBron')?.value || '',
+        adresStraat: readNamedField('holdingAdresStraat'),
+        adresHuisnummer: readNamedField('holdingAdresHuisnummer'),
+        adresPostcode: readNamedField('holdingAdresPostcode'),
+        adresPlaats: readNamedField('holdingAdresPlaats'),
+        eigendomNieuweBvs: readNamedField('holdingEigendomNieuweBvs'),
+        personeelMeer15: readNamedField('holdingPersoneelMeer15'),
+        personeelMinder15: readNamedField('holdingPersoneelMinder15'),
+        overige: readNamedField('holdingOverige')
+      };
+    }
+
+    function captureWerkmijTabDetailFromForm() {
+      return {
+        hasAccountant: document.getElementById('werkmijHasAccountant')?.value || '',
+        accountantNaam: readNamedField('werkmijAccountantNaam'),
+        accountantContact: readNamedField('werkmijAccountantContact'),
+        accountantTelefoon: readNamedField('werkmijAccountantTelefoon'),
+        accountantMail: readNamedField('werkmijAccountantMail'),
+        shareholders: cloneJson(managers.werkmijShareholders.getData()) || [],
+        directorsSameAsShareholders: !!document.getElementById('werkmijDirectorsSameAsShareholders')?.checked,
+        directors: cloneJson(managers.werkmijDirectors.getData()) || [],
+        adresAfwijkendAandeelhouder: !!document.getElementById('werkmijAdresAfwijkendAandeelhouder')?.checked,
+        adresZelfdeAandeelhouderIndex: document.getElementById('werkmijAdresZelfdeAandeelhouderIndex')?.value || '',
+        adresStraat: readNamedField('werkmijAdresStraat'),
+        adresHuisnummer: readNamedField('werkmijAdresHuisnummer'),
+        adresPostcode: readNamedField('werkmijAdresPostcode'),
+        adresPlaats: readNamedField('werkmijAdresPlaats'),
+        activiteiten: readNamedField('werkmijActiviteiten'),
+        import: !!document.querySelector('input[name="werkmijImport"]')?.checked,
+        export: !!document.querySelector('input[name="werkmijExport"]')?.checked,
+        detailWinkel: !!document.querySelector('input[name="detailWinkel"]')?.checked,
+        detailMarkt: !!document.querySelector('input[name="detailMarkt"]')?.checked,
+        detailStraat: !!document.querySelector('input[name="detailStraat"]')?.checked,
+        detailInternet: !!document.querySelector('input[name="detailInternet"]')?.checked,
+        detailHuis: !!document.querySelector('input[name="detailHuis"]')?.checked,
+        detailPostorder: !!document.querySelector('input[name="detailPostorder"]')?.checked,
+        detailOthers: !!document.querySelector('input[name="detailOthers"]')?.checked,
+        detailOthersToelichting: readNamedField('detailOthersToelichting'),
+        groothandel: readNamedField('werkmijGroothandel'),
+        personeelMeer15: readNamedField('werkmijPersoneelMeer15'),
+        personeelMinder15: readNamedField('werkmijPersoneelMinder15'),
+        overige: readNamedField('werkmijOverige')
+      };
+    }
+
+    function applyHoldingTabDetailToForm(detail) {
+      const row = { ...defaultHoldingTabDetail(), ...(detail || {}) };
+      suppressTabStateSync = true;
+      document.getElementById('holdingHasAccountant').value = row.hasAccountant || '';
+      writeNamedField('holdingAccountantNaam', row.accountantNaam);
+      writeNamedField('holdingAccountantContact', row.accountantContact);
+      writeNamedField('holdingAccountantTelefoon', row.accountantTelefoon);
+      writeNamedField('holdingAccountantMail', row.accountantMail);
+      managers.holdingShareholders.setData(Array.isArray(row.shareholders) ? row.shareholders : []);
+      document.getElementById('holdingDirectorsSameAsShareholders').checked = row.directorsSameAsShareholders !== false;
+      managers.holdingDirectors.setData(Array.isArray(row.directors) ? row.directors : []);
+      document.getElementById('holdingAdresAfwijkendAandeelhouder').checked = !!row.adresAfwijkendAandeelhouder;
+      document.getElementById('holdingAdresZelfdeAandeelhouderIndex').value = row.adresZelfdeAandeelhouderIndex || '';
+      document.getElementById('holdingAdresBron').value = row.adresBron || '';
+      writeNamedField('holdingAdresStraat', row.adresStraat);
+      writeNamedField('holdingAdresHuisnummer', row.adresHuisnummer);
+      writeNamedField('holdingAdresPostcode', row.adresPostcode);
+      writeNamedField('holdingAdresPlaats', row.adresPlaats);
+      writeNamedField('holdingEigendomNieuweBvs', row.eigendomNieuweBvs);
+      writeNamedField('holdingPersoneelMeer15', row.personeelMeer15);
+      writeNamedField('holdingPersoneelMinder15', row.personeelMinder15);
+      writeNamedField('holdingOverige', row.overige);
+      suppressTabStateSync = false;
+      updateDirectorsVisibility();
+      updateAddressSourceVisibility();
+      updateRentalAgreementVisibility();
+      updateDetailOthersVisibility();
+      refreshRequiredIndicators();
+    }
+
+    function applyWerkmijTabDetailToForm(detail) {
+      const row = { ...defaultWerkmijTabDetail(), ...(detail || {}) };
+      suppressTabStateSync = true;
+      document.getElementById('werkmijHasAccountant').value = row.hasAccountant || '';
+      writeNamedField('werkmijAccountantNaam', row.accountantNaam);
+      writeNamedField('werkmijAccountantContact', row.accountantContact);
+      writeNamedField('werkmijAccountantTelefoon', row.accountantTelefoon);
+      writeNamedField('werkmijAccountantMail', row.accountantMail);
+      managers.werkmijShareholders.setData(Array.isArray(row.shareholders) ? row.shareholders : []);
+      document.getElementById('werkmijDirectorsSameAsShareholders').checked = row.directorsSameAsShareholders !== false;
+      managers.werkmijDirectors.setData(Array.isArray(row.directors) ? row.directors : []);
+      document.getElementById('werkmijAdresAfwijkendAandeelhouder').checked = !!row.adresAfwijkendAandeelhouder;
+      document.getElementById('werkmijAdresZelfdeAandeelhouderIndex').value = row.adresZelfdeAandeelhouderIndex || '';
+      writeNamedField('werkmijAdresStraat', row.adresStraat);
+      writeNamedField('werkmijAdresHuisnummer', row.adresHuisnummer);
+      writeNamedField('werkmijAdresPostcode', row.adresPostcode);
+      writeNamedField('werkmijAdresPlaats', row.adresPlaats);
+      writeNamedField('werkmijActiviteiten', row.activiteiten);
+      const setCheck = (name, value) => {
+        const el = document.querySelector(`input[name="${name}"]`);
+        if (el) el.checked = !!value;
+      };
+      setCheck('werkmijImport', row.import);
+      setCheck('werkmijExport', row.export);
+      setCheck('detailWinkel', row.detailWinkel);
+      setCheck('detailMarkt', row.detailMarkt);
+      setCheck('detailStraat', row.detailStraat);
+      setCheck('detailInternet', row.detailInternet);
+      setCheck('detailHuis', row.detailHuis);
+      setCheck('detailPostorder', row.detailPostorder);
+      setCheck('detailOthers', row.detailOthers);
+      writeNamedField('detailOthersToelichting', row.detailOthersToelichting);
+      writeNamedField('werkmijGroothandel', row.groothandel);
+      writeNamedField('werkmijPersoneelMeer15', row.personeelMeer15);
+      writeNamedField('werkmijPersoneelMinder15', row.personeelMinder15);
+      writeNamedField('werkmijOverige', row.overige);
+      suppressTabStateSync = false;
+      updateDirectorsVisibility();
+      updateAddressSourceVisibility();
+      updateRentalAgreementVisibility();
+      updateDetailOthersVisibility();
+      refreshRequiredIndicators();
+    }
+
+    function persistActiveHoldingTabDetails() {
+      if (!isHoldingTabsEnabled() || suppressTabStateSync || !holdingTabDetailsStore.length) return;
+      const idx = Math.max(0, Math.min(activeHoldingTabIndex, holdingTabDetailsStore.length - 1));
+      holdingTabDetailsStore[idx] = captureHoldingTabDetailFromForm();
+    }
+
+    function persistActiveWerkmijTabDetails() {
+      if (!isWerkmijTabsEnabled() || suppressTabStateSync || !werkmijTabDetailsStore.length) return;
+      const idx = Math.max(0, Math.min(activeWerkmijTabIndex, werkmijTabDetailsStore.length - 1));
+      werkmijTabDetailsStore[idx] = captureWerkmijTabDetailFromForm();
+    }
+
+    function ensureHoldingTabDetailsStore(count) {
+      const next = [];
+      const saved = Array.isArray(existingData?.holdingEntityDetails) ? existingData.holdingEntityDetails : [];
+      for (let idx = 0; idx < count; idx += 1) {
+        next.push({
+          ...defaultHoldingTabDetail(),
+          ...(saved[idx] || {}),
+          ...(holdingTabDetailsStore[idx] || {})
+        });
+      }
+      holdingTabDetailsStore = next;
+    }
+
+    function ensureWerkmijTabDetailsStore(count) {
+      const next = [];
+      const saved = Array.isArray(existingData?.werkmijEntityDetails) ? existingData.werkmijEntityDetails : [];
+      for (let idx = 0; idx < count; idx += 1) {
+        next.push({
+          ...defaultWerkmijTabDetail(),
+          ...(saved[idx] || {}),
+          ...(werkmijTabDetailsStore[idx] || {})
+        });
+      }
+      werkmijTabDetailsStore = next;
+    }
+
+    function getHoldingDetailsForRoles() {
+      if (isHoldingTabsEnabled() && holdingTabDetailsStore.length) {
+        persistActiveHoldingTabDetails();
+        return holdingTabDetailsStore;
+      }
+      return [{
+        ...defaultHoldingTabDetail(),
+        shareholders: managers.holdingShareholders.getData(),
+        directorsSameAsShareholders: areHoldingDirectorsSameAsShareholders(),
+        directors: managers.holdingDirectors.getData()
+      }];
+    }
+
+    function getWerkmijDetailsForRoles() {
+      if (isWerkmijTabsEnabled() && werkmijTabDetailsStore.length) {
+        persistActiveWerkmijTabDetails();
+        return werkmijTabDetailsStore;
+      }
+      return [{
+        ...defaultWerkmijTabDetail(),
+        shareholders: managers.werkmijShareholders.getData(),
+        directorsSameAsShareholders: areWerkmijDirectorsSameAsShareholders(),
+        directors: managers.werkmijDirectors.getData()
+      }];
+    }
+
+    function mountHoldingTabScopedFieldsToPanel(index) {
+      const scopedWrap = document.getElementById('holdingTabScopedFieldsWrap');
+      const tabsWrap = document.getElementById('holdingMultiSectionsWrap');
+      if (!scopedWrap || !tabsWrap) return;
+      const panel = tabsWrap.querySelector(`[data-vof-holding-index="${index}"]`);
+      if (panel && scopedWrap.parentElement !== panel) panel.appendChild(scopedWrap);
+    }
+
+    function mountWerkmijTabScopedFieldsToPanel(index) {
+      const scopedWrap = document.getElementById('werkmijTabScopedFieldsWrap');
+      const tabsWrap = document.getElementById('werkmijMultiSectionsWrap');
+      if (!scopedWrap || !tabsWrap) return;
+      const panel = tabsWrap.querySelector(`[data-werkmij-index="${index}"]`);
+      if (panel && scopedWrap.parentElement !== panel) panel.appendChild(scopedWrap);
+    }
+
+    function restoreHoldingTabScopedFieldsToCardBody() {
+      const scopedWrap = document.getElementById('holdingTabScopedFieldsWrap');
+      const cardBody = document.querySelector('#holdingCard .card-b');
+      const anchor = document.getElementById('holdingMultiSectionsWrap');
+      if (!scopedWrap || !cardBody || !anchor) return;
+      if (scopedWrap.parentElement !== cardBody) {
+        cardBody.insertBefore(scopedWrap, anchor.nextSibling);
+      }
+    }
+
+    function restoreWerkmijTabScopedFieldsToCardBody() {
+      const scopedWrap = document.getElementById('werkmijTabScopedFieldsWrap');
+      const cardBody = document.querySelector('#werkmijCard .card-b');
+      const anchor = document.getElementById('werkmijMultiSectionsWrap');
+      if (!scopedWrap || !cardBody || !anchor) return;
+      if (scopedWrap.parentElement !== cardBody) {
+        cardBody.insertBefore(scopedWrap, anchor.nextSibling);
+      }
+    }
+
     function setActiveHoldingPanel(index) {
       const wrap = document.getElementById('holdingMultiSectionsWrap');
       if (!wrap) return;
       const tabs = Array.from(wrap.querySelectorAll('.holding-tab-btn'));
       const panels = Array.from(wrap.querySelectorAll('[data-vof-holding-index]'));
       if (!tabs.length || !panels.length) return;
+      if (isHoldingTabsEnabled() && holdingTabDetailsStore.length !== tabs.length) {
+        ensureHoldingTabDetailsStore(tabs.length);
+      }
+      if (isHoldingTabsEnabled()) persistActiveHoldingTabDetails();
       const safeIndex = Math.min(Math.max(0, index), tabs.length - 1);
       activeHoldingTabIndex = safeIndex;
       tabs.forEach((tab, idx) => {
@@ -2469,6 +2794,14 @@
       panels.forEach((panel, idx) => {
         panel.style.display = idx === safeIndex ? '' : 'none';
       });
+      if (isHoldingTabsEnabled()) {
+        mountHoldingTabScopedFieldsToPanel(safeIndex);
+        if (!holdingTabDetailsStore[safeIndex]) {
+          holdingTabDetailsStore[safeIndex] = defaultHoldingTabDetail();
+        }
+        applyHoldingTabDetailToForm(holdingTabDetailsStore[safeIndex]);
+        updateNaturalPersons();
+      }
     }
 
     function setActiveWerkmijPanel(index) {
@@ -2477,6 +2810,10 @@
       const tabs = Array.from(wrap.querySelectorAll('.werkmij-tab-btn'));
       const panels = Array.from(wrap.querySelectorAll('[data-werkmij-index]'));
       if (!tabs.length || !panels.length) return;
+      if (isWerkmijTabsEnabled() && werkmijTabDetailsStore.length !== tabs.length) {
+        ensureWerkmijTabDetailsStore(tabs.length);
+      }
+      if (isWerkmijTabsEnabled()) persistActiveWerkmijTabDetails();
       const safeIndex = Math.min(Math.max(0, index), tabs.length - 1);
       activeWerkmijTabIndex = safeIndex;
       tabs.forEach((tab, idx) => {
@@ -2487,12 +2824,22 @@
       panels.forEach((panel, idx) => {
         panel.style.display = idx === safeIndex ? '' : 'none';
       });
+      if (isWerkmijTabsEnabled()) {
+        mountWerkmijTabScopedFieldsToPanel(safeIndex);
+        if (!werkmijTabDetailsStore[safeIndex]) {
+          werkmijTabDetailsStore[safeIndex] = defaultWerkmijTabDetail();
+        }
+        applyWerkmijTabDetailToForm(werkmijTabDetailsStore[safeIndex]);
+        updateNaturalPersons();
+      }
     }
 
     function ensureVofHoldingSections() {
       const wrap = document.getElementById('holdingMultiSectionsWrap');
       const countInput = document.getElementById('vofHoldingCount');
       if (!wrap || !countInput) return;
+
+      if (isHoldingTabsEnabled()) persistActiveHoldingTabDetails();
 
       const count = clampVofHoldingCount(countInput.value || '2');
       countInput.value = String(count);
@@ -2512,10 +2859,16 @@
       }
       if (!seed.length) seed = [buildLegacyPrimaryHoldingSnapshot()];
 
+      const holdingScopedWrap = document.getElementById('holdingTabScopedFieldsWrap');
+      if (holdingScopedWrap && holdingScopedWrap.parentElement?.closest('#holdingMultiSectionsWrap')) {
+        restoreHoldingTabScopedFieldsToCardBody();
+      }
+
       while (seed.length < count) {
         seed.push({ naamBedrijf: '', telefoon: '', mailadres: '', adresStraat: '', adresHuisnummer: '', adresPostcode: '', adresPlaats: '' });
       }
       seed = seed.slice(0, count);
+      ensureHoldingTabDetailsStore(seed.length);
 
       const nav = seed.map((_, idx) => (
         `<button type="button" class="holding-tab-btn" data-holding-tab="${idx}" role="tab" aria-selected="false">Holding ${idx + 1}</button>`
@@ -2569,6 +2922,8 @@
       const countInput = document.getElementById('werkmijCount');
       if (!wrap || !countInput) return;
 
+      if (isWerkmijTabsEnabled()) persistActiveWerkmijTabDetails();
+
       const minCount = isBvHoldingFlow() ? 1 : 1;
       const count = clampEntityTabCount(countInput.value || '1', minCount);
       countInput.value = String(count);
@@ -2584,10 +2939,16 @@
       }
       if (!seed.length) seed = [buildLegacyPrimaryWerkmijSnapshot()];
 
+      const werkmijScopedWrap = document.getElementById('werkmijTabScopedFieldsWrap');
+      if (werkmijScopedWrap && werkmijScopedWrap.parentElement?.closest('#werkmijMultiSectionsWrap')) {
+        restoreWerkmijTabScopedFieldsToCardBody();
+      }
+
       while (seed.length < count) {
         seed.push({ naamBedrijf: '', telefoon: '', mailadres: '' });
       }
       seed = seed.slice(0, count);
+      ensureWerkmijTabDetailsStore(seed.length);
 
       const nav = seed.map((_, idx) => (
         `<button type="button" class="werkmij-tab-btn" data-werkmij-tab="${idx}" role="tab" aria-selected="false">BV ${idx + 1}</button>`
@@ -3195,18 +3556,40 @@
       }
 
       if (showHolding) {
-        pushRoles(managers.holdingShareholders.getData(), 'holding_shareholder', 'Holding aandeelhouder');
-        if (!areHoldingDirectorsSameAsShareholders()) {
-          pushRoles(managers.holdingDirectors.getData(), 'holding_director', 'Holding bestuurder');
+        if (isHoldingTabsEnabled()) {
+          getHoldingDetailsForRoles().forEach((detail, tabIdx) => {
+            const tabLabel = `Holding ${tabIdx + 1}`;
+            pushRoles(detail.shareholders || [], `holding_${tabIdx + 1}_shareholder`, `${tabLabel} aandeelhouder`);
+            if (detail.directorsSameAsShareholders !== true) {
+              pushRoles(detail.directors || [], `holding_${tabIdx + 1}_director`, `${tabLabel} bestuurder`);
+            }
+          });
+        } else {
+          pushRoles(managers.holdingShareholders.getData(), 'holding_shareholder', 'Holding aandeelhouder');
+          if (!areHoldingDirectorsSameAsShareholders()) {
+            pushRoles(managers.holdingDirectors.getData(), 'holding_director', 'Holding bestuurder');
+          }
         }
       }
 
       if (withWerkmij) {
-        if (shouldAskWerkmijShareholders()) {
-          pushRoles(managers.werkmijShareholders.getData(), 'werkmij_shareholder', 'Werkmij aandeelhouder');
-        }
-        if (!areWerkmijDirectorsSameAsShareholders()) {
-          pushRoles(managers.werkmijDirectors.getData(), 'werkmij_director', 'Werkmij bestuurder');
+        if (isWerkmijTabsEnabled()) {
+          getWerkmijDetailsForRoles().forEach((detail, tabIdx) => {
+            const tabLabel = `BV ${tabIdx + 1}`;
+            if (shouldAskWerkmijShareholders()) {
+              pushRoles(detail.shareholders || [], `werkmij_${tabIdx + 1}_shareholder`, `${tabLabel} aandeelhouder`);
+            }
+            if (detail.directorsSameAsShareholders !== true) {
+              pushRoles(detail.directors || [], `werkmij_${tabIdx + 1}_director`, `${tabLabel} bestuurder`);
+            }
+          });
+        } else {
+          if (shouldAskWerkmijShareholders()) {
+            pushRoles(managers.werkmijShareholders.getData(), 'werkmij_shareholder', 'Werkmij aandeelhouder');
+          }
+          if (!areWerkmijDirectorsSameAsShareholders()) {
+            pushRoles(managers.werkmijDirectors.getData(), 'werkmij_director', 'Werkmij bestuurder');
+          }
         }
       }
       if (withExistingHolding) {
@@ -3266,50 +3649,102 @@
       const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
       const showHolding = shouldShowNewHoldingCard();
       if (showHolding) {
-        managers.holdingShareholders.getData().forEach((item, idx) => {
-          if (item.type !== 'rp') return;
-          if (isNewlyEstablishedHoldingName(item.naam)) return;
-          pushRole({
-            roleKey: `holding_entity_${idx + 1}`,
-            title: `Rechtspersoon ${idx + 1}`,
-            name: item.naam || `Holding aandeelhouder ${idx + 1}`
+        if (isHoldingTabsEnabled()) {
+          getHoldingDetailsForRoles().forEach((detail, tabIdx) => {
+            (detail.shareholders || []).forEach((item, idx) => {
+              if (item.type !== 'rp') return;
+              if (isNewlyEstablishedHoldingName(item.naam)) return;
+              pushRole({
+                roleKey: `holding_${tabIdx + 1}_entity_${idx + 1}`,
+                title: `Rechtspersoon Holding ${tabIdx + 1}.${idx + 1}`,
+                name: item.naam || `Holding ${tabIdx + 1} aandeelhouder ${idx + 1}`
+              });
+            });
+            if (detail.directorsSameAsShareholders === true) return;
+            (detail.directors || []).forEach((item, idx) => {
+              if (item.type !== 'rp') return;
+              if (isNewlyEstablishedHoldingName(item.naam)) return;
+              pushRole({
+                roleKey: `holding_${tabIdx + 1}_director_entity_${idx + 1}`,
+                title: `Rechtspersoon Holding ${tabIdx + 1} bestuurder ${idx + 1}`,
+                name: item.naam || `Holding ${tabIdx + 1} bestuurder ${idx + 1}`
+              });
+            });
           });
-        });
-        if (!areHoldingDirectorsSameAsShareholders()) {
-          managers.holdingDirectors.getData().forEach((item, idx) => {
+        } else {
+          managers.holdingShareholders.getData().forEach((item, idx) => {
             if (item.type !== 'rp') return;
             if (isNewlyEstablishedHoldingName(item.naam)) return;
             pushRole({
-              roleKey: `holding_director_entity_${idx + 1}`,
-              title: `Rechtspersoon Holding bestuurder ${idx + 1}`,
-              name: item.naam || `Holding bestuurder ${idx + 1}`
+              roleKey: `holding_entity_${idx + 1}`,
+              title: `Rechtspersoon ${idx + 1}`,
+              name: item.naam || `Holding aandeelhouder ${idx + 1}`
             });
           });
+          if (!areHoldingDirectorsSameAsShareholders()) {
+            managers.holdingDirectors.getData().forEach((item, idx) => {
+              if (item.type !== 'rp') return;
+              if (isNewlyEstablishedHoldingName(item.naam)) return;
+              pushRole({
+                roleKey: `holding_director_entity_${idx + 1}`,
+                title: `Rechtspersoon Holding bestuurder ${idx + 1}`,
+                name: item.naam || `Holding bestuurder ${idx + 1}`
+              });
+            });
+          }
         }
       }
 
-      if (withWerkmij && shouldAskWerkmijShareholders()) {
-        managers.werkmijShareholders.getData().forEach((item, idx) => {
-          if (item.type !== 'rp') return;
-          if (isNewlyEstablishedHoldingName(item.naam)) return;
-          pushRole({
-            roleKey: `werkmij_entity_${idx + 1}`,
-            title: `Rechtspersoon Werkmij ${idx + 1}`,
-            name: item.naam || `Werkmij aandeelhouder ${idx + 1}`
+      if (withWerkmij) {
+        if (isWerkmijTabsEnabled()) {
+          getWerkmijDetailsForRoles().forEach((detail, tabIdx) => {
+            if (shouldAskWerkmijShareholders()) {
+              (detail.shareholders || []).forEach((item, idx) => {
+                if (item.type !== 'rp') return;
+                if (isNewlyEstablishedHoldingName(item.naam)) return;
+                pushRole({
+                  roleKey: `werkmij_${tabIdx + 1}_entity_${idx + 1}`,
+                  title: `Rechtspersoon BV ${tabIdx + 1}.${idx + 1}`,
+                  name: item.naam || `BV ${tabIdx + 1} aandeelhouder ${idx + 1}`
+                });
+              });
+            }
+            if (detail.directorsSameAsShareholders === true) return;
+            (detail.directors || []).forEach((item, idx) => {
+              if (item.type !== 'rp') return;
+              if (isNewlyEstablishedHoldingName(item.naam)) return;
+              pushRole({
+                roleKey: `werkmij_${tabIdx + 1}_director_entity_${idx + 1}`,
+                title: `Rechtspersoon BV ${tabIdx + 1} bestuurder ${idx + 1}`,
+                name: item.naam || `BV ${tabIdx + 1} bestuurder ${idx + 1}`
+              });
+            });
           });
-        });
-      }
+        } else {
+          if (shouldAskWerkmijShareholders()) {
+            managers.werkmijShareholders.getData().forEach((item, idx) => {
+              if (item.type !== 'rp') return;
+              if (isNewlyEstablishedHoldingName(item.naam)) return;
+              pushRole({
+                roleKey: `werkmij_entity_${idx + 1}`,
+                title: `Rechtspersoon Werkmij ${idx + 1}`,
+                name: item.naam || `Werkmij aandeelhouder ${idx + 1}`
+              });
+            });
+          }
 
-      if (withWerkmij && !areWerkmijDirectorsSameAsShareholders()) {
-        managers.werkmijDirectors.getData().forEach((item, idx) => {
-          if (item.type !== 'rp') return;
-          if (isNewlyEstablishedHoldingName(item.naam)) return;
-          pushRole({
-            roleKey: `werkmij_director_entity_${idx + 1}`,
-            title: `Rechtspersoon Werkmij bestuurder ${idx + 1}`,
-            name: item.naam || `Werkmij bestuurder ${idx + 1}`
-          });
-        });
+          if (!areWerkmijDirectorsSameAsShareholders()) {
+            managers.werkmijDirectors.getData().forEach((item, idx) => {
+              if (item.type !== 'rp') return;
+              if (isNewlyEstablishedHoldingName(item.naam)) return;
+              pushRole({
+                roleKey: `werkmij_director_entity_${idx + 1}`,
+                title: `Rechtspersoon Werkmij bestuurder ${idx + 1}`,
+                name: item.naam || `Werkmij bestuurder ${idx + 1}`
+              });
+            });
+          }
+        }
       }
 
       let cursor = 0;
@@ -4252,6 +4687,10 @@
     }
 
     function updateConditionalSections() {
+      if (!suppressTabStateSync) {
+        persistActiveHoldingTabDetails();
+        persistActiveWerkmijTabDetails();
+      }
       const withWerkmij = document.getElementById('hasWorkmaatschappij').value === 'ja';
       const ownershipField = document.getElementById('existingHoldingOwner');
       const vofPlusHoldingFlow = isVofPlusHoldingFlow();
@@ -4303,11 +4742,13 @@
       if (holdingPrimaryCompanyRow) holdingPrimaryCompanyRow.style.display = (showVofHoldingTabs || showBvHoldingTabs) ? 'none' : '';
       if (holdingPrimaryMailField) holdingPrimaryMailField.style.display = (showVofHoldingTabs || showBvHoldingTabs) ? 'none' : '';
       if (showVofHoldingTabs || showBvHoldingTabs) ensureVofHoldingSections();
+      else restoreHoldingTabScopedFieldsToCardBody();
 
       if (werkmijMultiSectionsWrap) werkmijMultiSectionsWrap.style.display = showWerkmijTabs ? '' : 'none';
       if (werkmijPrimaryCompanyRow) werkmijPrimaryCompanyRow.style.display = showWerkmijTabs ? 'none' : '';
       if (werkmijPrimaryMailField) werkmijPrimaryMailField.style.display = showWerkmijTabs ? 'none' : '';
       if (showWerkmijTabs) ensureWerkmijSections();
+      else restoreWerkmijTabScopedFieldsToCardBody();
 
       document.getElementById('holdingCard').style.display = showHolding ? '' : 'none';
       if (!showHolding) document.getElementById('holdingCard').classList.add('collapsed');
@@ -4757,6 +5198,12 @@
       existingData = payload.data || {};
       rechtspersoonFileStore = {};
       vofOwnerIntentieFileStore = {};
+      holdingTabDetailsStore = Array.isArray(existingData.holdingEntityDetails)
+        ? existingData.holdingEntityDetails.map(item => ({ ...defaultHoldingTabDetail(), ...(item || {}) }))
+        : [];
+      werkmijTabDetailsStore = Array.isArray(existingData.werkmijEntityDetails)
+        ? existingData.werkmijEntityDetails.map(item => ({ ...defaultWerkmijTabDetail(), ...(item || {}) }))
+        : [];
 
       const savedExtraOwnerRows = Array.isArray(existingData.omzettingExtraEigenarenIntentieDocs)
         ? existingData.omzettingExtraEigenarenIntentieDocs
@@ -4898,10 +5345,13 @@
       const showHolding = !withWerkmij || ownershipMode !== 'existing-only';
       const holdingSameDirectors = basic.holdingDirectorsSameAsShareholders === true || basic.holdingDirectorsSameAsShareholders === 'ja';
       const werkmijSameDirectors = basic.werkmijDirectorsSameAsShareholders === true || basic.werkmijDirectorsSameAsShareholders === 'ja';
-      const holdingAandeelhouders = managers.holdingShareholders.getData();
-      const holdingBestuurders = managers.holdingDirectors.getData();
-      const werkmijAandeelhouders = withWerkmij && shouldAskWerkmijShareholders() ? managers.werkmijShareholders.getData() : [];
-      const werkmijBestuurders = managers.werkmijDirectors.getData();
+      if (isHoldingTabsEnabled()) persistActiveHoldingTabDetails();
+      if (isWerkmijTabsEnabled()) persistActiveWerkmijTabDetails();
+
+      let holdingAandeelhouders = managers.holdingShareholders.getData();
+      let holdingBestuurders = managers.holdingDirectors.getData();
+      let werkmijAandeelhouders = withWerkmij && shouldAskWerkmijShareholders() ? managers.werkmijShareholders.getData() : [];
+      let werkmijBestuurders = managers.werkmijDirectors.getData();
       const bestaandHoldingBestuurders = managers.bestaandHoldingDirectors.getData();
       const naturalPersons = collectNaturalPersons();
       const rechtspersonen = collectRechtspersonen();
@@ -4936,6 +5386,30 @@
             telefoon: basic.werkmijTelefoon || '',
             mailadres: basic.werkmijMailadres || ''
           }];
+
+      const holdingEntityDetails = (showHolding && (isVofPlusHoldingFlow() || isBvHoldingFlow()))
+        ? holdingEntities.map((_, idx) => ({
+            ...defaultHoldingTabDetail(),
+            ...(holdingTabDetailsStore[idx] || {})
+          }))
+        : [];
+
+      const werkmijEntityDetails = (withWerkmij && isBvHoldingFlow())
+        ? werkmijEntities.map((_, idx) => ({
+            ...defaultWerkmijTabDetail(),
+            ...(werkmijTabDetailsStore[idx] || {})
+          }))
+        : [];
+
+      if (holdingEntityDetails.length) {
+        holdingAandeelhouders = Array.isArray(holdingEntityDetails[0].shareholders) ? holdingEntityDetails[0].shareholders : [];
+        holdingBestuurders = Array.isArray(holdingEntityDetails[0].directors) ? holdingEntityDetails[0].directors : [];
+      }
+      if (werkmijEntityDetails.length) {
+        werkmijAandeelhouders = Array.isArray(werkmijEntityDetails[0].shareholders) ? werkmijEntityDetails[0].shareholders : [];
+        werkmijBestuurders = Array.isArray(werkmijEntityDetails[0].directors) ? werkmijEntityDetails[0].directors : [];
+      }
+
       const firstHolding = holdingEntities[0] || null;
       const firstWerkmij = werkmijEntities[0] || null;
 
@@ -4963,8 +5437,10 @@
         spoed: (basic.behandelingType === 'spoed' || dossierOprichtingType === 'bv-spoed') ? 'spoed' : 'standaard',
         holdingAandeelhouders: showHolding ? holdingAandeelhouders : [],
         holdingEntities: showHolding ? holdingEntities : [],
+        holdingEntityDetails: showHolding ? holdingEntityDetails : [],
         holdingBestuurders: (showHolding && !holdingSameDirectors) ? holdingBestuurders : [],
         werkmijEntities: withWerkmij ? werkmijEntities : [],
+        werkmijEntityDetails: withWerkmij ? werkmijEntityDetails : [],
         werkmijAandeelhouders,
         werkmijBestuurders: (withWerkmij && !werkmijSameDirectors) ? werkmijBestuurders : [],
         bestaandHoldingBestuurders,
@@ -5187,10 +5663,13 @@
         if (payload.hasWorkmaatschappij === 'ja' && !payload.werkmijNaamBedrijf) {
           return showFormError('Vul de naam van de werkmaatschappij in.', 'input[name="werkmijNaamBedrijf"]');
         }
-        if (payload.hasWorkmaatschappij === 'ja' && !isOmzettingFlow() && !String(payload.werkmijActiviteiten || '').trim()) {
+        const hasHoldingTabDetails = Array.isArray(payload.holdingEntityDetails) && payload.holdingEntityDetails.length > 0;
+        const hasWerkmijTabDetails = Array.isArray(payload.werkmijEntityDetails) && payload.werkmijEntityDetails.length > 0;
+
+        if (payload.hasWorkmaatschappij === 'ja' && !isOmzettingFlow() && !hasWerkmijTabDetails && !String(payload.werkmijActiviteiten || '').trim()) {
           return showFormError('Vul het doel van de BV in (wat de BV gaat doen).', 'textarea[name="werkmijActiviteiten"]');
         }
-        if (payload.hasWorkmaatschappij === 'ja') {
+        if (payload.hasWorkmaatschappij === 'ja' && !hasWerkmijTabDetails) {
           const hasKvkRegistration = true; // optional — both unchecked is allowed
 
           const hasDetailhandel = !!payload.detailWinkel || !!payload.detailMarkt || !!payload.detailStraat || !!payload.detailInternet || !!payload.detailHuis || !!payload.detailPostorder || !!payload.detailOthers;
@@ -5199,6 +5678,22 @@
           }
           if (!payload.werkmijGroothandel) {
             return showFormError('Kies of de onderneming producten verkoopt aan andere ondernemingen (groothandel).', 'select[name="werkmijGroothandel"]');
+          }
+        }
+
+        if (payload.hasWorkmaatschappij === 'ja' && hasWerkmijTabDetails && !isOmzettingFlow()) {
+          for (let i = 0; i < payload.werkmijEntityDetails.length; i += 1) {
+            const detail = payload.werkmijEntityDetails[i] || {};
+            if (!String(detail.activiteiten || '').trim()) {
+              return showFormError('Vul het doel van BV ' + (i + 1) + ' in (wat de BV gaat doen).', '#werkmijMultiSectionsWrap');
+            }
+            const hasDetailhandel = !!detail.detailWinkel || !!detail.detailMarkt || !!detail.detailStraat || !!detail.detailInternet || !!detail.detailHuis || !!detail.detailPostorder || !!detail.detailOthers;
+            if (!hasDetailhandel) {
+              return showFormError('Kies minimaal één optie bij Detailhandel voor BV ' + (i + 1) + '.', '#werkmijMultiSectionsWrap');
+            }
+            if (!String(detail.groothandel || '').trim()) {
+              return showFormError('Kies bij BV ' + (i + 1) + ' of de onderneming producten verkoopt aan andere ondernemingen (groothandel).', '#werkmijMultiSectionsWrap');
+            }
           }
         }
 
@@ -5237,18 +5732,43 @@
         }
 
         if (showHolding) {
-          const holdPctError = validateShareholderPercentages(payload.holdingAandeelhouders, 'Holding aandeelhouders');
-          if (holdPctError) return showFormError(holdPctError, '#holdingShareholders [data-field="percentage"]');
-          if (payload.holdingAandeelhouders.length > MAX_SHAREHOLDERS_PER_ENTITY) {
-            return showFormError('Maximaal ' + MAX_SHAREHOLDERS_PER_ENTITY + ' aandeelhouders toegestaan voor de nieuwe holding.', '#holdingShareholders');
+          if (hasHoldingTabDetails) {
+            for (let i = 0; i < payload.holdingEntityDetails.length; i += 1) {
+              const detail = payload.holdingEntityDetails[i] || {};
+              const rows = Array.isArray(detail.shareholders) ? detail.shareholders : [];
+              const holdPctError = validateShareholderPercentages(rows, 'Holding ' + (i + 1) + ' aandeelhouders');
+              if (holdPctError) return showFormError(holdPctError, '#holdingMultiSectionsWrap');
+              if (rows.length > MAX_SHAREHOLDERS_PER_ENTITY) {
+                return showFormError('Maximaal ' + MAX_SHAREHOLDERS_PER_ENTITY + ' aandeelhouders toegestaan voor Holding ' + (i + 1) + '.', '#holdingMultiSectionsWrap');
+              }
+            }
+          } else {
+            const holdPctError = validateShareholderPercentages(payload.holdingAandeelhouders, 'Holding aandeelhouders');
+            if (holdPctError) return showFormError(holdPctError, '#holdingShareholders [data-field="percentage"]');
+            if (payload.holdingAandeelhouders.length > MAX_SHAREHOLDERS_PER_ENTITY) {
+              return showFormError('Maximaal ' + MAX_SHAREHOLDERS_PER_ENTITY + ' aandeelhouders toegestaan voor de nieuwe holding.', '#holdingShareholders');
+            }
           }
         }
 
-        if (payload.hasWorkmaatschappij === 'ja' && payload.werkmijAandeelhouders.length) {
-          const workPctError = validateShareholderPercentages(payload.werkmijAandeelhouders, 'Werkmij aandeelhouders');
-          if (workPctError) return showFormError(workPctError, '#werkmijShareholders [data-field="percentage"]');
-          if (payload.werkmijAandeelhouders.length > MAX_SHAREHOLDERS_PER_ENTITY) {
-            return showFormError('Maximaal ' + MAX_SHAREHOLDERS_PER_ENTITY + ' aandeelhouders toegestaan voor de nieuwe BV.', '#werkmijShareholders');
+        if (payload.hasWorkmaatschappij === 'ja') {
+          if (hasWerkmijTabDetails) {
+            for (let i = 0; i < payload.werkmijEntityDetails.length; i += 1) {
+              const detail = payload.werkmijEntityDetails[i] || {};
+              const rows = Array.isArray(detail.shareholders) ? detail.shareholders : [];
+              if (!rows.length) continue;
+              const workPctError = validateShareholderPercentages(rows, 'BV ' + (i + 1) + ' aandeelhouders');
+              if (workPctError) return showFormError(workPctError, '#werkmijMultiSectionsWrap');
+              if (rows.length > MAX_SHAREHOLDERS_PER_ENTITY) {
+                return showFormError('Maximaal ' + MAX_SHAREHOLDERS_PER_ENTITY + ' aandeelhouders toegestaan voor BV ' + (i + 1) + '.', '#werkmijMultiSectionsWrap');
+              }
+            }
+          } else if (payload.werkmijAandeelhouders.length) {
+            const workPctError = validateShareholderPercentages(payload.werkmijAandeelhouders, 'Werkmij aandeelhouders');
+            if (workPctError) return showFormError(workPctError, '#werkmijShareholders [data-field="percentage"]');
+            if (payload.werkmijAandeelhouders.length > MAX_SHAREHOLDERS_PER_ENTITY) {
+              return showFormError('Maximaal ' + MAX_SHAREHOLDERS_PER_ENTITY + ' aandeelhouders toegestaan voor de nieuwe BV.', '#werkmijShareholders');
+            }
           }
         }
 
