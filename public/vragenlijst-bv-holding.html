@@ -1994,7 +1994,7 @@
         this.container.innerHTML = this.data.map((row, idx) => {
           const forceNaturalOnly = shouldForceNaturalPersonShareholderType(this.baseKey);
           const effectiveType = forceNaturalOnly ? 'np' : (row.type || 'np');
-          const canLinkHolding = this.baseKey === 'werkmijAandeelhouder' && isBvHoldingFlow();
+          const canLinkHolding = (this.baseKey === 'werkmijAandeelhouder' || this.baseKey === 'werkmijBestuurder') && isBvHoldingFlow();
           const holdingOptions = canLinkHolding ? getHoldingNameOptions() : [];
           const linkedShareholders = this.allowSameAsShareholder ? this.getLinkedShareholders() : [];
           const hasLinkedShareholders = linkedShareholders.length > 0;
