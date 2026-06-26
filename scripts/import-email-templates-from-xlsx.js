@@ -50,9 +50,76 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;');
 }
 
+function linkifyText(s) {
+  const escaped = escapeHtml(String(s || ''));
+  return escaped.replace(/(https?:\/\/[^\s<]+)/gi, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
+}
+
+function isBulletLine(line) {
+  const t = String(line || '').trim();
+  return /^([•\-*]|\d+[.)])\s+/.test(t);
+}
+
+function stripBulletPrefix(line) {
+  return String(line || '').trim().replace(/^([•\-*]|\d+[.)])\s+/, '').trim();
+}
+
 function textToHtmlBody(text) {
   const normalized = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
-  return escapeHtml(normalized).replace(/\n/g, '<br>');
+  if (!normalized) return '';
+
+  const lines = normalized.split('\n').map((l) => l.trimEnd());
+  const blocks = [];
+  let current = [];
+
+  for (const line of lines) {
+    if (!line.trim()) {
+      if (current.length) {
+        blocks.push(current);
+        current = [];
+      }
+      continue;
+    }
+    current.push(line);
+  }
+  if (current.length) blocks.push(current);
+
+  function flushParagraph(parts, linesBuffer) {
+    if (!linesBuffer.length) return;
+    const paragraph = linesBuffer.map((line) => linkifyText(line.trim())).join('<br>');
+    parts.push(`<p>${paragraph}</p>`);
+    linesBuffer.length = 0;
+  }
+
+  function flushList(parts, bulletsBuffer) {
+    if (!bulletsBuffer.length) return;
+    const lis = bulletsBuffer.map((line) => `<li>${linkifyText(stripBulletPrefix(line))}</li>`).join('');
+    parts.push(`<ul>${lis}</ul>`);
+    bulletsBuffer.length = 0;
+  }
+
+  const htmlParts = [];
+  for (const block of blocks) {
+    const paraLines = [];
+    const bulletLines = [];
+
+    for (const line of block) {
+      if (isBulletLine(line)) {
+        flushParagraph(htmlParts, paraLines);
+        bulletLines.push(line);
+      } else {
+        flushList(htmlParts, bulletLines);
+        paraLines.push(line);
+      }
+    }
+
+    flushParagraph(htmlParts, paraLines);
+    flushList(htmlParts, bulletLines);
+  }
+
+  return htmlParts.join('');
 }
 
 function readTemplatesFromXlsx(filePath) {
