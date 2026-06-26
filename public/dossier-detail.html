@@ -94,6 +94,13 @@
     .em-tb-btn.active { background: #DDE5F4; color: #1A3B70; }
     .em-tb-sep { width: 1px; height: 18px; background: #DDE5F4; margin: 0 3px; flex-shrink: 0; }
     .em-editor { padding: 10px 12px; min-height: 150px; font-size: .9rem; font-family: inherit; color: #0F1D3A; outline: none; line-height: 1.75; }
+    .em-editor p { margin: 0 0 12px; }
+    .em-editor p:last-child { margin-bottom: 0; }
+    .em-editor ul,
+    .em-editor ol { margin: 0 0 12px 18px; padding-left: 14px; }
+    .em-editor li { margin: 0 0 6px; }
+    .em-editor li:last-child { margin-bottom: 0; }
+    .em-editor a { color: #1D4ED8; text-decoration: underline; }
     .em-editor:empty:before { content: attr(placeholder); color: #94A3B8; pointer-events: none; }
     .em-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid #EEF2FF; }
     .em-footer button { padding: 10px 22px; border-radius: 8px; font-size: .88rem; font-weight: 600; cursor: pointer; font-family: inherit; border: none; }
@@ -1698,9 +1705,9 @@ async function openEmailModal(opts = {}) {
   currentEmailMode = opts.mode || 'compose';
   document.getElementById('emTo').value = opts.to || currentDossier?.clientEmail || '';
   document.getElementById('emSubject').value = opts.subject || '';
-  document.getElementById('emBodyEditor').innerHTML = opts.bodyText
-    ? opts.bodyText.replace(/\n/g, '<br>')
-    : (opts.bodyHtml || '');
+  document.getElementById('emBodyEditor').innerHTML = opts.bodyHtml
+    ? opts.bodyHtml
+    : ((opts.bodyText || '').replace(/\n/g, '<br>'));
   // Swap footer
   document.getElementById('emFooterCompose').style.display = isStatus ? 'none' : 'flex';
   document.getElementById('emFooterStatus').style.display  = isStatus ? 'flex' : 'none';
