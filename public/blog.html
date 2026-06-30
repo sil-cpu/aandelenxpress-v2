@@ -69,21 +69,6 @@
         </div>
     </section>
 
-    <!-- FILTER BAR -->
-    <section class="blog-page-filter-bar">
-        <div class="container">
-            <div class="blog-filter-tabs" id="blogFilterTabs">
-                <button class="blog-filter-btn active" data-cat="all">Alle artikelen</button>
-                <button class="blog-filter-btn" data-cat="bv-oprichting">BV-oprichting</button>
-                <button class="blog-filter-btn" data-cat="holding">Holding</button>
-                <button class="blog-filter-btn" data-cat="fiscaal">Fiscaal</button>
-                <button class="blog-filter-btn" data-cat="digitalisering">Digitalisering</button>
-                <button class="blog-filter-btn" data-cat="wetgeving">Wetgeving</button>
-                <button class="blog-filter-btn" data-cat="jurisprudentie">Jurisprudentie</button>
-            </div>
-        </div>
-    </section>
-
     <!-- BLOG GRID -->
     <section class="blog-page-section">
         <div class="container">
@@ -252,8 +237,6 @@
             // Featured post
             const featured = allPosts.find(p => p.featured) || allPosts[0];
             if (featured) {
-                const catsList = (featured.categories || []).map(c => `<span class="blog-tag">${c}</span>`).join('');
-                const catsData = (featured.categories || []).join(' ').toLowerCase();
                 const excerpt = featured.excerpt || featured.content.substring(0, 150).replace(/<[^>]*>/g, '');
                 const date = new Date(featured.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
                 const initials = featured.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -262,12 +245,11 @@
                 const image = featured.image || '/assets/blog-featured.jpg';
                 
                 const featured_html = `
-                    <article class="blog-card blog-card-featured" data-cats="${catsData}">
+                    <article class="blog-card blog-card-featured">
                         <a href="${href}" class="blog-card-featured-image-wrap" aria-label="${featured.title}">
                             <img class="blog-card-featured-image" src="${image}" alt="${featured.title}" loading="eager">
                         </a>
                         <div class="blog-card-inner">
-                            <div class="blog-card-tags">${catsList}</div>
                             <div class="blog-card-body">
                                 <h2>${featured.title}</h2>
                                 <p>${excerpt}</p>
@@ -289,8 +271,6 @@
             // Other posts
             const others = allPosts.filter(p => p !== featured);
             const grid_html = others.map(post => {
-                const catsList = (post.categories || []).map(c => `<span class="blog-tag">${c}</span>`).join('');
-                const catsData = (post.categories || []).join(' ').toLowerCase();
                 const excerpt = post.excerpt || post.content.substring(0, 150).replace(/<[^>]*>/g, '');
                 const date = new Date(post.createdAt).toLocaleDateString('nl-NL', {day: 'numeric', month: 'long', year: 'numeric'});
                 const initials = post.author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -298,12 +278,11 @@
                 const href = resolvePostUrl(post);
                 const image = post.image || '/assets/blog-holding.jpg';
                 return `
-                    <article class="blog-card" data-cats="${catsData}">
+                    <article class="blog-card">
                         <a href="${href}" class="blog-card-media-wrap" aria-label="${post.title}">
                             <img class="blog-card-media" src="${image}" alt="${post.title}" loading="lazy">
                         </a>
                         <div class="blog-card-inner">
-                            <div class="blog-card-tags">${catsList}</div>
                             <div class="blog-card-body">
                                 <h3>${post.title}</h3>
                                 <p>${excerpt}</p>
@@ -321,27 +300,7 @@
                 `;
             }).join('');
             document.getElementById('blogGrid').innerHTML = grid_html;
-            
-            // Apply filter
-            filterBlog('all');
         }
-        
-        function filterBlog(category) {
-            const cards = document.querySelectorAll('.blog-page-grid .blog-card, #featuredContainer .blog-card');
-            cards.forEach(card => {
-                const cats = card.dataset.cats || '';
-                card.style.display = (category === 'all' || cats.includes(category)) ? '' : 'none';
-            });
-        }
-        
-        // Filter buttons
-        document.querySelectorAll('.blog-filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.blog-filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                filterBlog(btn.dataset.cat);
-            });
-        });
         
         // Load posts on page load
         loadBlogPosts();
