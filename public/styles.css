@@ -3999,6 +3999,12 @@ ul { list-style: none; }
     white-space: nowrap;
 }
 
+/* Keep featured summary text readable on dark image overlays */
+.blog-card.blog-card-featured p {
+    color: rgba(255,255,255,0.92);
+    text-shadow: 0 1px 12px rgba(0,0,0,0.45);
+}
+
 /* Ensure featured read-more keeps high contrast on dark overlay */
 .blog-card.blog-card-featured .blog-readmore {
     color: rgba(255,255,255,0.95);
