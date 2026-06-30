@@ -3468,7 +3468,7 @@ ul { list-style: none; }
 .home-testimonial-band-cite-text strong { font-size: 0.875rem; color: var(--dark); display: block; }
 .home-testimonial-band-cite-text span   { font-size: 0.78rem; color: var(--grey-mid); }
 .home-testimonial-band-visual { display: flex; flex-direction: column; gap: 16px; }
-.home-testimonial-band-stat { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 20px 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); }
+.home-testimonial-band-stat { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 20px 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); }
 .home-testimonial-band-stat-val   { font-size: 2.2rem; font-weight: 900; color: var(--brand); line-height: 1; flex-shrink: 0; }
 .home-testimonial-band-stat-label { font-size: 0.82rem; color: var(--grey-mid); line-height: 1.4; }
 
