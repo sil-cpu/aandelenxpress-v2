@@ -8,27 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .login-brand { justify-content: flex-start; }
-        .register-back-btn {
-            margin-top: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 46px;
-            padding: 0 20px;
-            border: 1px solid rgba(168, 197, 224, 0.5);
-            border-radius: 10px;
-            color: #E5EEF9;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.92rem;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        .register-back-btn:hover {
-            background: rgba(168, 197, 224, 0.1);
-            border-color: rgba(168, 197, 224, 0.85);
-        }
-        .login-form-side { justify-content: flex-start; overflow-y: auto; align-items: flex-start; padding: 60px 48px; }
+        .login-form-side { overflow-y: auto; align-items: flex-start; padding: 60px 48px; }
         .login-form-box { max-width: 540px; }
         .intake-section {
             margin: 28px 0 4px;
@@ -204,7 +184,6 @@
                     Aanmelding beoordeeld binnen 1 werkdag
                 </div>
             </div>
-            <a href="/" class="register-back-btn">&larr; Terug naar website</a>
         </div>
 
         <!-- Right form panel -->
@@ -430,7 +409,7 @@
                     Al een account? <a href="/login" style="color:#1A3B70; font-weight:600;">Inloggen</a>
                 </p>
                 <p class="login-footer-note">
-                    <a href="#" onclick="history.back(); return false;">&larr; Terug</a> &nbsp;&middot;&nbsp; Terug naar <a href="/">aandelenxpress.nl</a>
+                    Terug naar <a href="/">aandelenxpress.nl</a>
                 </p>
 
             </div>
@@ -445,8 +424,6 @@
         // ── Info tooltips ──────────────────────────────────────────────────────
         const TIPS = {
             kvk:                    '8-cijferig registratienummer bij de Kamer van Koophandel. Te vinden op kvk.nl of uw KvK-uittreksel.',
-            rechtsvorm:             'De juridische structuur van uw kantoor (bijv. BV, maatschap). Bepaalt de aansprakelijkheid en tekenbevoegdheid.',
-            groepsstructuur:        'Is uw kantoor onderdeel van een concern of holding? Bijv. een werk-BV onder een holdingmaatschappij.',
             bestuurder:             'De statutair bestuurder is ingeschreven bij de KvK en mag het kantoor juridisch vertegenwoordigen. Staat vermeld op uw KvK-uittreksel.',
             bevoegdheid:            'Zelfstandig = één bestuurder mag alleen tekenen. Gezamenlijk (allen) = alle bestuurders moeten samen tekenen. Gezamenlijk (twee van meerdere) = twee van de genoemde bestuurders moeten samen tekenen.',
             volmacht:               'Mogen medewerkers (geen bestuurder) namens het kantoor dossiers indienen of documenten ondertekenen? Een volmacht legt dit schriftelijk vast.',
@@ -545,9 +522,6 @@
             if (el) el.style.display = show ? 'block' : 'none';
         }
 
-        document.querySelectorAll('input[name="groepsstructuur"]').forEach(r =>
-            r.addEventListener('change', () => toggle('field-groepsstructuur-toelichting', r.value === 'Ja' && r.checked))
-        );
         document.querySelectorAll('input[name="volmacht"]').forEach(r =>
             r.addEventListener('change', () => toggle('field-gemachtigde', r.value !== 'Nee' && r.checked))
         );
@@ -630,10 +604,7 @@
                 password2: document.getElementById('password2').value,
                 intake_data: {
                     // Kantoorgegevens
-                    rechtsvorm:                     v('rechtsvorm'),
                     // A. Juridisch
-                    groepsstructuur:                r('groepsstructuur'),
-                    groepsstructuur_toelichting:    v('groepsstructuur_toelichting'),
                     bestuurder:                     v('bestuurder'),
                     bevoegdheid:                    r('bevoegdheid'),
                     volmacht:                       r('volmacht'),
