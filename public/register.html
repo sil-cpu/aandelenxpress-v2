@@ -145,6 +145,29 @@
         @media (max-width: 768px) {
             .login-form-side { padding: 40px 24px; }
         }
+        .login-brand-actions {
+            margin-top: 26px;
+        }
+        .login-brand-back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(138, 174, 216, 0.5);
+            color: #cfe0f5;
+            background: rgba(255, 255, 255, 0.04);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .login-brand-back-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(168, 197, 224, 0.85);
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +206,9 @@
                     </div>
                     Aanmelding beoordeeld binnen 1 werkdag
                 </div>
+            </div>
+            <div class="login-brand-actions">
+                <a href="/" class="login-brand-back-link">Ga terug naar website</a>
             </div>
         </div>
 

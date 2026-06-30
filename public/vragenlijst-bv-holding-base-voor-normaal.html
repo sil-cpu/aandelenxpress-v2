@@ -386,14 +386,6 @@
                   <option value="nee">Nee</option>
                 </select>
               </div>
-              <div class="field">
-                <label>Behandeling</label>
-                <select name="behandelingType">
-                  <option value="">Maak keuze</option>
-                  <option value="standaard">Standaard</option>
-                  <option value="spoed">Spoed</option>
-                </select>
-              </div>
               <div class="field" id="existingHoldingQuestionWrap">
                 <label>Wordt een bestaande holding eigenaar van de werkmaatschappij?</label>
                 <select id="existingHoldingOwner" name="existingHoldingOwner">
@@ -439,8 +431,8 @@
 
             <div class="group-title">Boekkeeper/Accountant</div>
             <div class="row">
-              <div class="field"><label>Naam van het kantoor</label><input name="holdingAccountantNaam"></div>
-              <div class="field"><label>Naam van de contactpersoon</label><input name="holdingAccountantContact"></div>
+              <div class="field"><label>Naam accountantskantoor</label><input name="holdingAccountantNaam"></div>
+              <div class="field"><label>Contactpersoon</label><input name="holdingAccountantContact"></div>
               <div class="field"><label>Telefoonnummer</label><input name="holdingAccountantTelefoon"></div>
               <div class="field"><label>Mailadres</label><input name="holdingAccountantMail" type="email"></div>
             </div>
@@ -518,8 +510,8 @@
 
             <div class="group-title">Boekkeeper/Accountant</div>
             <div class="row">
-              <div class="field"><label>Naam van het kantoor</label><input name="werkmijAccountantNaam"></div>
-              <div class="field"><label>Naam van de contactpersoon</label><input name="werkmijAccountantContact"></div>
+              <div class="field"><label>Naam accountantskantoor</label><input name="werkmijAccountantNaam"></div>
+              <div class="field"><label>Contactpersoon</label><input name="werkmijAccountantContact"></div>
               <div class="field"><label>Telefoonnummer</label><input name="werkmijAccountantTelefoon"></div>
               <div class="field"><label>Mailadres</label><input name="werkmijAccountantMail" type="email"></div>
             </div>
@@ -554,11 +546,11 @@
 
             <div class="group-title">KVK inschrijving</div>
             <div class="check-row">
-              <label><input type="checkbox" name="werkmijImport"> Importeert de vestiging producten?</label>
-              <label><input type="checkbox" name="werkmijExport"> Exporteert de vestiging producten?</label>
+              <label><input type="checkbox" name="werkmijImport"> Gaat u producten importeren?</label>
+              <label><input type="checkbox" name="werkmijExport"> Gaat u producten exporteren?</label>
             </div>
 
-            <div class="group-title">Detailhandel</div>
+            <div class="group-title">Verkoopt de onderneming producten aan consumenten? (detailhandel)</div>
             <div class="check-row">
               <label><input type="checkbox" name="detailWinkel"> In winkel of kiosk</label>
               <label><input type="checkbox" name="detailMarkt"> Op de markt</label>
@@ -569,7 +561,7 @@
               <label><input type="checkbox" name="detailOthers"> Others</label>
             </div>
 
-            <div class="field" style="margin-top: 9px;"><label>Verkoopt de onderneming producten aan andere ondernemingen? (groothandel)</label><select name="werkmijGroothandel"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
+            <div class="field" style="margin-top: 9px;"><label>Groothandel: verkoopt u aan andere ondernemingen?</label><select name="werkmijGroothandel"><option value="">Maak keuze</option><option value="ja">Ja</option><option value="nee">Nee</option></select></div>
 
             <div class="group-title">Personeel</div>
             <div class="row">
@@ -635,7 +627,7 @@
               </div>
 
               <div class="file-box" id="personeelsplanZone">
-                <label class="file-label">Bedrijfsplan</label>
+                <label class="file-label">Personeelsplan / bedrijfsplan(nen)</label>
                 <input id="personeelsplanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
                 <div class="file-meta">PDF, JPG, PNG - max 10 MB</div>
                 <div class="file-picked" id="personeelsplanSelected" style="display:none;"></div>
@@ -1157,37 +1149,8 @@
         prevBtn.disabled = idx <= 0;
         nextBtn.disabled = idx >= cards.length - 1;
         prevBtn.onclick = () => openTab(idx - 1, true);
-        nextBtn.onclick = () => {
-          const errMsg = validateCurrentTabShareholders(card);
-          if (errMsg) { showTabError(card, errMsg); return; }
-          clearTabError(card);
-          openTab(idx + 1, true);
-        };
+        nextBtn.onclick = () => openTab(idx + 1, true);
       });
-    }
-
-    function validateCurrentTabShareholders(card) {
-      const pctInputs = card.querySelectorAll('[data-repeat-item] [data-field="percentage"]');
-      if (!pctInputs.length) return null;
-      const rows = Array.from(pctInputs).map(inp => ({ percentage: inp.value }));
-      return validateShareholderPercentages(rows, 'Aandeelhouders');
-    }
-
-    function showTabError(card, msg) {
-      let el = card.querySelector('.tab-pct-error');
-      if (!el) {
-        el = document.createElement('div');
-        el.className = 'tab-pct-error';
-        el.style.cssText = 'color:#c0392b;background:#fef0f0;border:1px solid #f5c6cb;border-radius:6px;padding:10px 14px;margin:12px 0;font-size:0.9rem;font-weight:500;';
-        const nav = card.querySelector('.tab-inline-nav');
-        nav ? nav.parentNode.insertBefore(el, nav) : card.querySelector('.card-body').appendChild(el);
-      }
-      el.textContent = '⚠ ' + msg;
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    function clearTabError(card) {
-      card.querySelector('.tab-pct-error')?.remove();
     }
 
     function openTab(index, shouldScroll) {

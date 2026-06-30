@@ -3999,6 +3999,15 @@ ul { list-style: none; }
     white-space: nowrap;
 }
 
+/* Ensure featured read-more keeps high contrast on dark overlay */
+.blog-card.blog-card-featured .blog-readmore {
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 8px rgba(0,0,0,0.45);
+}
+.blog-card.blog-card-featured .blog-readmore:hover {
+    color: #ffffff;
+}
+
 @media (max-width: 960px) {
     .blog-page-grid { grid-template-columns: repeat(2, 1fr); }
     .blog-page-filter-bar { top: 68px; }

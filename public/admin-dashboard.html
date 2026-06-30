@@ -64,6 +64,13 @@
       .em-tb-btn:hover { background:#EBF2FF; }
       .em-tb-sep { width:1px;height:18px;background:#DDE5F4;margin:0 3px; }
       .em-editor { padding:10px 12px;min-height:130px;font-size:.9rem;font-family:inherit;color:#0F1D3A;outline:none;line-height:1.75; }
+      .em-editor p { margin:0 0 12px; }
+      .em-editor p:last-child { margin-bottom:0; }
+      .em-editor ul,
+      .em-editor ol { margin:0 0 12px 18px; padding-left:14px; }
+      .em-editor li { margin:0 0 6px; }
+      .em-editor li:last-child { margin-bottom:0; }
+      .em-editor a { color:#1D4ED8; text-decoration:underline; }
       .em-editor:empty:before { content:attr(placeholder);color:#94A3B8;pointer-events:none; }
       .em-footer { display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #EEF2FF; }
       .em-footer button { padding:10px 22px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;border:none; }
@@ -274,7 +281,7 @@
             <select id="dossierFilterStatus" style="padding:8px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.85rem;cursor:pointer;background:white;">
               <option value="">Alle</option>
               <option value="pending">Aanvraag ontvangen</option>
-              <option value="vragenlijst">Vragenlijst</option>
+              <option value="vragenlijst">Vragenlijst (verzonden/ontvangen)</option>
               <option value="betaling">Betaling (alle)</option>
               <option value="invoice-sent">  ↳ Factuur verzonden</option>
               <option value="invoice-paid">  ↳ Factuur betaald</option>
@@ -318,8 +325,7 @@
                 <th class="sortable" onclick="setSortColumn('type')">Type <span class="sort-indicator" id="sort-type"></span></th>
                 <th class="sortable" onclick="setSortColumn('partner')">Partner <span class="sort-indicator" id="sort-partner"></span></th>
                 <th class="sortable" onclick="setSortColumn('status')">Status <span class="sort-indicator" id="sort-status"></span></th>
-                <th class="sortable" onclick="setSortColumn('tags')">Tags <span class="sort-indicator" id="sort-tags"></span></th>
-                <th class="sortable" onclick="setSortColumn('date')">Datum <span class="sort-indicator" id="sort-date"></span></th>
+                <th class="sortable" onclick="setSortColumn('tags')">Tags <span class="sort-indicator" id="sort-tags"></span></th> <span class="sort-indicator" id="sort-date"></span></th>
                 <th class="sortable" onclick="setSortColumn('kvk')">KvK <span class="sort-indicator" id="sort-kvk"></span></th>
                 <th class="sortable" onclick="setSortColumn('contact')">Contact <span class="sort-indicator" id="sort-contact"></span></th>
                 <th class="sortable" onclick="setSortColumn('assigned')">Toegewezen aan <span class="sort-indicator" id="sort-assigned"></span></th>
@@ -1565,12 +1571,13 @@ const STATUS_GROUP_MAP = {
 
 const STATUS_BADGE_MAP = {
   'pending':             { css: 'badge-pending',             label: 'Aanvraag ontvangen' },
-  'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst' },
+  'vragenlijst':         { css: 'badge-vragenlijst',         label: 'Vragenlijst verzonden' },
+  'approved':            { css: 'badge-vragenlijst',         label: 'Vragenlijst ontvangen' },
   'wwft':                { css: 'badge-wwft',                label: 'WWFT-controle' },
   'betaling':            { css: 'badge-betaling',            label: 'Betaling' },
   'invoice-sent':        { css: 'badge-invoice-sent',        label: 'Factuur verzonden' },
   'invoice-paid':        { css: 'badge-invoice-paid',        label: 'Factuur betaald' },
-  'ocr':                 { css: 'badge-ocr',                 label: 'OCR' },
+  'ocr':                 { css: 'badge-ocr',                 label: 'OCR-verwerking' },
   'ocr-signed':          { css: 'badge-ocr-signed',          label: 'OCR ondertekend' },
   'draft-accountant':    { css: 'badge-draft-accountant',    label: 'Concept naar accountant' },
   'accountant-accepted': { css: 'badge-accountant-accepted', label: 'Goedgekeurd door accountant' },
@@ -1980,12 +1987,13 @@ const ALL_PAGES = [
 
 const ALL_STATUSES = [
   { key: 'pending',             label: 'Aanvraag ontvangen' },
-  { key: 'vragenlijst',         label: 'Vragenlijst' },
+  { key: 'vragenlijst',         label: 'Vragenlijst verzonden' },
+  { key: 'approved',            label: 'Vragenlijst ontvangen' },
   { key: 'wwft',                label: 'WWFT-controle' },
   { key: 'betaling',            label: 'Betaling' },
-  { key: 'invoice-sent',         label: 'Factuur verzonden' },
-  { key: 'invoice-paid',         label: 'Factuur betaald' },
-  { key: 'ocr',                 label: 'OCR' },
+  { key: 'invoice-sent',        label: 'Factuur verzonden' },
+  { key: 'invoice-paid',        label: 'Factuur betaald' },
+  { key: 'ocr',                 label: 'OCR-verwerking' },
   { key: 'ocr-signed',          label: 'OCR ondertekend' },
   { key: 'draft-accountant',    label: 'Concept naar accountant' },
   { key: 'accountant-accepted', label: 'Goedgekeurd door accountant' },
@@ -2000,7 +2008,6 @@ const ALL_STATUSES = [
   { key: 'complete',            label: 'Dossier afgerond' },
   { key: 'complete-review',     label: 'Reviewverzoek' },
   { key: 'rejected',            label: 'Afgewezen' },
-  { key: 'approved',            label: 'Approved' },
 ];
 
 const ALL_PRODUCTS = [
@@ -3426,7 +3433,57 @@ document.addEventListener('click', closeTagDropdown);
 // ── Email modal (status change) ─────────────────────────────
 let adminPendingStatus = null; // { nr, newStatus, clientEmail, name }
 
-function adminGetStatusEmailTemplate(status, d) {
+const STATUS_TEMPLATE_NAME_MAP_ADMIN = {
+  pending: ['Aanvraag ontvangen'],
+  vragenlijst: ['Vragenlijst verzonden'],
+  approved: ['Vragenlijst ontvangen'],
+  wwft: ['Wwft-controle', 'WWFT-controle'],
+  betaling: ['Factuur verzonden', 'Betaling in behandeling'],
+  'invoice-sent': ['Factuur verzonden'],
+  'invoice-paid': ['Factuur betaald'],
+  ocr: ['OCR-verwerking'],
+  'ocr-signed': ['OCR ondertekend'],
+  'draft-accountant': ['Concept naar accountant'],
+  'accountant-accepted': ['Goedgekeurd door accountant'],
+  'draft-client': ['Concept naar cliënt', 'Concept naar client'],
+  'client-signed': ['Ondertekend door cliënt', 'Ondertekend door client'],
+  'invitation-om': ['Uitnodiging notarisgesprek'],
+  'executed-notaris': ['Passeren van de akten'],
+  kvk: ['KvK-inschrijving'],
+  'passed-kvk': ['Inschrijving verwerkt door KvK'],
+  'making-binders': ['Closing binders opstellen'],
+  'upload-binders': ['Closing binder geüpload', 'Closing binder geupload'],
+  complete: ['Dossier afgerond'],
+  'complete-review': ['Reviewverzoek'],
+  rejected: ['Afgewezen']
+};
+
+let statusTemplateCacheAdmin = null;
+
+async function loadStatusTemplateCacheAdmin() {
+  if (statusTemplateCacheAdmin) return statusTemplateCacheAdmin;
+  try {
+    const r = await fetch('/api/email-templates');
+    if (!r.ok) return [];
+    const templates = await r.json();
+    statusTemplateCacheAdmin = templates || [];
+    return statusTemplateCacheAdmin;
+  } catch (_) {
+    return [];
+  }
+}
+
+function fillTemplatePlaceholdersAdmin(raw, d, vragenlijstUrl, statusUrl, code) {
+  const value = String(raw || '');
+  return value
+    .replace(/@@@@/g, vragenlijstUrl)
+    .replace(/@@@/g, vragenlijstUrl)
+    .replace(/\{\{VRAGENLIJST_URL\}\}/g, vragenlijstUrl)
+    .replace(/\{\{STATUS_URL\}\}/g, statusUrl)
+    .replace(/\{\{ACCESS_CODE\}\}/g, code || '');
+}
+
+async function adminGetStatusEmailTemplate(status, d) {
   const naam = (d.name || d.bedrijfsnaam || d.dossierNr || d.nr || '');
   const id   = d.dossierNr || d.nr || '';
   const origin = window.location.origin;
@@ -3434,27 +3491,45 @@ function adminGetStatusEmailTemplate(status, d) {
   const statusUrl = `${origin}/dossier-status?nr=${encodeURIComponent(id)}${tokenPart}`;
   const vragenlijstUrl = `${origin}/vragenlijst-bv-holding?nr=${encodeURIComponent(id)}&product=${encodeURIComponent(d.oprichtingType || 'bv-holding')}${tokenPart}`;
   const code = d.accessToken || '—';
+
+  const dbTemplates = await loadStatusTemplateCacheAdmin();
+  const candidateNames = STATUS_TEMPLATE_NAME_MAP_ADMIN[status] || [];
+  const dbTemplate = dbTemplates.find((tpl) => candidateNames.includes((tpl.name || '').trim()));
+  if (dbTemplate) {
+    const bodyHtml = fillTemplatePlaceholdersAdmin(dbTemplate.body || '', d, vragenlijstUrl, statusUrl, code);
+    return {
+      subject: dbTemplate.subject || `${candidateNames[0] || 'Status update'} - ${naam}`,
+      bodyHtml,
+      bodyText: (bodyHtml || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+    };
+  }
+
   const t = {
-    vragenlijst:         { subject: `Uw BV-aanvraag — vul de vragenlijst in`, body: `Goed nieuws!\n\nUw aanvraag voor de oprichting van ${naam} is geaccepteerd. De volgende stap is het invullen van de vragenlijst.\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
-    wwft:                { subject: `WWFT-controle — ${naam}`, body: `Beste klant,\n\nWij voeren een WWFT-check uit voor de oprichting van ${naam}. Wij nemen contact met u op indien aanvullende informatie nodig is.\n\nStatuspagina: ${statusUrl}` },
-    betaling:            { subject: `Betalingsverzoek — BV-oprichting ${naam}`, body: `Beste klant,\n\nDe volgende stap is de betaling voor de oprichting van ${naam}. U ontvangt binnenkort een factuur.\n\nStatuspagina: ${statusUrl}` },
-    ocr:                 { subject: `OCR verwerking gestart — ${naam}`, body: `Beste klant,\n\nWij starten de OCR-verwerking van uw documenten voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'ocr-signed':        { subject: `OCR getekend — ${naam}`, body: `Beste klant,\n\nDe OCR-documenten zijn ondertekend. Wij gaan verder met de volgende stap voor ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'draft-accountant':  { subject: `Concept klaar ter beoordeling — ${naam}`, body: `Beste accountant,\n\nEr staat een concept klaar voor uw beoordeling voor het dossier ${naam}. Wij verzoeken u dit te beoordelen.\n\nStatuspagina: ${statusUrl}` },
-    'accountant-accepted': { subject: `Concept goedgekeurd — ${naam}`, body: `Beste klant,\n\nDe accountant heeft het concept goedgekeurd voor ${naam}. Wij gaan verder met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
-    'draft-client':      { subject: `Concept ter ondertekening — ${naam}`, body: `Beste klant,\n\nHet concept voor de oprichting van ${naam} ligt klaar ter beoordeling en ondertekening.\n\nStatuspagina: ${statusUrl}` },
-    'client-signed':     { subject: `Document ondertekend — ${naam}`, body: `Beste klant,\n\nBedankt voor de ondertekening. Wij verwerken uw document voor ${naam} en gaan verder met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
-    'invitation-om':     { subject: `Uitnodiging Openbaar Ministerie — ${naam}`, body: `Beste klant,\n\nWij hebben de uitnodiging voor het Openbaar Ministerie verstuurd voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'executed-notaris':  { subject: `Notariële akte gepasseerd — ${naam}`, body: `Beste klant,\n\nDe notariële akte voor ${naam} is gepasseerd. Wij gaan nu door met de KvK-inschrijving.\n\nStatuspagina: ${statusUrl}` },
-    kvk:                 { subject: `KvK inschrijving gestart — ${naam}`, body: `Beste klant,\n\nDe notariële akte is gepasseerd. Uw BV wordt nu ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
-    'passed-kvk':        { subject: `KvK inschrijving verwerkt — ${naam}`, body: `Beste klant,\n\nUw BV ${naam} is succesvol ingeschreven bij de Kamer van Koophandel.\n\nStatuspagina: ${statusUrl}` },
-    'making-binders':    { subject: `Closing Binders worden opgesteld — ${naam}`, body: `Beste klant,\n\nWij stellen de Closing Binders op voor het dossier ${naam}.\n\nStatuspagina: ${statusUrl}` },
-    'upload-binders':    { subject: `Closing Binders beschikbaar — ${naam}`, body: `Beste klant,\n\nDe Closing Binders voor ${naam} zijn beschikbaar en geüpload naar uw dossier.\n\nStatuspagina: ${statusUrl}` },
-    complete:            { subject: `Dossier afgerond — ${naam}`, body: `Gefeliciteerd!\n\nHet dossier voor ${naam} is volledig afgerond.\n\nStatuspagina: ${statusUrl}` },
-    'complete-review':   { subject: `Dossier in eindcontrole — ${naam}`, body: `Beste klant,\n\nHet dossier voor ${naam} wordt momenteel in eindcontrole genomen.\n\nStatuspagina: ${statusUrl}` },
+    pending:             { subject: `Aanvraag ontvangen — ${naam}`, body: `Beste aanvrager,\n\nWij hebben uw aanvraag in goede orde ontvangen en zullen deze voorlopig beoordelen conform de wettelijke voorschriften. Dit duurt doorgaans 1-2 werkdagen.\n\nStatuspagina: ${statusUrl}` },
+    vragenlijst:         { subject: `Vragenlijst verzonden — ${naam}`, body: `Beste ondernemer,\n\nWilt u de vragenlijst invullen zodat wij uw dossier kunnen opstarten?\n\nVragenlijst: ${vragenlijstUrl}\nToegangscode: ${code}\nStatuspagina: ${statusUrl}` },
+    approved:            { subject: `Vragenlijst ontvangen — ${naam}`, body: `Beste ondernemer,\n\nHartelijk dank voor het invullen van de vragenlijst. Wij hebben alles in goede orde ontvangen en starten met de beoordeling.\n\nStatuspagina: ${statusUrl}` },
+    wwft:                { subject: `WWFT-controle — ${naam}`, body: `Beste ondernemer,\n\nWij voeren de WWFT-controle uit op uw dossier. Indien aanvullende informatie nodig is, nemen wij per e-mail contact met u op.\n\nStatuspagina: ${statusUrl}` },
+    betaling:            { subject: `Betaling in behandeling — ${naam}`, body: `Beste ondernemer,\n\nUw dossier staat op de betalingsstap. Zodra de betaling is verwerkt, zetten wij direct de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'invoice-sent':      { subject: `Factuur verzonden — ${naam}`, body: `Beste ondernemer,\n\nWij hebben u via Mollie een factuur gestuurd. Controleer uw e-mail en voldoe de factuur om door te gaan.\n\nStatuspagina: ${statusUrl}` },
+    'invoice-paid':      { subject: `Factuur betaald — ${naam}`, body: `Beste ondernemer,\n\nUw betaling is ontvangen. Wij gaan verder met de online identificatie en vervolgstappen.\n\nStatuspagina: ${statusUrl}` },
+    ocr:                 { subject: `OCR-verwerking — ${naam}`, body: `Beste ondernemer,\n\nUw dossier staat in OCR-verwerking. Wij verwerken de documenten en bereiden de volgende stap voor.\n\nStatuspagina: ${statusUrl}` },
+    'ocr-signed':        { subject: `OCR ondertekend — ${naam}`, body: `Beste ondernemer,\n\nDe OCR-documenten zijn ondertekend en verwerkt. Wij vervolgen het dossier.\n\nStatuspagina: ${statusUrl}` },
+    'draft-accountant':  { subject: `Concept naar accountant — ${naam}`, body: `Beste ondernemer,\n\nHet concept is gedeeld met de accountant voor beoordeling.\n\nStatuspagina: ${statusUrl}` },
+    'accountant-accepted': { subject: `Goedgekeurd door accountant — ${naam}`, body: `Beste ondernemer,\n\nDe accountant heeft het concept goedgekeurd. Wij gaan door met de volgende stap.\n\nStatuspagina: ${statusUrl}` },
+    'draft-client':      { subject: `Concept naar client — ${naam}`, body: `Beste ondernemer,\n\nU heeft een concept ontvangen ter inzage en ondertekening.\n\nStatuspagina: ${statusUrl}` },
+    'client-signed':     { subject: `Ondertekend door client — ${naam}`, body: `Beste ondernemer,\n\nBedankt, uw documenten zijn ondertekend. Wij plannen het notaristraject in.\n\nStatuspagina: ${statusUrl}` },
+    'invitation-om':     { subject: `Uitnodiging notarisgesprek — ${naam}`, body: `Beste ondernemer,\n\nU bent uitgenodigd voor het notarisgesprek. Na bevestiging ontvangt u de vergaderlink.\n\nStatuspagina: ${statusUrl}` },
+    'executed-notaris':  { subject: `Passeren van de akten — ${naam}`, body: `Beste ondernemer,\n\nDe akte is gepasseerd. Juridisch is uw BV nu officieel opgericht. Wij verzorgen nu de KvK-inschrijving.\n\nStatuspagina: ${statusUrl}` },
+    kvk:                 { subject: `KvK-inschrijving — ${naam}`, body: `Beste ondernemer,\n\nWij hebben uw vennootschap ingediend bij de Kamer van Koophandel voor registratie.\n\nStatuspagina: ${statusUrl}` },
+    'passed-kvk':        { subject: `Inschrijving verwerkt door KvK — ${naam}`, body: `Beste ondernemer,\n\nDe KvK-inschrijving is verwerkt. Wij ronden de laatste dossierstappen af.\n\nStatuspagina: ${statusUrl}` },
+    'making-binders':    { subject: `Closing binders opstellen — ${naam}`, body: `Beste ondernemer,\n\nWij stellen momenteel de closing binders op voor uw dossier.\n\nStatuspagina: ${statusUrl}` },
+    'upload-binders':    { subject: `Closing binder geupload — ${naam}`, body: `Beste ondernemer,\n\nUw closing binder staat klaar in het dossier.\n\nStatuspagina: ${statusUrl}` },
+    complete:            { subject: `Dossier afgerond — ${naam}`, body: `Beste ondernemer,\n\nUw dossier is volledig afgerond. Gefeliciteerd en bedankt voor het vertrouwen.\n\nStatuspagina: ${statusUrl}` },
+    'complete-review':   { subject: `Reviewverzoek — ${naam}`, body: `Beste ondernemer,\n\nUw dossier staat in review. Wij koppelen snel de uitkomst terug.\n\nStatuspagina: ${statusUrl}` },
     rejected:            { subject: `Update over uw dossier — ${naam}`, body: `Beste klant,\n\nWij willen u informeren over de status van uw dossier. Neem voor meer informatie contact op via info@aandelenxpress.nl.` }
   };
-  return t[status] || { subject: `Status update — ${naam}`, body: `Uw dossier heeft een nieuwe status.` };
+  const fallback = t[status] || { subject: `Status update — ${naam}`, body: `Uw dossier heeft een nieuwe status.` };
+  return { subject: fallback.subject, bodyText: fallback.body };
 }
 
 async function selectStatusFromDropdown(nr, status, e) {
@@ -3463,10 +3538,10 @@ async function selectStatusFromDropdown(nr, status, e) {
   const d = allDossiersData.find(x => x.dossierNr === nr);
   if (!d) { await quickChangeStatus(nr, status); return; }
   adminPendingStatus = { nr, newStatus: status, clientEmail: d.clientEmail || '', name: d.name || d.bedrijfsnaam || nr, accessToken: d.accessToken || '', oprichtingType: d.oprichtingType || 'bv-holding' };
-  const tpl = adminGetStatusEmailTemplate(status, adminPendingStatus);
+  const tpl = await adminGetStatusEmailTemplate(status, adminPendingStatus);
   document.getElementById('adminEmTo').value = adminPendingStatus.clientEmail;
   document.getElementById('adminEmSubject').value = tpl.subject;
-  document.getElementById('adminEmBodyEditor').innerHTML = tpl.body.replace(/\n/g, '<br>');
+  document.getElementById('adminEmBodyEditor').innerHTML = tpl.bodyHtml || (tpl.bodyText || '').replace(/\n/g, '<br>');
   document.getElementById('adminEmailModal').classList.add('open');
   setTimeout(() => document.getElementById('adminEmTo').focus(), 50);
 }
