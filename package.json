@@ -23,6 +23,7 @@
     "express-session": "^1.19.0",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.18.0",
-    "resend": "^6.12.3"
+    "resend": "^6.12.3",
+    "twilio": "^6.0.2"
   }
 }

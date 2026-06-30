@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 const AdmZip = require('adm-zip');
 const { PDFDocument, rgb, StandardFonts, PDFString, PDFName, PDFBool } = require('pdf-lib');
+const twilio = require('twilio');
 const emails = require('./emails');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -17,6 +18,9 @@ const PRICING_MARKER = '[AX_PRICING]';
 const BRANDING_BUCKET = 'branding-assets';
 const FILE_BUCKET = 'dossier-files';
 const LEGACY_BRANDING_PREFIX = '__BRANDING__:';
+const SMS_CODE_TTL_MS = 5 * 60 * 1000;
+const SMS_RESEND_COOLDOWN_MS = 30 * 1000;
+const pendingSmsLogins = new Map();
 
 // ── Supabase client (service role bypasses RLS) ────────────────────────────
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -419,6 +423,104 @@ function requireSuperAdmin(req, res, next) {
     res.status(403).json({ error: 'Alleen super admins hebben toegang' });
 }
 
+function normalizePhone(rawPhone) {
+    let value = String(rawPhone || '').trim();
+    if (!value) return '';
+    value = value.replace(/[\s().-]/g, '');
+
+    if (value.startsWith('00')) value = '+' + value.slice(2);
+    if (/^06\d{8}$/.test(value)) value = '+31' + value.slice(1);
+    if (/^\+31\d{9}$/.test(value)) return value;
+    if (/^\+\d{8,15}$/.test(value)) return value;
+
+    return '';
+}
+
+function maskPhone(phone) {
+    const normalized = normalizePhone(phone);
+    if (!normalized) return 'onbekend nummer';
+    const tail = normalized.slice(-2);
+    return normalized.slice(0, 4) + '******' + tail;
+}
+
+function parsePermissions(permissions) {
+    if (!permissions) return {};
+    if (typeof permissions === 'object') return { ...permissions };
+    try {
+        const parsed = JSON.parse(String(permissions));
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+}
+
+function getUserMfaPhone(user) {
+    const direct = normalizePhone(user?.phone || user?.telefoon || user?.mobile);
+    if (direct) return direct;
+
+    const permissions = parsePermissions(user?.permissions);
+    return normalizePhone(permissions.mfaPhone);
+}
+
+async function saveUserMfaPhone(email, rawPhone) {
+    const phone = normalizePhone(rawPhone);
+    if (!phone) {
+        return { error: 'Voer een geldig mobiel telefoonnummer in (bijv. +31612345678)' };
+    }
+
+    const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('email, permissions')
+        .eq('email', email)
+        .single();
+
+    if (userError || !user) return { error: 'Gebruiker niet gevonden' };
+
+    const permissions = parsePermissions(user.permissions);
+    permissions.mfaPhone = phone;
+
+    const { error } = await supabase
+        .from('users')
+        .update({ permissions })
+        .eq('email', email);
+
+    if (error) {
+        return { error: 'Opslaan van telefoonnummer mislukt. Controleer of de users.permissions kolom (JSONB) bestaat.' };
+    }
+
+    return { phone };
+}
+
+async function sendSmsCode(to, code) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const from = process.env.TWILIO_FROM_NUMBER;
+    const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+
+    if (!accountSid || !authToken || (!from && !messagingServiceSid)) {
+        throw new Error('SMS-provider is niet geconfigureerd. Stel TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN en TWILIO_FROM_NUMBER of TWILIO_MESSAGING_SERVICE_SID in.');
+    }
+
+    const client = twilio(accountSid, authToken);
+    const payload = {
+        to,
+        body: `Uw AandelenXpress inlogcode is ${code}. Deze code verloopt na 5 minuten.`
+    };
+
+    if (messagingServiceSid) payload.messagingServiceSid = messagingServiceSid;
+    else payload.from = from;
+
+    await client.messages.create(payload);
+}
+
+function createSmsCode() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function createLoginToken() {
+    return crypto.randomBytes(24).toString('hex');
+}
+
 // ── Express middleware ─────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '25mb' }));
@@ -535,12 +637,106 @@ app.post('/api/login', async (req, res) => {
     }
     if (user.status === 'inactive') return res.status(401).json({ error: 'Uw account is gedeactiveerd. Neem contact op met AandelenXpress.' });
 
+    const mfaPhone = getUserMfaPhone(user);
+    if (!mfaPhone) {
+        return res.status(400).json({ error: 'Voor dit account ontbreekt een 2FA-telefoonnummer. Neem contact op met de beheerder.' });
+    }
+
+    const loginToken = createLoginToken();
+    const code = createSmsCode();
+    const now = Date.now();
+
+    pendingSmsLogins.set(loginToken, {
+        email: user.email,
+        code,
+        phone: mfaPhone,
+        expiresAt: now + SMS_CODE_TTL_MS,
+        resendAfter: now + SMS_RESEND_COOLDOWN_MS,
+        attempts: 0
+    });
+
+    try {
+        await sendSmsCode(mfaPhone, code);
+    } catch (error) {
+        pendingSmsLogins.delete(loginToken);
+        return res.status(500).json({ error: error.message || 'Verzenden van SMS-code mislukt' });
+    }
+
+    return res.json({
+        requires2fa: true,
+        loginToken,
+        maskedPhone: maskPhone(mfaPhone),
+        expiresIn: Math.floor(SMS_CODE_TTL_MS / 1000)
+    });
+});
+
+app.post('/api/login/verify-sms', async (req, res) => {
+    const loginToken = String(req.body?.loginToken || '').trim();
+    const code = String(req.body?.code || '').trim();
+    if (!loginToken || !code) return res.status(400).json({ error: 'Login token en code vereist' });
+
+    const pending = pendingSmsLogins.get(loginToken);
+    if (!pending) return res.status(401).json({ error: 'Inlogsessie verlopen. Log opnieuw in.' });
+
+    if (Date.now() > pending.expiresAt) {
+        pendingSmsLogins.delete(loginToken);
+        return res.status(401).json({ error: 'SMS-code is verlopen. Log opnieuw in.' });
+    }
+
+    if (pending.attempts >= 5) {
+        pendingSmsLogins.delete(loginToken);
+        return res.status(429).json({ error: 'Te veel foutieve pogingen. Log opnieuw in.' });
+    }
+
+    if (pending.code !== code) {
+        pending.attempts += 1;
+        return res.status(401).json({ error: 'Ongeldige SMS-code' });
+    }
+
+    const { data: user } = await supabase.from('users').select('*').eq('email', pending.email).single();
+    if (!user || user.status === 'inactive') {
+        pendingSmsLogins.delete(loginToken);
+        return res.status(401).json({ error: 'Uw account is niet beschikbaar' });
+    }
+
     req.session.user = {
-        email, name: user.name, company: user.company, type: user.type,
+        email: user.email,
+        name: user.name,
+        company: user.company,
+        type: user.type,
         permissions: user.permissions || null,
         isSuperAdmin: isSuperAdmin(user)
     };
+
+    pendingSmsLogins.delete(loginToken);
     res.json({ success: true, redirect: user.type === 'admin' ? '/admin-dashboard' : '/reseller-dashboard' });
+});
+
+app.post('/api/login/resend-sms', async (req, res) => {
+    const loginToken = String(req.body?.loginToken || '').trim();
+    if (!loginToken) return res.status(400).json({ error: 'Login token vereist' });
+
+    const pending = pendingSmsLogins.get(loginToken);
+    if (!pending) return res.status(401).json({ error: 'Inlogsessie verlopen. Log opnieuw in.' });
+    if (Date.now() > pending.expiresAt) {
+        pendingSmsLogins.delete(loginToken);
+        return res.status(401).json({ error: 'Inlogsessie verlopen. Log opnieuw in.' });
+    }
+
+    if (Date.now() < pending.resendAfter) {
+        return res.status(429).json({ error: 'Wacht even voordat u een nieuwe code opvraagt.' });
+    }
+
+    pending.code = createSmsCode();
+    pending.resendAfter = Date.now() + SMS_RESEND_COOLDOWN_MS;
+
+    try {
+        await sendSmsCode(pending.phone, pending.code);
+    } catch (error) {
+        return res.status(500).json({ error: error.message || 'Verzenden van SMS-code mislukt' });
+    }
+
+    res.json({ success: true, maskedPhone: maskPhone(pending.phone) });
 });
 
 app.get('/api/logout', (req, res) => {
@@ -664,12 +860,17 @@ app.post('/api/admin/approve', requireAdmin, async (req, res) => {
     const { data: r } = await supabase.from('pending_resellers').select('*').eq('email', email).single();
     if (!r) return res.status(404).json({ error: 'Aanmelding niet gevonden' });
 
-    await supabase.from('users').insert({
+    const approveResult = await supabase.from('users').insert({
         email: r.email, password: r.password, type: 'reseller',
         name: r.naam, company: r.kantoor,
         company_id: 'reseller-' + Math.random().toString(36).substr(2, 9),
         status: 'active'
     });
+    if (approveResult.error) return res.status(500).json({ error: 'Aanmaken van reseller-account mislukt' });
+
+    const phoneSave = await saveUserMfaPhone(r.email, r.telefoon);
+    if (phoneSave.error) return res.status(500).json({ error: phoneSave.error });
+
     await supabase.from('pending_resellers').delete().eq('email', email);
     emails.emailResellerApproved({ name: r.naam, email: r.email });
     res.json({ success: true });
@@ -695,6 +896,7 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
     res.json((data || []).map(u => ({
         email: u.email, name: u.name, company: u.company,
         type: u.type, status: u.status, companyId: u.company_id,
+        phone: getUserMfaPhone(u),
         permissions: u.permissions || null,
         isSuperAdmin: isSuperAdmin(u)
     })));
@@ -705,23 +907,62 @@ app.put('/api/admin/users/:email/permissions', requireSuperAdmin, async (req, re
     if (!email) return res.status(400).json({ error: 'Email ontbreekt' });
     if (isSuperAdmin({ email })) return res.status(403).json({ error: 'Kan rechten van super admin niet wijzigen' });
     const { permissions } = req.body; // null = full access, { pages:[...], statusChanges:[...] } = restricted
-    const { error } = await supabase.from('users').update({ permissions: permissions ?? null }).eq('email', email).eq('type', 'admin');
+
+    const { data: currentUser } = await supabase
+        .from('users')
+        .select('permissions')
+        .eq('email', email)
+        .eq('type', 'admin')
+        .single();
+
+    const currentPermissions = parsePermissions(currentUser?.permissions);
+    const mfaPhone = currentPermissions.mfaPhone;
+    const nextPermissions = {
+        ...(parsePermissions(permissions) || {})
+    };
+    if (mfaPhone) nextPermissions.mfaPhone = mfaPhone;
+
+    const { error } = await supabase
+        .from('users')
+        .update({ permissions: Object.keys(nextPermissions).length ? nextPermissions : null })
+        .eq('email', email)
+        .eq('type', 'admin');
+
     if (error) return res.status(500).json({ error: 'Opslaan mislukt. Voeg de kolom "permissions" (JSONB) toe aan de users-tabel in Supabase.' });
     res.json({ success: true });
 });
 
 app.post('/api/admin/users/add', requireAdmin, async (req, res) => {
-    const { email, name, password, permissions } = req.body;
-    if (!email || !name || !password) return res.status(400).json({ error: 'Alle velden verplicht' });
+    const { email, name, password, permissions, phone } = req.body;
+    if (!email || !name || !password || !phone) return res.status(400).json({ error: 'Alle velden verplicht' });
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) return res.status(400).json({ error: 'Voer een geldig mobiel telefoonnummer in' });
+
+    const permissionsWithPhone = {
+        ...(parsePermissions(permissions) || {}),
+        mfaPhone: normalizedPhone
+    };
+
     const { error } = await supabase.from('users').insert({
         email, name, password, type: 'admin',
         company: 'AandelenXpress',
         company_id: 'aax-admin-' + Math.random().toString(36).substr(2, 5),
         status: 'active',
-        permissions: permissions ?? null
+        permissions: permissionsWithPhone
     });
     if (error) return res.status(409).json({ error: 'Email bestaat al' });
     res.json({ success: true });
+});
+
+app.put('/api/admin/users/:email/mfa-phone', requireAdmin, async (req, res) => {
+    const email = String(req.params.email || '').trim().toLowerCase();
+    const phone = String(req.body?.phone || '').trim();
+    if (!email || !phone) return res.status(400).json({ error: 'Email en telefoon vereist' });
+
+    const result = await saveUserMfaPhone(email, phone);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    res.json({ success: true, phone: result.phone });
 });
 
 app.post('/api/admin/users/reset-password', requireAdmin, async (req, res) => {

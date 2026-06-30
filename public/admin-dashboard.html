@@ -596,6 +596,10 @@
               <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">E-mailadres</label>
               <input type="email" id="addAdminEmail" placeholder="jan@aandelenxpress.nl" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
             </div>
+            <div class="form-field" style="margin-bottom:16px;">
+              <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Mobiel telefoonnummer (2FA)</label>
+              <input type="tel" id="addAdminPhone" placeholder="+31612345678" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+            </div>
             <div class="form-field" style="margin-bottom:20px;">
               <label style="display:block;font-size:0.75rem;color:#8A9BB5;margin-bottom:6px;font-weight:600;text-transform:uppercase;">Wachtwoord</label>
               <input type="password" id="addAdminPassword" placeholder="Min. 8 tekens" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
@@ -2346,6 +2350,7 @@ async function loadLedenTab(tab) {
 function openAddAdminDrawer() {
   document.getElementById('addAdminName').value = '';
   document.getElementById('addAdminEmail').value = '';
+  document.getElementById('addAdminPhone').value = '';
   document.getElementById('addAdminPassword').value = '';
   document.getElementById('addAdminError').style.display = 'none';
 
@@ -2383,10 +2388,11 @@ function closeAddAdminDrawer() {
 async function saveNewAdmin() {
   const name = document.getElementById('addAdminName').value.trim();
   const email = document.getElementById('addAdminEmail').value.trim();
+  const phone = document.getElementById('addAdminPhone').value.trim();
   const password = document.getElementById('addAdminPassword').value;
   const errorEl = document.getElementById('addAdminError');
 
-  if (!name || !email || !password) {
+  if (!name || !email || !phone || !password) {
     errorEl.textContent = 'Alle velden verplicht';
     errorEl.style.display = 'block';
     return;
@@ -2408,7 +2414,7 @@ async function saveNewAdmin() {
   const res = await fetch('/api/admin/users/add', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, name, password, permissions })
+    body: JSON.stringify({ email, name, phone, password, permissions })
   });
 
   const data = await res.json();

@@ -72,8 +72,16 @@
                         </div>
                         <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
                     </div>
+                    <div class="login-field" id="smsCodeField" style="display:none;">
+                        <div class="login-field-row">
+                            <label for="smsCode">SMS-code</label>
+                            <a href="#" class="login-forgot" id="resendSmsLink" style="display:none;" onclick="return false;">Nieuwe code</a>
+                        </div>
+                        <input type="text" id="smsCode" name="smsCode" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+                        <div id="smsInfo" style="margin-top:6px;color:#8A9BB5;font-size:0.82rem;display:none;"></div>
+                    </div>
                     <div id="loginError" style="color: #c33; font-size: 0.9rem; margin-bottom: 12px; display: none;"></div>
-                    <button type="submit" class="login-submit">Inloggen</button>
+                    <button type="submit" class="login-submit" id="loginSubmitBtn">Inloggen</button>
                 </form>
 
                 <div class="login-divider">of</div>
@@ -90,34 +98,109 @@
     </div>
 
     <script>
+        let loginToken = null;
+
+        function resetLoginError() {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+        }
+
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function setSmsStep(active, maskedPhone) {
+            const smsField = document.getElementById('smsCodeField');
+            const smsInfo = document.getElementById('smsInfo');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const resendLink = document.getElementById('resendSmsLink');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+
+            smsField.style.display = active ? 'block' : 'none';
+            smsInfo.style.display = active ? 'block' : 'none';
+            resendLink.style.display = active ? 'inline' : 'none';
+            emailInput.readOnly = active;
+            passwordInput.readOnly = active;
+            submitBtn.textContent = active ? 'Code verifiëren' : 'Inloggen';
+
+            if (active) {
+                smsInfo.textContent = `We hebben een SMS-code gestuurd naar ${maskedPhone}.`;
+                document.getElementById('smsCode').focus();
+            } else {
+                document.getElementById('smsCode').value = '';
+            }
+        }
+
+        document.getElementById('resendSmsLink').addEventListener('click', async () => {
+            resetLoginError();
+            if (!loginToken) return;
+            try {
+                const response = await fetch('/api/login/resend-sms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ loginToken })
+                });
+                const data = await response.json();
+                if (!response.ok) return showLoginError(data.error || 'Nieuwe code sturen is mislukt');
+                document.getElementById('smsInfo').textContent = `Nieuwe SMS-code verstuurd naar ${data.maskedPhone}.`;
+            } catch {
+                showLoginError('Verbindingsfout. Probeer het opnieuw.');
+            }
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const email = document.getElementById('email').value;
+            resetLoginError();
+
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('loginError');
-            
+            const smsCode = document.getElementById('smsCode').value.trim();
+
             try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    // Redirect to dashboard
-                    window.location.href = data.redirect;
+                if (!loginToken) {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok) return showLoginError(data.error || 'Login mislukt');
+                    if (data.requires2fa && data.loginToken) {
+                        loginToken = data.loginToken;
+                        setSmsStep(true, data.maskedPhone || 'uw nummer');
+                        return;
+                    }
+                    if (data.success) {
+                        window.location.href = data.redirect;
+                        return;
+                    }
+                    showLoginError('Login mislukt');
                 } else {
-                    errorDiv.textContent = data.error || 'Login mislukt';
-                    errorDiv.style.display = 'block';
+                    if (!/^\d{6}$/.test(smsCode)) {
+                        return showLoginError('Voer een geldige 6-cijferige SMS-code in');
+                    }
+
+                    const response = await fetch('/api/login/verify-sms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ loginToken, code: smsCode })
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok) return showLoginError(data.error || 'Verificatie mislukt');
+                    if (data.success) {
+                        window.location.href = data.redirect;
+                        return;
+                    }
+                    showLoginError('Verificatie mislukt');
                 }
-            } catch (err) {
-                errorDiv.textContent = 'Verbindingsfout. Probeer het opnieuw.';
-                errorDiv.style.display = 'block';
+            } catch {
+                showLoginError('Verbindingsfout. Probeer het opnieuw.');
             }
         });
     </script>
