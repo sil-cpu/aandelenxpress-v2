@@ -4070,22 +4070,35 @@ ul { list-style: none; }
     gap: 56px; align-items: start;
 }
 
-.artikel-text p.lead {
+.artikel-text p.lead,
+.artikel-content p.lead {
     font-size: 1.05rem; line-height: 1.78; color: #374151;
     margin-bottom: 36px;
     border-left: 3px solid var(--brand); padding-left: 20px;
 }
-.artikel-text h2 {
+.artikel-text h2,
+.artikel-content h2 {
     font-size: 1.3rem; font-weight: 700; color: var(--dark);
     letter-spacing: -0.02em;
     margin: 44px 0 14px;
     padding-top: 32px; border-top: 1px solid var(--border);
 }
-.artikel-text h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
-.artikel-text p { font-size: 0.985rem; line-height: 1.78; color: #374151; margin-bottom: 18px; }
-.artikel-text ul, .artikel-text ol { padding-left: 22px; margin-bottom: 20px; }
-.artikel-text li { font-size: 0.985rem; line-height: 1.7; color: #374151; margin-bottom: 8px; }
-.artikel-text code {
+.artikel-text h2:first-of-type,
+.artikel-content h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+.artikel-text p,
+.artikel-content p { font-size: 0.985rem; line-height: 1.78; color: #374151; margin-bottom: 18px; }
+.artikel-text ul,
+.artikel-text ol,
+.artikel-content ul,
+.artikel-content ol { padding-left: 22px; margin-bottom: 20px; }
+.artikel-text ul,
+.artikel-content ul { list-style: disc; }
+.artikel-text ol,
+.artikel-content ol { list-style: decimal; }
+.artikel-text li,
+.artikel-content li { font-size: 0.985rem; line-height: 1.7; color: #374151; margin-bottom: 8px; }
+.artikel-text code,
+.artikel-content code {
     background: var(--bg-light); border: 1px solid var(--border);
     border-radius: 4px; padding: 2px 6px;
     font-size: 0.85rem; font-family: 'Consolas','Monaco',monospace; color: #0D2351;
