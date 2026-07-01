@@ -463,6 +463,18 @@ function parsePermissions(permissions) {
     }
 }
 
+function getPartnerProfile(user) {
+    const permissions = parsePermissions(user?.permissions);
+    const profile = permissions.partnerProfile && typeof permissions.partnerProfile === 'object'
+        ? permissions.partnerProfile
+        : {};
+    return {
+        address: String(profile.address || '').trim(),
+        city: String(profile.city || '').trim(),
+        since: String(profile.since || '').trim()
+    };
+}
+
 function getUserMfaPhone(user) {
     const direct = normalizePhone(user?.phone || user?.telefoon || user?.mobile);
     if (direct) return direct;
@@ -905,13 +917,18 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
     let q = supabase.from('users').select('*');
     if (type !== 'all') q = q.eq('type', type);
     const { data } = await q;
-    res.json((data || []).map(u => ({
+    res.json((data || []).map(u => {
+        const partnerProfile = getPartnerProfile(u);
+        return {
         email: u.email, name: u.name, company: u.company,
         type: u.type, status: u.status, companyId: u.company_id,
         phone: getUserMfaPhone(u),
+        partnerAddress: partnerProfile.address,
+        partnerCity: partnerProfile.city,
+        partnerSince: partnerProfile.since,
         permissions: u.permissions || null,
         isSuperAdmin: isSuperAdmin(u)
-    })));
+    }}));
 });
 
 app.put('/api/admin/users/:email/permissions', requireSuperAdmin, async (req, res) => {
@@ -971,12 +988,18 @@ app.put('/api/admin/users/:email', requireAdmin, async (req, res) => {
     const nextEmail = String(req.body?.email || '').trim().toLowerCase();
     const name = String(req.body?.name || '').trim();
     const phone = String(req.body?.phone || '').trim();
+    const partnerAddress = String(req.body?.address || '').trim();
+    const partnerCity = String(req.body?.city || '').trim();
+    const partnerSince = String(req.body?.since || '').trim();
 
     if (!currentEmail || !nextEmail || !name || !phone) {
         return res.status(400).json({ error: 'Naam, e-mail en telefoon zijn verplicht' });
     }
     if (!/^\S+@\S+\.\S+$/.test(nextEmail)) {
         return res.status(400).json({ error: 'Voer een geldig e-mailadres in' });
+    }
+    if (partnerSince && !/^\d{4}-\d{2}-\d{2}$/.test(partnerSince)) {
+        return res.status(400).json({ error: 'Gebruik bij sinds het formaat JJJJ-MM-DD' });
     }
 
     const normalizedPhone = normalizePhone(phone);
@@ -1004,6 +1027,13 @@ app.put('/api/admin/users/:email', requireAdmin, async (req, res) => {
 
     const permissions = parsePermissions(currentUser.permissions);
     permissions.mfaPhone = normalizedPhone;
+    if (currentUser.type === 'reseller') {
+        permissions.partnerProfile = {
+            address: partnerAddress,
+            city: partnerCity,
+            since: partnerSince
+        };
+    }
 
     const { error: updateError } = await supabase
         .from('users')
@@ -1025,7 +1055,15 @@ app.put('/api/admin/users/:email', requireAdmin, async (req, res) => {
         req.session.user.name = name;
     }
 
-    res.json({ success: true, email: nextEmail, name, phone: normalizedPhone });
+    res.json({
+        success: true,
+        email: nextEmail,
+        name,
+        phone: normalizedPhone,
+        partnerAddress,
+        partnerCity,
+        partnerSince
+    });
 });
 
 app.put('/api/admin/users/:email/mfa-phone', requireAdmin, async (req, res) => {

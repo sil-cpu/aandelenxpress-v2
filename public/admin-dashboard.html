@@ -675,6 +675,20 @@
               <div class="drawer-field-label">Mobiel telefoonnummer (2FA)</div>
               <input type="tel" id="euPhoneInput" placeholder="+31612345678" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
             </div>
+            <div id="euPartnerMetaWrap" style="display:none;">
+              <div class="drawer-field" style="margin-bottom:12px;">
+                <div class="drawer-field-label">Adres</div>
+                <input type="text" id="euAddressInput" placeholder="Straat 1, 1234 AB Plaats" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+              </div>
+              <div class="drawer-field" style="margin-bottom:12px;">
+                <div class="drawer-field-label">Plaats</div>
+                <input type="text" id="euCityInput" placeholder="Den Haag" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+              </div>
+              <div class="drawer-field" style="margin-bottom:12px;">
+                <div class="drawer-field-label">Sinds</div>
+                <input type="date" id="euSinceInput" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+              </div>
+            </div>
             <div class="drawer-field" style="margin-bottom:12px;">
               <div class="drawer-field-label">Type</div>
               <div class="drawer-field-value" id="euType">—</div>
@@ -1671,10 +1685,11 @@ async function loadPartners() {
       name:     u.company || u.name,
       contact:  u.name,
       email:    u.email,
-      city:     '—',
-      phone:    '—',
+      city:     u.partnerCity || '—',
+      phone:    u.phone || '—',
+      address:  u.partnerAddress || '',
       kvk:      u.companyId || '—',
-      since:    '—',
+      since:    formatPartnerSince(u.partnerSince),
       dossiers: requests.filter(r => r.resellerId === u.email && !r.trashedAt).length,
       color:    PARTNER_COLORS[i % PARTNER_COLORS.length]
     }));
@@ -1695,6 +1710,14 @@ const monthData = [
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString("nl-NL",{day:"numeric",month:"short",year:"numeric"});
+}
+
+function formatPartnerSince(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 // Copy URL to clipboard
@@ -2506,6 +2529,10 @@ async function openEditUserDrawer(email) {
   document.getElementById('euNameInput').value = user.name || '';
   document.getElementById('euEmailInput').value = user.email || '';
   document.getElementById('euPhoneInput').value = user.phone || '';
+  document.getElementById('euAddressInput').value = user.partnerAddress || '';
+  document.getElementById('euCityInput').value = user.partnerCity || '';
+  document.getElementById('euSinceInput').value = user.partnerSince || '';
+  document.getElementById('euPartnerMetaWrap').style.display = user.type === 'reseller' ? '' : 'none';
   document.getElementById('euType').textContent = user.type === 'admin' ? 'Beheerder' : 'Reseller';
   document.getElementById('editUserError').style.display = 'none';
   const badge = document.getElementById('euStatusBadge');
@@ -2516,6 +2543,9 @@ async function openEditUserDrawer(email) {
   document.getElementById('euNameInput').disabled = editingUserLocked;
   document.getElementById('euEmailInput').disabled = editingUserLocked;
   document.getElementById('euPhoneInput').disabled = editingUserLocked;
+  document.getElementById('euAddressInput').disabled = editingUserLocked;
+  document.getElementById('euCityInput').disabled = editingUserLocked;
+  document.getElementById('euSinceInput').disabled = editingUserLocked;
   document.getElementById('euSaveBtn').disabled = editingUserLocked;
   document.getElementById('euSaveBtn').style.opacity = editingUserLocked ? '0.65' : '1';
   document.getElementById('euSaveBtn').style.cursor = editingUserLocked ? 'not-allowed' : 'pointer';
@@ -2552,6 +2582,9 @@ async function saveEditedUser() {
   const name = document.getElementById('euNameInput').value.trim();
   const email = document.getElementById('euEmailInput').value.trim().toLowerCase();
   const phone = document.getElementById('euPhoneInput').value.trim();
+  const address = document.getElementById('euAddressInput').value.trim();
+  const city = document.getElementById('euCityInput').value.trim();
+  const since = document.getElementById('euSinceInput').value.trim();
   if (!name || !email || !phone) {
     errorEl.textContent = 'Naam, e-mail en telefoon zijn verplicht';
     errorEl.style.display = 'block';
@@ -2561,7 +2594,7 @@ async function saveEditedUser() {
   const res = await fetch('/api/admin/users/' + encodeURIComponent(editingUserEmail), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, phone })
+    body: JSON.stringify({ name, email, phone, address, city, since })
   });
   const data = await res.json().catch(() => ({}));
 
