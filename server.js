@@ -539,6 +539,7 @@ app.get('/:page.html', (req, res, next) => {
     if (page === 'vragenlijst-bv-holding-preview') {
         return res.redirect(302, '/vragenlijst-bv-holding?preview=1');
     }
+    if (page === 'about') return res.redirect(301, '/over-ons');
     if (protectedPages.includes(page)) return next();
     if (page === 'index') return res.redirect(301, '/');
     return res.redirect(301, `/${page}`);
