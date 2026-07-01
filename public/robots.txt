@@ -10,4 +10,4 @@ Disallow: /partner-detail
 Disallow: /api/
 Disallow: /_debug/
 
-Sitemap: https://aandelenxpress.nl/sitemap.xml
+Sitemap: https://www.aandelenxpress.nl/sitemap.xml
