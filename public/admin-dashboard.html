@@ -252,6 +252,7 @@
                 <th>Email</th>
                 <th>Telefoon</th>
                 <th>Sinds</th>
+                <th style="width:44px;">Acties</th>
               </tr>
             </thead>
             <tbody id="allPartners"></tbody>
@@ -1794,7 +1795,7 @@ function renderPartnersTable(data) {
   const tbody = document.getElementById('allPartners');
   if (!tbody) return;
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#8A9BB5;">Geen partners gevonden</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:32px;text-align:center;color:#8A9BB5;">Geen partners gevonden</td></tr>';
     return;
   }
   tbody.innerHTML = data.map((p, idx) => `
@@ -1807,8 +1808,48 @@ function renderPartnersTable(data) {
       <td class="td-muted"><a href="mailto:${p.email}" style="color:#1A3B70;text-decoration:none;" onclick="event.stopPropagation()">${p.email}</a></td>
       <td class="td-muted" style="white-space:nowrap;">${p.phone}</td>
       <td class="td-muted" style="white-space:nowrap;">${p.since}</td>
+      <td onclick="event.stopPropagation()" style="width:44px;">
+        <div class="dossier-menu-wrap">
+          <button class="dossier-menu-btn" onclick="openPartnerMenu('${encodeURIComponent(p.email)}', event)" title="Acties">
+            <svg width="4" height="16" viewBox="0 0 4 16" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/></svg>
+          </button>
+          <div id="partner-menu-${encodeURIComponent(p.email)}" class="dossier-dropdown">
+            <button onclick="location.href='partner-detail.html?v=branding2&email='+encodeURIComponent('${p.email}')">Partner bekijken</button>
+            <button onclick="openEditUserDrawer('${p.email}')">Gebruiker bewerken</button>
+            <hr/>
+            <button class="danger" onclick="deletePartnerByEmail('${p.email}')">Partner verwijderen</button>
+          </div>
+        </div>
+      </td>
     </tr>
   `).join("");
+}
+
+function openPartnerMenu(encodedEmail, e) {
+  e.stopPropagation();
+  const menu = document.getElementById('partner-menu-' + encodedEmail);
+  const isOpen = menu && menu.style.display === 'block';
+  closeAllDossierMenus();
+  if (menu && !isOpen) menu.style.display = 'block';
+}
+
+async function deletePartnerByEmail(email) {
+  closeAllDossierMenus();
+  if (!confirm('Weet u zeker dat u deze partnergebruiker wilt verwijderen?')) return;
+
+  const res = await fetch('/api/admin/users/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    adminSaveToast(data.error || 'Fout bij verwijderen');
+    return;
+  }
+
+  adminSaveToast('Partner verwijderd');
+  await loadPartners();
 }
 
 let requestsChartInstance = null;
