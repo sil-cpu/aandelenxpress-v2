@@ -664,11 +664,15 @@
             <div class="drawer-section-title">Gebruikersgegevens</div>
             <div class="drawer-field" style="margin-bottom:12px;">
               <div class="drawer-field-label">Naam</div>
-              <div class="drawer-field-value" id="euName">—</div>
+              <input type="text" id="euNameInput" placeholder="Naam" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
             </div>
             <div class="drawer-field" style="margin-bottom:12px;">
               <div class="drawer-field-label">E-mail</div>
-              <div class="drawer-field-value" id="euEmail">—</div>
+              <input type="email" id="euEmailInput" placeholder="E-mailadres" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
+            </div>
+            <div class="drawer-field" style="margin-bottom:12px;">
+              <div class="drawer-field-label">Mobiel telefoonnummer (2FA)</div>
+              <input type="tel" id="euPhoneInput" placeholder="+31612345678" style="width:100%;padding:10px 12px;border:1px solid #E8EDF5;border-radius:6px;font-size:0.9rem;">
             </div>
             <div class="drawer-field" style="margin-bottom:12px;">
               <div class="drawer-field-label">Type</div>
@@ -678,11 +682,13 @@
               <div class="drawer-field-label">Status</div>
               <div class="drawer-field-value"><span class="badge" id="euStatusBadge" style="padding:4px 10px;font-size:0.8rem;"></span></div>
             </div>
+            <div id="editUserError" style="color:#c53030;font-size:0.85rem;margin:10px 0;display:none;"></div>
           </div>
 
           <div class="drawer-section">
             <div class="drawer-section-title">Acties</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
+              <button class="btn-primary" style="width:100%;padding:10px;font-size:0.9rem;" id="euSaveBtn" onclick="saveEditedUser()">Wijzigingen opslaan</button>
               <button class="btn-primary" style="width:100%;padding:10px;font-size:0.9rem;" onclick="openResetPasswordDrawer()">Wachtwoord resetten</button>
               <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;" id="euToggleStatusBtn" onclick="">Status wijzigen</button>
               <button class="btn-ghost" style="width:100%;padding:10px;font-size:0.9rem;color:#c53030;border-color:#c53030;" onclick="deleteUserConfirmDrawer()" id="euDeleteBtn">Verwijderen</button>
@@ -2317,6 +2323,7 @@ async function loadRejectedResellers() {
 // ── Leden & Gebruikersbeheer ────────────────────────────────────────
 let currentLedenTab = 'admins';
 let editingUserEmail = null;
+let editingUserLocked = false;
 
 function switchLedenTab(tab) {
   currentLedenTab = tab;
@@ -2446,6 +2453,7 @@ async function saveNewAdmin() {
 
 async function openEditUserDrawer(email) {
   editingUserEmail = email;
+  editingUserLocked = false;
   const res = await fetch('/api/admin/users?type=all');
   if (!res.ok) return;
   const users = await res.json();
@@ -2454,16 +2462,31 @@ async function openEditUserDrawer(email) {
 
   document.getElementById('editUserTitle').textContent = user.name;
   document.getElementById('editUserSub').textContent = user.email;
-  document.getElementById('euName').textContent = user.name;
-  document.getElementById('euEmail').textContent = user.email;
+  document.getElementById('euNameInput').value = user.name || '';
+  document.getElementById('euEmailInput').value = user.email || '';
+  document.getElementById('euPhoneInput').value = user.phone || '';
   document.getElementById('euType').textContent = user.type === 'admin' ? 'Beheerder' : 'Reseller';
+  document.getElementById('editUserError').style.display = 'none';
   const badge = document.getElementById('euStatusBadge');
   badge.textContent = user.status === 'active' ? 'Actief' : 'Inactief';
   badge.className = 'badge ' + (user.status === 'active' ? 'badge-active' : 'badge-pending');
+
+  editingUserLocked = !!user.isSuperAdmin;
+  document.getElementById('euNameInput').disabled = editingUserLocked;
+  document.getElementById('euEmailInput').disabled = editingUserLocked;
+  document.getElementById('euPhoneInput').disabled = editingUserLocked;
+  document.getElementById('euSaveBtn').disabled = editingUserLocked;
+  document.getElementById('euSaveBtn').style.opacity = editingUserLocked ? '0.65' : '1';
+  document.getElementById('euSaveBtn').style.cursor = editingUserLocked ? 'not-allowed' : 'pointer';
+  if (editingUserLocked) {
+    const errorEl = document.getElementById('editUserError');
+    errorEl.textContent = 'Hoofdadmin kan niet worden aangepast';
+    errorEl.style.display = 'block';
+  }
   
   const toggleBtn = document.getElementById('euToggleStatusBtn');
   toggleBtn.textContent = user.status === 'active' ? 'Deactiveren' : 'Activeren';
-  toggleBtn.onclick = () => toggleUserStatus(email);
+  toggleBtn.onclick = () => toggleUserStatus(editingUserEmail);
 
   if (email === 'admin@aandelenxpress.nl') {
     document.getElementById('euDeleteBtn').style.display = 'none';
@@ -2473,6 +2496,46 @@ async function openEditUserDrawer(email) {
 
   document.getElementById('editUserDrawer').classList.add('open');
   document.getElementById('editUserBackdrop').classList.add('open');
+}
+
+async function saveEditedUser() {
+  const errorEl = document.getElementById('editUserError');
+  errorEl.style.display = 'none';
+
+  if (editingUserLocked) {
+    errorEl.textContent = 'Hoofdadmin kan niet worden aangepast';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const name = document.getElementById('euNameInput').value.trim();
+  const email = document.getElementById('euEmailInput').value.trim().toLowerCase();
+  const phone = document.getElementById('euPhoneInput').value.trim();
+  if (!name || !email || !phone) {
+    errorEl.textContent = 'Naam, e-mail en telefoon zijn verplicht';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const res = await fetch('/api/admin/users/' + encodeURIComponent(editingUserEmail), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, phone })
+  });
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    errorEl.textContent = data.error || 'Opslaan mislukt';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  editingUserEmail = data.email || email;
+  document.getElementById('editUserTitle').textContent = data.name || name;
+  document.getElementById('editUserSub').textContent = editingUserEmail;
+  adminSaveToast('Gebruiker bijgewerkt');
+  loadLedenTab(currentLedenTab);
+  if (currentAdmin?.isSuperAdmin) loadRechten();
 }
 
 function closeEditUserDrawer() {

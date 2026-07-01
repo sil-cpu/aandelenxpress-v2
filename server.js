@@ -966,6 +966,68 @@ app.post('/api/admin/users/add', requireAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
+app.put('/api/admin/users/:email', requireAdmin, async (req, res) => {
+    const currentEmail = String(req.params.email || '').trim().toLowerCase();
+    const nextEmail = String(req.body?.email || '').trim().toLowerCase();
+    const name = String(req.body?.name || '').trim();
+    const phone = String(req.body?.phone || '').trim();
+
+    if (!currentEmail || !nextEmail || !name || !phone) {
+        return res.status(400).json({ error: 'Naam, e-mail en telefoon zijn verplicht' });
+    }
+    if (!/^\S+@\S+\.\S+$/.test(nextEmail)) {
+        return res.status(400).json({ error: 'Voer een geldig e-mailadres in' });
+    }
+
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+        return res.status(400).json({ error: 'Voer een geldig mobiel telefoonnummer in' });
+    }
+
+    const { data: currentUser, error: currentUserError } = await supabase
+        .from('users')
+        .select('email, type, permissions')
+        .eq('email', currentEmail)
+        .single();
+
+    if (currentUserError || !currentUser) return res.status(404).json({ error: 'Gebruiker niet gevonden' });
+    if (isSuperAdmin(currentUser)) return res.status(403).json({ error: 'Hoofdadmin kan niet worden aangepast' });
+
+    if (nextEmail !== currentEmail) {
+        const { data: duplicateUser } = await supabase
+            .from('users')
+            .select('email')
+            .eq('email', nextEmail)
+            .single();
+        if (duplicateUser) return res.status(409).json({ error: 'E-mailadres bestaat al' });
+    }
+
+    const permissions = parsePermissions(currentUser.permissions);
+    permissions.mfaPhone = normalizedPhone;
+
+    const { error: updateError } = await supabase
+        .from('users')
+        .update({
+            email: nextEmail,
+            name,
+            permissions
+        })
+        .eq('email', currentEmail);
+
+    if (updateError) return res.status(500).json({ error: 'Opslaan mislukt' });
+
+    if (currentUser.type === 'reseller' && nextEmail !== currentEmail) {
+        await supabase.from('reseller_branding').update({ reseller_email: nextEmail }).eq('reseller_email', currentEmail);
+    }
+
+    if (req.session?.user?.email === currentEmail) {
+        req.session.user.email = nextEmail;
+        req.session.user.name = name;
+    }
+
+    res.json({ success: true, email: nextEmail, name, phone: normalizedPhone });
+});
+
 app.put('/api/admin/users/:email/mfa-phone', requireAdmin, async (req, res) => {
     const email = String(req.params.email || '').trim().toLowerCase();
     const phone = String(req.body?.phone || '').trim();
