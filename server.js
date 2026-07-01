@@ -426,10 +426,19 @@ function requireSuperAdmin(req, res, next) {
 function normalizePhone(rawPhone) {
     let value = String(rawPhone || '').trim();
     if (!value) return '';
-    value = value.replace(/[\s().-]/g, '');
+    // Keep only digits and an optional leading plus sign.
+    value = value.replace(/[^\d+]/g, '');
+    if (value.includes('+')) {
+        value = value.startsWith('+')
+            ? '+' + value.slice(1).replace(/\+/g, '')
+            : value.replace(/\+/g, '');
+    }
 
     if (value.startsWith('00')) value = '+' + value.slice(2);
-    if (/^06\d{8}$/.test(value)) value = '+31' + value.slice(1);
+    if (/^06\d{8}$/.test(value)) return '+31' + value.slice(1);
+    if (/^316\d{8}$/.test(value)) return '+' + value;
+    if (/^3106\d{8}$/.test(value)) return '+31' + value.slice(3);
+    if (/^\+3106\d{8}$/.test(value)) return '+31' + value.slice(4);
     if (/^\+31\d{9}$/.test(value)) return value;
     if (/^\+\d{8,15}$/.test(value)) return value;
 
