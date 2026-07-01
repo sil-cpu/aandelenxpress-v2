@@ -603,8 +603,8 @@ app.use(express.static(publicPath, {
 }));
 
 // ── Static pages ───────────────────────────────────────────────────────────
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
 app.get('/reset-password.html', (req, res) => res.redirect(301, '/reset-password'));
